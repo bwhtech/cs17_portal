@@ -1,0 +1,198 @@
+{% extends "templates/web.html" %}
+
+{% block head_include %}
+
+<link rel="stylesheet" href="https://unpkg.com/@knadh/oat/oat.min.css">
+<script src="https://unpkg.com/@knadh/oat/oat.min.js" defer></script>
+
+{% endblock %}
+
+{% block page_content %}
+
+<div class="container" style="max-width: 700px; margin-top: 60px;">
+
+    <div class="oat-card p-6">
+
+        <div style="margin-bottom: 30px;">
+            <h1 style="font-size: 32px; font-weight: bold;">
+                CS17 Assignment Submission
+            </h1>
+
+            <p style="color: gray; margin-top: 10px;">
+                Upload your assignment file
+            </p>
+        </div>
+
+        <form id="submission-form">
+
+            <!-- Full Name -->
+            <div style="margin-bottom: 24px;">
+
+                <label
+                    for="full_name"
+                    style="display:block; margin-bottom:8px; font-weight:600;"
+                >
+                    Full Name *
+                </label>
+
+                <input
+                    type="text"
+                    id="full_name"
+                    placeholder="Enter your full name"
+                    required
+                    class="oat-input"
+                    style="width:100%;"
+                />
+
+            </div>
+
+            <!-- ZIP Upload -->
+            <div style="margin-bottom: 24px;">
+
+                <label
+                    for="submission_file"
+                    style="display:block; margin-bottom:8px; font-weight:600;"
+                >
+                    Assignment File *
+                </label>
+
+                <input
+                    type="file"
+                    id="submission_file"
+                    accept=".zip,application/zip"
+                    required
+                    class="oat-input"
+                    style="width:100%;"
+                />
+
+            
+
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" style="width:100%; background-color: #000000; color: white; border: none; padding: 10px;">
+                Submit Assignment
+            </button>
+              
+
+        </form>
+
+        <!-- Response Box -->
+        <div id="response-box" style="margin-top: 24px;"></div>
+
+    </div>
+
+</div>
+
+<script>
+
+document.getElementById("submission-form").addEventListener("submit", async function(e) {
+
+    e.preventDefault();
+
+    const fullName = document.getElementById("full_name").value.trim();
+
+    const fileInput = document.getElementById("submission_file");
+
+    const responseBox = document.getElementById("response-box");
+
+    // Validation
+    if (!fullName) {
+
+        responseBox.innerHTML = `
+            <div class="oat-alert oat-alert-danger">
+                Full name is required
+            </div>
+        `;
+
+        return;
+    }
+
+    if (!fileInput.files.length) {
+
+        responseBox.innerHTML = `
+            <div class="oat-alert oat-alert-danger">
+                Please upload a ZIP file
+            </div>
+        `;
+
+        return;
+    }
+
+    const file = fileInput.files[0];
+
+    if (!file.name.toLowerCase().endsWith(".zip")) {
+
+        responseBox.innerHTML = `
+            <div class="oat-alert oat-alert-danger">
+                Only ZIP files are allowed
+            </div>
+        `;
+
+        return;
+    }
+
+    // Create form data
+    const formData = new FormData();
+
+    formData.append("full_name", fullName);
+    formData.append("file", file);
+
+    responseBox.innerHTML = `
+        <div class="oat-alert oat-alert-info">
+            Uploading assignment...
+        </div>
+    `;
+
+    try {
+
+        const response = await fetch(
+            "/api/method/cs17_portal.api.upload_assignment",
+            {
+                method: "POST",
+
+                headers: {
+                    "X-Frappe-CSRF-Token": frappe.csrf_token
+                },
+
+                body: formData
+            }
+        );
+
+        const data = await response.json();
+
+        if (data.message.status === "success") {
+
+            responseBox.innerHTML = `
+                <div class="oat-alert oat-alert-success">
+                    Assignment submitted successfully
+                </div>
+            `;
+
+            document.getElementById("submission-form").reset();
+
+        } else {
+
+            responseBox.innerHTML = `
+                <div class="oat-alert oat-alert-danger">
+                    ${data.message.message}
+                </div>
+            `;
+        }
+
+    } catch (error) {
+
+        console.error(error);
+
+        responseBox.innerHTML = `
+            <div class="oat-alert oat-alert-danger">
+                Something went wrong
+            </div>
+        `;
+    }
+
+});
+
+</script>
+
+{% endblock %}
