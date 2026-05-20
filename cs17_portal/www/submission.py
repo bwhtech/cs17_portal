@@ -23,9 +23,7 @@ def upload_assignment():
 		return {"status": "error", "message": "File is required"}
 
 	# Save file in Frappe
-	saved_file = save_file(
-		uploaded_file.filename, uploaded_file.stream.read(), "File", None, is_private=1
-	)
+	saved_file = save_file(uploaded_file.filename, uploaded_file.stream.read(), "File", None, is_private=1)
 
 	# Create submission entry
 	submission = frappe.get_doc(
