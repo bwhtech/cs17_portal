@@ -144,52 +144,35 @@ document.getElementById("submission-form").addEventListener("submit", async func
         </div>
     `;
 
-    try {
-
-        const response = await fetch(
-            "/api/method/cs17_portal.api.upload_assignment",
-            {
-                method: "POST",
-
-                headers: {
-                    "X-Frappe-CSRF-Token": frappe.csrf_token
-                },
-
-                body: formData
-            }
-        );
-
-        const data = await response.json();
-
-        if (data.message.status === "success") {
-
+   frappe.call({
+    method: "cs17_portal.www.submission.upload_assignment",
+    type: "POST",
+    args: {},
+    success: function(r) {
+        if (r.message.success) {
             responseBox.innerHTML = `
                 <div class="oat-alert oat-alert-success">
-                    Assignment submitted successfully
+                    Assignment uploaded successfully!
                 </div>
             `;
-
-            document.getElementById("submission-form").reset();
-
         } else {
-
             responseBox.innerHTML = `
                 <div class="oat-alert oat-alert-danger">
-                    ${data.message.message}
+                    ${r.message.error || "An error occurred while uploading. Please try again."}
                 </div>
             `;
         }
-
-    } catch (error) {
-
-        console.error(error);
-
+    },
+    error: function(r) {
         responseBox.innerHTML = `
             <div class="oat-alert oat-alert-danger">
-                Something went wrong
+                An error occurred while uploading. Please try again.
             </div>
         `;
-    }
+    },
+    always: function(r) {},
+});
+
 
 });
 
