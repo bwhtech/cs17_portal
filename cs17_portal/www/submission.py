@@ -2,38 +2,34 @@ import frappe
 from frappe.utils.file_manager import save_file
 
 
-def get_context(context):
-	context.title = "CS17 Assignment Submission"
-
-
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def upload_assignment():
-	full_name = frappe.form_dict.get("full_name")
-	uploaded_file = frappe.request.files.get("file")
 
-	# Validation
-	if not full_name:
-		return {"status": "error", "message": "Full name is required"}
+    full_name = frappe.form_dict.get("full_name")
 
-	if not uploaded_file:
-		return {"status": "error", "message": "File is required"}
+    uploaded_file = frappe.request.files.get("file")
 
-	# ZIP validation
-	if not uploaded_file:
-		return {"status": "error", "message": "File is required"}
+    if not full_name:
+        return {
+            "status": "error",
+            "message": "Full name is required"
+        }
 
-	# Save file in Frappe
-	saved_file = save_file(uploaded_file.filename, uploaded_file.stream.read(), "File", None, is_private=1)
+    if not uploaded_file:
+        return {
+            "status": "error",
+            "message": "ZIP file is required"
+        }
 
-	# Create submission entry
-	submission = frappe.get_doc(
-		{
-			"doctype": "CS17 Assignment Submission",
-			"full_name": full_name,
-			"submission_document": saved_file.file_url,
-		}
-	)
+    saved_file = save_file(
+        uploaded_file.filename,
+        uploaded_file.read(),
+        "File",
+        None,
+        is_private=1
+    )
 
-	submission.insert(ignore_permissions=True)
-
-	return {"status": "success", "message": "Assignment submitted successfully"}
+    return {
+        "status": "success",
+        "file_url": saved_file.file_url
+    }

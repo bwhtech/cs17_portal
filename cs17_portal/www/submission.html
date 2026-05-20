@@ -40,13 +40,12 @@
                     id="full_name"
                     placeholder="Enter your full name"
                     required
-                    class="oat-input"
                     style="width:100%;"
                 />
 
             </div>
 
-            <!-- ZIP Upload -->
+            <!-- File Upload -->
             <div style="margin-bottom: 24px;">
 
                 <label
@@ -59,21 +58,29 @@
                 <input
                     type="file"
                     id="submission_file"
-                    accept=".zip,application/zip"
                     required
                     class="oat-input"
                     style="width:100%;"
                 />
 
-
-
             </div>
 
             <!-- Submit Button -->
-            <button type="submit" style="width:100%; background-color: #000000; color: white; border: none; padding: 10px;">
+            <button
+                type="submit"
+                style="
+                    width:100%;
+                    background-color:#000000;
+                    color:white;
+                    border:none;
+                    padding:12px;
+                    border-radius:8px;
+                    font-weight:600;
+                    cursor:pointer;
+                "
+            >
                 Submit Assignment
             </button>
-
 
         </form>
 
@@ -112,7 +119,7 @@ document.getElementById("submission-form").addEventListener("submit", async func
 
         responseBox.innerHTML = `
             <div class="oat-alert oat-alert-danger">
-                Please upload a ZIP file
+                Please upload a file
             </div>
         `;
 
@@ -120,17 +127,6 @@ document.getElementById("submission-form").addEventListener("submit", async func
     }
 
     const file = fileInput.files[0];
-
-    if (!file.name.toLowerCase().endsWith(".zip")) {
-
-        responseBox.innerHTML = `
-            <div class="oat-alert oat-alert-danger">
-                Only ZIP files are allowed
-            </div>
-        `;
-
-        return;
-    }
 
     // Create form data
     const formData = new FormData();
@@ -144,35 +140,45 @@ document.getElementById("submission-form").addEventListener("submit", async func
         </div>
     `;
 
-   frappe.call({
-    method: "cs17_portal.www.submission.upload_assignment",
-    type: "POST",
-    args: {},
-    success: function(r) {
-        if (r.message.success) {
+    try {
+
+        const response = await fetch(
+            "/api/method/cs17_portal.www.submission.upload_assignment",
+            {
+                method: "POST",
+                body: formData
+            }
+        );
+
+        const data = await response.json();
+
+        if (data.message && data.message.status === "success") {
+
             responseBox.innerHTML = `
                 <div class="oat-alert oat-alert-success">
                     Assignment uploaded successfully!
                 </div>
             `;
+
+            document.getElementById("submission-form").reset();
+
         } else {
+
             responseBox.innerHTML = `
                 <div class="oat-alert oat-alert-danger">
-                    ${r.message.error || "An error occurred while uploading. Please try again."}
+                    ${data.message.message || "Upload failed"}
                 </div>
             `;
         }
-    },
-    error: function(r) {
+
+    } catch (err) {
+
         responseBox.innerHTML = `
             <div class="oat-alert oat-alert-danger">
-                An error occurred while uploading. Please try again.
+                An error occurred while uploading.
             </div>
         `;
-    },
-    always: function(r) {},
-});
-
+    }
 
 });
 
