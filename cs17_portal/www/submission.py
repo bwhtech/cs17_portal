@@ -36,6 +36,4 @@ def upload_assignment():
 
 	submission.insert(ignore_permissions=True)
 
-	frappe.db.commit()
-
 	return {"status": "success", "message": "Assignment submitted successfully"}
