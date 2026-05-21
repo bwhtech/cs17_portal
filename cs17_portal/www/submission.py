@@ -2,7 +2,7 @@ import frappe
 from frappe.utils.file_manager import save_file
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def upload_assignment():
 	full_name = frappe.form_dict.get("full_name")
 	uploaded_file = frappe.request.files.get("file")
@@ -27,6 +27,5 @@ def upload_assignment():
 		}
 	)
 	doc.insert(ignore_permissions=True)
-	frappe.db.commit()
 
 	return {"status": "success", "file_url": saved_file.file_url, "submission": doc.name}
