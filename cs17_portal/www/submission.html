@@ -98,39 +98,30 @@ document.getElementById("submission-form").addEventListener("submit", async func
     e.preventDefault();
 
     const fullName = document.getElementById("full_name").value.trim();
-
     const fileInput = document.getElementById("submission_file");
-
     const responseBox = document.getElementById("response-box");
 
-    // Validation
     if (!fullName) {
-
         responseBox.innerHTML = `
             <div class="oat-alert oat-alert-danger">
                 Full name is required
             </div>
         `;
-
         return;
     }
 
     if (!fileInput.files.length) {
-
         responseBox.innerHTML = `
             <div class="oat-alert oat-alert-danger">
                 Please upload a file
             </div>
         `;
-
         return;
     }
 
     const file = fileInput.files[0];
 
-    // Create form data
     const formData = new FormData();
-
     formData.append("full_name", fullName);
     formData.append("file", file);
 
@@ -146,6 +137,9 @@ document.getElementById("submission-form").addEventListener("submit", async func
             "/api/method/cs17_portal.www.submission.upload_assignment",
             {
                 method: "POST",
+                headers: {
+                    "X-Frappe-CSRF-Token": frappe.csrf_token
+                },
                 body: formData
             }
         );
@@ -156,7 +150,7 @@ document.getElementById("submission-form").addEventListener("submit", async func
 
             responseBox.innerHTML = `
                 <div class="oat-alert oat-alert-success">
-                    Assignment uploaded successfully!
+                    Assignment submitted successfully!
                 </div>
             `;
 
@@ -166,7 +160,7 @@ document.getElementById("submission-form").addEventListener("submit", async func
 
             responseBox.innerHTML = `
                 <div class="oat-alert oat-alert-danger">
-                    ${data.message.message || "Upload failed"}
+                    ${data.message?.message || "Upload failed"}
                 </div>
             `;
         }
