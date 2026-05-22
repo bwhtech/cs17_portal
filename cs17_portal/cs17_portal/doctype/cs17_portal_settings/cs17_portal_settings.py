@@ -12,8 +12,9 @@ class CS17PortalSettings(Document):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
-		from cs17_portal.cs17_portal.doctype.cs17_quick_link.cs17_quick_link import CS17QuickLink
 		from frappe.types import DF
+
+		from cs17_portal.cs17_portal.doctype.cs17_quick_link.cs17_quick_link import CS17QuickLink
 
 		quick_links: DF.Table[CS17QuickLink]
 	# end: auto-generated types
