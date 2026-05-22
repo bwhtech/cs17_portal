@@ -15,7 +15,20 @@ class CS17Cohort(Document):
 		from frappe.types import DF
 
 		cohort_code: DF.Data
-		start_month: DF.Literal["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+		start_month: DF.Literal[
+			"January",
+			"February",
+			"March",
+			"April",
+			"May",
+			"June",
+			"July",
+			"August",
+			"September",
+			"October",
+			"November",
+			"December",
+		]
 		start_year: DF.Data | None
 	# end: auto-generated types
 
