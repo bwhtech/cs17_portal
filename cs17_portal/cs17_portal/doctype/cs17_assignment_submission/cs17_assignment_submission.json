@@ -7,9 +7,12 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_ara1",
-  "amended_from",
+  "student",
+  "assignment",
   "full_name",
-  "submission_document"
+  "submission_document",
+  "amended_from",
+  "submitted_at"
  ],
  "fields": [
   {
@@ -30,8 +33,7 @@
    "fieldname": "full_name",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Full Name",
-   "reqd": 1
+   "label": "Full Name"
   },
   {
    "fieldname": "submission_document",
@@ -39,13 +41,32 @@
    "in_list_view": 1,
    "label": "Submission Document",
    "reqd": 1
+  },
+  {
+   "fieldname": "submitted_at",
+   "fieldtype": "Datetime",
+   "label": "Submitted At"
+  },
+  {
+   "fieldname": "student",
+   "fieldtype": "Link",
+   "label": "Student",
+   "options": "CS17 Student",
+   "reqd": 1
+  },
+  {
+   "fieldname": "assignment",
+   "fieldtype": "Link",
+   "label": "Assignment",
+   "options": "CS17 Assignment",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-05-20 13:01:21.692071",
+ "modified": "2026-05-22 16:19:17.878147",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Submission",
