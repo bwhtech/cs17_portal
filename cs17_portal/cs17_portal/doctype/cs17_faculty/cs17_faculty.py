@@ -20,7 +20,6 @@ class CS17Faculty(Document):
 		naming_series: DF.Literal["CS17FAC.###"]
 		user: DF.Link | None
 	# end: auto-generated types
-	
+
 	def before_save(self):
 		self.full_name = f"{self.first_name} {self.last_name}"
-
