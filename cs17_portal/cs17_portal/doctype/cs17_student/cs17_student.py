@@ -19,16 +19,13 @@ class CS17Student(Document):
 		blood_group: DF.Literal["O+", "O-", "B+", "B-", "A+", "A-", "AB+", "AB-"]
 		cohort: DF.Link
 		date_of_birth: DF.Date | None
-		full_name: DF.Data
+		first_name: DF.Data
+		full_name: DF.Data | None
+		last_name: DF.Data
+		naming_series: DF.Literal[None]
 		profile_picture: DF.AttachImage | None
-		register_number: DF.Data | None
 		user: DF.Link | None
 	# end: auto-generated types
 
-	def autoname(self):
-		cohort = frappe.get_doc("CS17 Cohort", self.cohort)
-		cohort_code = cohort.cohort_code  # e.g. "C0"
-		year_suffix = str(cohort.start_year)[-2:]  # "2026" → "26"
-		prefix = f"CS17{cohort_code}{year_suffix}"  # → "CS17C026"
-		self.name = make_autoname(f"{prefix}.###")
-		self.register_number = self.name
+	def validate(self):
+		self.full_name = " ".join(filter(None, [self.first_name, self.last_name]))

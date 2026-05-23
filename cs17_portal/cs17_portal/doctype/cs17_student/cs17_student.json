@@ -2,13 +2,16 @@
  "actions": [],
  "allow_bulk_edit": 1,
  "allow_rename": 1,
+ "autoname": "naming_series:[naming_series]",
  "creation": "2026-05-22 15:42:14.801456",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "naming_series",
+  "first_name",
+  "last_name",
   "full_name",
   "cohort",
-  "register_number",
   "user",
   "date_of_birth",
   "blood_group",
@@ -21,7 +24,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Full Name",
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "cohort",
@@ -30,11 +33,6 @@
    "label": "Cohort",
    "options": "CS17 Cohort",
    "reqd": 1
-  },
-  {
-   "fieldname": "register_number",
-   "fieldtype": "Data",
-   "label": "Register Number"
   },
   {
    "fieldname": "user",
@@ -62,15 +60,33 @@
    "fieldname": "profile_picture",
    "fieldtype": "Attach Image",
    "label": "Profile Picture"
+  },
+  {
+   "fieldname": "first_name",
+   "fieldtype": "Data",
+   "label": "First Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "last_name",
+   "fieldtype": "Data",
+   "label": "Last Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-22 15:55:07.783221",
+ "modified": "2026-05-23 16:58:46.837435",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Student",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {

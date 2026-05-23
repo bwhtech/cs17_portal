@@ -16,13 +16,9 @@ class CS17Faculty(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
-		full_name: DF.Data
-		register_number: DF.Data | None
+		first_name: DF.Data
+		full_name: DF.Data | None
+		last_name: DF.Data
+		naming_series: DF.Literal[None]
 		user: DF.Link | None
 	# end: auto-generated types
-
-	def autoname(self):
-		year_suffix = str(now_datetime().year)[-2:]  # 2026 → "26"
-		prefix = f"CS17F{year_suffix}"  # → "CS17F26"
-		self.name = make_autoname(f"{prefix}.###")
-		self.register_number = self.name

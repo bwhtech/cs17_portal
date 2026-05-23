@@ -2,12 +2,15 @@
  "actions": [],
  "allow_bulk_edit": 1,
  "allow_rename": 1,
+ "autoname": "naming_series:[naming_series]",
  "creation": "2026-05-22 15:18:11.922501",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "naming_series",
+  "first_name",
+  "last_name",
   "full_name",
-  "register_number",
   "user"
  ],
  "fields": [
@@ -18,26 +21,38 @@
    "options": "User"
   },
   {
-   "fieldname": "register_number",
-   "fieldtype": "Data",
-   "label": "Register Number"
-  },
-  {
    "fieldname": "full_name",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Full Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "first_name",
+   "fieldtype": "Data",
+   "label": "First Name",
    "reqd": 1
+  },
+  {
+   "fieldname": "last_name",
+   "fieldtype": "Data",
+   "label": "Last Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-22 15:55:43.273065",
+ "modified": "2026-05-23 16:58:56.714837",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Faculty",
- "naming_rule": "By script",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {

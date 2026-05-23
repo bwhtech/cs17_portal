@@ -18,6 +18,7 @@ class CS17Assignment(Document):
 		description: DF.TextEditor | None
 		due_date: DF.Date
 		max_marks: DF.Float
+		naming_series: DF.Data | None
 		title: DF.Data
 	# end: auto-generated types
 

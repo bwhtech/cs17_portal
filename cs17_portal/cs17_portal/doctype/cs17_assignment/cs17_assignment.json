@@ -2,10 +2,12 @@
  "actions": [],
  "allow_bulk_edit": 1,
  "allow_rename": 1,
+ "autoname": "naming_series:[naming_series]",
  "creation": "2026-05-22 16:10:09.497159",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "naming_series",
   "title",
   "cohort",
   "due_date",
@@ -44,15 +46,21 @@
    "fieldname": "max_marks",
    "fieldtype": "Float",
    "label": "Max Marks"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Data",
+   "label": "Naming Series"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-22 16:17:41.938492",
+ "modified": "2026-05-23 16:58:26.143135",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {

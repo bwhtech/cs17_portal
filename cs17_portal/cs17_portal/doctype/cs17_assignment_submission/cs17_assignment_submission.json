@@ -2,16 +2,18 @@
  "actions": [],
  "allow_bulk_edit": 1,
  "allow_rename": 1,
+ "autoname": "naming_series:[naming_series]",
  "creation": "2026-05-20 12:58:27.260293",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "section_break_ara1",
+  "amended_from",
+  "naming_series",
   "student",
   "assignment",
   "full_name",
   "submission_document",
-  "amended_from",
   "submitted_at"
  ],
  "fields": [
@@ -60,16 +62,22 @@
    "label": "Assignment",
    "options": "CS17 Assignment",
    "reqd": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-05-22 16:19:17.878147",
+ "modified": "2026-05-23 16:57:58.150874",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Submission",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
