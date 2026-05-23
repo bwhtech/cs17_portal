@@ -28,4 +28,4 @@ class CS17Student(Document):
 	# end: auto-generated types
 
 	def validate(self):
-		self.full_name = " ".join(filter(None, [self.first_name, self.last_name]))
+		self.full_name = " ".join([name for name in [self.first_name, self.last_name] if name])
