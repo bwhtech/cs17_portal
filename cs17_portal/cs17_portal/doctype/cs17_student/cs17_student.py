@@ -22,7 +22,7 @@ class CS17Student(Document):
 		first_name: DF.Data
 		full_name: DF.Data | None
 		last_name: DF.Data
-		naming_series: DF.Literal[None]
+		naming_series: DF.Literal["CS17.{cohort}.YYYY.###"]
 		profile_picture: DF.AttachImage | None
 		user: DF.Link | None
 	# end: auto-generated types

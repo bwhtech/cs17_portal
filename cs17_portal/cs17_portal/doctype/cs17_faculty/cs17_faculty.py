@@ -3,8 +3,6 @@
 
 import frappe
 from frappe.model.document import Document
-from frappe.model.naming import make_autoname
-from frappe.utils import now_datetime
 
 
 class CS17Faculty(Document):
@@ -19,6 +17,10 @@ class CS17Faculty(Document):
 		first_name: DF.Data
 		full_name: DF.Data | None
 		last_name: DF.Data
-		naming_series: DF.Literal[None]
+		naming_series: DF.Literal["CS17FAC.###"]
 		user: DF.Link | None
 	# end: auto-generated types
+	
+	def before_save(self):
+		self.full_name = f"{self.first_name} {self.last_name}"
+

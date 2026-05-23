@@ -2,57 +2,66 @@
  "actions": [],
  "allow_bulk_edit": 1,
  "allow_rename": 1,
+ "autoname": "naming_series:",
  "creation": "2026-05-22 16:19:47.158349",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "title",
-  "description",
-  "due_date",
-  "cohort",
-  "max_marks"
+  "naming_series",
+  "max_marks",
+  "assignment",
+  "submission",
+  "remarks",
+  "graded_by"
  ],
  "fields": [
   {
-   "fieldname": "title",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Title",
-   "reqd": 1
-  },
-  {
-   "fieldname": "description",
-   "fieldtype": "Text Editor",
-   "label": "Description"
-  },
-  {
-   "fieldname": "due_date",
-   "fieldtype": "Date",
-   "in_list_view": 1,
-   "label": "Due Date",
-   "reqd": 1
-  },
-  {
-   "fieldname": "cohort",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Cohort",
-   "options": "CS17 Cohort",
-   "reqd": 1
-  },
-  {
    "fieldname": "max_marks",
    "fieldtype": "Float",
-   "label": "Max Marks"
+   "in_list_view": 1,
+   "label": "Marks Obtained",
+   "reqd": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "GRADE-.###"
+  },
+  {
+   "fieldname": "assignment",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Assignment",
+   "options": "CS17 Assignment",
+   "reqd": 1
+  },
+  {
+   "fieldname": "submission",
+   "fieldtype": "Link",
+   "label": "Submission",
+   "options": "CS17 Assignment Submission"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Data",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "graded_by",
+   "fieldtype": "Link",
+   "label": "Graded by ",
+   "options": "User"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-23 00:02:45.539793",
+ "modified": "2026-05-23 17:39:37.306800",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Grade",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {

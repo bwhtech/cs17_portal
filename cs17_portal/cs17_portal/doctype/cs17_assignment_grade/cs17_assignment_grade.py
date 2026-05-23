@@ -14,11 +14,12 @@ class CS17AssignmentGrade(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
-		cohort: DF.Link
-		description: DF.TextEditor | None
-		due_date: DF.Date
+		assignment: DF.Link
+		graded_by: DF.Link | None
 		max_marks: DF.Float
-		title: DF.Data
+		naming_series: DF.Literal["GRADE-.###"]
+		remarks: DF.Data | None
+		submission: DF.Link | None
 	# end: auto-generated types
 
 	pass

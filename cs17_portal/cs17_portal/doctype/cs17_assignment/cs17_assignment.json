@@ -49,14 +49,15 @@
   },
   {
    "fieldname": "naming_series",
-   "fieldtype": "Data",
-   "label": "Naming Series"
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "ASSIGN-.###"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-23 16:58:26.143135",
+ "modified": "2026-05-23 17:26:11.119202",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",
