@@ -1,0 +1,95 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "autoname": "naming_series:[naming_series]",
+ "creation": "2026-05-22 15:18:11.922501",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "section_break_sbup",
+  "full_name",
+  "first_name",
+  "last_name",
+  "column_break_lgbf",
+  "profile_picture",
+  "user"
+ ],
+ "fields": [
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "User"
+  },
+  {
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Full Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "first_name",
+   "fieldtype": "Data",
+   "label": "First Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "last_name",
+   "fieldtype": "Data",
+   "label": "Last Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "CS17FAC.###"
+  },
+  {
+   "fieldname": "section_break_sbup",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "profile_picture",
+   "fieldtype": "Attach Image",
+   "label": "Profile Picture"
+  },
+  {
+   "fieldname": "column_break_lgbf",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "grid_page_length": 50,
+ "image_field": "profile_picture",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-25 14:23:45.167826",
+ "modified_by": "Administrator",
+ "module": "CS17 Portal",
+ "name": "CS17 Faculty",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "full_name"
+}

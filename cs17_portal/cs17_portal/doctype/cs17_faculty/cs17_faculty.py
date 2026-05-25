@@ -1,11 +1,11 @@
 # Copyright (c) 2026, developers@bwh.tech and contributors
 # For license information, please see license.txt
 
-# import frappe
+import frappe
 from frappe.model.document import Document
 
 
-class CS17AssignmentSubmission(Document):
+class CS17Faculty(Document):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
 
@@ -14,13 +14,13 @@ class CS17AssignmentSubmission(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
-		amended_from: DF.Link | None
-		assignment: DF.Link
+		first_name: DF.Data
 		full_name: DF.Data | None
-		naming_series: DF.Literal["SUB-.###.{assignment}"]
-		student: DF.Link
-		submission_document: DF.Attach
-		submitted_at: DF.Datetime | None
+		last_name: DF.Data
+		naming_series: DF.Literal["CS17FAC.###"]
+		profile_picture: DF.AttachImage | None
+		user: DF.Link | None
 	# end: auto-generated types
 
-	pass
+	def before_save(self):
+		self.full_name = f"{self.first_name} {self.last_name}"

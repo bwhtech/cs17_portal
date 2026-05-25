@@ -5,7 +5,7 @@
 from frappe.model.document import Document
 
 
-class CS17AssignmentSubmission(Document):
+class CS17PortalSettings(Document):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
 
@@ -14,13 +14,9 @@ class CS17AssignmentSubmission(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
-		amended_from: DF.Link | None
-		assignment: DF.Link
-		full_name: DF.Data | None
-		naming_series: DF.Literal["SUB-.###.{assignment}"]
-		student: DF.Link
-		submission_document: DF.Attach
-		submitted_at: DF.Datetime | None
+		from cs17_portal.cs17_portal.doctype.cs17_quick_link.cs17_quick_link import CS17QuickLink
+
+		quick_links: DF.Table[CS17QuickLink]
 	# end: auto-generated types
 
 	pass

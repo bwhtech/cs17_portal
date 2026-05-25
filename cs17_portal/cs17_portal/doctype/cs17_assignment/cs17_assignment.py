@@ -5,7 +5,7 @@
 from frappe.model.document import Document
 
 
-class CS17AssignmentSubmission(Document):
+class CS17Assignment(Document):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
 
@@ -14,13 +14,12 @@ class CS17AssignmentSubmission(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
-		amended_from: DF.Link | None
-		assignment: DF.Link
-		full_name: DF.Data | None
-		naming_series: DF.Literal["SUB-.###.{assignment}"]
-		student: DF.Link
-		submission_document: DF.Attach
-		submitted_at: DF.Datetime | None
+		cohort: DF.Link
+		description: DF.TextEditor | None
+		due_date: DF.Date
+		max_marks: DF.Float
+		naming_series: DF.Literal["ASSIGN-.###"]
+		title: DF.Data
 	# end: auto-generated types
 
 	pass

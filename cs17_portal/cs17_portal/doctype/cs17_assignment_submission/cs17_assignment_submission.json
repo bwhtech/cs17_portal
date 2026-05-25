@@ -2,14 +2,21 @@
  "actions": [],
  "allow_bulk_edit": 1,
  "allow_rename": 1,
+ "autoname": "naming_series:[naming_series]",
  "creation": "2026-05-20 12:58:27.260293",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_ara1",
   "amended_from",
+  "column_break_kefc",
+  "naming_series",
+  "section_break_ara1",
+  "student",
+  "assignment",
   "full_name",
-  "submission_document"
+  "column_break_hiss",
+  "submission_document",
+  "submitted_at"
  ],
  "fields": [
   {
@@ -27,11 +34,11 @@
    "search_index": 1
   },
   {
+   "fetch_from": "student.full_name",
    "fieldname": "full_name",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Full Name",
-   "reqd": 1
+   "label": "Full Name"
   },
   {
    "fieldname": "submission_document",
@@ -39,16 +46,50 @@
    "in_list_view": 1,
    "label": "Submission Document",
    "reqd": 1
+  },
+  {
+   "fieldname": "submitted_at",
+   "fieldtype": "Datetime",
+   "label": "Submitted At"
+  },
+  {
+   "fieldname": "student",
+   "fieldtype": "Link",
+   "label": "Student",
+   "options": "CS17 Student",
+   "reqd": 1
+  },
+  {
+   "fieldname": "assignment",
+   "fieldtype": "Link",
+   "label": "Assignment",
+   "options": "CS17 Assignment",
+   "reqd": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SUB-.###.{assignment}"
+  },
+  {
+   "fieldname": "column_break_kefc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_hiss",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-05-20 13:01:21.692071",
+ "modified": "2026-05-25 14:28:44.190904",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Submission",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -69,5 +110,6 @@
  "rows_threshold_for_grid_search": 20,
  "sort_field": "creation",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "full_name"
 }

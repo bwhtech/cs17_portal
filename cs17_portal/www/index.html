@@ -1,0 +1,47 @@
+{% extends "templates/web.html" %}
+
+{% block head_include %}
+<link rel="stylesheet" href="https://unpkg.com/@knadh/oat/oat.min.css">
+{% endblock %}
+
+{% block page_content %}
+
+<div class="container" style="max-width: 700px; margin-top: 60px;">
+
+    <div style="margin-bottom: 40px;">
+        <h1 style="font-size: 32px; font-weight: bold;">CS17 Portal</h1>
+        <p style="color: gray; margin-top: 10px;">Welcome. Select an option below.</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+
+        {% for link in quick_links %}
+        <a
+            href="{{ link.link }}"
+            class="oat-card"
+            style="
+                display: block;
+                padding: 20px 24px;
+                text-decoration: none;
+                color: inherit;
+                border-radius: 8px;
+                font-weight: 600;
+                font-size: 16px;
+            "
+        >
+            {% if link.icon %}
+                <span style="margin-right: 10px;">{{ link.icon }}</span>
+            {% endif %}
+            {{ link.title }}
+        </a>
+        {% endfor %}
+
+        {% if not quick_links %}
+        <p style="color: gray;">No quick links configured yet.</p>
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}
