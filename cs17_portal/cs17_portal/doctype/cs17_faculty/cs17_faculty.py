@@ -18,6 +18,7 @@ class CS17Faculty(Document):
 		full_name: DF.Data | None
 		last_name: DF.Data
 		naming_series: DF.Literal["CS17FAC.###"]
+		profile_picture: DF.AttachImage | None
 		user: DF.Link | None
 	# end: auto-generated types
 

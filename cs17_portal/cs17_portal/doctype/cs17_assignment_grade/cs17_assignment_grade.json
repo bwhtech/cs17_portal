@@ -7,6 +7,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "column_break_ibmm",
   "naming_series",
   "section_break_cezv",
   "assignment",
@@ -62,12 +63,17 @@
   {
    "fieldname": "column_break_lrax",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_ibmm",
+   "fieldtype": "Column Break",
+   "options": "GRADE-.####"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-25 13:16:38.672765",
+ "modified": "2026-05-25 14:45:50.806834",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Grade",

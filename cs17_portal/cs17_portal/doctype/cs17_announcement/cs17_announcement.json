@@ -2,10 +2,12 @@
  "actions": [],
  "allow_bulk_edit": 1,
  "allow_rename": 1,
+ "autoname": "ALERT-.####",
  "creation": "2026-05-22 16:24:06.316277",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "section_break_iphc",
   "is_published",
   "section_break_pybi",
   "title",
@@ -53,15 +55,20 @@
   {
    "fieldname": "column_break_efaz",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_iphc",
+   "fieldtype": "Section Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-25 13:18:06.228314",
+ "modified": "2026-05-25 14:40:59.282241",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Announcement",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {

@@ -9,9 +9,11 @@
  "field_order": [
   "naming_series",
   "section_break_sbup",
+  "full_name",
   "first_name",
   "last_name",
-  "full_name",
+  "column_break_lgbf",
+  "profile_picture",
   "user"
  ],
  "fields": [
@@ -49,12 +51,22 @@
   {
    "fieldname": "section_break_sbup",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "profile_picture",
+   "fieldtype": "Attach Image",
+   "label": "Profile Picture"
+  },
+  {
+   "fieldname": "column_break_lgbf",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
+ "image_field": "profile_picture",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-25 13:10:21.545065",
+ "modified": "2026-05-25 14:23:45.167826",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Faculty",
@@ -78,5 +90,6 @@
  "rows_threshold_for_grid_search": 20,
  "sort_field": "creation",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "full_name"
 }
