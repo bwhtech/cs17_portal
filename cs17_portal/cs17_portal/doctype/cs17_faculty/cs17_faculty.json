@@ -8,6 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
+  "section_break_sbup",
   "first_name",
   "last_name",
   "full_name",
@@ -44,12 +45,16 @@
    "fieldtype": "Select",
    "label": "Naming Series",
    "options": "CS17FAC.###"
+  },
+  {
+   "fieldname": "section_break_sbup",
+   "fieldtype": "Section Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-23 17:24:27.105897",
+ "modified": "2026-05-25 13:10:21.545065",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Faculty",

@@ -7,12 +7,14 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_ara1",
   "amended_from",
+  "column_break_kefc",
   "naming_series",
+  "section_break_ara1",
   "student",
   "assignment",
   "full_name",
+  "column_break_hiss",
   "submission_document",
   "submitted_at"
  ],
@@ -32,6 +34,7 @@
    "search_index": 1
   },
   {
+   "fetch_from": "student.full_name",
    "fieldname": "full_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -68,13 +71,21 @@
    "fieldtype": "Select",
    "label": "Naming Series",
    "options": "SUB-.###.{assignment}"
+  },
+  {
+   "fieldname": "column_break_kefc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_hiss",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-05-23 17:27:34.159757",
+ "modified": "2026-05-25 13:13:10.592489",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Submission",

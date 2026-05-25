@@ -6,11 +6,13 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "title",
-  "content",
   "is_published",
+  "section_break_pybi",
+  "title",
+  "cohort",
   "published_date",
-  "cohort"
+  "column_break_efaz",
+  "content"
  ],
  "fields": [
   {
@@ -43,12 +45,20 @@
    "fieldtype": "Link",
    "label": "Cohort",
    "options": "CS17 Cohort"
+  },
+  {
+   "fieldname": "section_break_pybi",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_efaz",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-22 16:26:20.245457",
+ "modified": "2026-05-25 13:18:06.228314",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Announcement",

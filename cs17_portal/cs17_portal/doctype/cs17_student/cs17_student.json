@@ -8,15 +8,17 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
+  "section_break_juvy",
+  "user",
+  "profile_picture",
   "first_name",
   "last_name",
   "full_name",
+  "column_break_vxfo",
   "cohort",
-  "user",
   "date_of_birth",
   "blood_group",
-  "address",
-  "profile_picture"
+  "address"
  ],
  "fields": [
   {
@@ -78,12 +80,20 @@
    "fieldtype": "Select",
    "label": "Naming Series",
    "options": "CS17.{cohort}.YYYY.###"
+  },
+  {
+   "fieldname": "section_break_juvy",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_vxfo",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-23 17:23:15.666016",
+ "modified": "2026-05-25 13:09:05.733391",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Student",

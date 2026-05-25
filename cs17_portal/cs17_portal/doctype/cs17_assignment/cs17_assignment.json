@@ -8,11 +8,13 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
+  "section_break_ojuv",
   "title",
   "cohort",
   "due_date",
-  "description",
-  "max_marks"
+  "max_marks",
+  "column_break_vtqn",
+  "description"
  ],
  "fields": [
   {
@@ -52,12 +54,20 @@
    "fieldtype": "Select",
    "label": "Naming Series",
    "options": "ASSIGN-.###"
+  },
+  {
+   "fieldname": "section_break_ojuv",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_vtqn",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-23 17:26:11.119202",
+ "modified": "2026-05-25 13:14:50.725893",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",

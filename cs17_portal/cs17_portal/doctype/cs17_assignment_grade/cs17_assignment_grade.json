@@ -8,11 +8,13 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
-  "max_marks",
+  "section_break_cezv",
   "assignment",
   "submission",
-  "remarks",
-  "graded_by"
+  "graded_by",
+  "column_break_lrax",
+  "max_marks",
+  "remarks"
  ],
  "fields": [
   {
@@ -44,7 +46,7 @@
   },
   {
    "fieldname": "remarks",
-   "fieldtype": "Data",
+   "fieldtype": "Small Text",
    "label": "Remarks"
   },
   {
@@ -52,12 +54,20 @@
    "fieldtype": "Link",
    "label": "Graded by ",
    "options": "User"
+  },
+  {
+   "fieldname": "section_break_cezv",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_lrax",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-23 17:39:37.306800",
+ "modified": "2026-05-25 13:16:38.672765",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Grade",
