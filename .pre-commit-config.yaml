@@ -39,6 +39,7 @@ repos:
         exclude: |
             (?x)^(
                 cs17_portal/public/dist/.*|
+                cs17_portal/public/dashboard/.*|
                 .*node_modules.*|
                 .*boilerplate.*|
                 cs17_portal/templates/includes/.*|
@@ -56,6 +57,7 @@ repos:
         exclude: |
             (?x)^(
                 cs17_portal/public/dist/.*|
+                cs17_portal/public/dashboard/.*|
                 cypress/.*|
                 .*node_modules.*|
                 .*boilerplate.*|

@@ -13,7 +13,6 @@ def get_context():
 	return context
 
 
-# nosemgrep: frappe-semgrep-rules.rules.security.guest-whitelisted-method
 @frappe.whitelist(methods=["POST"], allow_guest=True)
 def get_context_for_dev():
 	if not frappe.conf.developer_mode:
@@ -22,11 +21,26 @@ def get_context_for_dev():
 
 
 def get_boot():
+	current_user = frappe.session.user
+	student = None
+
+	if current_user and current_user != "Guest":
+		students = frappe.get_list(
+			"CS17 Student",
+			filters={"user": current_user},
+			fields=["name", "full_name", "cohort", "profile_picture"],
+			limit=1,
+		)
+		if students:
+			student = students[0]
+
 	return frappe._dict(
 		{
 			"frappe_version": frappe.__version__,
 			"site_name": frappe.local.site,
 			"read_only_mode": frappe.flags.read_only,
 			"system_timezone": get_system_timezone(),
+			"current_user": current_user,
+			"student": student,
 		}
 	)
