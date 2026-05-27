@@ -1,5 +1,5 @@
 import frappe
-
+from frappe import _
 
 @frappe.whitelist()
 def get_current_student() -> dict | None:
@@ -24,7 +24,7 @@ def submit_assignment(assignment: str, file_url: str) -> dict:
 		limit=1,
 	)
 	if not student_list:
-		frappe.throw("No student record found for current user")
+		frappe.throw(_("No student record found for current user"))
 
 	student = student_list[0].name
 
