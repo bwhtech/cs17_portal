@@ -28,13 +28,15 @@ def submit_assignment(assignment: str, file_url: str) -> dict:
 
 	student = student_list[0].name
 
-	doc = frappe.get_doc({
-		"doctype": "CS17 Assignment Submission",
-		"naming_series": "SUB-.###.{assignment}",
-		"student": student,
-		"assignment": assignment,
-		"submission_document": file_url,
-		"submitted_at": frappe.utils.now_datetime(),
-	})
+	doc = frappe.get_doc(
+		{
+			"doctype": "CS17 Assignment Submission",
+			"naming_series": "SUB-.###.{assignment}",
+			"student": student,
+			"assignment": assignment,
+			"submission_document": file_url,
+			"submitted_at": frappe.utils.now_datetime(),
+		}
+	)
 	doc.insert(ignore_permissions=True)
 	return {"name": doc.name}
