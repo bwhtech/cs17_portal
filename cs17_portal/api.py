@@ -1,6 +1,7 @@
 import frappe
 from frappe import _
 
+
 @frappe.whitelist()
 def get_current_student() -> dict | None:
 	user = frappe.session.user
