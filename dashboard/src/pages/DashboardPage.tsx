@@ -37,7 +37,7 @@ export default function DashboardPage() {
     "CS17 Assignment Submission",
     {
       filters: [["student", "=", student?.name ?? ""]],
-      fields: ["name", "assignment", "submitted_at"],
+      fields: ["name", "assignment", "submitted_at", "edited_at"],
       limit: 100,
     },
     student?.name ? undefined : null

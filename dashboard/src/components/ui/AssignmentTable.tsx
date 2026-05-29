@@ -22,6 +22,7 @@ interface Submission {
   name: string;
   assignment: string;
   submitted_at: string;
+  edited_at: string | null;
 }
 
 interface Props {
@@ -35,6 +36,15 @@ function getStatus(assignment: Assignment, submission: Submission | undefined) {
   if (submission) return "submitted";
   if (new Date(assignment.due_date) < new Date()) return "overdue";
   return "pending";
+}
+
+function formatDateTime(dateStr: string) {
+  return new Date(dateStr).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 export default function AssignmentTable({
@@ -56,6 +66,7 @@ export default function AssignmentTable({
             <TableHead>Title</TableHead>
             <TableHead>Due</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Submitted</TableHead>
             <TableHead className="text-right">Action</TableHead>
           </TableRow>
         </TableHeader>
@@ -63,7 +74,7 @@ export default function AssignmentTable({
           {assignments.length === 0 && (
             <TableRow>
               <TableCell
-                colSpan={4}
+                colSpan={5}
                 className="text-center text-muted-foreground py-8"
               >
                 No assignments yet.
@@ -95,6 +106,20 @@ export default function AssignmentTable({
                   )}
                   {status === "pending" && (
                     <Badge variant="secondary">Pending</Badge>
+                  )}
+                </TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {submission ? (
+                    <div className="flex flex-col gap-0.5">
+                      <span>{formatDateTime(submission.submitted_at)}</span>
+                      {submission.edited_at && (
+                        <span className="text-xs">
+                          Edited {formatDateTime(submission.edited_at)}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <span>—</span>
                   )}
                 </TableCell>
                 <TableCell className="text-right">
