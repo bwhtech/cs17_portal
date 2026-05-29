@@ -8,6 +8,7 @@ import {
   Inbox,
   Settings,
   Bell,
+  ExternalLink,
 } from "lucide-react";
 import { useCurrentStudent } from "@/hooks/useCurrentStudent";
 import { cn } from "@/lib/utils";
@@ -112,6 +113,7 @@ export default function Sidebar() {
                       >
                         <Icon className="w-4 h-4 shrink-0" />
                         {item.label}
+                        <ExternalLink className="w-3 h-3 ml-auto shrink-0 opacity-50" />
                       </a>
                     </li>
                   );
