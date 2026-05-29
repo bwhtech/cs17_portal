@@ -14,8 +14,10 @@ class CS17Announcement(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
+		alert_variant: DF.Literal["info", "warning", "error"]
 		cohort: DF.Link | None
 		content: DF.MarkdownEditor
+		is_dismissible: DF.Check
 		is_published: DF.Check
 		published_date: DF.Date | None
 		title: DF.Data

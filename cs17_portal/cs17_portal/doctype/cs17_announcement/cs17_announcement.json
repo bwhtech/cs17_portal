@@ -9,6 +9,8 @@
  "field_order": [
   "section_break_iphc",
   "is_published",
+  "alert_variant",
+  "is_dismissible",
   "section_break_pybi",
   "title",
   "cohort",
@@ -59,12 +61,25 @@
   {
    "fieldname": "section_break_iphc",
    "fieldtype": "Section Break"
+  },
+  {
+   "default": "info",
+   "fieldname": "alert_variant",
+   "fieldtype": "Select",
+   "label": "Alert Variant",
+   "options": "info\nwarning\nerror"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_dismissible",
+   "fieldtype": "Check",
+   "label": "Is Dismissible"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-25 14:40:59.282241",
+ "modified": "2026-05-28 14:13:06.330610",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Announcement",
@@ -88,5 +103,6 @@
  "rows_threshold_for_grid_search": 20,
  "sort_field": "creation",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "title"
 }

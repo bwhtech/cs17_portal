@@ -14,17 +14,10 @@
   "submission",
   "graded_by",
   "column_break_lrax",
-  "max_marks",
+  "marks_obtained",
   "remarks"
  ],
  "fields": [
-  {
-   "fieldname": "max_marks",
-   "fieldtype": "Float",
-   "in_list_view": 1,
-   "label": "Marks Obtained",
-   "reqd": 1
-  },
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
@@ -68,12 +61,19 @@
    "fieldname": "column_break_ibmm",
    "fieldtype": "Column Break",
    "options": "GRADE-.####"
+  },
+  {
+   "fieldname": "marks_obtained",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Marks Obtained",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-25 14:45:50.806834",
+ "modified": "2026-05-29 12:45:07.882987",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Grade",

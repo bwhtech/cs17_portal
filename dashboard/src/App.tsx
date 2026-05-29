@@ -4,7 +4,7 @@ import Layout from "@/components/ui/Layout";
 import DashboardPage from "@/pages/DashboardPage";
 import AssignmentsPage from "@/pages/AssignmentsPage";
 import AlertsPage from "@/pages/AlertsPage";
-import ComingSoonPage from "@/pages/ComingSoonPage";
+import SettingsPage from "@/pages/SettingsPage";
 
 function App() {
   return (
@@ -15,28 +15,7 @@ function App() {
             <Route index element={<DashboardPage />} />
             <Route path="/assignments" element={<AssignmentsPage />} />
             <Route path="/alerts" element={<AlertsPage />} />
-            <Route path="/marks" element={<ComingSoonPage title="Results" />} />
-            <Route
-              path="/schedule"
-              element={<ComingSoonPage title="Schedule" />}
-            />
-            <Route
-              path="/courses"
-              element={<ComingSoonPage title="Courses" />}
-            />
-            <Route path="/cohort" element={<ComingSoonPage title="Cohort" />} />
-            <Route
-              path="/resources"
-              element={<ComingSoonPage title="Resources" />}
-            />
-            <Route
-              path="/settings"
-              element={<ComingSoonPage title="Settings" />}
-            />
-            <Route
-              path="/help"
-              element={<ComingSoonPage title="Help & Support" />}
-            />
+            <Route path="/settings" element={<SettingsPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

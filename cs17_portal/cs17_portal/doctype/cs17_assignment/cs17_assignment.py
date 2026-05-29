@@ -16,7 +16,7 @@ class CS17Assignment(Document):
 
 		cohort: DF.Link
 		description: DF.TextEditor | None
-		due_date: DF.Date
+		due_date: DF.Datetime
 		max_marks: DF.Float
 		naming_series: DF.Literal["ASSIGN-.###"]
 		title: DF.Data

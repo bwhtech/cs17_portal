@@ -31,7 +31,7 @@
   },
   {
    "fieldname": "due_date",
-   "fieldtype": "Date",
+   "fieldtype": "Datetime",
    "in_list_view": 1,
    "label": "Due Date",
    "reqd": 1
@@ -67,7 +67,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-25 13:14:50.725893",
+ "modified": "2026-05-28 14:16:45.015563",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",
