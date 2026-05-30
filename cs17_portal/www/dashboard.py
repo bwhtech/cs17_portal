@@ -26,7 +26,13 @@ def get_boot():
 
 	if current_user and current_user != "Guest":
 		try:
-			student = frappe.get_doc("CS17 Student", {"user": current_user})
+			doc = frappe.get_doc("CS17 Student", {"user": current_user})
+			student = {
+				"name": doc.name,
+				"full_name": doc.full_name,
+				"cohort": doc.cohort,
+				"profile_picture": doc.profile_picture,
+			}
 		except frappe.DoesNotExistError:
 			student = None
 
