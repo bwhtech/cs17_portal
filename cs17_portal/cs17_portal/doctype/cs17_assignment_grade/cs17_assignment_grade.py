@@ -16,7 +16,7 @@ class CS17AssignmentGrade(Document):
 
 		assignment: DF.Link
 		graded_by: DF.Link | None
-		max_marks: DF.Float
+		marks_obtained: DF.Float
 		naming_series: DF.Literal["GRADE-.###"]
 		remarks: DF.SmallText | None
 		submission: DF.Link | None

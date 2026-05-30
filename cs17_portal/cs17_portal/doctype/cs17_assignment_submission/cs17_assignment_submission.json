@@ -16,7 +16,8 @@
   "full_name",
   "column_break_hiss",
   "submission_document",
-  "submitted_at"
+  "submitted_at",
+  "edited_at"
  ],
  "fields": [
   {
@@ -79,13 +80,18 @@
   {
    "fieldname": "column_break_hiss",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "edited_at",
+   "fieldtype": "Datetime",
+   "label": "Edited At"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-05-25 14:28:44.190904",
+ "modified": "2026-05-29 18:46:11.593138",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Submission",

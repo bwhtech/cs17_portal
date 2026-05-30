@@ -2,16 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/assets/cs17_portal/dashboard/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>dashboard</title>
+    <title>CS17 Portal</title>
+    <script type="module" src="/src/main.tsx"></script>
   </head>
   <body>
     <div id="root"></div>
-		<script>
-			window.csrf_token = '{{ frappe.session.csrf_token }}';
-			// TODO: load boot data here (context file is created in `www` directory)
-		</script>
-    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      window.frappe_boot = {{ boot | tojson }};
+      window.csrf_token = '{{ frappe.session.csrf_token }}';
+    </script>
   </body>
 </html>

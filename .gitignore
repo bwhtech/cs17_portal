@@ -31,7 +31,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-
+git
 # Dependency directories
 node_modules/
 jspm_packages/
@@ -53,3 +53,10 @@ jspm_packages/
 
 # Aider AI Chat
 .aider*
+cs17_portal/public/dashboard/
+cs17_portal/public/node_modules/
+
+install-state.gz
+.yarn/
+dashboard/.vite/
+cs17_portal/www/dashboard.html
