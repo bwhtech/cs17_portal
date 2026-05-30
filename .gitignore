@@ -58,3 +58,6 @@ cs17_portal/public/node_modules/
 
 install-state.gz
 .yarn/
+
+cs17_portal/www/dashboard.html
+dashboard/.vite/

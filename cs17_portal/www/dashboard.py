@@ -25,14 +25,10 @@ def get_boot():
 	student = None
 
 	if current_user and current_user != "Guest":
-		students = frappe.get_list(
-			"CS17 Student",
-			filters={"user": current_user},
-			fields=["name", "full_name", "cohort", "profile_picture"],
-			limit=1,
-		)
-		if students:
-			student = students[0]
+		try:
+			student = frappe.get_doc("CS17 Student", {"user": current_user})
+		except frappe.DoesNotExistError:
+			student = None
 
 	return frappe._dict(
 		{

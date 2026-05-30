@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 const routeLabels: Record<string, string> = {
   "/": "Dashboard",
   "/assignments": "Assignments",
-  "/alerts": "Alerts",
+  "/announcements": "Announcements",
   "/settings": "Settings",
 };
 
@@ -41,7 +41,7 @@ export default function TopBar() {
   const [dismissed, setDismissed] = useState<Set<string>>(loadDismissed);
   const bellRef = useRef<HTMLDivElement>(null);
 
-  const { data: alerts } = useFrappeGetDocList(
+  const { data: announcements } = useFrappeGetDocList(
     "CS17 Announcement",
     {
       filters: [
@@ -54,8 +54,8 @@ export default function TopBar() {
     student?.cohort ? undefined : null,
   );
 
-  const visible = (alerts ?? []).filter((a) => !dismissed.has(a.name));
-  const alertCount = visible.length;
+  const visible = (announcements ?? []).filter((a) => !dismissed.has(a.name));
+  const announcementCount = visible.length;
 
   function dismiss(name: string) {
     setDismissed((prev) => {
@@ -90,9 +90,9 @@ export default function TopBar() {
             onClick={() => setBellOpen((o) => !o)}
           >
             <Bell className="w-4 h-4" />
-            {alertCount > 0 && (
+            {announcementCount > 0 && (
               <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
-                {alertCount}
+                {announcementCount}
               </span>
             )}
           </button>
@@ -100,7 +100,7 @@ export default function TopBar() {
           {bellOpen && (
             <div className="absolute right-0 top-10 w-80 bg-background border border-border rounded-lg shadow-lg z-50 overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-                <span className="text-sm font-semibold">Alerts</span>
+                <span className="text-sm font-semibold">Announcements</span>
                 <button
                   onClick={() => setBellOpen(false)}
                   className="p-0.5 rounded hover:bg-accent"
@@ -111,28 +111,28 @@ export default function TopBar() {
               <div className="max-h-80 overflow-y-auto p-2 space-y-1.5">
                 {visible.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-6">
-                    No alerts
+                    No announcements
                   </p>
                 ) : (
-                  visible.map((alert: any) => (
+                  visible.map((announcement: any) => (
                     <div
-                      key={alert.name}
+                      key={announcement.name}
                       className={cn(
                         "px-3 py-2.5 rounded-md border text-sm flex items-start gap-2",
-                        variantStyles[alert.alert_variant ?? "info"]
+                        variantStyles[announcement.alert_variant ?? "info"]
                       )}
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold">{alert.title}</p>
-                        {alert.content && (
+                        <p className="font-semibold">{announcement.title}</p>
+                        {announcement.content && (
                           <p className="mt-0.5 text-xs opacity-80">
-                            {alert.content}
+                            {announcement.content}
                           </p>
                         )}
                       </div>
-                      {!!alert.is_dismissible && (
+                      {!!announcement.is_dismissible && (
                         <button
-                          onClick={() => dismiss(alert.name)}
+                          onClick={() => dismiss(announcement.name)}
                           className="shrink-0 opacity-50 hover:opacity-100 transition-opacity mt-0.5"
                         >
                           <X className="w-3.5 h-3.5" />

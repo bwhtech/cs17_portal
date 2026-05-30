@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import SubmitAssignmentDialog from "@/components/ui/SubmitAssignmentDialog";
+import { formatDateTime } from "@/lib/dayjs";
 
 interface Assignment {
   name: string;
@@ -36,15 +37,6 @@ function getStatus(assignment: Assignment, submission: Submission | undefined) {
   if (submission) return "submitted";
   if (new Date(assignment.due_date) < new Date()) return "overdue";
   return "pending";
-}
-
-function formatDateTime(dateStr: string) {
-  return new Date(dateStr).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
 }
 
 export default function AssignmentTable({
@@ -84,18 +76,12 @@ export default function AssignmentTable({
           {assignments.map((a) => {
             const submission = submissionMap[a.name];
             const status = getStatus(a, submission);
-            const due = new Date(a.due_date);
 
             return (
               <TableRow key={a.name}>
                 <TableCell className="font-medium">{a.title}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {due.toLocaleString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })}
+                  {formatDateTime(a.due_date)}
                 </TableCell>
                 <TableCell>
                   {status === "submitted" && (

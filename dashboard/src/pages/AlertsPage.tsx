@@ -4,6 +4,7 @@ import { useCurrentStudent } from "@/hooks/useCurrentStudent";
 import { Skeleton } from "@/components/ui/skeleton";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/dayjs";
 
 const variantBar: Record<string, string> = {
   error: "bg-red-500",
@@ -108,12 +109,7 @@ export default function AlertsPage() {
               </div>
 
               {/* Date */}
-              <p className="text-xs text-muted-foreground shrink-0">
-                {new Date(a.published_date).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                })}
-              </p>
+             {formatDate(a.published_date)}
 
               {/* Dismiss */}
               {isDismissed ? (

@@ -14,7 +14,7 @@ function App() {
           <Route element={<Layout />}>
             <Route index element={<DashboardPage />} />
             <Route path="/assignments" element={<AssignmentsPage />} />
-            <Route path="/alerts" element={<AlertsPage />} />
+            <Route path="/announcements" element={<AlertsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Route>
         </Routes>

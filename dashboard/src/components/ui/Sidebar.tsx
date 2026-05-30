@@ -137,10 +137,10 @@ export default function Sidebar() {
           <ul>
             <li>
               <Link
-                to="/alerts"
+                to="/announcements"
                 className={cn(
                   "flex items-center gap-3 px-2 py-1.5 rounded-md text-sm transition-colors",
-                  location.pathname === "/alerts"
+                  location.pathname === "/announcements"
                     ? "bg-accent text-accent-foreground font-medium"
                     : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                 )}
