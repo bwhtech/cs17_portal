@@ -98,20 +98,17 @@ export default function AssignmentTable({
                   )}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {submission ? (
-                    <div className="flex flex-col gap-0.5">
-                      <span>{formatDateTime(submission.submitted_at)}</span>
-                      {submission.modified &&
-                        new Date(submission.modified).getTime() >
-                          new Date(submission.submitted_at).getTime() + 5000 && (
-                          <span className="text-xs">
-                            Edited {formatDateTime(submission.modified)}
-                          </span>
-                        )}
-                    </div>
-                  ) : (
-                    <span>—</span>
-                  )}
+                {submission ? (
+                  <span>
+                    {submission.modified &&
+                    new Date(submission.modified).getTime() >
+                      new Date(submission.submitted_at).getTime() + 5000
+                      ? formatDateTime(submission.modified)
+                      : formatDateTime(submission.submitted_at)}
+                  </span>
+                ) : (
+                  <span>—</span>
+                )}
                 </TableCell>
                 <TableCell className="text-right">
                   {status === "submitted" ? (
