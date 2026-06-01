@@ -81,6 +81,7 @@ export default function AssignmentsPage() {
       <AssignmentTable
         assignments={assignments ?? []}
         submissionMap={submissionMap}
+        gradeMap={gradeMap}
         onSubmitSuccess={() => mutate()}
         onViewGrade={(assignmentName) => setGradeAssignment(assignmentName)}
       />

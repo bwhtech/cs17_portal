@@ -16,11 +16,12 @@ class CS17AssignmentGrade(Document):
 
 		assignment: DF.Link
 		evaluation_type: DF.Data | None
-		grade: DF.Literal["A+", "A", "B+", "B", "C+", "C", "D+", "D", "F"]
+		full_name: DF.Data | None
+		grade: DF.Literal["A", "B", "C", "D", "E"]
 		graded_by: DF.Link | None
 		marks_obtained: DF.Float
 		naming_series: DF.Literal["GRADE-.###"]
-		remarks: DF.SmallText | None
+		remarks: DF.MarkdownEditor | None
 		submission: DF.Link | None
 	# end: auto-generated types
 

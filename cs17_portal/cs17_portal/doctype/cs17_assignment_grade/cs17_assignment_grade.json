@@ -14,6 +14,7 @@
   "submission",
   "graded_by",
   "grade",
+  "full_name",
   "column_break_lrax",
   "marks_obtained",
   "remarks",
@@ -42,7 +43,7 @@
   },
   {
    "fieldname": "remarks",
-   "fieldtype": "Small Text",
+   "fieldtype": "Markdown Editor",
    "label": "Remarks"
   },
   {
@@ -76,7 +77,7 @@
    "fieldname": "grade",
    "fieldtype": "Select",
    "label": "Grade",
-   "options": "A+\nA\nB+\nB\nC+\nC\nD+\nD\nF"
+   "options": "A\nB\nC\nD\nE"
   },
   {
    "fetch_from": "assignment.evaluation_type",
@@ -84,12 +85,19 @@
    "fieldtype": "Data",
    "label": "Evaluation Type",
    "read_only": 1
+  },
+  {
+   "fetch_from": "submission.full_name",
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "label": "Full Name",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-01 15:54:59.574493",
+ "modified": "2026-06-01 19:43:08.169292",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Grade",
@@ -113,5 +121,6 @@
  "rows_threshold_for_grid_search": 20,
  "sort_field": "creation",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "full_name"
 }

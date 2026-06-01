@@ -29,6 +29,7 @@ interface Submission {
 interface Props {
   assignments: Assignment[];
   submissionMap: Record<string, Submission>;
+  gradeMap?: Record<string, any>;
   onSubmitSuccess: () => void;
   onViewGrade?: (assignmentName: string) => void;
 }
@@ -42,6 +43,7 @@ function getStatus(assignment: Assignment, submission: Submission | undefined) {
 export default function AssignmentTable({
   assignments,
   submissionMap,
+  gradeMap,
   onSubmitSuccess,
   onViewGrade,
 }: Props) {
@@ -76,6 +78,7 @@ export default function AssignmentTable({
           {assignments.map((a) => {
             const submission = submissionMap[a.name];
             const status = getStatus(a, submission);
+            const isGraded = !!gradeMap?.[a.name];
 
             return (
               <TableRow key={a.name}>
@@ -111,16 +114,18 @@ export default function AssignmentTable({
                 <TableCell className="text-right">
                   {status === "submitted" ? (
                     <div className="flex items-center justify-end gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setDialogAssignment(a);
-                          setEditSubmission(submission);
-                        }}
-                      >
-                        Edit
-                      </Button>
+                      {!isGraded && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setDialogAssignment(a);
+                            setEditSubmission(submission);
+                          }}
+                        >
+                          Edit
+                        </Button>
+                      )}
                       {onViewGrade && (
                         <Button
                           size="sm"
