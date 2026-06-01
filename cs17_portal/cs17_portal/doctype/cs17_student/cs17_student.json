@@ -95,8 +95,7 @@
    "fetch_from": "user.mobile_no",
    "fieldname": "primary_phone",
    "fieldtype": "Data",
-   "label": "Mobile No",
-   "reqd": 1
+   "label": "Mobile No"
   },
   {
    "fetch_from": "user.phone",
@@ -109,7 +108,7 @@
  "image_field": "profile_picture",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-01 13:30:08.458676",
+ "modified": "2026-06-01 16:03:36.420702",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Student",

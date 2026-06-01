@@ -74,8 +74,9 @@
   {
    "depends_on": "eval:doc.evaluation_type==\"Grade\"",
    "fieldname": "grade",
-   "fieldtype": "Data",
-   "label": "Grade"
+   "fieldtype": "Select",
+   "label": "Grade",
+   "options": "A+\nA\nB+\nB\nC+\nC\nD+\nD\nF"
   },
   {
    "fetch_from": "assignment.evaluation_type",
@@ -88,7 +89,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-01 15:40:29.732465",
+ "modified": "2026-06-01 15:54:59.574493",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Grade",

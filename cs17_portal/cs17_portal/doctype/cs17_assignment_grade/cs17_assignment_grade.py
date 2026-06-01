@@ -16,7 +16,7 @@ class CS17AssignmentGrade(Document):
 
 		assignment: DF.Link
 		evaluation_type: DF.Data | None
-		grade: DF.Data | None
+		grade: DF.Literal["A+", "A", "B+", "B", "C+", "C", "D+", "D", "F"]
 		graded_by: DF.Link | None
 		marks_obtained: DF.Float
 		naming_series: DF.Literal["GRADE-.###"]
