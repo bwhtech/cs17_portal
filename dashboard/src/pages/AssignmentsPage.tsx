@@ -19,11 +19,18 @@ export default function AssignmentsPage() {
       "CS17 Assignment",
       {
         filters: [["cohort", "=", student?.cohort ?? ""]],
-        fields: ["name", "title", "due_date", "max_marks", "evaluation_type", "modified"],
+        fields: [
+          "name",
+          "title",
+          "due_date",
+          "max_marks",
+          "remarks",
+          "modified",
+        ],
         orderBy: { field: "due_date", order: "asc" },
         limit: 50,
       },
-      student?.cohort ? undefined : null
+      student?.cohort ? undefined : null,
     );
 
   const {
@@ -37,11 +44,11 @@ export default function AssignmentsPage() {
       fields: ["name", "assignment", "submitted_at", "modified"],
       limit: 100,
     },
-    student?.name ? undefined : null
+    student?.name ? undefined : null,
   );
 
   const submissionMap = Object.fromEntries(
-    (submissions ?? []).map((s) => [s.assignment, s])
+    (submissions ?? []).map((s) => [s.assignment, s]),
   );
 
   const submissionNames = (submissions ?? []).map((s) => s.name);
@@ -50,14 +57,22 @@ export default function AssignmentsPage() {
     "CS17 Assignment Grade",
     {
       filters: [["submission", "in", submissionNames]],
-      fields: ["name", "assignment", "submission", "marks_obtained", "grade", "evaluation_type", "remarks"],
+      fields: [
+        "name",
+        "assignment",
+        "submission",
+        "marks_obtained",
+        "grade",
+        "evaluation_type",
+        "remarks",
+      ],
       limit: 100,
     },
-    submissionNames.length > 0 ? undefined : null
+    submissionNames.length > 0 ? undefined : null,
   );
 
   const gradeMap = Object.fromEntries(
-    (grades ?? []).map((g) => [g.assignment, g])
+    (grades ?? []).map((g) => [g.assignment, g]),
   );
 
   const isLoading = studentLoading || assignmentsLoading || submissionsLoading;
@@ -101,12 +116,18 @@ export default function AssignmentsPage() {
               {activeGrade.evaluation_type === "Grade" ? (
                 <div>
                   <p className="text-sm text-muted-foreground">Grade</p>
-                  <p className="text-2xl font-semibold">{activeGrade.grade ?? "—"}</p>
+                  <p className="text-2xl font-semibold">
+                    {activeGrade.grade ?? "—"}
+                  </p>
                 </div>
               ) : (
                 <div>
-                  <p className="text-sm text-muted-foreground">Marks Obtained</p>
-                  <p className="text-2xl font-semibold">{activeGrade.marks_obtained ?? "—"}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Marks Obtained
+                  </p>
+                  <p className="text-2xl font-semibold">
+                    {activeGrade.marks_obtained ?? "—"}
+                  </p>
                 </div>
               )}
               {activeGrade.remarks && (

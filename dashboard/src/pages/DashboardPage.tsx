@@ -47,6 +47,22 @@ export default function DashboardPage() {
     (submissions ?? []).map((s) => [s.assignment, s]),
   );
 
+  const submissionNames = (submissions ?? []).map((s) => s.name);
+
+  const { data: grades } = useFrappeGetDocList(
+    "CS17 Assignment Grade",
+    {
+      filters: [["submission", "in", submissionNames]],
+      fields: ["name", "assignment", "submission"],
+      limit: 100,
+    },
+    submissionNames.length > 0 ? undefined : null,
+  );
+
+  const gradeMap = Object.fromEntries(
+    (grades ?? []).map((g) => [g.assignment, g]),
+  );
+
   const alerts = (announcements ?? []).map((a) => ({
     name: a.name,
     title: a.title,
@@ -105,6 +121,7 @@ export default function DashboardPage() {
           <AssignmentTable
             assignments={upcomingAssignments}
             submissionMap={submissionMap}
+            gradeMap={gradeMap}
             onSubmitSuccess={() => {}}
           />
         )}

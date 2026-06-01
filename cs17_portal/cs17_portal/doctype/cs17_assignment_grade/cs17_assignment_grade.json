@@ -80,7 +80,7 @@
    "options": "A\nB\nC\nD\nE"
   },
   {
-   "fetch_from": "assignment.evaluation_type",
+   "fetch_from": "assignment.remarks",
    "fieldname": "evaluation_type",
    "fieldtype": "Data",
    "label": "Evaluation Type",
@@ -97,7 +97,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-01 19:43:08.169292",
+ "modified": "2026-06-01 20:02:55.041895",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Grade",
