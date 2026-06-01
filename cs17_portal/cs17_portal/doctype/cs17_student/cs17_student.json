@@ -14,6 +14,8 @@
   "last_name",
   "cohort",
   "user",
+  "primary_phone",
+  "alternate_phone",
   "column_break_vxfo",
   "profile_picture",
   "date_of_birth",
@@ -88,13 +90,26 @@
   {
    "fieldname": "column_break_vxfo",
    "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "user.mobile_no",
+   "fieldname": "primary_phone",
+   "fieldtype": "Data",
+   "label": "Mobile No",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "user.phone",
+   "fieldname": "alternate_phone",
+   "fieldtype": "Data",
+   "label": "Phone"
   }
  ],
  "grid_page_length": 50,
  "image_field": "profile_picture",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-25 14:42:16.698049",
+ "modified": "2026-06-01 13:24:05.324610",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Student",

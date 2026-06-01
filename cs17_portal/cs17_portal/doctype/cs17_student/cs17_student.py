@@ -16,6 +16,7 @@ class CS17Student(Document):
 		from frappe.types import DF
 
 		address: DF.SmallText | None
+		alternate_phone: DF.Data | None
 		blood_group: DF.Literal["O+", "O-", "B+", "B-", "A+", "A-", "AB+", "AB-"]
 		cohort: DF.Link
 		date_of_birth: DF.Date | None
@@ -23,6 +24,7 @@ class CS17Student(Document):
 		full_name: DF.Data | None
 		last_name: DF.Data
 		naming_series: DF.Literal["CS17.{cohort}.YYYY.###"]
+		primary_phone: DF.Data
 		profile_picture: DF.AttachImage | None
 		user: DF.Link | None
 	# end: auto-generated types
