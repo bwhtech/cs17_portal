@@ -101,11 +101,13 @@ export default function AssignmentTable({
                   {submission ? (
                     <div className="flex flex-col gap-0.5">
                       <span>{formatDateTime(submission.submitted_at)}</span>
-                      {submission.modified && (
-                        <span className="text-xs">
-                          Edited {formatDateTime(submission.modified)}
-                        </span>
-                      )}
+                      {submission.modified &&
+                        new Date(submission.modified).getTime() >
+                          new Date(submission.submitted_at).getTime() + 5000 && (
+                          <span className="text-xs">
+                            Edited {formatDateTime(submission.modified)}
+                          </span>
+                        )}
                     </div>
                   ) : (
                     <span>—</span>
