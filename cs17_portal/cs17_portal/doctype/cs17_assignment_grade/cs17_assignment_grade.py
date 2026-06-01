@@ -15,6 +15,8 @@ class CS17AssignmentGrade(Document):
 		from frappe.types import DF
 
 		assignment: DF.Link
+		evaluation_type: DF.Data | None
+		grade: DF.Data | None
 		graded_by: DF.Link | None
 		marks_obtained: DF.Float
 		naming_series: DF.Literal["GRADE-.###"]

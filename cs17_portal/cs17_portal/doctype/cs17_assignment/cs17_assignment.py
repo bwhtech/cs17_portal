@@ -17,6 +17,7 @@ class CS17Assignment(Document):
 		cohort: DF.Link
 		description: DF.TextEditor | None
 		due_date: DF.Datetime
+		evaluation_type: DF.Literal["Grade", "Marks"]
 		max_marks: DF.Float
 		naming_series: DF.Literal["ASSIGN-.###"]
 		title: DF.Data

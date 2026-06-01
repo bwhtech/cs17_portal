@@ -13,9 +13,11 @@
   "assignment",
   "submission",
   "graded_by",
+  "grade",
   "column_break_lrax",
   "marks_obtained",
-  "remarks"
+  "remarks",
+  "evaluation_type"
  ],
  "fields": [
   {
@@ -63,17 +65,30 @@
    "options": "GRADE-.####"
   },
   {
+   "depends_on": "eval:doc.evaluation_type==\"Marks\"",
    "fieldname": "marks_obtained",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Marks Obtained",
-   "reqd": 1
+   "label": "Marks Obtained"
+  },
+  {
+   "depends_on": "eval:doc.evaluation_type==\"Grade\"",
+   "fieldname": "grade",
+   "fieldtype": "Data",
+   "label": "Grade"
+  },
+  {
+   "fetch_from": "assignment.evaluation_type",
+   "fieldname": "evaluation_type",
+   "fieldtype": "Data",
+   "label": "Evaluation Type",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-29 12:45:07.882987",
+ "modified": "2026-06-01 15:40:29.732465",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Grade",

@@ -19,7 +19,7 @@ export default function DashboardPage() {
       orderBy: { field: "published_date", order: "desc" },
       limit: 10,
     },
-    student?.cohort ? undefined : null
+    student?.cohort ? undefined : null,
   );
 
   const { data: assignments } = useFrappeGetDocList(
@@ -30,21 +30,21 @@ export default function DashboardPage() {
       orderBy: { field: "creation", order: "desc" },
       limit: 20,
     },
-    student?.cohort ? undefined : null
+    student?.cohort ? undefined : null,
   );
 
   const { data: submissions } = useFrappeGetDocList(
     "CS17 Assignment Submission",
     {
       filters: [["student", "=", student?.name ?? ""]],
-      fields: ["name", "assignment", "submitted_at", "edited_at"],
+      fields: ["name", "assignment", "submitted_at", "modified"],
       limit: 100,
     },
-    student?.name ? undefined : null
+    student?.name ? undefined : null,
   );
 
   const submissionMap = Object.fromEntries(
-    (submissions ?? []).map((s) => [s.assignment, s])
+    (submissions ?? []).map((s) => [s.assignment, s]),
   );
 
   const alerts = (announcements ?? []).map((a) => ({

@@ -23,7 +23,7 @@ interface Submission {
   name: string;
   assignment: string;
   submitted_at: string;
-  edited_at: string | null;
+  modified: string | null;
 }
 
 interface Props {
@@ -98,9 +98,9 @@ export default function AssignmentTable({
                   {submission ? (
                     <div className="flex flex-col gap-0.5">
                       <span>{formatDateTime(submission.submitted_at)}</span>
-                      {submission.edited_at && (
+                      {submission.modified && (
                         <span className="text-xs">
-                          Edited {formatDateTime(submission.edited_at)}
+                          Edited {formatDateTime(submission.modified)}
                         </span>
                       )}
                     </div>

@@ -19,7 +19,7 @@ export default function AssignmentsPage() {
       "CS17 Assignment",
       {
         filters: [["cohort", "=", student?.cohort ?? ""]],
-        fields: ["name", "title", "due_date", "max_marks"],
+        fields: ["name", "title", "due_date", "max_marks", "evaluation_type", "modified"],
         orderBy: { field: "due_date", order: "asc" },
         limit: 50,
       },
@@ -34,7 +34,7 @@ export default function AssignmentsPage() {
     "CS17 Assignment Submission",
     {
       filters: [["student", "=", student?.name ?? ""]],
-      fields: ["name", "assignment", "submitted_at", "edited_at"],
+      fields: ["name", "assignment", "submitted_at", "modified"],
       limit: 100,
     },
     student?.name ? undefined : null
@@ -50,7 +50,7 @@ export default function AssignmentsPage() {
     "CS17 Assignment Grade",
     {
       filters: [["submission", "in", submissionNames]],
-      fields: ["name", "assignment", "submission", "marks_obtained", "remarks"],
+      fields: ["name", "assignment", "submission", "marks_obtained", "grade", "evaluation_type", "remarks"],
       limit: 100,
     },
     submissionNames.length > 0 ? undefined : null
@@ -97,12 +97,17 @@ export default function AssignmentsPage() {
           </DialogHeader>
           {activeGrade ? (
             <div className="space-y-3 py-2">
-              <div>
-                <p className="text-sm text-muted-foreground">Marks Obtained</p>
-                <p className="text-2xl font-semibold">
-                  {activeGrade.marks_obtained}
-                </p>
-              </div>
+              {activeGrade.evaluation_type === "Grade" ? (
+                <div>
+                  <p className="text-sm text-muted-foreground">Grade</p>
+                  <p className="text-2xl font-semibold">{activeGrade.grade ?? "—"}</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-sm text-muted-foreground">Marks Obtained</p>
+                  <p className="text-2xl font-semibold">{activeGrade.marks_obtained ?? "—"}</p>
+                </div>
+              )}
               {activeGrade.remarks && (
                 <div>
                   <p className="text-sm text-muted-foreground">Remarks</p>
