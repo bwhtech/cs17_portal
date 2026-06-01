@@ -23,12 +23,13 @@ interface Submission {
   name: string;
   assignment: string;
   submitted_at: string;
-  edited_at: string | null;
+  modified: string | null;
 }
 
 interface Props {
   assignments: Assignment[];
   submissionMap: Record<string, Submission>;
+  gradeMap?: Record<string, any>;
   onSubmitSuccess: () => void;
   onViewGrade?: (assignmentName: string) => void;
 }
@@ -42,6 +43,7 @@ function getStatus(assignment: Assignment, submission: Submission | undefined) {
 export default function AssignmentTable({
   assignments,
   submissionMap,
+  gradeMap,
   onSubmitSuccess,
   onViewGrade,
 }: Props) {
@@ -76,6 +78,7 @@ export default function AssignmentTable({
           {assignments.map((a) => {
             const submission = submissionMap[a.name];
             const status = getStatus(a, submission);
+            const isGraded = !!gradeMap?.[a.name];
 
             return (
               <TableRow key={a.name}>
@@ -95,32 +98,33 @@ export default function AssignmentTable({
                   )}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {submission ? (
-                    <div className="flex flex-col gap-0.5">
-                      <span>{formatDateTime(submission.submitted_at)}</span>
-                      {submission.edited_at && (
-                        <span className="text-xs">
-                          Edited {formatDateTime(submission.edited_at)}
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <span>—</span>
-                  )}
+                {submission ? (
+                  <span>
+                    {submission.modified &&
+                    new Date(submission.modified).getTime() >
+                      new Date(submission.submitted_at).getTime() + 5000
+                      ? formatDateTime(submission.modified)
+                      : formatDateTime(submission.submitted_at)}
+                  </span>
+                ) : (
+                  <span>—</span>
+                )}
                 </TableCell>
                 <TableCell className="text-right">
                   {status === "submitted" ? (
                     <div className="flex items-center justify-end gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setDialogAssignment(a);
-                          setEditSubmission(submission);
-                        }}
-                      >
-                        Edit
-                      </Button>
+                      {!isGraded && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setDialogAssignment(a);
+                            setEditSubmission(submission);
+                          }}
+                        >
+                          Edit
+                        </Button>
+                      )}
                       {onViewGrade && (
                         <Button
                           size="sm"

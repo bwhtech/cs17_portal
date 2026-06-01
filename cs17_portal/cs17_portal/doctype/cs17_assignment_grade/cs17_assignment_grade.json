@@ -13,9 +13,12 @@
   "assignment",
   "submission",
   "graded_by",
+  "grade",
+  "full_name",
   "column_break_lrax",
   "marks_obtained",
-  "remarks"
+  "remarks",
+  "evaluation_type"
  ],
  "fields": [
   {
@@ -40,7 +43,7 @@
   },
   {
    "fieldname": "remarks",
-   "fieldtype": "Small Text",
+   "fieldtype": "Markdown Editor",
    "label": "Remarks"
   },
   {
@@ -63,17 +66,38 @@
    "options": "GRADE-.####"
   },
   {
+   "depends_on": "eval:doc.evaluation_type==\"Marks\"",
    "fieldname": "marks_obtained",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Marks Obtained",
-   "reqd": 1
+   "label": "Marks Obtained"
+  },
+  {
+   "depends_on": "eval:doc.evaluation_type==\"Grade\"",
+   "fieldname": "grade",
+   "fieldtype": "Select",
+   "label": "Grade",
+   "options": "A\nB\nC\nD\nE"
+  },
+  {
+   "fetch_from": "assignment.remarks",
+   "fieldname": "evaluation_type",
+   "fieldtype": "Data",
+   "label": "Evaluation Type",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "submission.full_name",
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "label": "Full Name",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-29 12:45:07.882987",
+ "modified": "2026-06-01 20:02:55.041895",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Grade",
@@ -97,5 +121,6 @@
  "rows_threshold_for_grid_search": 20,
  "sort_field": "creation",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "full_name"
 }

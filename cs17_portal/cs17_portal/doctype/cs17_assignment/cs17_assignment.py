@@ -19,6 +19,7 @@ class CS17Assignment(Document):
 		due_date: DF.Datetime
 		max_marks: DF.Float
 		naming_series: DF.Literal["ASSIGN-.###"]
+		remarks: DF.Literal["Grade", "Marks"]
 		title: DF.Data
 	# end: auto-generated types
 

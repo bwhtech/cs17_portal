@@ -61,6 +61,5 @@ def edit_submission(submission: str, file_url: str) -> dict:
 	_check_deadline(sub_doc.assignment)
 
 	sub_doc.submission_document = file_url
-	sub_doc.edited_at = frappe.utils.now_datetime()
 	sub_doc.save(ignore_permissions=True)
 	return {"name": sub_doc.name}
