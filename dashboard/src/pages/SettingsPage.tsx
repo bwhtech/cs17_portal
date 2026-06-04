@@ -41,8 +41,13 @@ export default function SettingsPage() {
   }
 
   async function handleLogout() {
-    await fetch("/api/method/logout");
-    window.location.href = "/";
+    await fetch("/api/method/logout", {
+      method: "POST",
+      headers: {
+        "X-Frappe-CSRF-Token": (window as any).csrf_token,
+      },
+    });
+    window.location.href = "/login";
   }
 
   return (
@@ -145,7 +150,10 @@ export default function SettingsPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowLogoutDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowLogoutDialog(false)}
+            >
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleLogout}>
