@@ -13,6 +13,7 @@
   "cohort",
   "due_date",
   "max_marks",
+  "assignment_type",
   "remarks",
   "column_break_vtqn",
   "description"
@@ -70,12 +71,18 @@
    "fieldtype": "Select",
    "label": "Remarks",
    "options": "Grade\nMarks"
+  },
+  {
+   "fieldname": "assignment_type",
+   "fieldtype": "Select",
+   "label": "Assignment Type",
+   "options": "Graded\nNot Graded"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-01 19:42:28.395049",
+ "modified": "2026-06-04 11:00:25.232176",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",

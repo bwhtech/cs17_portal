@@ -14,6 +14,7 @@ class CS17Assignment(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
+		assignment_type: DF.Literal["Graded", "Not Graded"]
 		cohort: DF.Link
 		description: DF.TextEditor | None
 		due_date: DF.Datetime

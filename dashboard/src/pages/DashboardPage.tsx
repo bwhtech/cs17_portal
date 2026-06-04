@@ -4,6 +4,13 @@ import AssignmentTable from "@/components/ui/AssignmentTable";
 import AlertBanner from "@/components/ui/AlertBanner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function DashboardPage() {
   const { student, isLoading: studentLoading } = useCurrentStudent();
@@ -26,7 +33,7 @@ export default function DashboardPage() {
     "CS17 Assignment",
     {
       filters: [["cohort", "=", student?.cohort ?? ""]],
-      fields: ["name", "title", "due_date", "max_marks"],
+      fields: ["name", "title", "due_date", "max_marks", "assignment_type"],
       orderBy: { field: "creation", order: "desc" },
       limit: 20,
     },
@@ -53,7 +60,7 @@ export default function DashboardPage() {
     "CS17 Assignment Grade",
     {
       filters: [["submission", "in", submissionNames]],
-      fields: ["name", "assignment", "submission"],
+      fields: ["name", "assignment", "submission", "marks_obtained", "grade", "evaluation_type", "remarks"],
       limit: 100,
     },
     submissionNames.length > 0 ? undefined : null,
@@ -62,6 +69,9 @@ export default function DashboardPage() {
   const gradeMap = Object.fromEntries(
     (grades ?? []).map((g) => [g.assignment, g]),
   );
+
+  const [gradeAssignment, setGradeAssignment] = useState<string | null>(null);
+  const activeGrade = gradeAssignment ? gradeMap[gradeAssignment] : null;
 
   const alerts = (announcements ?? []).map((a) => ({
     name: a.name,
@@ -123,9 +133,46 @@ export default function DashboardPage() {
             submissionMap={submissionMap}
             gradeMap={gradeMap}
             onSubmitSuccess={() => {}}
+            onViewGrade={(assignmentName) => setGradeAssignment(assignmentName)}
           />
         )}
       </div>
+
+      <Dialog
+        open={!!gradeAssignment}
+        onOpenChange={(open) => {
+          if (!open) setGradeAssignment(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Grade & Feedback</DialogTitle>
+          </DialogHeader>
+          {activeGrade ? (
+            <div className="space-y-3 py-2">
+              {activeGrade.evaluation_type === "Grade" ? (
+                <div>
+                  <p className="text-sm text-muted-foreground">Grade</p>
+                  <p className="text-2xl font-semibold">{activeGrade.grade ?? "—"}</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-sm text-muted-foreground">Marks Obtained</p>
+                  <p className="text-2xl font-semibold">{activeGrade.marks_obtained ?? "—"}</p>
+                </div>
+              )}
+              {activeGrade.remarks && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Remarks</p>
+                  <p className="text-sm">{activeGrade.remarks}</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground py-2">No grade posted yet.</p>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
