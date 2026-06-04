@@ -85,7 +85,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-06-01 13:44:09.143015",
+ "modified": "2026-06-04 17:49:31.880132",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Submission",
@@ -103,6 +103,17 @@
    "role": "System Manager",
    "share": 1,
    "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "CS17 Student",
+   "share": 1,
    "write": 1
   }
  ],
