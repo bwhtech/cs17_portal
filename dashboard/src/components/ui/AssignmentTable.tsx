@@ -17,6 +17,7 @@ interface Assignment {
   title: string;
   due_date: string;
   max_marks: number;
+  assignment_type?: string;
 }
 
 interface Submission {
@@ -123,9 +124,9 @@ export default function AssignmentTable({
                           }}
                         >
                           Edit
-                        </Button>
+                      </Button>
                       )}
-                      {onViewGrade && (
+                      {onViewGrade && a.assignment_type !== "Not Graded" && (
                         <Button
                           size="sm"
                           variant="ghost"
