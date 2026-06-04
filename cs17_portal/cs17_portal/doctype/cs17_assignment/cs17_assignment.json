@@ -82,8 +82,8 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-04 11:00:25.232176",
- "modified_by": "Administrator",
+ "modified": "2026-06-04 17:03:36.484852",
+ "modified_by": "ishadewangan055@gmail.com",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",
  "naming_rule": "By \"Naming Series\" field",
@@ -98,6 +98,18 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "All",
    "share": 1,
    "write": 1
   }

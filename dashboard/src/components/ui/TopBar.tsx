@@ -98,7 +98,10 @@ export default function TopBar() {
           </button>
 
           {bellOpen && (
-            <div className="absolute right-0 top-10 w-80 bg-background border border-border rounded-lg shadow-lg z-50 overflow-hidden">
+            <div
+              className="absolute right-0 top-10 w-80 border border-border rounded-lg shadow-lg z-50 overflow-hidden"
+              style={{ backgroundColor: "white" }}
+            >
               <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                 <span className="text-sm font-semibold">Announcements</span>
                 <button
@@ -145,7 +148,6 @@ export default function TopBar() {
             </div>
           )}
         </div>
-
       </div>
     </header>
   );
