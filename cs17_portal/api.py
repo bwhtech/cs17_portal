@@ -10,6 +10,7 @@ def get_current_student() -> dict | None:
 		filters={"user": user},
 		fields=["name", "full_name", "cohort", "profile_picture"],
 		limit=1,
+		ignore_permissions=True,
 	)
 	if students:
 		return students[0]
@@ -22,6 +23,7 @@ def _get_student_or_throw() -> str:
 		filters={"user": frappe.session.user},
 		fields=["name"],
 		limit=1,
+		ignore_permissions=True,
 	)
 	if not student_list:
 		frappe.throw(_("No student record found for current user"))
@@ -57,7 +59,12 @@ def submit_assignment(assignment: str, file_url: str) -> dict:
 
 @frappe.whitelist()
 def edit_submission(submission: str, file_url: str) -> dict:
+	student = _get_student_or_throw()
 	sub_doc = frappe.get_doc("CS17 Assignment Submission", submission)
+
+	if sub_doc.student != student:
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
 	_check_deadline(sub_doc.assignment)
 
 	sub_doc.submission_document = file_url

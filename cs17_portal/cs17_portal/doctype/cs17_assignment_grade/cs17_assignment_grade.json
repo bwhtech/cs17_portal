@@ -15,6 +15,7 @@
   "graded_by",
   "grade",
   "full_name",
+  "assignment_title",
   "column_break_lrax",
   "marks_obtained",
   "remarks",
@@ -92,12 +93,20 @@
    "fieldtype": "Data",
    "label": "Full Name",
    "read_only": 1
+  },
+  {
+   "fetch_from": "assignment.title",
+   "fieldname": "assignment_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Assignment Title",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-04 17:47:51.275436",
+ "modified": "2026-06-05 12:38:57.015453",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Grade",
