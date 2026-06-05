@@ -22,6 +22,7 @@ def _get_student_or_throw() -> str:
 		filters={"user": frappe.session.user},
 		fields=["name"],
 		limit=1,
+		ignore_permissions=True,
 	)
 	if not student_list:
 		frappe.throw(_("No student record found for current user"))
