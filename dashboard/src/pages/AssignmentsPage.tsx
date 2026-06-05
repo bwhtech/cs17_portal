@@ -24,7 +24,10 @@ export default function AssignmentsPage() {
     student?.cohort ? undefined : null,
   );
 
-  const { data: submissions } = useFrappeGetDocList(
+  const {
+    data: submissions,
+    mutate: mutateSubmissions,
+  } = useFrappeGetDocList(
     "CS17 Assignment Submission",
     {
       filters: [["student", "=", student?.name ?? ""]],
@@ -40,7 +43,7 @@ export default function AssignmentsPage() {
 
   const submissionNames = (submissions ?? []).map((s) => s.name);
 
-  const { data: grades } = useFrappeGetDocList(
+  const { data: grades, mutate: mutateGrades } = useFrappeGetDocList(
     "CS17 Assignment Grade",
     {
       filters: [["submission", "in", submissionNames]],
@@ -81,7 +84,10 @@ export default function AssignmentsPage() {
           assignments={assignments ?? []}
           submissionMap={submissionMap}
           gradeMap={gradeMap}
-          onSubmitSuccess={() => {}}
+          onSubmitSuccess={() => {
+            mutateSubmissions();
+            mutateGrades();
+          }}
           onViewGrade={(assignmentName) => setGradeAssignment(assignmentName)}
         />
       </div>
