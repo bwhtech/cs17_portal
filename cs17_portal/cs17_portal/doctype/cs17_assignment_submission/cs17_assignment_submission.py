@@ -16,6 +16,7 @@ class CS17AssignmentSubmission(Document):
 
 		amended_from: DF.Link | None
 		assignment: DF.Link
+		assignment_title: DF.Data | None
 		full_name: DF.Data | None
 		naming_series: DF.Literal["SUB-.###.{assignment}"]
 		student: DF.Link
