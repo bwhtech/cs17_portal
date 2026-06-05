@@ -74,7 +74,7 @@ export default function AlertsPage() {
   return (
     <div className="p-6">
       <div className="border border-border rounded-xl overflow-hidden">
-        {announcements.map((a, i) => {
+        {announcements.map((a) => {
           const variant = a.alert_variant ?? "info";
           const isDismissed = dismissed.has(a.name);
 
@@ -95,12 +95,7 @@ export default function AlertsPage() {
 
               {/* Content */}
               <div className="flex-1 min-w-0">
-                <p
-                  className={cn(
-                    "text-sm font-medium",)}
-                >
-                  {a.title}
-                </p>
+                <p className="text-sm font-medium">{a.title}</p>
                 {a.content && (
                   <p className="text-xs text-muted-foreground truncate">
                     {a.content}
@@ -109,7 +104,9 @@ export default function AlertsPage() {
               </div>
 
               {/* Date */}
-             {formatDate(a.published_date)}
+              <span className="text-xs text-muted-foreground shrink-0">
+                {formatDate(a.published_date)}
+              </span>
 
               {/* Dismiss */}
               {isDismissed ? (
