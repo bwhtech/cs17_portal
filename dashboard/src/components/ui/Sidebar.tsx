@@ -9,6 +9,7 @@ import {
   Settings,
   Bell,
   ExternalLink,
+  MessageSquare,
 } from "lucide-react";
 import { useCurrentStudent } from "@/hooks/useCurrentStudent";
 import { cn } from "@/lib/utils";
@@ -40,6 +41,11 @@ const navSections = [
   {
     label: "ACCOUNT",
     items: [
+      {
+        icon: MessageSquare,
+        label: "Chat and Discussion",
+        href: "https://portal.cs17.org/raven/CS17",
+      },
       { icon: Inbox, label: "Open Inbox", href: "https://inbox.cs17.org" },
       { icon: Settings, label: "Settings", to: "/settings" },
     ] as NavItem[],
@@ -53,8 +59,11 @@ export default function Sidebar() {
   return (
     <aside className="w-56 shrink-0 border-r border-border bg-background flex flex-col h-screen sticky top-0">
       {/* Brand */}
-      <div className="px-5 py-4 border-b border-border">
+      <div className="px-5 py-4 border-b border-border flex items-center gap-2">
         <img src={logoUrl} alt="CS17" className="h-5" />
+        <span className="text-[10px] font-semibold bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full leading-none">
+          Beta
+        </span>
       </div>
 
       {/* Student profile */}
