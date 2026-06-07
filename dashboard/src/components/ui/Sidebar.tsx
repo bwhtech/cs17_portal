@@ -43,7 +43,7 @@ const navSections = [
     items: [
       {
         icon: MessageSquare,
-        label: "Chat and Discussion",
+        label: "Open Chat",
         href: "https://portal.cs17.org/raven/CS17",
       },
       { icon: Inbox, label: "Open Inbox", href: "https://inbox.cs17.org" },
