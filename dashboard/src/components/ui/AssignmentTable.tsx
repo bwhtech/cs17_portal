@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import SubmitAssignmentDialog from "@/components/ui/SubmitAssignmentDialog";
 import { formatDateTime } from "@/lib/dayjs";
+import { useNavigate } from "react-router-dom";
 
 interface Assignment {
   name: string;
@@ -52,6 +53,7 @@ export default function AssignmentTable({
     null,
   );
   const [editSubmission, setEditSubmission] = useState<Submission | null>(null);
+  const navigate = useNavigate();
 
   return (
     <>
@@ -83,7 +85,16 @@ export default function AssignmentTable({
 
             return (
               <TableRow key={a.name}>
-                <TableCell className="font-medium">{a.title}</TableCell>
+                <TableCell className="font-medium">
+                  <button
+                    className="text-left hover:underline"
+                    onClick={() =>
+                      navigate(`/assignments/${a.name}/submission`)
+                    }
+                  >
+                    {a.title}
+                  </button>
+                </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {formatDateTime(a.due_date)}
                 </TableCell>
@@ -99,17 +110,17 @@ export default function AssignmentTable({
                   )}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                {submission ? (
-                  <span>
-                    {submission.modified &&
-                    new Date(submission.modified).getTime() >
-                      new Date(submission.submitted_at).getTime() + 5000
-                      ? formatDateTime(submission.modified)
-                      : formatDateTime(submission.submitted_at)}
-                  </span>
-                ) : (
-                  <span>—</span>
-                )}
+                  {submission ? (
+                    <span>
+                      {submission.modified &&
+                      new Date(submission.modified).getTime() >
+                        new Date(submission.submitted_at).getTime() + 5000
+                        ? formatDateTime(submission.modified)
+                        : formatDateTime(submission.submitted_at)}
+                    </span>
+                  ) : (
+                    <span>—</span>
+                  )}
                 </TableCell>
                 <TableCell className="text-right">
                   {status === "submitted" ? (
@@ -124,7 +135,7 @@ export default function AssignmentTable({
                           }}
                         >
                           Edit
-                      </Button>
+                        </Button>
                       )}
                       {onViewGrade && a.assignment_type !== "Not Graded" && (
                         <Button
