@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 # import frappe
+import frappe
 from frappe.model.document import Document
 
 
@@ -23,4 +24,28 @@ class CS17Announcement(Document):
 		title: DF.Data
 	# end: auto-generated types
 
-	pass
+	def on_update(self):
+		if self.is_published and self.has_value_changed("is_published"):
+			self.send_announcement_email()
+	
+	def send_announcement_email(self):
+		if self.cohort:
+			students = frappe.get_all("CS17 Student", filters={"cohort": self.cohort}, fields=["user"])
+		else:
+			students = frappe.get_all("CS17 Student", fields=["user"])
+
+		recipients = []
+		for student in students:
+			if student.user:
+				email = frappe.get_value("User", student.user, "email")
+				if email:
+					recipients.append(email)
+
+		if not recipients:
+			return
+
+		frappe.sendmail(
+			recipients=recipients,
+			subject=self.title,
+			message=frappe.utils.md_to_html(self.content),
+		)
