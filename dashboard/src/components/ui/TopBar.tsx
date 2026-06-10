@@ -1,9 +1,10 @@
 import { Bell, X } from "lucide-react";
-import { useLocation } from "react-router-dom";
 import { useCurrentStudent } from "@/hooks/useCurrentStudent";
 import { useFrappeGetDocList } from "frappe-react-sdk";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { useBreadcrumb } from "@/context/BreadcrumbContext";
+import { useLocation, Link } from "react-router-dom";
 
 const routeLabels: Record<string, string> = {
   "/": "Dashboard",
@@ -13,8 +14,10 @@ const routeLabels: Record<string, string> = {
 };
 
 const variantStyles: Record<string, string> = {
-  error: "bg-red-50 text-red-800 border-red-200 dark:bg-red-950 dark:text-red-200 dark:border-red-800",
-  warning: "bg-yellow-50 text-yellow-800 border-yellow-200 dark:bg-yellow-950 dark:text-yellow-200 dark:border-yellow-800",
+  error:
+    "bg-red-50 text-red-800 border-red-200 dark:bg-red-950 dark:text-red-200 dark:border-red-800",
+  warning:
+    "bg-yellow-50 text-yellow-800 border-yellow-200 dark:bg-yellow-950 dark:text-yellow-200 dark:border-yellow-800",
   info: "bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-200 dark:border-blue-800",
 };
 
@@ -35,6 +38,7 @@ function saveDismissed(set: Set<string>) {
 
 export default function TopBar() {
   const location = useLocation();
+  const { items } = useBreadcrumb();
   const { student } = useCurrentStudent();
   const pageLabel = routeLabels[location.pathname] ?? "Dashboard";
   const [bellOpen, setBellOpen] = useState(false);
@@ -78,9 +82,28 @@ export default function TopBar() {
   return (
     <header className="h-12 border-b border-border bg-background flex items-center px-6 gap-4 sticky top-0 z-10">
       <div className="flex items-center gap-1.5 text-sm text-muted-foreground flex-1">
-        <span>Workspace</span>
-        <span>/</span>
-        <span className="text-foreground font-medium">{pageLabel}</span>
+        <Link to="/" className="hover:text-foreground transition-colors">
+          Workspace
+        </Link>
+        {items.length > 0 ? (
+          items.map((item, i) => (
+            <span key={i} className="flex items-center gap-1.5">
+              <span>/</span>
+              {item.href ? (
+                <Link to={item.href} className="hover:text-foreground transition-colors">
+                  {item.label}
+                </Link>
+              ) : (
+                <span className="text-foreground font-medium">{item.label}</span>
+              )}
+            </span>
+          ))
+        ) : (
+          <>
+            <span>/</span>
+            <span className="text-foreground font-medium">{pageLabel}</span>
+          </>
+        )}
       </div>
 
       <div className="flex items-center gap-3">
@@ -122,7 +145,7 @@ export default function TopBar() {
                       key={announcement.name}
                       className={cn(
                         "px-3 py-2.5 rounded-md border text-sm flex items-start gap-2",
-                        variantStyles[announcement.alert_variant ?? "info"]
+                        variantStyles[announcement.alert_variant ?? "info"],
                       )}
                     >
                       <div className="flex-1 min-w-0">

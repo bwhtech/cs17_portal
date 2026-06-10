@@ -47,6 +47,14 @@ export default function SubmitAssignmentDialog({
   const isEdit = !!existingSubmission;
   const loading = uploading || submitting || editing;
 
+  function handleOpenChange(open: boolean) {
+    if (!open) {
+      setFile(null);
+      setError(null);
+    }
+    onOpenChange(open);
+  }
+
   async function handleSubmit() {
     if (!file) return;
     setError(null);
@@ -78,7 +86,7 @@ export default function SubmitAssignmentDialog({
         setSubmitting(false);
         if (!res.ok) {
           const data = await res.json();
-          throw new Error(data?.exc_type ?? "Submission failed.");
+          throw new Error(data?.message ?? data?.exc_type ?? "Submission failed.");
         }
       }
 
@@ -92,7 +100,7 @@ export default function SubmitAssignmentDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
