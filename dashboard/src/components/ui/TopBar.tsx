@@ -1,10 +1,10 @@
 import { Bell, X } from "lucide-react";
-import { useLocation } from "react-router-dom";
 import { useCurrentStudent } from "@/hooks/useCurrentStudent";
 import { useFrappeGetDocList } from "frappe-react-sdk";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useBreadcrumb } from "@/context/BreadcrumbContext";
+import { useLocation, Link } from "react-router-dom";
 
 const routeLabels: Record<string, string> = {
   "/": "Dashboard",
@@ -82,22 +82,19 @@ export default function TopBar() {
   return (
     <header className="h-12 border-b border-border bg-background flex items-center px-6 gap-4 sticky top-0 z-10">
       <div className="flex items-center gap-1.5 text-sm text-muted-foreground flex-1">
-        <span>Workspace</span>
+        <Link to="/" className="hover:text-foreground transition-colors">
+          Workspace
+        </Link>
         {items.length > 0 ? (
           items.map((item, i) => (
             <span key={i} className="flex items-center gap-1.5">
               <span>/</span>
               {item.href ? (
-                <a
-                  href={item.href}
-                  className="hover:text-foreground transition-colors"
-                >
+                <Link to={item.href} className="hover:text-foreground transition-colors">
                   {item.label}
-                </a>
+                </Link>
               ) : (
-                <span className="text-foreground font-medium">
-                  {item.label}
-                </span>
+                <span className="text-foreground font-medium">{item.label}</span>
               )}
             </span>
           ))
