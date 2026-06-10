@@ -27,7 +27,7 @@ class CS17Announcement(Document):
 	def on_update(self):
 		if self.is_published and self.has_value_changed("is_published"):
 			self.send_announcement_email()
-	
+
 	def send_announcement_email(self):
 		if self.cohort:
 			students = frappe.get_all("CS17 Student", filters={"cohort": self.cohort}, fields=["user"])
