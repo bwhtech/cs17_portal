@@ -7,12 +7,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import SubmitAssignmentDialog from "@/components/ui/SubmitAssignmentDialog";
 import { formatDateTime } from "@/lib/dayjs";
 import { ArrowLeft } from "lucide-react";
+import { useBreadcrumb } from "@/context/BreadcrumbContext";
+import { useEffect } from "react";
 
 export default function AssignmentDetailPage() {
   const { assignmentId } = useParams<{ assignmentId: string }>();
   const { student } = useCurrentStudent();
   const [dialogOpen, setDialogOpen] = useState(false);
   const navigate = useNavigate();
+  const { setBreadcrumb } = useBreadcrumb();
 
   const { data: assignment, isLoading: assignmentLoading } = useFrappeGetDoc(
     "CS17 Assignment",
@@ -45,6 +48,15 @@ export default function AssignmentDetailPage() {
   );
 
   const isGraded = (grades?.length ?? 0) > 0;
+
+  useEffect(() => {
+    if (!assignment) return;
+    setBreadcrumb([
+      { label: "Assignments", href: "/assignments" },
+      { label: assignment.title },
+    ]);
+    return () => setBreadcrumb([]);
+  }, [assignment?.title]);
 
   if (assignmentLoading) {
     return (
