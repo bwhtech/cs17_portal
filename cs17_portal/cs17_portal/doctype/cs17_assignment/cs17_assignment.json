@@ -9,11 +9,11 @@
  "field_order": [
   "naming_series",
   "section_break_ojuv",
+  "assignment_type",
   "title",
   "cohort",
   "due_date",
   "max_marks",
-  "assignment_type",
   "remarks",
   "column_break_vtqn",
   "description"
@@ -52,10 +52,11 @@
    "label": "Max Marks"
   },
   {
+   "default": "GRADED-.###",
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "ASSIGN-.###"
+   "options": "GRADED-.###\nNOT-GRADED-.###"
   },
   {
    "fieldname": "section_break_ojuv",
@@ -76,13 +77,14 @@
    "fieldname": "assignment_type",
    "fieldtype": "Select",
    "label": "Assignment Type",
-   "options": "Graded\nNot Graded"
+   "options": "Graded\nNot Graded",
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-04 17:48:57.308957",
+ "modified": "2026-06-11 18:47:25.444687",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",

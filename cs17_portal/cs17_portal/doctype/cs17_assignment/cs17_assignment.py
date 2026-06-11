@@ -1,7 +1,7 @@
 # Copyright (c) 2026, developers@bwh.tech and contributors
 # For license information, please see license.txt
 
-# import frappe
+import frappe
 from frappe.model.document import Document
 
 
@@ -19,9 +19,12 @@ class CS17Assignment(Document):
 		description: DF.TextEditor | None
 		due_date: DF.Datetime
 		max_marks: DF.Float
-		naming_series: DF.Literal["ASSIGN-.###"]
+		naming_series: DF.Literal["GRADED-.###", "NOT-GRADED-.###"]
 		remarks: DF.Literal["Grade", "Marks"]
 		title: DF.Data
 	# end: auto-generated types
 
-	pass
+	def validate(self):
+		if self.assignment_type == "Not Graded":
+			self.max_marks = 0
+			self.remarks = ""

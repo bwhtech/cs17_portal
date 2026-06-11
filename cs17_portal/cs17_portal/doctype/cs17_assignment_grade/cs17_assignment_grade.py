@@ -1,7 +1,8 @@
 # Copyright (c) 2026, developers@bwh.tech and contributors
 # For license information, please see license.txt
 
-# import frappe
+import frappe
+from frappe import _
 from frappe.model.document import Document
 
 
@@ -26,4 +27,7 @@ class CS17AssignmentGrade(Document):
 		submission: DF.Link | None
 	# end: auto-generated types
 
-	pass
+	def validate(self):
+		assignment_type = frappe.db.get_value("CS17 Assignment", self.assignment, "assignment_type")
+		if assignment_type == "Not Graded":
+			frappe.throw(_("Cannot grade a Not Graded assignment."))
