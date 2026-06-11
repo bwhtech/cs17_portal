@@ -1,7 +1,6 @@
 # Copyright (c) 2026, developers@bwh.tech and contributors
 # For license information, please see license.txt
 
-# import frappe
 import frappe
 from frappe.model.document import Document
 
@@ -29,17 +28,20 @@ class CS17Announcement(Document):
 			self.send_announcement_email()
 
 	def send_announcement_email(self):
-      filters = {"user": ["is", "set"]}
+		filters = {"user": ["is", "set"]}
 		if self.cohort:
 			filters.update({"cohort": self.cohort})
-		
-      students = frappe.get_all("CS17 Student", filters=filters, fields=["user"], pluck="user")
 
-		recipients = []
-		for user in students:
-				email = frappe.get_value("User", student.user, "email")
-				if email:
-					recipients.append(email)
+		users = frappe.get_all("CS17 Student", filters=filters, pluck="user")
+
+		if not users:
+			return
+
+		recipients = frappe.get_all(
+			"User",
+			filters={"name": ["in", users], "email": ["is", "set"]},
+			pluck="email",
+		)
 
 		if not recipients:
 			return
