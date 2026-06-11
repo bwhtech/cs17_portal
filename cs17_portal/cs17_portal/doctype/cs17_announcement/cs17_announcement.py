@@ -1,7 +1,7 @@
 # Copyright (c) 2026, developers@bwh.tech and contributors
 # For license information, please see license.txt
 
-# import frappe
+import frappe
 from frappe.model.document import Document
 
 
@@ -23,4 +23,31 @@ class CS17Announcement(Document):
 		title: DF.Data
 	# end: auto-generated types
 
-	pass
+	def on_update(self):
+		if self.is_published and self.has_value_changed("is_published"):
+			self.send_announcement_email()
+
+	def send_announcement_email(self):
+		filters = {"user": ["is", "set"]}
+		if self.cohort:
+			filters.update({"cohort": self.cohort})
+
+		users = frappe.get_all("CS17 Student", filters=filters, pluck="user")
+
+		if not users:
+			return
+
+		recipients = frappe.get_all(
+			"User",
+			filters={"name": ["in", users], "email": ["is", "set"]},
+			pluck="email",
+		)
+
+		if not recipients:
+			return
+
+		frappe.sendmail(
+			recipients=recipients,
+			subject=self.title,
+			message=frappe.utils.md_to_html(self.content),
+		)
