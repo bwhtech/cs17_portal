@@ -13,7 +13,7 @@ frappe.ui.form.on("CS17 Assignment", {
 		if (!frm.doc.__islocal) return;
 
 		frm.doc.naming_series =
-			frm.doc.assignment_type === "Graded" ? "GRADED-.###" : "NOTGRADED-.###";
+			frm.doc.assignment_type === "Graded" ? "GRADED-.###" : "NOT-GRADED-.###";
 		frm.refresh_field("naming_series");
 		update_graded_fields(frm);
 	},

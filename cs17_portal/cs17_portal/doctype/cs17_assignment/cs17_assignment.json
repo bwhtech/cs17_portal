@@ -56,7 +56,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "GRADED-.###\nNOTGRADED-.###"
+   "options": "GRADED-.###\nNOT-GRADED-.###"
   },
   {
    "fieldname": "section_break_ojuv",
@@ -83,7 +83,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-11 17:17:09.941753",
+ "modified": "2026-06-11 18:29:19.708320",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",
