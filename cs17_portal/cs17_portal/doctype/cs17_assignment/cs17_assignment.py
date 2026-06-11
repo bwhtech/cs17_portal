@@ -1,7 +1,7 @@
 # Copyright (c) 2026, developers@bwh.tech and contributors
 # For license information, please see license.txt
 
-# import frappe
+import frappe
 from frappe.model.document import Document
 
 
@@ -24,4 +24,7 @@ class CS17Assignment(Document):
 		title: DF.Data
 	# end: auto-generated types
 
-	pass
+	def validate(self):
+		if self.assignment_type == "Not Graded":
+			self.max_marks = 0
+			self.remarks = ""
