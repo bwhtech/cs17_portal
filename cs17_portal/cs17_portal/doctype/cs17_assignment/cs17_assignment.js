@@ -3,9 +3,6 @@
 
 frappe.ui.form.on("CS17 Assignment", {
 	refresh(frm) {
-		if (!frm.doc.__islocal) {
-			frm.set_df_property("assignment_type", "read_only", 1);
-		}
 		update_graded_fields(frm);
 	},
 

@@ -77,13 +77,14 @@
    "fieldname": "assignment_type",
    "fieldtype": "Select",
    "label": "Assignment Type",
-   "options": "Graded\nNot Graded"
+   "options": "Graded\nNot Graded",
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-11 18:29:19.708320",
+ "modified": "2026-06-11 18:47:25.444687",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",
