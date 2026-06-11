@@ -19,7 +19,7 @@ class CS17Assignment(Document):
 		description: DF.TextEditor | None
 		due_date: DF.Datetime
 		max_marks: DF.Float
-		naming_series: DF.Literal["ASSIGN-.###"]
+		naming_series: DF.Literal["GRADED-.###", "NOTGRADED-.###"]
 		remarks: DF.Literal["Grade", "Marks"]
 		title: DF.Data
 	# end: auto-generated types
