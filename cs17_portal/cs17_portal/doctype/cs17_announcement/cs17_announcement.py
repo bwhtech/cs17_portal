@@ -36,8 +36,7 @@ class CS17Announcement(Document):
       students = frappe.get_all("CS17 Student", filters=filters, fields=["user"], pluck="user")
 
 		recipients = []
-		for student in students:
-			if student.user:
+		for user in students:
 				email = frappe.get_value("User", student.user, "email")
 				if email:
 					recipients.append(email)
