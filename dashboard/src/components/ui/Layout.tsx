@@ -1,36 +1,23 @@
-import { useLayoutEffect } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "@/components/ui/Sidebar";
 import TopBar from "@/components/ui/TopBar";
 import { BreadcrumbProvider } from "@/context/BreadcrumbContext";
 
+const isGuest = (user: string | undefined) => !user || user === "Guest";
+
 export default function Layout() {
   const currentUser = (window as any).frappe_boot?.current_user;
-  const navigate = useNavigate();
+  const location = useLocation();
 
-  useLayoutEffect(() => {
-    if (!currentUser || currentUser === "Guest") {
-      const intendedPath =
-        window.location.pathname.replace("/dashboard", "") || "/";
-      const redirectTo = encodeURIComponent(
-        `/dashboard?intended=${encodeURIComponent(intendedPath)}`,
-      );
-      window.location.href = `/login?redirect-to=${redirectTo}`;
-      return;
+  useEffect(() => {
+    if (isGuest(currentUser)) {
+      const redirectTo = encodeURIComponent(location.pathname + location.search);
+      window.location.replace(`/login?redirect-to=${redirectTo}`);
     }
+  }, [currentUser]);
 
-    // After login, Frappe lands on /dashboard?intended=...  — read and restore it
-    const params = new URLSearchParams(window.location.search);
-    const intended = params.get("intended");
-    if (intended) {
-      window.history.replaceState({}, "", "/dashboard");
-      navigate(intended, { replace: true });
-    }
-  }, []);
-
-  if (!currentUser || currentUser === "Guest") {
-    return null;
-  }
+  if (isGuest(currentUser)) return null;
 
   return (
     <BreadcrumbProvider>
