@@ -61,3 +61,5 @@ install-state.gz
 dashboard/.vite/
 cs17_portal/www/dashboard.html
 cs17_portal/public/node_modules/
+dashboard/playwright-report/
+dashboard/test-results/
