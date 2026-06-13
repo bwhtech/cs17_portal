@@ -56,11 +56,6 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium firefox webkit
 
-      - name: Create bench site config for Vite
-        run: |
-          mkdir -p ../../../sites
-          echo '{"webserver_port": 8000}' > ../../../sites/common_site_config.json
-
       - name: Start Vite dev server
         run: yarn dev > /tmp/vite.log 2>&1 &
 
