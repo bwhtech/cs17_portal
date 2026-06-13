@@ -56,8 +56,13 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium firefox webkit
 
+      - name: Create bench site config for Vite
+        run: |
+          mkdir -p ../../../sites
+          echo '{"webserver_port": 8000}' > ../../../sites/common_site_config.json
+
       - name: Start Vite dev server
-        run: yarn dev &
+        run: yarn dev > /tmp/vite.log 2>&1 &
 
       - name: Wait for Vite
         run: npx wait-on http://localhost:8080 --timeout 60000
@@ -80,3 +85,7 @@ jobs:
           name: test-results
           path: dashboard/test-results/
           retention-days: 14
+
+      - name: Show Vite logs on failure
+        if: failure()
+        run: cat /tmp/vite.log || true
