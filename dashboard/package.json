@@ -8,7 +8,9 @@
     "build": "vite build --base=/assets/cs17_portal/dashboard/ && yarn copy-html-entry",
     "lint": "eslint .",
     "preview": "vite preview",
-    "copy-html-entry": "cp ../cs17_portal/public/dashboard/index.html ../cs17_portal/www/dashboard.html"
+    "copy-html-entry": "cp ../cs17_portal/public/dashboard/index.html ../cs17_portal/www/dashboard.html",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.9",
@@ -31,6 +33,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4.3.0",
     "@tailwindcss/typography": "^0.5.20",
     "@types/node": "^25.9.1",
@@ -46,6 +49,7 @@
     "tailwindcss": "4",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
-    "vite": "^8.0.12"
+    "vite": "^8.0.12",
+    "wait-on": "^8.0.2"
   }
 }

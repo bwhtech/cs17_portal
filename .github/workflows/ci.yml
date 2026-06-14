@@ -46,7 +46,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.14'
+          python-version: "3.14"
 
       - name: Setup Node
         uses: actions/setup-node@v6
@@ -94,7 +94,7 @@ jobs:
           bench --site test_site install-app cs17_portal
           bench build
         env:
-          CI: 'Yes'
+          CI: "Yes"
 
       - name: Run Tests
         working-directory: /home/runner/frappe-bench
