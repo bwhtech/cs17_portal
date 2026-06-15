@@ -1,0 +1,13 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "CS17 Assignment",
+  "enabled": 1,
+  "modified": "2026-06-15 16:40:39.209850",
+  "module": "CS17 Portal",
+  "name": "CS17 Assignment Naming Series",
+  "script": "// Copyright (c) 2026, developers@bwh.tech and contributors\n// For license information, please see license.txt\n\nfrappe.ui.form.on(\"CS17 Assignment\", {\n\trefresh(frm) {\n\t\tif (!frm.doc.__islocal) {\n\t\t\tfrm.add_custom_button('Copy Submission Link', () => {\n\t\t\t\tconst submissionRoute = \"/submit\";\n\t\t\t\tconst link = `${window.location.origin}${submissionRoute}/${frm.doc.name}`;\n\n\t\t\t\tif (navigator.clipboard && window.isSecureContext) {\n\t\t\t\t\tnavigator.clipboard.writeText(link)\n\t\t\t\t\t\t.then(() => {\n\t\t\t\t\t\t\tfrappe.show_alert({ message: 'Link copied!', indicator: 'green' });\n\t\t\t\t\t\t})\n\t\t\t\t\t\t.catch(() => {\n\t\t\t\t\t\t\tfrappe.show_alert({ message: 'Failed to copy: ' + link, indicator: 'red' });\n\t\t\t\t\t\t});\n\t\t\t\t} else {\n\t\t\t\t\tconst el = document.createElement('textarea');\n\t\t\t\t\tel.value = link;\n\t\t\t\t\tdocument.body.appendChild(el);\n\t\t\t\t\tel.select();\n\t\t\t\t\tdocument.execCommand('copy');\n\t\t\t\t\tdocument.body.removeChild(el);\n\t\t\t\t\tfrappe.show_alert({ message: 'Link copied!', indicator: 'green' });\n\t\t\t\t}\n\t\t\t});\n\t\t}\n\t},\n\tassignment_type(frm) {\n\t\tif (!frm.doc.__islocal) return;\n\t\tfrm.set_value(\n\t\t\t\"naming_series\",\n\t\t\tfrm.doc.assignment_type === \"Graded\" ? \"GRADED-.###\" : \"NOT-GRADED-.###\"\n\t\t);\n\t},\n});",
+  "view": "Form"
+ }
+]

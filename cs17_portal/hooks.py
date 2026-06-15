@@ -262,3 +262,4 @@ require_type_annotated_api_methods = False
 website_route_rules = [
 	{"from_route": "/dashboard/<path:app_path>", "to_route": "dashboard"},
 ]
+fixtures = ["Client Script"]
