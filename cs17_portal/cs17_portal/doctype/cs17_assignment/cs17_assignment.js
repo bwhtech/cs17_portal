@@ -6,7 +6,7 @@ frappe.ui.form.on("CS17 Assignment", {
 		update_graded_fields(frm);
 
 		if (!frm.doc.__islocal) {
-			frm.add_custom_button(__('Copy Submission Link'), () => {
+			frm.add_custom_button(__("Copy Submission Link"), () => {
 				const link = `${window.location.origin}/submit/${frm.doc.name}`;
 				frappe.utils.copy_to_clipboard(link);
 			});
