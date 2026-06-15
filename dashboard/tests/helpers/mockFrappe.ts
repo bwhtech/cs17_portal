@@ -111,7 +111,7 @@ export async function setupMocks(page: Page) {
   });
 
   // Serve index.html with Jinja templates replaced (Vite doesn't process them)
-  await page.route(/\/dashboard(\?.*)?$/, async (route) => {
+  await page.route(/\/dashboard(\/.*)?(\?.*)?$/, async (route) => {
     if (route.request().resourceType() !== "document") {
       return route.continue();
     }
@@ -137,12 +137,16 @@ export async function setupMocks(page: Page) {
     await route.fulfill({ status: 200, contentType: "text/html", body: html });
   });
 
-  // Mock auth check
+  // Catch all first - lowest priority because playwright matches routes LIFO
+  await page.route(/\/api\//, (route) =>
+    route.fulfill({ status: 200, json: { message: null } }),
+  );
+
   await page.route(/\/api\/method\/frappe\.auth\.get_logged_user/, (route) =>
     route.fulfill({ json: { message: "test@example.com" } }),
   );
 
-  // Resource mocks — most specific first
+  // Resource mocks — most specific last (highest priority in LIFO)
   await page.route(/\/api\/resource\/CS17%20Assignment%20Submission/, (route) =>
     route.fulfill({ json: submissions }),
   );
@@ -161,10 +165,5 @@ export async function setupMocks(page: Page) {
 
   await page.route(/\/api\/resource\/CS17%20Assignment(\?|$)/, (route) =>
     route.fulfill({ json: assignments }),
-  );
-
-  // Catch-all for any other API calls
-  await page.route(/\/api\//, (route) =>
-    route.fulfill({ status: 200, json: { message: null } }),
   );
 }
