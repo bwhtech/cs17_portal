@@ -93,8 +93,13 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
- "links": [],
- "modified": "2026-06-05 13:03:08.608234",
+ "links": [
+  {
+   "link_doctype": "CS17 Assignment Grade",
+   "link_fieldname": "submission"
+  }
+ ],
+ "modified": "2026-06-17 14:59:02.052320",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Submission",
