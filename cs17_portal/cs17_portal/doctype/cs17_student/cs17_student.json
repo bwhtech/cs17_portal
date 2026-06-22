@@ -107,8 +107,13 @@
  "grid_page_length": 50,
  "image_field": "profile_picture",
  "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2026-06-01 16:03:36.420702",
+ "links": [
+  {
+   "link_doctype": "CS17 Assignment Submission",
+   "link_fieldname": "student"
+  }
+ ],
+ "modified": "2026-06-17 17:29:12.821931",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Student",
