@@ -109,12 +109,14 @@ export default function AssignmentDetailPage() {
               </p>
             </div>
 
-            {assignment.max_marks && (
-              <div>
-                <p className="text-xs text-muted-foreground">Max Marks</p>
-                <p className="text-sm font-medium">{assignment.max_marks}</p>
-              </div>
-            )}
+            <div>
+              <p className="text-xs text-muted-foreground">Max Marks</p>
+              <p className="text-sm font-medium">
+                {assignment.assignment_type === "Not Graded"
+                  ? "Non Graded"
+                  : assignment.max_marks}
+              </p>
+            </div>
 
             {submission ? (
               <>
