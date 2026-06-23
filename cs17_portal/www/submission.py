@@ -8,9 +8,7 @@ no_cache = 1
 def get_context(context):
 	if frappe.session.user == "Guest":
 		assignment_name = frappe.form_dict.get("assignment", "")
-		frappe.local.flags.redirect_location = (
-			f"/login?redirect-to=/submission?assignment={assignment_name}"
-		)
+		frappe.local.flags.redirect_location = f"/login?redirect-to=/submission?assignment={assignment_name}"
 		raise frappe.Redirect
 
 	assignment_name = frappe.form_dict.get("assignment")

@@ -7,7 +7,9 @@ frappe.ui.form.on("CS17 Assignment", {
 
 		if (!frm.doc.__islocal) {
 			frm.add_custom_button(__("Copy Submission Link"), () => {
-				const link = `${frappe.utils.get_url()}/dashboard/assignments/${frm.doc.name}/submission`;
+				const link = `${frappe.utils.get_url()}/dashboard/assignments/${
+					frm.doc.name
+				}/submission`;
 				frappe.utils.copy_to_clipboard(link);
 			});
 		}
@@ -18,7 +20,9 @@ frappe.ui.form.on("CS17 Assignment", {
 
 		frm.set_value(
 			"naming_series",
-			frm.doc.assignment_type === "Graded" ? "GRADE-{cohort}-.###" : "NOT-GRADED-{cohort}-.###"
+			frm.doc.assignment_type === "Graded"
+				? "GRADE-{cohort}-.###"
+				: "NOT-GRADED-{cohort}-.###"
 		);
 		update_graded_fields(frm);
 	},
