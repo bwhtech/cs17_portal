@@ -21,7 +21,7 @@ frappe.ui.form.on("CS17 Assignment", {
 		frm.set_value(
 			"naming_series",
 			frm.doc.assignment_type === "Graded"
-				? "GRADE-{cohort}-.###"
+				? "GRADED-{cohort}-.###"
 				: "NOT-GRADED-{cohort}-.###"
 		);
 		update_graded_fields(frm);
