@@ -7,15 +7,16 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "column_break_aiuk",
   "naming_series",
   "section_break_ojuv",
   "assignment_type",
+  "remarks",
   "title",
   "cohort",
-  "due_date",
   "max_marks",
-  "remarks",
   "column_break_vtqn",
+  "due_date",
   "description"
  ],
  "fields": [
@@ -47,16 +48,18 @@
    "reqd": 1
   },
   {
+   "depends_on": "eval:doc.assignment_type === \"Graded\" && doc.remarks === \"Marks\"",
    "fieldname": "max_marks",
    "fieldtype": "Float",
    "label": "Max Marks"
   },
   {
-   "default": "GRADED-.###",
+   "default": "GRADE-{cohort}-.###",
    "fieldname": "naming_series",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Naming Series",
-   "options": "GRADED-.###\nNOT-GRADED-.###"
+   "options": "GRADE-{cohort}-.###\nNOT-GRADED-{cohort}-.###"
   },
   {
    "fieldname": "section_break_ojuv",
@@ -70,7 +73,7 @@
    "default": "Grade",
    "fieldname": "remarks",
    "fieldtype": "Select",
-   "label": "Remarks",
+   "label": "Evaluation Type",
    "options": "Grade\nMarks"
   },
   {
@@ -79,12 +82,26 @@
    "label": "Assignment Type",
    "options": "Graded\nNot Graded",
    "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_aiuk",
+   "fieldtype": "Column Break",
+   "hidden": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2026-06-11 18:47:25.444687",
+ "links": [
+  {
+   "link_doctype": "CS17 Assignment Submission",
+   "link_fieldname": "assignment"
+  },
+  {
+   "link_doctype": "CS17 Assignment Grade",
+   "link_fieldname": "assignment"
+  }
+ ],
+ "modified": "2026-06-23 15:42:50.366861",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",

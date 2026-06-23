@@ -3,12 +3,7 @@ import { useCurrentStudent } from "@/hooks/useCurrentStudent";
 import AssignmentTable from "@/components/ui/AssignmentTable";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import GradeDialog from "@/components/ui/GradeDialog";
 
 export default function AssignmentsPage() {
   const { student, isLoading: studentLoading } = useCurrentStudent();
@@ -92,41 +87,11 @@ export default function AssignmentsPage() {
         />
       </div>
 
-      <Dialog
+      <GradeDialog
         open={!!gradeAssignment}
-        onOpenChange={(open) => {
-          if (!open) setGradeAssignment(null);
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Grade & Feedback</DialogTitle>
-          </DialogHeader>
-          {activeGrade ? (
-            <div className="space-y-3 py-2">
-              {activeGrade.evaluation_type === "Grade" ? (
-                <div>
-                  <p className="text-sm text-muted-foreground">Grade</p>
-                  <p className="text-2xl font-semibold">{activeGrade.grade ?? "—"}</p>
-                </div>
-              ) : (
-                <div>
-                  <p className="text-sm text-muted-foreground">Marks Obtained</p>
-                  <p className="text-2xl font-semibold">{activeGrade.marks_obtained ?? "—"}</p>
-                </div>
-              )}
-              {activeGrade.remarks && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Remarks</p>
-                  <p className="text-sm">{activeGrade.remarks}</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground py-2">No grade posted yet.</p>
-          )}
-        </DialogContent>
-      </Dialog>
+        onOpenChange={(open) => { if (!open) setGradeAssignment(null); }}
+        grade={activeGrade}
+      />
     </div>
   );
 }

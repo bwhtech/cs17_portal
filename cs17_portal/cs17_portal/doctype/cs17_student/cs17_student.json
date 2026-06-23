@@ -80,6 +80,7 @@
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Naming Series",
    "options": "CS17.{cohort}.YYYY.###"
   },
@@ -107,8 +108,13 @@
  "grid_page_length": 50,
  "image_field": "profile_picture",
  "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2026-06-01 16:03:36.420702",
+ "links": [
+  {
+   "link_doctype": "CS17 Assignment Submission",
+   "link_fieldname": "student"
+  }
+ ],
+ "modified": "2026-06-23 16:25:31.779892",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Student",

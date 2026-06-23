@@ -18,7 +18,7 @@ class CS17AssignmentSubmission(Document):
 		assignment: DF.Link
 		assignment_title: DF.Data | None
 		full_name: DF.Data | None
-		naming_series: DF.Literal["SUB-.###.{assignment}"]
+		naming_series: DF.Literal["SUB.-.{assignment}.-.###"]
 		student: DF.Link
 		submission_document: DF.Attach
 		submitted_at: DF.Datetime | None

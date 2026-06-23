@@ -38,8 +38,9 @@ export default function SubmitAssignmentDialog({
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { upload, loading: uploading } = useFrappeFileUpload();
-  const [submitting, setSubmitting] = useState(false);
-
+  const { call: submitCall, loading: submitting } = useFrappePostCall(
+    "cs17_portal.api.submit_assignment"
+  );
   const { call: editCall, loading: editing } = useFrappePostCall(
     "cs17_portal.api.edit_submission"
   );
@@ -68,33 +69,16 @@ export default function SubmitAssignmentDialog({
           file_url: uploaded.file_url,
         });
       } else {
-        setSubmitting(true);
-        const res = await fetch(
-          "/api/method/cs17_portal.api.submit_assignment",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Frappe-CSRF-Token": (window as any).csrf_token,
-            },
-            body: JSON.stringify({
-              assignment: assignment.name,
-              file_url: uploaded.file_url,
-            }),
-          }
-        );
-        setSubmitting(false);
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data?.message ?? data?.exc_type ?? "Submission failed.");
-        }
+        await submitCall({
+          assignment: assignment.name,
+          file_url: uploaded.file_url,
+        });
       }
 
       setFile(null);
       onOpenChange(false);
       onSuccess?.();
     } catch (err: any) {
-      setSubmitting(false);
       setError(err?.message ?? "Submission failed. Please try again.");
     }
   }

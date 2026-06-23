@@ -45,6 +45,7 @@
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Naming Series",
    "options": "CS17FAC.###"
   },
@@ -66,7 +67,7 @@
  "image_field": "profile_picture",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-25 14:23:45.167826",
+ "modified": "2026-06-23 16:25:47.497794",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Faculty",
