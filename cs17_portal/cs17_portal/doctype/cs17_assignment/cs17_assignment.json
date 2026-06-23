@@ -54,12 +54,12 @@
    "label": "Max Marks"
   },
   {
-   "default": "GRADE-{cohort}-.###",
+   "default": "GRADED-{cohort}-.###",
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "hidden": 1,
    "label": "Naming Series",
-   "options": "GRADE-{cohort}-.###\nNOT-GRADED-{cohort}-.###"
+   "options": "GRADED-{cohort}-.###\nNOT-GRADED-{cohort}-.###"
   },
   {
    "fieldname": "section_break_ojuv",
@@ -101,7 +101,7 @@
    "link_fieldname": "assignment"
   }
  ],
- "modified": "2026-06-23 15:42:50.366861",
+ "modified": "2026-06-23 19:15:54.593753",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",
