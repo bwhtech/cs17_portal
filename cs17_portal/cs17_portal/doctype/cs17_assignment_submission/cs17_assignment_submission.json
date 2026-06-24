@@ -68,10 +68,12 @@
    "reqd": 1
   },
   {
+   "default": "SUB.-.{assignment}.-.###",
    "fieldname": "naming_series",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Naming Series",
-   "options": "SUB-.###.{assignment}"
+   "options": "SUB.-.{assignment}.-.###"
   },
   {
    "fieldname": "column_break_kefc",
@@ -99,7 +101,7 @@
    "link_fieldname": "submission"
   }
  ],
- "modified": "2026-06-17 14:59:02.052320",
+ "modified": "2026-06-23 16:26:10.139218",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Submission",

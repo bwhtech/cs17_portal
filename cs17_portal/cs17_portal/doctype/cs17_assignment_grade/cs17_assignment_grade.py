@@ -22,7 +22,7 @@ class CS17AssignmentGrade(Document):
 		grade: DF.Literal["A", "B", "C", "D", "E"]
 		graded_by: DF.Link | None
 		marks_obtained: DF.Float
-		naming_series: DF.Literal["GRADE-.###"]
+		naming_series: DF.Literal["GRADE.-{assignment}-.###"]
 		remarks: DF.MarkdownEditor | None
 		submission: DF.Link | None
 	# end: auto-generated types

@@ -1,181 +1,111 @@
 {% extends "templates/web.html" %}
 
-{% block head_include %}
-
-<link rel="stylesheet" href="https://unpkg.com/@knadh/oat/oat.min.css">
-<script src="https://unpkg.com/@knadh/oat/oat.min.js" defer></script>
-
-{% endblock %}
-
 {% block page_content %}
+<div class="container" style="max-width: 680px; margin-top: 60px; margin-bottom: 60px;">
 
-<div class="container" style="max-width: 700px; margin-top: 60px;">
+	<h2 class="mb-1">{{ assignment.title }}</h2>
+	<p class="text-muted mb-4">
+		Due: {{ due_date_display }}
+		{% if is_overdue %}
+		&nbsp;<span class="badge badge-danger">Overdue</span>
+		{% endif %}
+	</p>
 
-    <div class="oat-card p-6">
+	{% if assignment.description %}
+	<div class="mb-4">{{ assignment.description | safe }}</div>
+	{% endif %}
 
-        <div style="margin-bottom: 30px;">
-            <h1 style="font-size: 32px; font-weight: bold;">
-                CS17 Assignment Submission
-            </h1>
+	{% if existing_submission %}
+	<div class="alert alert-success">
+		Submitted on {{ existing_submission.submitted_at_display }}.
+		{% if not is_overdue %} You can update your file below.{% endif %}
+	</div>
+	{% endif %}
 
-            <p style="color: gray; margin-top: 10px;">
-                Upload your assignment file
-            </p>
-        </div>
+	{% if is_overdue and not existing_submission %}
+	<div class="alert alert-danger">The deadline for this assignment has passed.</div>
+	{% else %}
 
-        <form id="submission-form">
+	<form id="submission-form">
+		<div class="form-group">
+			<label for="submission_file"><strong>Assignment File</strong></label>
+			<input type="file" id="submission_file" class="form-control-file mt-1" />
+		</div>
+		<button type="submit" class="btn btn-primary mt-3">
+			{% if existing_submission %}Update Submission{% else %}Submit Assignment{% endif %}
+		</button>
+	</form>
 
-            <!-- Full Name -->
-            <div style="margin-bottom: 24px;">
+	{% endif %}
 
-                <label
-                    for="full_name"
-                    style="display:block; margin-bottom:8px; font-weight:600;"
-                >
-                    Full Name *
-                </label>
-
-                <input
-                    type="text"
-                    id="full_name"
-                    placeholder="Enter your full name"
-                    required
-                    style="width:100%;"
-                />
-
-            </div>
-
-            <!-- File Upload -->
-            <div style="margin-bottom: 24px;">
-
-                <label
-                    for="submission_file"
-                    style="display:block; margin-bottom:8px; font-weight:600;"
-                >
-                    Assignment File *
-                </label>
-
-                <input
-                    type="file"
-                    id="submission_file"
-                    required
-                    class="oat-input"
-                    style="width:100%;"
-                />
-
-            </div>
-
-            <!-- Submit Button -->
-            <button
-                type="submit"
-                style="
-                    width:100%;
-                    background-color:#000000;
-                    color:white;
-                    border:none;
-                    padding:12px;
-                    border-radius:8px;
-                    font-weight:600;
-                    cursor:pointer;
-                "
-            >
-                Submit Assignment
-            </button>
-
-        </form>
-
-        <!-- Response Box -->
-        <div id="response-box" style="margin-top: 24px;"></div>
-
-    </div>
+	<div id="response-box" class="mt-4"></div>
 
 </div>
 
 <script>
+(function () {
+	var form = document.getElementById("submission-form");
+	if (!form) return;
 
-document.getElementById("submission-form").addEventListener("submit", async function(e) {
+	form.addEventListener("submit", async function (e) {
+		e.preventDefault();
 
-    e.preventDefault();
+		var responseBox = document.getElementById("response-box");
+		var fileInput = document.getElementById("submission_file");
+		var submitBtn = form.querySelector("[type=submit]");
 
-    const fullName = document.getElementById("full_name").value.trim();
-    const fileInput = document.getElementById("submission_file");
-    const responseBox = document.getElementById("response-box");
+		if (!fileInput.files.length) {
+			responseBox.innerHTML = '<div class="alert alert-danger">Please select a file to upload.</div>';
+			return;
+		}
 
-    if (!fullName) {
-        responseBox.innerHTML = `
-            <div class="oat-alert oat-alert-danger">
-                Full name is required
-            </div>
-        `;
-        return;
-    }
+		submitBtn.disabled = true;
+		responseBox.innerHTML = '<div class="alert alert-info">Uploading file…</div>';
 
-    if (!fileInput.files.length) {
-        responseBox.innerHTML = `
-            <div class="oat-alert oat-alert-danger">
-                Please upload a file
-            </div>
-        `;
-        return;
-    }
+		try {
+			var fileData = new FormData();
+			fileData.append("file", fileInput.files[0]);
+			fileData.append("is_private", "1");
+			fileData.append("doctype", "CS17 Assignment Submission");
 
-    const file = fileInput.files[0];
+			var uploadRes = await fetch("/api/method/upload_file", {
+				method: "POST",
+				headers: { "X-Frappe-CSRF-Token": frappe.csrf_token },
+				body: fileData,
+			});
 
-    const formData = new FormData();
-    formData.append("full_name", fullName);
-    formData.append("file", file);
+			if (!uploadRes.ok) throw new Error("File upload failed.");
+			var uploadData = await uploadRes.json();
+			var fileUrl = uploadData.message.file_url;
 
-    responseBox.innerHTML = `
-        <div class="oat-alert oat-alert-info">
-            Uploading assignment...
-        </div>
-    `;
+			{% if existing_submission %}
+			await frappe.call({
+				method: "cs17_portal.api.edit_submission",
+				args: {
+					submission: "{{ existing_submission.name }}",
+					file_url: fileUrl,
+				},
+			});
+			{% else %}
+			await frappe.call({
+				method: "cs17_portal.api.submit_assignment",
+				args: {
+					assignment: "{{ assignment.name }}",
+					file_url: fileUrl,
+				},
+			});
+			{% endif %}
 
-    try {
+			responseBox.innerHTML = '<div class="alert alert-success">Assignment submitted successfully!</div>';
+			form.reset();
 
-        const response = await fetch(
-            "/api/method/cs17_portal.www.submission.upload_assignment",
-            {
-                method: "POST",
-                headers: {
-                    "X-Frappe-CSRF-Token": frappe.csrf_token
-                },
-                body: formData
-            }
-        );
-
-        const data = await response.json();
-
-        if (data.message && data.message.status === "success") {
-
-            responseBox.innerHTML = `
-                <div class="oat-alert oat-alert-success">
-                    Assignment submitted successfully!
-                </div>
-            `;
-
-            document.getElementById("submission-form").reset();
-
-        } else {
-
-            responseBox.innerHTML = `
-                <div class="oat-alert oat-alert-danger">
-                    ${data.message?.message || "Upload failed"}
-                </div>
-            `;
-        }
-
-    } catch (err) {
-
-        responseBox.innerHTML = `
-            <div class="oat-alert oat-alert-danger">
-                An error occurred while uploading.
-            </div>
-        `;
-    }
-
-});
-
+		} catch (err) {
+			responseBox.innerHTML =
+				'<div class="alert alert-danger">' + (err.message || "An error occurred. Please try again.") + '</div>';
+			submitBtn.disabled = false;
+		}
+	});
+})();
 </script>
 
 {% endblock %}

@@ -41,13 +41,14 @@ export default function AssignmentDetailPage() {
     "CS17 Assignment Grade",
     {
       filters: [["submission", "=", submission?.name ?? ""]],
-      fields: ["name"],
+      fields: ["name", "evaluation_type", "marks_obtained", "grade", "remarks"],
       limit: 1,
     },
     submission?.name ? undefined : null,
   );
 
-  const isGraded = (grades?.length ?? 0) > 0;
+  const gradeDoc = grades?.[0] ?? null;
+  const isGraded = !!gradeDoc;
 
   useEffect(() => {
     if (!assignment) return;
@@ -108,12 +109,14 @@ export default function AssignmentDetailPage() {
               </p>
             </div>
 
-            {assignment.max_marks && (
-              <div>
-                <p className="text-xs text-muted-foreground">Max Marks</p>
-                <p className="text-sm font-medium">{assignment.max_marks}</p>
-              </div>
-            )}
+            <div>
+              <p className="text-xs text-muted-foreground">Max Marks</p>
+              <p className="text-sm font-medium">
+                {assignment.assignment_type === "Not Graded"
+                  ? "Non Graded"
+                  : assignment.max_marks}
+              </p>
+            </div>
 
             {submission ? (
               <>
@@ -131,6 +134,27 @@ export default function AssignmentDetailPage() {
                   >
                     Edit Submission
                   </Button>
+                )}
+                {gradeDoc && (
+                  <>
+                    {gradeDoc.evaluation_type === "Grade" ? (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Grade</p>
+                        <p className="text-lg font-semibold">{gradeDoc.grade ?? "—"}</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Marks Obtained</p>
+                        <p className="text-lg font-semibold">{gradeDoc.marks_obtained ?? "—"}</p>
+                      </div>
+                    )}
+                    {gradeDoc.remarks && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Remarks</p>
+                        <p className="text-sm mt-0.5">{gradeDoc.remarks}</p>
+                      </div>
+                    )}
+                  </>
                 )}
               </>
             ) : (

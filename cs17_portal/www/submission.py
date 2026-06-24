@@ -1,31 +1,43 @@
 import frappe
-from frappe.utils.file_manager import save_file
+from frappe import _
+from frappe.utils import format_datetime, now_datetime
+
+no_cache = 1
 
 
-@frappe.whitelist()
-def upload_assignment():
-	full_name = frappe.form_dict.get("full_name")
-	uploaded_file = frappe.request.files.get("file")
+def get_context(context):
+	if frappe.session.user == "Guest":
+		assignment_name = frappe.form_dict.get("assignment", "")
+		frappe.local.flags.redirect_location = f"/login?redirect-to=/submission?assignment={assignment_name}"
+		raise frappe.Redirect
 
-	if not full_name:
-		return {"status": "error", "message": "Full name is required"}
+	assignment_name = frappe.form_dict.get("assignment")
+	if not assignment_name:
+		frappe.throw(_("Assignment not specified"), frappe.DoesNotExistError)
 
-	if not uploaded_file:
-		return {"status": "error", "message": "File is required"}
+	assignment = frappe.get_doc("CS17 Assignment", assignment_name)
+	context.assignment = assignment
+	context.due_date_display = format_datetime(assignment.due_date)
+	context.is_overdue = now_datetime() > assignment.due_date
 
-	# 1. Save the file first so we have the URL ready
-	saved_file = save_file(
-		uploaded_file.filename, uploaded_file.read(), "CS17 Assignment Submission", None, is_private=1
+	students = frappe.get_list(
+		"CS17 Student",
+		filters={"user": frappe.session.user},
+		fields=["name"],
+		limit=1,
+		ignore_permissions=True,
 	)
 
-	# 2. Insert the doc with both mandatory fields already populated
-	doc = frappe.get_doc(
-		{
-			"doctype": "CS17 Assignment Submission",
-			"full_name": full_name,
-			"submission_document": saved_file.file_url,
-		}
-	)
-	doc.insert(ignore_permissions=True)
-
-	return {"status": "success", "file_url": saved_file.file_url, "submission": doc.name}
+	context.existing_submission = None
+	if students:
+		submissions = frappe.get_list(
+			"CS17 Assignment Submission",
+			filters={"student": students[0].name, "assignment": assignment_name},
+			fields=["name", "submitted_at"],
+			limit=1,
+			ignore_permissions=True,
+		)
+		if submissions:
+			sub = submissions[0]
+			sub.submitted_at_display = format_datetime(sub.submitted_at)
+			context.existing_submission = sub
