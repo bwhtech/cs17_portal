@@ -36,9 +36,14 @@ interface Props {
   onViewGrade?: (assignmentName: string) => void;
 }
 
-function getStatus(assignment: Assignment, submission: Submission | undefined) {
+function getStatus(
+  assignment: Assignment,
+  submission: Submission | undefined,
+  isGraded: boolean,
+) {
+  if (isGraded) return "closed";
   if (submission) return "submitted";
-  if (new Date(assignment.due_date) < new Date()) return "overdue";
+  if (new Date(assignment.due_date) < new Date()) return "closed";
   return "pending";
 }
 
@@ -64,7 +69,7 @@ export default function AssignmentTable({
             <TableHead>Due</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Submitted</TableHead>
-            <TableHead className="text-right">Action</TableHead>
+            <TableHead className="text-right"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -80,8 +85,8 @@ export default function AssignmentTable({
           )}
           {assignments.map((a) => {
             const submission = submissionMap[a.name];
-            const status = getStatus(a, submission);
             const isGraded = !!gradeMap?.[a.name];
+            const status = getStatus(a, submission, isGraded);
 
             return (
               <TableRow key={a.name}>
@@ -102,8 +107,8 @@ export default function AssignmentTable({
                   {status === "submitted" && (
                     <Badge variant="default">Submitted</Badge>
                   )}
-                  {status === "overdue" && (
-                    <Badge variant="destructive">Overdue</Badge>
+                  {status === "closed" && (
+                    <Badge variant="outline">Closed</Badge>
                   )}
                   {status === "pending" && (
                     <Badge variant="secondary">Pending</Badge>
@@ -118,35 +123,28 @@ export default function AssignmentTable({
                         ? formatDateTime(submission.modified)
                         : formatDateTime(submission.submitted_at)}
                     </span>
-                  ) : (
-                    <span>—</span>
-                  )}
+                  ) : null}
                 </TableCell>
                 <TableCell className="text-right">
-                  {status === "submitted" ? (
-                    <div className="flex items-center justify-end gap-2">
-                      {!isGraded && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setDialogAssignment(a);
-                            setEditSubmission(submission);
-                          }}
-                        >
-                          Edit
-                        </Button>
-                      )}
-                      {onViewGrade && a.assignment_type !== "Not Graded" && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => onViewGrade(a.name)}
-                        >
-                          View Grade
-                        </Button>
-                      )}
-                    </div>
+                  {status === "closed" && isGraded && onViewGrade && a.assignment_type !== "Not Graded" ? (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onViewGrade(a.name)}
+                    >
+                      View Grade
+                    </Button>
+                  ) : status === "submitted" ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setDialogAssignment(a);
+                        setEditSubmission(submission);
+                      }}
+                    >
+                      Edit
+                    </Button>
                   ) : status === "pending" ? (
                     <Button
                       size="sm"
@@ -157,9 +155,7 @@ export default function AssignmentTable({
                     >
                       Submit
                     </Button>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
-                  )}
+                  ) : null}
                 </TableCell>
               </TableRow>
             );
