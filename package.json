@@ -7,14 +7,21 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "postinstall": "cd dashboard && yarn install",
     "dev": "cd dashboard && yarn dev",
-    "build": "cd dashboard && yarn build"
+    "build": "cd dashboard && yarn build",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4.3.0",
-    "tailwindcss": "^4.3.0"
+    "@types/node": "^25.9.3",
+    "tailwindcss": "^4.3.0",
+    "wait-on": "^9.0.10"
   }
 }

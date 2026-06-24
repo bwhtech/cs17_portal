@@ -2,12 +2,12 @@
   "compilerOptions": {
     "target": "es2023",
     "lib": ["ES2023", "DOM"],
-    "module": "esnext",
+    "module": "node16",
     "types": ["node"],
     "skipLibCheck": true,
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "noEmit": true
+    "moduleResolution": "node16",
+    "noEmit": true,
+    "strict": true
   },
   "include": ["./**/*.ts", "../playwright.config.ts"]
 }
