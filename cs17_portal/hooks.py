@@ -149,23 +149,9 @@ app_license = "mit"
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"cs17_portal.tasks.all"
-# 	],
-# 	"daily": [
-# 		"cs17_portal.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"cs17_portal.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"cs17_portal.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"cs17_portal.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	"all": ["cs17_portal.tasks.auto_publish_assignments"],
+}
 
 # Testing
 # -------

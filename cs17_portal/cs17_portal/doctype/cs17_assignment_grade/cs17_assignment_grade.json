@@ -10,6 +10,7 @@
   "column_break_ibmm",
   "naming_series",
   "section_break_cezv",
+  "is_published",
   "assignment",
   "submission",
   "graded_by",
@@ -17,6 +18,7 @@
   "full_name",
   "assignment_title",
   "column_break_lrax",
+  "published_on",
   "marks_obtained",
   "remarks",
   "evaluation_type"
@@ -103,6 +105,18 @@
    "in_list_view": 1,
    "label": "Assignment Title",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_published",
+   "fieldtype": "Check",
+   "label": "Is Published"
+  },
+  {
+   "depends_on": "eval:!doc.is_published",
+   "fieldname": "published_on",
+   "fieldtype": "Datetime",
+   "label": "Publish On"
   }
  ],
  "grid_page_length": 50,

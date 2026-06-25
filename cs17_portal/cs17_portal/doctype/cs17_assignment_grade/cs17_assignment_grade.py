@@ -21,8 +21,10 @@ class CS17AssignmentGrade(Document):
 		full_name: DF.Data | None
 		grade: DF.Literal["A", "B", "C", "D", "E"]
 		graded_by: DF.Link | None
+		is_published: DF.Check
 		marks_obtained: DF.Float
 		naming_series: DF.Literal["GRADE.-{assignment}-.###"]
+		published_on: DF.Datetime | None
 		remarks: DF.MarkdownEditor | None
 		submission: DF.Link | None
 	# end: auto-generated types
