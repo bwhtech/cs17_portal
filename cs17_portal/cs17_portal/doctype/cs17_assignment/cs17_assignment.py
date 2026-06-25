@@ -18,8 +18,10 @@ class CS17Assignment(Document):
 		cohort: DF.Link
 		description: DF.TextEditor | None
 		due_date: DF.Datetime
+		is_published: DF.Check
 		max_marks: DF.Float
 		naming_series: DF.Literal["GRADED-{cohort}-.###", "NOT-GRADED-{cohort}-.###"]
+		publish_on: DF.Datetime | None
 		remarks: DF.Literal["Grade", "Marks"]
 		title: DF.Data
 	# end: auto-generated types

@@ -10,12 +10,14 @@
   "column_break_aiuk",
   "naming_series",
   "section_break_ojuv",
+  "is_published",
   "assignment_type",
   "remarks",
   "title",
   "cohort",
   "max_marks",
   "column_break_vtqn",
+  "publish_on",
   "due_date",
   "description"
  ],
@@ -87,6 +89,18 @@
    "fieldname": "column_break_aiuk",
    "fieldtype": "Column Break",
    "hidden": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_published",
+   "fieldtype": "Check",
+   "label": "Is Published"
+  },
+  {
+   "depends_on": "eval:!doc.is_published",
+   "fieldname": "publish_on",
+   "fieldtype": "Datetime",
+   "label": "Publish On"
   }
  ],
  "grid_page_length": 50,
@@ -101,7 +115,7 @@
    "link_fieldname": "assignment"
   }
  ],
- "modified": "2026-06-23 19:15:54.593753",
+ "modified": "2026-06-25 13:40:27.299436",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",

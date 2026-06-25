@@ -40,8 +40,8 @@ export default function AssignmentDetailPage() {
   const { data: grades } = useFrappeGetDocList(
     "CS17 Assignment Grade",
     {
-      filters: [["submission", "=", submission?.name ?? ""]],
-      fields: ["name", "evaluation_type", "marks_obtained", "grade", "remarks"],
+      filters: [["submission", "=", submission?.name ?? ""], ["is_published", "=", 1]],
+      fields: ["name", "evaluation_type", "marks_obtained", "grade", "remarks", "is_published"],
       limit: 1,
     },
     submission?.name ? undefined : null,

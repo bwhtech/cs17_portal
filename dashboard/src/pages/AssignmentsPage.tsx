@@ -11,9 +11,9 @@ export default function AssignmentsPage() {
   const { data: assignments, isLoading: assignmentsLoading } = useFrappeGetDocList(
     "CS17 Assignment",
     {
-      filters: [["cohort", "=", student?.cohort ?? ""]],
+      filters: [["cohort", "=", student?.cohort ?? ""], ["is_published", "=", 1]],
       fields: ["name", "title", "due_date", "max_marks", "assignment_type"],
-      orderBy: { field: "due_date", order: "asc" },
+      orderBy: { field: "due_date", order: "desc" },
       limit: 100,
     },
     student?.cohort ? undefined : null,
@@ -42,8 +42,8 @@ export default function AssignmentsPage() {
   const { data: grades, mutate: mutateGrades } = useFrappeGetDocList(
     "CS17 Assignment Grade",
     {
-      filters: [["assignment", "in", assignmentNames]],
-      fields: ["name", "assignment", "submission", "marks_obtained", "grade", "evaluation_type", "remarks"],
+      filters: [["assignment", "in", assignmentNames], ["is_published", "=", 1]],
+      fields: ["name", "assignment", "submission", "marks_obtained", "grade", "evaluation_type", "remarks", "is_published"],
       limit: 100,
     },
     assignmentNames.length > 0 ? undefined : null,

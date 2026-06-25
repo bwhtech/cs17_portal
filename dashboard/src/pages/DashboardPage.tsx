@@ -27,7 +27,7 @@ export default function DashboardPage() {
   const { data: assignments } = useFrappeGetDocList(
     "CS17 Assignment",
     {
-      filters: [["cohort", "=", student?.cohort ?? ""]],
+      filters: [["cohort", "=", student?.cohort ?? ""], ["is_published", "=", 1]],
       fields: ["name", "title", "due_date", "max_marks", "assignment_type"],
       orderBy: { field: "creation", order: "desc" },
       limit: 20,
