@@ -27,6 +27,9 @@ class CS17AssignmentGrade(Document):
 		submission: DF.Link | None
 	# end: auto-generated types
 
+	def before_save(self):
+		self.graded_by = frappe.session.user
+
 	def validate(self):
 		assignment_type = frappe.db.get_value("CS17 Assignment", self.assignment, "assignment_type")
 		if assignment_type == "Not Graded":

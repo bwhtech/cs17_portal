@@ -52,20 +52,27 @@ export default function DashboardPage() {
     (submissions ?? []).map((s) => [s.assignment, s]),
   );
 
-  const submissionNames = (submissions ?? []).map((s) => s.name);
+  const submissionNames = new Set((submissions ?? []).map((s) => s.name));
+  const assignmentNames = (assignments ?? []).map((a) => a.name);
 
   const { data: grades, mutate: mutateGrades } = useFrappeGetDocList(
     "CS17 Assignment Grade",
     {
-      filters: [["submission", "in", submissionNames]],
+      filters: [["assignment", "in", assignmentNames]],
       fields: ["name", "assignment", "submission", "marks_obtained", "grade", "evaluation_type", "remarks"],
       limit: 100,
     },
-    submissionNames.length > 0 ? undefined : null,
+    assignmentNames.length > 0 ? undefined : null,
   );
 
   const gradeMap = Object.fromEntries(
-    (grades ?? []).map((g) => [g.assignment, g]),
+    (grades ?? [])
+      .filter((g) =>
+        g.submission
+          ? submissionNames.has(g.submission)
+          : !!submissionMap[g.assignment],
+      )
+      .map((g) => [g.assignment, g]),
   );
 
   const [gradeAssignment, setGradeAssignment] = useState<string | null>(null);

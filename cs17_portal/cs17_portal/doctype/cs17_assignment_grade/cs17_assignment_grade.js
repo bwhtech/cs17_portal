@@ -6,5 +6,13 @@ frappe.ui.form.on("CS17 Assignment Grade", {
 		frm.set_query("assignment", () => ({
 			filters: { assignment_type: "Graded" },
 		}));
+
+		frm.set_query("submission", () => ({
+			filters: { assignment: frm.doc.assignment },
+		}));
+	},
+
+	assignment(frm) {
+		frm.set_value("submission", null);
 	},
 });
