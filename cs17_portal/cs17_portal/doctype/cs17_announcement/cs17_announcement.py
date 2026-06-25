@@ -34,7 +34,9 @@ class CS17Announcement(Document):
 
 		user_names = frappe.get_all("CS17 Student", filters=filters, pluck="user")
 		recipients = set(
-			frappe.get_all("User", filters={"name": ["in", user_names], "email": ["is", "set"]}, pluck="email")
+			frappe.get_all(
+				"User", filters={"name": ["in", user_names], "email": ["is", "set"]}, pluck="email"
+			)
 		)
 
 		if creator_email := frappe.db.get_value("User", self.owner, "email"):
