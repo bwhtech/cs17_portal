@@ -32,19 +32,13 @@ class CS17Announcement(Document):
 		if self.cohort:
 			filters.update({"cohort": self.cohort})
 
-		users = frappe.get_all("CS17 Student", filters=filters, pluck="user")
+		user_names = frappe.get_all("CS17 Student", filters=filters, pluck="user")
+		recipients = set(
+			frappe.get_all("User", filters={"name": ["in", user_names], "email": ["is", "set"]}, pluck="email")
+		)
 
-		recipients = []
-		if users:
-			recipients = frappe.get_all(
-				"User",
-				filters={"name": ["in", users], "email": ["is", "set"]},
-				pluck="email",
-			)
-
-		creator_email = frappe.db.get_value("User", self.owner, "email")
-		if creator_email and creator_email not in recipients:
-			recipients.append(creator_email)
+		if creator_email := frappe.db.get_value("User", self.owner, "email"):
+			recipients.add(creator_email)
 
 		if not recipients:
 			return
