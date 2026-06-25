@@ -7,7 +7,6 @@ def publish_all_existing_assignments():
 	frappe.db.sql(
 		"UPDATE `tabCS17 Assignment` SET is_published = 1 WHERE is_published = 0 AND publish_on IS NULL"
 	)
-	frappe.db.commit()
 
 
 def auto_publish_assignments():
@@ -21,4 +20,3 @@ def auto_publish_assignments():
 		""",
 		now_datetime(),
 	)
-	frappe.db.commit()
