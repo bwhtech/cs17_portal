@@ -1,75 +1,47 @@
-"""
-Migrate CS17 Student and CS17 Faculty records into CS17 Profile.
-
-- Existing CS17 Student rows are inserted as CS17 Profile with profile_type = "Student"
-- Existing CS17 Faculty rows are inserted as CS17 Profile with profile_type = "Faculty"
-- Original document names are preserved so CS17 Assignment Submission.student links remain valid
-"""
-
 import frappe
 
 
 def execute():
-	if not frappe.db.table_exists("tabCS17 Student") and not frappe.db.table_exists("tabCS17 Faculty"):
-		return
-
-	# Migrate students
 	if frappe.db.table_exists("tabCS17 Student"):
-		students = frappe.db.sql(
-			"""
-			SELECT name, first_name, last_name, full_name, cohort, user,
-			       profile_picture, date_of_birth, blood_group, address,
-			       primary_phone, alternate_phone, creation, modified, owner
-			FROM `tabCS17 Student`
-			""",
-			as_dict=True,
-		)
-		for s in students:
-			if frappe.db.exists("CS17 Profile", s.name):
-				continue
-			doc = frappe.get_doc(
-				{
-					"doctype": "CS17 Profile",
-					"name": s.name,
-					"profile_type": "Student",
-					"first_name": s.first_name,
-					"last_name": s.last_name,
-					"full_name": s.full_name,
-					"cohort": s.cohort,
-					"user": s.user,
-					"profile_picture": s.profile_picture,
-					"date_of_birth": s.date_of_birth,
-					"blood_group": s.blood_group,
-					"address": s.address,
-					"primary_phone": s.primary_phone,
-					"alternate_phone": s.alternate_phone,
-				}
-			)
-			doc.insert(ignore_permissions=True)
-
-	# Migrate faculty
+		_migrate_students()
 	if frappe.db.table_exists("tabCS17 Faculty"):
-		faculty_list = frappe.db.sql(
-			"""
-			SELECT name, first_name, last_name, full_name, user,
-			       profile_picture, creation, modified, owner
-			FROM `tabCS17 Faculty`
-			""",
-			as_dict=True,
+		_migrate_faculty()
+
+
+def _migrate_students():
+	students = frappe.get_all(
+		"CS17 Student",
+		fields=[
+			"name",
+			"first_name",
+			"last_name",
+			"full_name",
+			"cohort",
+			"user",
+			"profile_picture",
+			"date_of_birth",
+			"blood_group",
+			"address",
+			"primary_phone",
+			"alternate_phone",
+		],
+	)
+	for s in students:
+		if frappe.db.exists("CS17 Profile", s.name):
+			continue
+		frappe.get_doc({"doctype": "CS17 Profile", "profile_type": "Student", **s}).insert(
+			ignore_permissions=True
 		)
-		for f in faculty_list:
-			if frappe.db.exists("CS17 Profile", f.name):
-				continue
-			doc = frappe.get_doc(
-				{
-					"doctype": "CS17 Profile",
-					"name": f.name,
-					"profile_type": "Faculty",
-					"first_name": f.first_name,
-					"last_name": f.last_name,
-					"full_name": f.full_name,
-					"user": f.user,
-					"profile_picture": f.profile_picture,
-				}
-			)
-			doc.insert(ignore_permissions=True)
+
+
+def _migrate_faculty():
+	faculty_list = frappe.get_all(
+		"CS17 Faculty",
+		fields=["name", "first_name", "last_name", "full_name", "user", "profile_picture"],
+	)
+	for f in faculty_list:
+		if frappe.db.exists("CS17 Profile", f.name):
+			continue
+		frappe.get_doc({"doctype": "CS17 Profile", "profile_type": "Faculty", **f}).insert(
+			ignore_permissions=True
+		)
