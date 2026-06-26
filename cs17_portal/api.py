@@ -3,7 +3,7 @@ from frappe import _
 
 
 @frappe.whitelist()
-def get_current_profile() -> dict | None:
+def get_user_profile() -> dict | None:
 	return frappe.db.get_value(
 		"CS17 Profile",
 		{"user": frappe.session.user},
