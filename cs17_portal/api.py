@@ -21,50 +21,20 @@ def _get_profile_or_throw(profile_type: str) -> str:
 
 
 @frappe.whitelist()
-def get_faculty_recent_submissions(limit: int = 5) -> list:
-	faculty_name = _get_profile_or_throw(profile_type="Faculty")
-	cohort = frappe.db.get_value("CS17 Profile", faculty_name, "cohort")
-	if not cohort:
+def get_recent_submissions(faculty: str, limit: int = 5) -> list:
+	profile = frappe.db.get_value("CS17 Profile", faculty, ["user", "cohort"], as_dict=True)
+	if not profile or profile.user != frappe.session.user:
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	if not profile.cohort:
 		return []
 	return frappe.get_list(
 		"CS17 Assignment Submission",
-		filters=[["assignment.cohort", "=", cohort]],
+		filters=[["assignment.cohort", "=", profile.cohort]],
 		fields=["name", "student", "full_name", "assignment", "assignment_title", "submitted_at"],
 		order_by="submitted_at desc",
-		limit=int(limit),
+		limit=limit,
 		ignore_permissions=True,
 	)
-
-
-@frappe.whitelist()
-def create_assignment(
-	title: str,
-	cohort: str,
-	due_date: str,
-	assignment_type: str,
-	description: str = "",
-	max_marks: float | None = None,
-	remarks: str | None = None,
-	is_published: int = 0,
-	publish_on: str | None = None,
-) -> dict:
-	_get_profile_or_throw(profile_type="Faculty")
-	doc = frappe.get_doc(
-		{
-			"doctype": "CS17 Assignment",
-			"title": title,
-			"cohort": cohort,
-			"due_date": due_date,
-			"assignment_type": assignment_type,
-			"description": description,
-			"max_marks": max_marks,
-			"remarks": remarks,
-			"is_published": is_published,
-			"publish_on": publish_on,
-		}
-	)
-	doc.insert(ignore_permissions=True)
-	return {"name": doc.name}
 
 
 def _check_deadline(assignment_name: str) -> None:

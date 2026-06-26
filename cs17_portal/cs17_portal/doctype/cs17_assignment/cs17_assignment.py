@@ -26,6 +26,11 @@ class CS17Assignment(Document):
 		title: DF.Data
 	# end: auto-generated types
 
+	def before_insert(self):
+		from cs17_portal.api import _get_profile_or_throw
+
+		_get_profile_or_throw("Faculty")
+
 	def validate(self):
 		if self.assignment_type == "Not Graded":
 			self.max_marks = 0

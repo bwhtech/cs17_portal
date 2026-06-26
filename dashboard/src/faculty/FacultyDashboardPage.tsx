@@ -14,12 +14,13 @@ interface RecentSubmission {
 }
 
 export default function FacultyDashboardPage() {
-  const { profile, isLoading: facultyLoading } = useCurrentProfile();
+  const { profile } = useCurrentProfile();
 
   const { data: recentSubmissions, isLoading: submissionsLoading } =
     useFrappeGetCall<{ message: RecentSubmission[] }>(
-      "cs17_portal.api.get_faculty_recent_submissions",
-      { limit: 5 },
+      "cs17_portal.api.get_recent_submissions",
+      profile ? { faculty: profile.name, limit: 5 } : undefined,
+      profile ? undefined : null,
     );
 
   const { data: publishedCount } = useFrappeGetDocCount(
@@ -48,15 +49,6 @@ export default function FacultyDashboardPage() {
   });
 
   const submissions: RecentSubmission[] = recentSubmissions?.message ?? [];
-
-  if (facultyLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-5 w-40" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">

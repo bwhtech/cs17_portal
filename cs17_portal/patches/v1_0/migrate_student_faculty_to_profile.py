@@ -27,9 +27,9 @@ def execute():
 		for s in students:
 			if frappe.db.exists("CS17 Profile", s.name):
 				continue
-			frappe.db.insert(
-				"CS17 Profile",
+			doc = frappe.get_doc(
 				{
+					"doctype": "CS17 Profile",
 					"name": s.name,
 					"profile_type": "Student",
 					"first_name": s.first_name,
@@ -43,11 +43,9 @@ def execute():
 					"address": s.address,
 					"primary_phone": s.primary_phone,
 					"alternate_phone": s.alternate_phone,
-					"creation": s.creation,
-					"modified": s.modified,
-					"owner": s.owner,
-				},
+				}
 			)
+			doc.insert(ignore_permissions=True)
 
 	# Migrate faculty
 	if frappe.db.table_exists("tabCS17 Faculty"):
@@ -62,9 +60,9 @@ def execute():
 		for f in faculty_list:
 			if frappe.db.exists("CS17 Profile", f.name):
 				continue
-			frappe.db.insert(
-				"CS17 Profile",
+			doc = frappe.get_doc(
 				{
+					"doctype": "CS17 Profile",
 					"name": f.name,
 					"profile_type": "Faculty",
 					"first_name": f.first_name,
@@ -72,8 +70,6 @@ def execute():
 					"full_name": f.full_name,
 					"user": f.user,
 					"profile_picture": f.profile_picture,
-					"creation": f.creation,
-					"modified": f.modified,
-					"owner": f.owner,
-				},
+				}
 			)
+			doc.insert(ignore_permissions=True)
