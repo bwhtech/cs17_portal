@@ -6,6 +6,8 @@ import AssignmentsPage from "@/pages/AssignmentsPage";
 import AlertsPage from "@/pages/AlertsPage";
 import SettingsPage from "@/pages/SettingsPage";
 import AssignmentDetailPage from "@/pages/AssignmentDetailPage";
+import FacultyLayout from "@/faculty/FacultyLayout";
+import FacultyDashboardPage from "@/faculty/FacultyDashboardPage";
 
 function App() {
   return (
@@ -18,6 +20,10 @@ function App() {
             <Route path="/assignments/:assignmentId/submission" element={<AssignmentDetailPage />} />
             <Route path="/announcements" element={<AlertsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+          </Route>
+
+          <Route path="/faculty" element={<FacultyLayout />}>
+            <Route index element={<FacultyDashboardPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

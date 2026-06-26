@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 import { Outlet, useLocation, Navigate } from "react-router-dom";
-import Sidebar from "@/components/ui/Sidebar";
-import TopBar from "@/components/ui/TopBar";
+import FacultySidebar from "@/faculty/FacultySidebar";
+import FacultyTopBar from "@/faculty/FacultyTopBar";
 import { BreadcrumbProvider } from "@/context/BreadcrumbContext";
 
 const isGuest = (user: string | undefined) => !user || user === "Guest";
 
-export default function Layout() {
+export default function FacultyLayout() {
   const boot = (window as any).frappe_boot;
   const currentUser = boot?.current_user;
   const isFaculty = !!boot?.faculty;
@@ -21,14 +21,14 @@ export default function Layout() {
 
   if (isGuest(currentUser)) return null;
 
-  if (isFaculty) return <Navigate to="/faculty/" replace />;
+  if (!isFaculty) return <Navigate to="/" replace />;
 
   return (
     <BreadcrumbProvider>
       <div className="flex h-screen bg-background overflow-hidden">
-        <Sidebar />
+        <FacultySidebar />
         <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-          <TopBar />
+          <FacultyTopBar />
           <main className="flex-1 overflow-y-auto p-6">
             <Outlet />
           </main>

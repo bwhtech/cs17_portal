@@ -3,6 +3,77 @@ from frappe import _
 
 
 @frappe.whitelist()
+def get_current_faculty() -> dict | None:
+	user = frappe.session.user
+	faculty = frappe.get_list(
+		"CS17 Faculty",
+		filters={"user": user},
+		fields=["name", "full_name", "profile_picture"],
+		limit=1,
+		ignore_permissions=True,
+	)
+	if faculty:
+		return faculty[0]
+	return None
+
+
+def _get_faculty_or_throw() -> str:
+	faculty_list = frappe.get_list(
+		"CS17 Faculty",
+		filters={"user": frappe.session.user},
+		fields=["name"],
+		limit=1,
+		ignore_permissions=True,
+	)
+	if not faculty_list:
+		frappe.throw(_("No faculty record found for current user"), frappe.PermissionError)
+	return faculty_list[0].name
+
+
+@frappe.whitelist()
+def get_faculty_recent_submissions(limit: int = 5) -> list:
+	_get_faculty_or_throw()
+	return frappe.get_list(
+		"CS17 Assignment Submission",
+		fields=["name", "student", "full_name", "assignment", "assignment_title", "submitted_at"],
+		order_by="submitted_at desc",
+		limit=int(limit),
+		ignore_permissions=True,
+	)
+
+
+@frappe.whitelist()
+def create_assignment(
+	title: str,
+	cohort: str,
+	due_date: str,
+	assignment_type: str,
+	description: str = "",
+	max_marks: float | None = None,
+	remarks: str | None = None,
+	is_published: int = 0,
+	publish_on: str | None = None,
+) -> dict:
+	_get_faculty_or_throw()
+	doc = frappe.get_doc(
+		{
+			"doctype": "CS17 Assignment",
+			"title": title,
+			"cohort": cohort,
+			"due_date": due_date,
+			"assignment_type": assignment_type,
+			"description": description,
+			"max_marks": max_marks,
+			"remarks": remarks,
+			"is_published": is_published,
+			"publish_on": publish_on,
+		}
+	)
+	doc.insert(ignore_permissions=True)
+	return {"name": doc.name}
+
+
+@frappe.whitelist()
 def get_current_student() -> dict | None:
 	user = frappe.session.user
 	students = frappe.get_list(

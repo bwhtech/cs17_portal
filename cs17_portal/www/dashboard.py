@@ -27,6 +27,7 @@ def get_context_for_dev():
 def get_boot():
 	current_user = frappe.session.user
 	student = None
+	faculty = None
 
 	if current_user and current_user != "Guest":
 		try:
@@ -40,6 +41,16 @@ def get_boot():
 		except frappe.DoesNotExistError:
 			student = None
 
+		try:
+			doc = frappe.get_doc("CS17 Faculty", {"user": current_user})
+			faculty = {
+				"name": doc.name,
+				"full_name": doc.full_name,
+				"profile_picture": doc.profile_picture,
+			}
+		except frappe.DoesNotExistError:
+			faculty = None
+
 	return frappe._dict(
 		{
 			"frappe_version": frappe.__version__,
@@ -48,5 +59,6 @@ def get_boot():
 			"system_timezone": get_system_timezone(),
 			"current_user": current_user,
 			"student": student,
+			"faculty": faculty,
 		}
 	)
