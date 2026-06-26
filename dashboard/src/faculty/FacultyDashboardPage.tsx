@@ -1,5 +1,5 @@
 import { useFrappeGetCall, useFrappeGetDocCount } from "frappe-react-sdk";
-import { useCurrentFaculty } from "@/hooks/useCurrentFaculty";
+import { useCurrentProfile } from "@/hooks/useCurrentProfile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
 import { formatDateTime } from "@/lib/dayjs";
@@ -14,7 +14,7 @@ interface RecentSubmission {
 }
 
 export default function FacultyDashboardPage() {
-  const { faculty, isLoading: facultyLoading } = useCurrentFaculty();
+  const { profile, isLoading: facultyLoading } = useCurrentProfile();
 
   const { data: recentSubmissions, isLoading: submissionsLoading } =
     useFrappeGetCall<{ message: RecentSubmission[] }>(
@@ -62,7 +62,7 @@ export default function FacultyDashboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">
-          Welcome back, {faculty?.full_name?.split(" ")[0] ?? "Faculty"}.
+          Welcome back, {profile?.full_name?.split(" ")[0] ?? "Faculty"}.
         </h1>
         <p className="text-sm text-muted-foreground mt-1">{today}</p>
       </div>

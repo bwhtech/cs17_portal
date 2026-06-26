@@ -9,6 +9,7 @@
  "field_order": [
   "naming_series",
   "section_break_juvy",
+  "profile_type",
   "full_name",
   "first_name",
   "last_name",
@@ -24,6 +25,14 @@
  ],
  "fields": [
   {
+   "fieldname": "profile_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Profile Type",
+   "options": "Student\nFaculty",
+   "reqd": 1
+  },
+  {
    "fieldname": "full_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -31,12 +40,12 @@
    "read_only": 1
   },
   {
+   "depends_on": "eval:doc.profile_type === 'Student'",
    "fieldname": "cohort",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Cohort",
-   "options": "CS17 Cohort",
-   "reqd": 1
+   "options": "CS17 Cohort"
   },
   {
    "fieldname": "user",
@@ -82,7 +91,7 @@
    "fieldtype": "Select",
    "hidden": 1,
    "label": "Naming Series",
-   "options": "CS17.{cohort}.YYYY.###"
+   "options": "CS17P.YYYY.###"
   },
   {
    "fieldname": "section_break_juvy",
@@ -94,12 +103,14 @@
   },
   {
    "fetch_from": "user.mobile_no",
+   "fetch_if_empty": 1,
    "fieldname": "primary_phone",
    "fieldtype": "Data",
    "label": "Mobile No"
   },
   {
    "fetch_from": "user.phone",
+   "fetch_if_empty": 1,
    "fieldname": "alternate_phone",
    "fieldtype": "Data",
    "label": "Phone"
@@ -114,10 +125,10 @@
    "link_fieldname": "student"
   }
  ],
- "modified": "2026-06-23 16:25:31.779892",
+ "modified": "2026-06-26 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
- "name": "CS17 Student",
+ "name": "CS17 Profile",
  "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [

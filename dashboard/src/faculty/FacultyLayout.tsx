@@ -9,7 +9,7 @@ const isGuest = (user: string | undefined) => !user || user === "Guest";
 export default function FacultyLayout() {
   const boot = (window as any).frappe_boot;
   const currentUser = boot?.current_user;
-  const isFaculty = !!boot?.faculty;
+  const isFaculty = boot?.profile?.profile_type === "Faculty";
   const location = useLocation();
 
   useEffect(() => {

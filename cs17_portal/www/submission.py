@@ -20,19 +20,19 @@ def get_context(context):
 	context.due_date_display = format_datetime(assignment.due_date)
 	context.is_overdue = now_datetime() > assignment.due_date
 
-	students = frappe.get_list(
-		"CS17 Student",
-		filters={"user": frappe.session.user},
+	profiles = frappe.get_list(
+		"CS17 Profile",
+		filters={"user": frappe.session.user, "profile_type": "Student"},
 		fields=["name"],
 		limit=1,
 		ignore_permissions=True,
 	)
 
 	context.existing_submission = None
-	if students:
+	if profiles:
 		submissions = frappe.get_list(
 			"CS17 Assignment Submission",
-			filters={"student": students[0].name, "assignment": assignment_name},
+			filters={"student": profiles[0].name, "assignment": assignment_name},
 			fields=["name", "submitted_at"],
 			limit=1,
 			ignore_permissions=True,

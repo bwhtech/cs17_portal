@@ -11,7 +11,7 @@ import {
   ExternalLink,
   MessageSquare,
 } from "lucide-react";
-import { useCurrentFaculty } from "@/hooks/useCurrentFaculty";
+import { useCurrentProfile } from "@/hooks/useCurrentProfile";
 import { cn } from "@/lib/utils";
 import logoUrl from "@/assets/CS17.svg";
 
@@ -54,7 +54,7 @@ const navSections = [
 
 export default function FacultySidebar() {
   const location = useLocation();
-  const { faculty } = useCurrentFaculty();
+  const { profile } = useCurrentProfile();
 
   return (
     <aside className="w-56 shrink-0 border-r border-border bg-background flex flex-col h-screen sticky top-0">
@@ -67,20 +67,20 @@ export default function FacultySidebar() {
 
       <div className="px-4 py-4 border-b border-border">
         <div className="flex items-center gap-3">
-          {faculty?.profile_picture ? (
+          {profile?.profile_picture ? (
             <img
-              src={faculty.profile_picture}
-              alt={faculty.full_name}
+              src={profile.profile_picture}
+              alt={profile.full_name}
               className="w-9 h-9 rounded-full object-cover shrink-0"
             />
           ) : (
             <div className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold shrink-0">
-              {faculty?.full_name?.[0] ?? "?"}
+              {profile?.full_name?.[0] ?? "?"}
             </div>
           )}
           <div className="min-w-0">
             <p className="text-sm font-medium truncate">
-              {faculty?.full_name ?? "Loading..."}
+              {profile?.full_name ?? "Loading..."}
             </p>
             <p className="text-xs text-muted-foreground">Faculty</p>
           </div>

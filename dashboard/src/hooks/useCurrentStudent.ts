@@ -7,7 +7,9 @@ interface Student {
 
 export function useCurrentStudent() {
   const boot = (window as any).frappe_boot;
-  const student: Student | null = boot?.student ?? null;
+  const profile = boot?.profile;
+  const student: Student | null =
+    profile?.profile_type === "Student" ? profile : null;
 
   return {
     student,
