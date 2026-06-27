@@ -12,24 +12,6 @@ def get_user_profile() -> dict | None:
 	)
 
 
-def get_current_profile_name(profile_type: str) -> str | None:
-	"""Return the current user's profile name for the given type, or None."""
-	return frappe.db.get_value(
-		"CS17 Profile",
-		{"user": frappe.session.user, "profile_type": profile_type},
-		"name",
-	)
-
-
-def validate_membership(profile_type: str) -> None:
-	"""Throw if the current user has no profile of the given type."""
-	if not get_current_profile_name(profile_type):
-		frappe.throw(
-			_("No {0} profile found for current user").format(profile_type),
-			frappe.PermissionError,
-		)
-
-
 @frappe.whitelist()
 def get_recent_submissions(faculty: str, limit: int = 5) -> list:
 	profile = frappe.get_doc("CS17 Profile", faculty)
@@ -45,3 +27,19 @@ def get_recent_submissions(faculty: str, limit: int = 5) -> list:
 		limit=limit,
 		ignore_permissions=True,
 	)
+
+
+def get_current_profile_name(profile_type: str) -> str | None:
+	return frappe.db.get_value(
+		"CS17 Profile",
+		{"user": frappe.session.user, "profile_type": profile_type},
+		"name",
+	)
+
+
+def validate_membership(profile_type: str) -> None:
+	if not get_current_profile_name(profile_type):
+		frappe.throw(
+			_("No {0} profile found for current user").format(profile_type),
+			frappe.PermissionError,
+		)

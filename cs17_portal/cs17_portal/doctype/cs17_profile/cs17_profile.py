@@ -22,12 +22,19 @@ class CS17Profile(Document):
 		first_name: DF.Data
 		full_name: DF.Data | None
 		last_name: DF.Data
-		naming_series: DF.Literal["CS17P.YYYY.###"]
+		naming_series: DF.Literal["CS17-STU-{cohort}-.###", "CS17-FAC.###"]
 		primary_phone: DF.Data | None
 		profile_picture: DF.AttachImage | None
 		profile_type: DF.Literal["Student", "Faculty"]
 		user: DF.Link | None
 	# end: auto-generated types
+
+	def autoname(self):
+		if self.profile_type == "Student":
+			cohort = self.cohort or "GEN"
+			self.name = frappe.model.naming.make_autoname(f"CS17-STU-{cohort}-.###")
+		else:
+			self.name = frappe.model.naming.make_autoname("CS17-FAC-.###")
 
 	def validate(self):
 		self.full_name = " ".join([name for name in [self.first_name, self.last_name] if name])

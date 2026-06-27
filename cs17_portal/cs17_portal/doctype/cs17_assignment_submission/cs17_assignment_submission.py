@@ -5,6 +5,8 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
+from cs17_portal.api import get_current_profile_name
+
 
 class CS17AssignmentSubmission(Document):
 	# begin: auto-generated types
@@ -36,8 +38,6 @@ class CS17AssignmentSubmission(Document):
 
 @frappe.whitelist()
 def submit_assignment(assignment: str, file_url: str) -> dict:
-	from cs17_portal.api import get_current_profile_name
-
 	student = get_current_profile_name("Student")
 	if not student:
 		frappe.throw(_("No Student profile found for current user"), frappe.PermissionError)
@@ -57,8 +57,6 @@ def submit_assignment(assignment: str, file_url: str) -> dict:
 
 @frappe.whitelist()
 def edit_submission(submission: str, file_url: str) -> dict:
-	from cs17_portal.api import get_current_profile_name
-
 	student = get_current_profile_name("Student")
 	sub_doc = frappe.get_doc("CS17 Assignment Submission", submission)
 	if not student or sub_doc.student != student:

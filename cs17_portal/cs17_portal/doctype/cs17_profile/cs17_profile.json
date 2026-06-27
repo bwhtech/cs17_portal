@@ -91,7 +91,7 @@
    "fieldtype": "Select",
    "hidden": 1,
    "label": "Naming Series",
-   "options": "CS17P.YYYY.###"
+   "options": "CS17-STU-{cohort}-.###\nCS17-FAC-.###"
   },
   {
    "fieldname": "section_break_juvy",
@@ -125,8 +125,8 @@
    "link_fieldname": "student"
   }
  ],
- "modified": "2026-06-26 00:00:00.000000",
- "modified_by": "Administrator",
+ "modified": "2026-06-27 12:31:02.322584",
+ "modified_by": "ishadewangan055@gmail.com",
  "module": "CS17 Portal",
  "name": "CS17 Profile",
  "naming_rule": "By \"Naming Series\" field",
