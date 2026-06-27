@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 
 
@@ -37,4 +38,26 @@ class CS17Profile(Document):
 			self.name = frappe.model.naming.make_autoname("CS17-FAC-.###")
 
 	def validate(self):
-		self.full_name = " ".join([name for name in [self.first_name, self.last_name] if name])
+		self.set_full_name()
+		self.validate_one_profile_per_user()
+
+	def set_full_name(self):
+		self.full_name = " ".join(name for name in [self.first_name, self.last_name] if name)
+
+	def validate_one_profile_per_user(self):
+		# A user is either a student or faculty, never both, so they may hold only one profile.
+		if not self.user:
+			return
+
+		existing = frappe.db.get_value(
+			"CS17 Profile",
+			{"user": self.user, "name": ["!=", self.name]},
+			["name", "profile_type"],
+			as_dict=True,
+		)
+		if existing:
+			frappe.throw(
+				_("{0} already has a {1} profile ({2}) and cannot have another.").format(
+					frappe.bold(self.user), existing.profile_type, existing.name
+				)
+			)

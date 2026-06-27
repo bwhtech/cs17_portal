@@ -51,7 +51,8 @@
    "fieldname": "user",
    "fieldtype": "Link",
    "label": "User",
-   "options": "User"
+   "options": "User",
+   "unique": 1
   },
   {
    "fieldname": "date_of_birth",
