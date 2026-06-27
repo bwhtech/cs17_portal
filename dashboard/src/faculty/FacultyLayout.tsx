@@ -1,26 +1,13 @@
-import { useEffect } from "react";
-import { Outlet, useLocation, Navigate } from "react-router-dom";
+import { Outlet, Navigate } from "react-router-dom";
+import { useAuthGuard } from "@/hooks/useAuthGuard";
 import FacultySidebar from "@/faculty/FacultySidebar";
 import FacultyTopBar from "@/faculty/FacultyTopBar";
 import { BreadcrumbProvider } from "@/context/BreadcrumbContext";
 
-const isGuest = (user: string | undefined) => !user || user === "Guest";
-
 export default function FacultyLayout() {
-  const boot = (window as any).frappe_boot;
-  const currentUser = boot?.current_user;
-  const isFaculty = boot?.profile?.profile_type === "Faculty";
-  const location = useLocation();
+  const { isGuest, isFaculty } = useAuthGuard();
 
-  useEffect(() => {
-    if (isGuest(currentUser)) {
-      const redirectTo = encodeURIComponent(location.pathname + location.search);
-      window.location.replace(`/login?redirect-to=${redirectTo}`);
-    }
-  }, [currentUser]);
-
-  if (isGuest(currentUser)) return null;
-
+  if (isGuest) return null;
   if (!isFaculty) return <Navigate to="/" replace />;
 
   return (

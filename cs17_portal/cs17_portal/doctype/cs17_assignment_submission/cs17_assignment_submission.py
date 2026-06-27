@@ -1,7 +1,8 @@
 # Copyright (c) 2026, developers@bwh.tech and contributors
 # For license information, please see license.txt
 
-# import frappe
+import frappe
+from frappe import _
 from frappe.model.document import Document
 
 
@@ -24,4 +25,45 @@ class CS17AssignmentSubmission(Document):
 		submitted_at: DF.Datetime | None
 	# end: auto-generated types
 
-	pass
+	def validate(self):
+		student_user = frappe.db.get_value("CS17 Profile", self.student, "user")
+		if frappe.session.user != student_user:
+			return
+		due_date = frappe.db.get_value("CS17 Assignment", self.assignment, "due_date")
+		if due_date and frappe.utils.now_datetime() > due_date:
+			frappe.throw(_("The deadline for this assignment has passed."))
+
+
+@frappe.whitelist()
+def submit_assignment(assignment: str, file_url: str) -> dict:
+	from cs17_portal.api import get_current_profile_name
+
+	student = get_current_profile_name("Student")
+	if not student:
+		frappe.throw(_("No Student profile found for current user"), frappe.PermissionError)
+	doc = frappe.get_doc(
+		{
+			"doctype": "CS17 Assignment Submission",
+			"naming_series": "SUB-.###.{assignment}",
+			"student": student,
+			"assignment": assignment,
+			"submission_document": file_url,
+			"submitted_at": frappe.utils.now_datetime(),
+		}
+	)
+	doc.insert(ignore_permissions=True)
+	return {"name": doc.name}
+
+
+@frappe.whitelist()
+def edit_submission(submission: str, file_url: str) -> dict:
+	from cs17_portal.api import get_current_profile_name
+
+	student = get_current_profile_name("Student")
+	sub_doc = frappe.get_doc("CS17 Assignment Submission", submission)
+	if not student or sub_doc.student != student:
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	sub_doc.submission_document = file_url
+	sub_doc.submitted_at = frappe.utils.now_datetime()
+	sub_doc.save(ignore_permissions=True)
+	return {"name": sub_doc.name}

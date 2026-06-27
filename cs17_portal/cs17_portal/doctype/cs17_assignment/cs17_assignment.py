@@ -27,9 +27,9 @@ class CS17Assignment(Document):
 	# end: auto-generated types
 
 	def before_insert(self):
-		from cs17_portal.api import _get_profile_or_throw
+		from cs17_portal.api import validate_membership
 
-		_get_profile_or_throw("Faculty")
+		validate_membership("Faculty")
 
 	def validate(self):
 		if self.assignment_type == "Not Graded":

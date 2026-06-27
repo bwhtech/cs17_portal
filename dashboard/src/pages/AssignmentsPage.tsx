@@ -26,7 +26,7 @@ export default function AssignmentsPage() {
     "CS17 Assignment Submission",
     {
       filters: [["student", "=", student?.name ?? ""]],
-      fields: ["name", "assignment", "submitted_at", "modified"],
+      fields: ["name", "assignment", "submitted_at"],
       limit: 100,
     },
     student?.name ? undefined : null,

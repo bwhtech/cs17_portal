@@ -25,7 +25,6 @@ interface Submission {
   name: string;
   assignment: string;
   submitted_at: string;
-  modified: string | null;
 }
 
 interface Props {
@@ -115,15 +114,7 @@ export default function AssignmentTable({
                   )}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {submission ? (
-                    <span>
-                      {submission.modified &&
-                      new Date(submission.modified).getTime() >
-                        new Date(submission.submitted_at).getTime() + 5000
-                        ? formatDateTime(submission.modified)
-                        : formatDateTime(submission.submitted_at)}
-                    </span>
-                  ) : null}
+                  {submission ? formatDateTime(submission.submitted_at) : null}
                 </TableCell>
                 <TableCell className="text-right">
                   {status === "closed" && isGraded && onViewGrade && a.assignment_type !== "Not Graded" ? (
