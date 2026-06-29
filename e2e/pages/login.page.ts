@@ -11,7 +11,9 @@ export class LoginPage {
 		this.page = page;
 		this.emailInput = page.locator("#login_email");
 		this.passwordInput = page.locator("#login_password");
-		this.submitButton = page.locator("button.btn-login");
+		this.submitButton = page.locator(
+			"button.btn-login:not(.btn-login-with-email-link)",
+		);
 		this.errorMessage = page.locator(".msgprint, .alert-danger").first();
 	}
 
