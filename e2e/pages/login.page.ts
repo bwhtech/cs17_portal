@@ -17,7 +17,8 @@ export class LoginPage {
 
 	async goto(): Promise<void> {
 		await this.page.goto("/login");
-		await this.page.waitForLoadState("networkidle");
+		await this.emailInput.waitFor({ state: "visible" });
+		await this.passwordInput.waitFor({ state: "visible" });
 	}
 
 	async fillCredentials(email: string, password: string): Promise<void> {
