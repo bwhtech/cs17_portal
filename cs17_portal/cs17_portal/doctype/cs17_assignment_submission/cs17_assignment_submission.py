@@ -75,7 +75,7 @@ def submit_assignment(assignment: str, file_url: str) -> dict:
 	doc = frappe.get_doc(
 		{
 			"doctype": "CS17 Assignment Submission",
-			"naming_series": "SUB-.###.{assignment}",
+			"naming_series": "SUB.-.{assignment}.-.###",
 			"student": student,
 			"assignment": assignment,
 			"submitted_at": frappe.utils.now_datetime(),

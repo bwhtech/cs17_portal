@@ -2,11 +2,6 @@ import * as fs from "fs";
 import { test, expect, Page } from "@playwright/test";
 import {
 	CS17Assignment,
-	cleanupTestAssignments,
-	cleanupTestCohorts,
-	cleanupTestProfiles,
-	cleanupTestSubmissions,
-	cleanupTestUsers,
 	createTestAssignment,
 	ensureSessionFaculty,
 } from "../helpers/cs17";
@@ -76,13 +71,6 @@ test.describe("Student submission types", () => {
 		});
 	});
 
-	test.afterAll(async ({ request }) => {
-		await cleanupTestSubmissions(request);
-		await cleanupTestAssignments(request);
-		await cleanupTestProfiles(request);
-		await cleanupTestUsers(request);
-		await cleanupTestCohorts(request);
-	});
 
 	test("rejects a non-PDF and accepts a PDF for a PDF assignment", async ({ page }) => {
 		const bad = await submitAsStudent(page, pdf.name, "/files/report.png");

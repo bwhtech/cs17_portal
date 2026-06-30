@@ -1,7 +1,5 @@
 import { test, expect } from "@playwright/test";
 import {
-	cleanupTestProfiles,
-	cleanupTestUsers,
 	createTestProfile,
 	createTestUser,
 	deleteTestProfile,
@@ -9,13 +7,8 @@ import {
 	getUserProfile,
 } from "../helpers/cs17";
 
-test.describe("CS17 Profile", () => {
-	// Profiles must go before users: a User can't be deleted while a profile links to it.
-	test.afterAll(async ({ request }) => {
-		await cleanupTestProfiles(request);
-		await cleanupTestUsers(request);
-	});
 
+test.describe("CS17 Profile", () => {
 	test("derives full_name and uses the student naming series", async ({
 		request,
 	}) => {

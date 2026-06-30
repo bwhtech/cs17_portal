@@ -36,6 +36,17 @@ export default defineConfig({
 		{
 			name: "setup",
 			testMatch: /auth\.setup\.ts/,
+			teardown: "cleanup",
+			use: {
+				...devices["Desktop Chrome"],
+				launchOptions: {
+					args: [`--host-resolver-rules=MAP ${SITE_DOMAIN} 127.0.0.1`],
+				},
+			},
+		},
+		{
+			name: "cleanup",
+			testMatch: /global\.teardown\.ts/,
 			use: {
 				...devices["Desktop Chrome"],
 				launchOptions: {
