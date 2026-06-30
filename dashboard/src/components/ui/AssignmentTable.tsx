@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import SubmitAssignmentDialog from "@/components/ui/SubmitAssignmentDialog";
+import SubmissionPreviewDialog from "@/components/ui/SubmissionPreviewDialog";
 import { formatDateTime } from "@/lib/dayjs";
 import { useNavigate } from "react-router-dom";
 
@@ -19,12 +20,15 @@ interface Assignment {
   due_date: string;
   max_marks: number;
   assignment_type?: string;
+  submission_type?: string;
 }
 
 interface Submission {
   name: string;
   assignment: string;
   submitted_at: string;
+  submission_document?: string;
+  submission_url?: string;
 }
 
 interface Props {
@@ -57,6 +61,12 @@ export default function AssignmentTable({
     null,
   );
   const [editSubmission, setEditSubmission] = useState<Submission | null>(null);
+  const [previewAssignment, setPreviewAssignment] = useState<Assignment | null>(
+    null,
+  );
+  const [previewSubmission, setPreviewSubmission] = useState<Submission | null>(
+    null,
+  );
   const navigate = useNavigate();
 
   return (
@@ -117,36 +127,50 @@ export default function AssignmentTable({
                   {submission ? formatDateTime(submission.submitted_at) : null}
                 </TableCell>
                 <TableCell className="text-right">
-                  {status === "closed" && isGraded && onViewGrade && a.assignment_type !== "Not Graded" ? (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => onViewGrade(a.name)}
-                    >
-                      View Grade
-                    </Button>
-                  ) : status === "submitted" ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setDialogAssignment(a);
-                        setEditSubmission(submission);
-                      }}
-                    >
-                      Edit
-                    </Button>
-                  ) : status === "pending" ? (
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setDialogAssignment(a);
-                        setEditSubmission(null);
-                      }}
-                    >
-                      Submit
-                    </Button>
-                  ) : null}
+                  <div className="flex items-center justify-end gap-2">
+                    {submission && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setPreviewAssignment(a);
+                          setPreviewSubmission(submission);
+                        }}
+                      >
+                        Preview
+                      </Button>
+                    )}
+                    {status === "closed" && isGraded && onViewGrade && a.assignment_type !== "Not Graded" ? (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => onViewGrade(a.name)}
+                      >
+                        View Grade
+                      </Button>
+                    ) : status === "submitted" ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setDialogAssignment(a);
+                          setEditSubmission(submission);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                    ) : status === "pending" ? (
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setDialogAssignment(a);
+                          setEditSubmission(null);
+                        }}
+                      >
+                        Submit
+                      </Button>
+                    ) : null}
+                  </div>
                 </TableCell>
               </TableRow>
             );
@@ -170,6 +194,24 @@ export default function AssignmentTable({
             setEditSubmission(null);
             onSubmitSuccess();
           }}
+        />
+      )}
+
+      {previewAssignment && (
+        <SubmissionPreviewDialog
+          open={!!previewAssignment}
+          onOpenChange={(open) => {
+            if (!open) {
+              setPreviewAssignment(null);
+              setPreviewSubmission(null);
+            }
+          }}
+          title={previewAssignment.title}
+          submissionType={previewAssignment.submission_type}
+          fileUrl={
+            previewSubmission?.submission_document ||
+            previewSubmission?.submission_url
+          }
         />
       )}
     </>

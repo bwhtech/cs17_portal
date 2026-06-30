@@ -8,10 +8,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useFrappeFileUpload, useFrappePostCall } from "frappe-react-sdk";
+import { getSubmissionConfig, isSubmissionValid } from "@/lib/submissionTypes";
 
 interface Assignment {
   name: string;
   title: string;
+  submission_type?: string;
 }
 
 interface Submission {
@@ -35,7 +37,12 @@ export default function SubmitAssignmentDialog({
   existingSubmission,
   onSuccess,
 }: Props) {
+  const submissionType = assignment.submission_type ?? "Any";
+  const config = getSubmissionConfig(submissionType);
+  const isUrl = submissionType === "URL";
   const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [url, setUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
   const { upload, loading: uploading } = useFrappeFileUpload();
   const { call: submitCall, loading: submitting } = useFrappePostCall(
@@ -47,39 +54,60 @@ export default function SubmitAssignmentDialog({
 
   const isEdit = !!existingSubmission;
   const loading = uploading || submitting || editing;
+  const ready = isUrl ? url.trim().length > 0 : !!file;
 
-  function handleOpenChange(open: boolean) {
-    if (!open) {
-      setFile(null);
-      setError(null);
+  function clearPreview() {
+    setPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+  }
+
+  function reset() {
+    setFile(null);
+    setUrl("");
+    setError(null);
+    clearPreview();
+  }
+
+  function handleOpenChange(next: boolean) {
+    if (!next) reset();
+    onOpenChange(next);
+  }
+
+  function handleFileChange(selected: File | null) {
+    setError(null);
+    setFile(selected);
+    clearPreview();
+    if (selected && submissionType === "Image") {
+      setPreview(URL.createObjectURL(selected));
     }
-    onOpenChange(open);
+  }
+
+  async function save(fileUrl: string) {
+    if (isEdit) {
+      await editCall({ submission: existingSubmission!.name, file_url: fileUrl });
+    } else {
+      await submitCall({ assignment: assignment.name, file_url: fileUrl });
+    }
+    reset();
+    onOpenChange(false);
+    onSuccess?.();
   }
 
   async function handleSubmit() {
-    if (!file) return;
     setError(null);
-
+    if (!isSubmissionValid(submissionType, file, url)) {
+      setError(config.error);
+      return;
+    }
     try {
-      const uploaded = await upload(file, { isPrivate: true });
-
-      if (isEdit) {
-        await editCall({
-          submission: existingSubmission!.name,
-          file_url: uploaded.file_url,
-        });
-      } else {
-        await submitCall({
-          assignment: assignment.name,
-          file_url: uploaded.file_url,
-        });
-      }
-
-      setFile(null);
-      onOpenChange(false);
-      onSuccess?.();
+      const fileUrl = isUrl
+        ? url.trim()
+        : (await upload(file!, { isPrivate: true })).file_url;
+      await save(fileUrl);
     } catch (err: any) {
-      setError(err?.message ?? "Submission failed. Please try again.");
+      setError(err?.message ?? "Something went wrong. Please try again.");
     }
   }
 
@@ -93,26 +121,65 @@ export default function SubmitAssignmentDialog({
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
-          <Input
-            type="file"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          />
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              {config.label}
+            </label>
+            {isUrl ? (
+              <Input
+                type="url"
+                placeholder="https://example.com/your-work"
+                value={url}
+                onChange={(e) => {
+                  setError(null);
+                  setUrl(e.target.value);
+                }}
+              />
+            ) : (
+              <Input
+                type="file"
+                accept={config.accept}
+                onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
+              />
+            )}
+            <p className="mt-2.5 text-xs text-muted-foreground">{config.help}</p>
+          </div>
+
+          {preview && (
+            <img
+              src={preview}
+              alt="Preview"
+              className="max-h-40 rounded-md border border-border object-contain"
+            />
+          )}
+
           {error && <p className="text-sm text-destructive">{error}</p>}
+
           <Button
             onClick={handleSubmit}
-            disabled={!file || loading}
+            disabled={!ready || loading}
             className="w-full"
           >
-            {uploading
-              ? "Uploading…"
-              : submitting || editing
-              ? "Submitting…"
-              : isEdit
-              ? "Update Submission"
-              : "Submit Assignment"}
+            {buttonLabel({ uploading, submitting, editing, isEdit })}
           </Button>
         </div>
       </DialogContent>
     </Dialog>
   );
+}
+
+function buttonLabel({
+  uploading,
+  submitting,
+  editing,
+  isEdit,
+}: {
+  uploading: boolean;
+  submitting: boolean;
+  editing: boolean;
+  isEdit: boolean;
+}): string {
+  if (uploading) return "Uploading…";
+  if (submitting || editing) return "Submitting…";
+  return isEdit ? "Update Submission" : "Submit Assignment";
 }

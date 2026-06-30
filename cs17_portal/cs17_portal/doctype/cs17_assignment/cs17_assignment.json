@@ -15,6 +15,7 @@
   "remarks",
   "title",
   "cohort",
+  "submission_type",
   "max_marks",
   "column_break_vtqn",
   "publish_on",
@@ -47,6 +48,14 @@
    "in_list_view": 1,
    "label": "Cohort",
    "options": "CS17 Cohort",
+   "reqd": 1
+  },
+  {
+   "default": "Any",
+   "fieldname": "submission_type",
+   "fieldtype": "Select",
+   "label": "Submission Type",
+   "options": "Any\nPDF\nURL\nImage\nZIP",
    "reqd": 1
   },
   {

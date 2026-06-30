@@ -17,6 +17,7 @@
   "assignment_title",
   "column_break_hiss",
   "submission_document",
+  "submission_url",
   "submitted_at"
  ],
  "fields": [
@@ -45,8 +46,13 @@
    "fieldname": "submission_document",
    "fieldtype": "Attach",
    "in_list_view": 1,
-   "label": "Submission Document",
-   "reqd": 1
+   "label": "Submission Document"
+  },
+  {
+   "fieldname": "submission_url",
+   "fieldtype": "Data",
+   "label": "Submission URL",
+   "options": "URL"
   },
   {
    "fieldname": "submitted_at",

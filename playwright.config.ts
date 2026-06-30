@@ -2,6 +2,8 @@ import { defineConfig, devices } from "@playwright/test";
 import path from "path";
 
 const authFile = path.join(__dirname, "e2e", ".auth", "user.json");
+const studentAuthFile = path.join(__dirname, "e2e", ".auth", "student.json");
+const studentSpecs = /student-submission\.spec\.ts/;
 
 const SITE_HOST = process.env.SITE_HOST || "cs17.portal:8000";
 const SITE_DOMAIN = SITE_HOST.split(":")[0];
@@ -42,7 +44,19 @@ export default defineConfig({
 			},
 		},
 		{
+			name: "student-setup",
+			testMatch: /student\.setup\.ts/,
+			use: {
+				...devices["Desktop Chrome"],
+				launchOptions: {
+					args: [`--host-resolver-rules=MAP ${SITE_DOMAIN} 127.0.0.1`],
+				},
+			},
+			dependencies: ["setup"],
+		},
+		{
 			name: "chromium",
+			testIgnore: studentSpecs,
 			use: {
 				...devices["Desktop Chrome"],
 				storageState: authFile,
@@ -53,7 +67,20 @@ export default defineConfig({
 			dependencies: ["setup"],
 		},
 		{
+			name: "chromium-student",
+			testMatch: studentSpecs,
+			use: {
+				...devices["Desktop Chrome"],
+				storageState: studentAuthFile,
+				launchOptions: {
+					args: [`--host-resolver-rules=MAP ${SITE_DOMAIN} 127.0.0.1`],
+				},
+			},
+			dependencies: ["student-setup"],
+		},
+		{
 			name: "firefox",
+			testIgnore: studentSpecs,
 			use: {
 				...devices["Desktop Firefox"],
 				storageState: authFile,
@@ -62,6 +89,7 @@ export default defineConfig({
 		},
 		{
 			name: "webkit",
+			testIgnore: studentSpecs,
 			use: {
 				...devices["Desktop Safari"],
 				storageState: authFile,
