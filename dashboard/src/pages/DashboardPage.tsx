@@ -87,7 +87,6 @@ export default function DashboardPage() {
   }));
 
   const now = new Date();
-
   const upcomingAssignments = (assignments ?? [])
     .filter((a) => new Date(a.due_date) >= now)
     .slice(0, 3);

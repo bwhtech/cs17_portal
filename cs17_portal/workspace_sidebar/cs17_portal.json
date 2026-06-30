@@ -4,7 +4,7 @@
  "docstatus": 0,
  "doctype": "Workspace Sidebar",
  "header_icon": "graduation-cap",
- "idx": 0,
+ "idx": 4,
  "items": [
   {
    "child": 0,
@@ -23,20 +23,8 @@
    "collapsible": 1,
    "indent": 0,
    "keep_closed": 0,
-   "label": "Student",
-   "link_to": "CS17 Student",
-   "link_type": "DocType",
-   "open_in_new_tab": 1,
-   "show_arrow": 0,
-   "type": "Link"
-  },
-  {
-   "child": 0,
-   "collapsible": 1,
-   "indent": 0,
-   "keep_closed": 0,
-   "label": "Faculty",
-   "link_to": "CS17 Faculty",
+   "label": "Profile",
+   "link_to": "CS17 Profile",
    "link_type": "DocType",
    "open_in_new_tab": 1,
    "show_arrow": 0,
@@ -115,7 +103,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-05-22 23:46:17.041476",
+ "modified": "2026-06-26 18:55:51.115492",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Portal",

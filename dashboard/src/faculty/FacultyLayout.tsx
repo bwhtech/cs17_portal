@@ -1,21 +1,21 @@
 import { Outlet, Navigate } from "react-router-dom";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
-import Sidebar from "@/components/ui/Sidebar";
-import TopBar from "@/components/ui/TopBar";
+import FacultySidebar from "@/faculty/FacultySidebar";
+import FacultyTopBar from "@/faculty/FacultyTopBar";
 import { BreadcrumbProvider } from "@/context/BreadcrumbContext";
 
-export default function Layout() {
+export default function FacultyLayout() {
   const { isGuest, isFaculty } = useAuthGuard();
 
   if (isGuest) return null;
-  if (isFaculty) return <Navigate to="/faculty" replace />;
+  if (!isFaculty) return <Navigate to="/" replace />;
 
   return (
     <BreadcrumbProvider>
       <div className="flex h-screen bg-background overflow-hidden">
-        <Sidebar />
+        <FacultySidebar />
         <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-          <TopBar />
+          <FacultyTopBar />
           <main className="flex-1 overflow-y-auto p-6">
             <Outlet />
           </main>

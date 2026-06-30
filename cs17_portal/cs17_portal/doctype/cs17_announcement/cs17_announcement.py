@@ -28,11 +28,11 @@ class CS17Announcement(Document):
 			self.send_announcement_email()
 
 	def send_announcement_email(self):
-		filters = {"user": ["is", "set"]}
+		filters = {"user": ["is", "set"], "profile_type": "Student"}
 		if self.cohort:
 			filters.update({"cohort": self.cohort})
 
-		user_names = frappe.get_all("CS17 Student", filters=filters, pluck="user")
+		user_names = frappe.get_all("CS17 Profile", filters=filters, pluck="user")
 		recipients = set(
 			frappe.get_all(
 				"User", filters={"name": ["in", user_names], "email": ["is", "set"]}, pluck="email"

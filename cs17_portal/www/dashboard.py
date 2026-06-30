@@ -26,19 +26,18 @@ def get_context_for_dev():
 
 def get_boot():
 	current_user = frappe.session.user
-	student = None
+	profile = None
 
 	if current_user and current_user != "Guest":
-		try:
-			doc = frappe.get_doc("CS17 Student", {"user": current_user})
-			student = {
-				"name": doc.name,
-				"full_name": doc.full_name,
-				"cohort": doc.cohort,
-				"profile_picture": doc.profile_picture,
-			}
-		except frappe.DoesNotExistError:
-			student = None
+		profiles = frappe.get_list(
+			"CS17 Profile",
+			filters={"user": current_user},
+			fields=["name", "full_name", "profile_type", "cohort", "profile_picture"],
+			limit=1,
+			ignore_permissions=True,
+		)
+		if profiles:
+			profile = profiles[0]
 
 	return frappe._dict(
 		{
@@ -47,6 +46,6 @@ def get_boot():
 			"read_only_mode": frappe.flags.read_only,
 			"system_timezone": get_system_timezone(),
 			"current_user": current_user,
-			"student": student,
+			"profile": profile,
 		}
 	)

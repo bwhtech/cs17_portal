@@ -39,10 +39,10 @@ export default function SubmitAssignmentDialog({
   const [error, setError] = useState<string | null>(null);
   const { upload, loading: uploading } = useFrappeFileUpload();
   const { call: submitCall, loading: submitting } = useFrappePostCall(
-    "cs17_portal.api.submit_assignment"
+    "cs17_portal.cs17_portal.doctype.cs17_assignment_submission.cs17_assignment_submission.submit_assignment"
   );
   const { call: editCall, loading: editing } = useFrappePostCall(
-    "cs17_portal.api.edit_submission"
+    "cs17_portal.cs17_portal.doctype.cs17_assignment_submission.cs17_assignment_submission.edit_submission"
   );
 
   const isEdit = !!existingSubmission;
