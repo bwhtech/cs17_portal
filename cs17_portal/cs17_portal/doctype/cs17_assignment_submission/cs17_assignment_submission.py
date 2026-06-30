@@ -11,6 +11,9 @@ from cs17_portal.api import get_current_profile_name
 
 
 class CS17AssignmentSubmission(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:

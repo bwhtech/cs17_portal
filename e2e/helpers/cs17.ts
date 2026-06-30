@@ -57,24 +57,6 @@ export async function deleteTestProfile(
 	await deleteDoc(request, "CS17 Profile", name);
 }
 
-export async function cleanupTestProfiles(
-	request: APIRequestContext,
-): Promise<void> {
-	const profiles = await getList<CS17Profile>(request, "CS17 Profile", {
-		fields: ["name"],
-		filters: { first_name: TEST_FIRST_NAME },
-		limit: 200,
-	});
-
-	for (const profile of profiles) {
-		try {
-			await deleteTestProfile(request, profile.name);
-		} catch (error) {
-			console.warn(`Failed to delete profile ${profile.name}:`, error);
-		}
-	}
-}
-
 export async function createTestUser(
 	request: APIRequestContext,
 ): Promise<{ name: string; email: string }> {
@@ -92,23 +74,11 @@ export async function createTestUser(
 	return { name: user.name, email };
 }
 
-// Profiles linked to these users must be removed first to avoid LinkExistsError.
-export async function cleanupTestUsers(
+export async function deleteTestUser(
 	request: APIRequestContext,
+	name: string,
 ): Promise<void> {
-	const users = await getList<{ name: string }>(request, "User", {
-		fields: ["name"],
-		filters: { email: ["like", `%${TEST_USER_DOMAIN}`] },
-		limit: 200,
-	});
-
-	for (const user of users) {
-		try {
-			await deleteDoc(request, "User", user.name);
-		} catch (error) {
-			console.warn(`Failed to delete user ${user.name}:`, error);
-		}
-	}
+	await deleteDoc(request, "User", name);
 }
 
 export async function getProfileForUser(
@@ -171,23 +141,6 @@ export async function createTestCohort(
 		cohort_code: options.cohortCode ?? generateCohortCode(),
 		start_date: options.startDate ?? "2026-01-01",
 	});
-}
-
-export async function cleanupTestCohorts(
-	request: APIRequestContext,
-): Promise<void> {
-	const cohorts = await getList<CS17Cohort>(request, "CS17 Cohort", {
-		fields: ["name"],
-		filters: { cohort_code: ["like", `${TEST_COHORT_PREFIX}%`] },
-		limit: 200,
-	});
-	for (const cohort of cohorts) {
-		try {
-			await deleteDoc(request, "CS17 Cohort", cohort.name);
-		} catch (error) {
-			console.warn(`Failed to delete cohort ${cohort.name}:`, error);
-		}
-	}
 }
 
 // Assignment.before_insert requires the API session (Administrator) to be Faculty.

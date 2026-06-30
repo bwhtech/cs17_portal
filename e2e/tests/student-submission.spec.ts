@@ -2,6 +2,8 @@ import * as fs from "fs";
 import { test, expect, Page } from "@playwright/test";
 import {
 	CS17Assignment,
+	cleanupTestAssignments,
+	cleanupTestSubmissions,
 	createTestAssignment,
 	ensureSessionFaculty,
 } from "../helpers/cs17";
@@ -71,6 +73,11 @@ test.describe("Student submission types", () => {
 		});
 	});
 
+	test.afterAll(async ({ request }) => {
+		// Cohort and student belong to the student-setup project; leave them.
+		await cleanupTestSubmissions(request);
+		await cleanupTestAssignments(request);
+	});
 
 	test("rejects a non-PDF and accepts a PDF for a PDF assignment", async ({ page }) => {
 		const bad = await submitAsStudent(page, pdf.name, "/files/report.png");
