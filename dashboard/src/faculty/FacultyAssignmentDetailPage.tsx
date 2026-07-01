@@ -192,7 +192,7 @@ export default function FacultyAssignmentDetailPage() {
         <SubmissionPreviewDialog
           open={!!preview}
           onOpenChange={(open) => !open && setPreview(null)}
-          title={preview.full_name ?? preview.student}
+          title={`Submission: ${preview.full_name ?? preview.student}`}
           submissionType={assignment.submission_type}
           fileUrl={preview.submission_document || preview.submission_url}
         />
