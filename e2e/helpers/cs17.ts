@@ -308,7 +308,7 @@ export async function createTestFaculty(
 		new_password: password,
 		send_welcome_email: 0,
 		enabled: 1,
-		roles: [{ role: "CS17 Faculty" }, { role: "System Manager" }],
+		roles: [{ role: "System Manager" }],
 	});
 
 	const profile = await createTestProfile(request, {
