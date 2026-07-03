@@ -126,7 +126,7 @@ export interface TestStudent {
 }
 
 const TEST_COHORT_PREFIX = "E2E-";
-const TEST_ASSIGNMENT_PREFIX = "E2E Assignment";
+export const TEST_ASSIGNMENT_PREFIX = "E2E Assignment";
 
 export function generateCohortCode(): string {
 	const suffix = Date.now().toString().slice(-7);
@@ -185,6 +185,27 @@ export async function cleanupTestAssignments(
 	}
 }
 
+export interface CS17Submission {
+	name: string;
+	assignment: string;
+	student: string;
+	full_name?: string;
+	submission_document?: string | null;
+	submission_url?: string | null;
+}
+
+export async function createTestSubmission(
+	request: APIRequestContext,
+	options: { assignment: string; student: string; fileUrl?: string },
+): Promise<CS17Submission> {
+	return createDoc<CS17Submission>(request, "CS17 Assignment Submission", {
+		assignment: options.assignment,
+		student: options.student,
+		submission_document: options.fileUrl ?? "/files/report.pdf",
+		submitted_at: "2026-01-01 00:00:00",
+	});
+}
+
 export async function cleanupTestSubmissions(
 	request: APIRequestContext,
 ): Promise<void> {
@@ -202,6 +223,27 @@ export async function cleanupTestSubmissions(
 			await deleteDoc(request, "CS17 Assignment Submission", submission.name);
 		} catch (error) {
 			console.warn(`Failed to delete submission ${submission.name}:`, error);
+		}
+	}
+}
+
+export async function cleanupTestGrades(
+	request: APIRequestContext,
+): Promise<void> {
+	const grades = await getList<{ name: string }>(
+		request,
+		"CS17 Assignment Grade",
+		{
+			fields: ["name"],
+			filters: { full_name: ["like", `${TEST_FIRST_NAME} %`] },
+			limit: 500,
+		},
+	);
+	for (const grade of grades) {
+		try {
+			await deleteDoc(request, "CS17 Assignment Grade", grade.name);
+		} catch (error) {
+			console.warn(`Failed to delete grade ${grade.name}:`, error);
 		}
 	}
 }
@@ -245,4 +287,34 @@ export async function createTestStudent(
 	});
 
 	return { email, password, profileName: profile.name, cohort };
+}
+
+export interface TestFaculty {
+	email: string;
+	password: string;
+	profileName: string;
+}
+
+export async function createTestFaculty(
+	request: APIRequestContext,
+): Promise<TestFaculty> {
+	const suffix = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+	const email = `e2e-faculty-${suffix}${TEST_USER_DOMAIN}`;
+	const password = "e2e-Test-Pass-123";
+
+	await createDoc(request, "User", {
+		email,
+		first_name: TEST_FIRST_NAME,
+		new_password: password,
+		send_welcome_email: 0,
+		enabled: 1,
+		roles: [{ role: "CS17 Faculty" }, { role: "System Manager" }],
+	});
+
+	const profile = await createTestProfile(request, {
+		profileType: "Faculty",
+		user: email,
+	});
+
+	return { email, password, profileName: profile.name };
 }
