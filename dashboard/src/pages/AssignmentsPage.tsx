@@ -12,7 +12,7 @@ export default function AssignmentsPage() {
     "CS17 Assignment",
     {
       filters: [["cohort", "=", student?.cohort ?? ""], ["is_published", "=", 1]],
-      fields: ["name", "title", "due_date", "max_marks", "assignment_type"],
+      fields: ["name", "title", "due_date", "max_marks", "assignment_type", "submission_type"],
       orderBy: { field: "due_date", order: "desc" },
       limit: 100,
     },
@@ -26,7 +26,7 @@ export default function AssignmentsPage() {
     "CS17 Assignment Submission",
     {
       filters: [["student", "=", student?.name ?? ""]],
-      fields: ["name", "assignment", "submitted_at"],
+      fields: ["name", "assignment", "submitted_at", "submission_document", "submission_url"],
       limit: 100,
     },
     student?.name ? undefined : null,

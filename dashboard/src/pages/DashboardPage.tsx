@@ -28,7 +28,7 @@ export default function DashboardPage() {
     "CS17 Assignment",
     {
       filters: [["cohort", "=", student?.cohort ?? ""], ["is_published", "=", 1]],
-      fields: ["name", "title", "due_date", "max_marks", "assignment_type"],
+      fields: ["name", "title", "due_date", "max_marks", "assignment_type", "submission_type"],
       orderBy: { field: "creation", order: "desc" },
       limit: 20,
     },
@@ -42,7 +42,7 @@ export default function DashboardPage() {
     "CS17 Assignment Submission",
     {
       filters: [["student", "=", student?.name ?? ""]],
-      fields: ["name", "assignment", "submitted_at", "modified"],
+      fields: ["name", "assignment", "submitted_at", "modified", "submission_document", "submission_url"],
       limit: 100,
     },
     student?.name ? undefined : null,

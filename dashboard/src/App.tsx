@@ -8,6 +8,7 @@ import SettingsPage from "@/pages/SettingsPage";
 import AssignmentDetailPage from "@/pages/AssignmentDetailPage";
 import FacultyLayout from "@/faculty/FacultyLayout";
 import FacultyDashboardPage from "@/faculty/FacultyDashboardPage";
+import FacultySettingsPage from "@/faculty/FacultySettingsPage";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
 
           <Route path="/faculty" element={<FacultyLayout />}>
             <Route index element={<FacultyDashboardPage />} />
+            <Route path="settings" element={<FacultySettingsPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

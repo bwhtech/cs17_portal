@@ -1,19 +1,33 @@
 import { test, expect } from "@playwright/test";
 import {
-	cleanupTestProfiles,
-	cleanupTestUsers,
 	createTestProfile,
 	createTestUser,
 	deleteTestProfile,
+	deleteTestUser,
 	getProfileForUser,
 	getUserProfile,
 } from "../helpers/cs17";
 
 test.describe("CS17 Profile", () => {
-	// Profiles must go before users: a User can't be deleted while a profile links to it.
+	const createdProfiles: string[] = [];
+	const createdUsers: string[] = [];
+
 	test.afterAll(async ({ request }) => {
-		await cleanupTestProfiles(request);
-		await cleanupTestUsers(request);
+		// Profiles before users: a User can't be deleted while a profile links to it.
+		for (const name of createdProfiles) {
+			try {
+				await deleteTestProfile(request, name);
+			} catch (error) {
+				console.warn(`Failed to delete profile ${name}:`, error);
+			}
+		}
+		for (const name of createdUsers) {
+			try {
+				await deleteTestUser(request, name);
+			} catch (error) {
+				console.warn(`Failed to delete user ${name}:`, error);
+			}
+		}
 	});
 
 	test("derives full_name and uses the student naming series", async ({
@@ -24,6 +38,7 @@ test.describe("CS17 Profile", () => {
 			firstName: "E2E",
 			lastName: "Student-One",
 		});
+		createdProfiles.push(profile.name);
 
 		expect(profile.full_name).toBe("E2E Student-One");
 		expect(profile.name).toMatch(/^CS17-STU-/);
@@ -35,13 +50,19 @@ test.describe("CS17 Profile", () => {
 		const profile = await createTestProfile(request, {
 			profileType: "Faculty",
 		});
+		createdProfiles.push(profile.name);
 
 		expect(profile.name).toMatch(/^CS17-FAC-/);
 	});
 
 	test("rejects a second profile for the same user", async ({ request }) => {
 		const user = await createTestUser(request);
-		await createTestProfile(request, { profileType: "Student", user: user.name });
+		createdUsers.push(user.name);
+		const profile = await createTestProfile(request, {
+			profileType: "Student",
+			user: user.name,
+		});
+		createdProfiles.push(profile.name);
 
 		await expect(
 			createTestProfile(request, { profileType: "Faculty", user: user.name }),

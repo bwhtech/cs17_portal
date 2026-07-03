@@ -57,24 +57,6 @@ export async function deleteTestProfile(
 	await deleteDoc(request, "CS17 Profile", name);
 }
 
-export async function cleanupTestProfiles(
-	request: APIRequestContext,
-): Promise<void> {
-	const profiles = await getList<CS17Profile>(request, "CS17 Profile", {
-		fields: ["name"],
-		filters: { first_name: TEST_FIRST_NAME },
-		limit: 200,
-	});
-
-	for (const profile of profiles) {
-		try {
-			await deleteTestProfile(request, profile.name);
-		} catch (error) {
-			console.warn(`Failed to delete profile ${profile.name}:`, error);
-		}
-	}
-}
-
 export async function createTestUser(
 	request: APIRequestContext,
 ): Promise<{ name: string; email: string }> {
@@ -92,23 +74,11 @@ export async function createTestUser(
 	return { name: user.name, email };
 }
 
-// Profiles linked to these users must be removed first to avoid LinkExistsError.
-export async function cleanupTestUsers(
+export async function deleteTestUser(
 	request: APIRequestContext,
+	name: string,
 ): Promise<void> {
-	const users = await getList<{ name: string }>(request, "User", {
-		fields: ["name"],
-		filters: { email: ["like", `%${TEST_USER_DOMAIN}`] },
-		limit: 200,
-	});
-
-	for (const user of users) {
-		try {
-			await deleteDoc(request, "User", user.name);
-		} catch (error) {
-			console.warn(`Failed to delete user ${user.name}:`, error);
-		}
-	}
+	await deleteDoc(request, "User", name);
 }
 
 export async function getProfileForUser(
@@ -130,4 +100,149 @@ export async function getUserProfile(
 		request,
 		"cs17_portal.api.get_user_profile",
 	);
+}
+
+export interface CS17Cohort {
+	name: string;
+	cohort_code: string;
+	start_date: string;
+}
+
+export interface CS17Assignment {
+	name: string;
+	title: string;
+	cohort: string;
+	submission_type: string;
+	assignment_type?: string;
+	due_date?: string;
+	is_published?: number;
+}
+
+export interface TestStudent {
+	email: string;
+	password: string;
+	profileName: string;
+	cohort: string;
+}
+
+const TEST_COHORT_PREFIX = "E2E-";
+const TEST_ASSIGNMENT_PREFIX = "E2E Assignment";
+
+export function generateCohortCode(): string {
+	const suffix = Date.now().toString().slice(-7);
+	return `${TEST_COHORT_PREFIX}${suffix}`;
+}
+
+export async function createTestCohort(
+	request: APIRequestContext,
+	options: { cohortCode?: string; startDate?: string } = {},
+): Promise<CS17Cohort> {
+	return createDoc<CS17Cohort>(request, "CS17 Cohort", {
+		cohort_code: options.cohortCode ?? generateCohortCode(),
+		start_date: options.startDate ?? "2026-01-01",
+	});
+}
+
+// Assignment.before_insert requires the API session (Administrator) to be Faculty.
+export async function createTestAssignment(
+	request: APIRequestContext,
+	options: {
+		cohort: string;
+		submissionType?: string;
+		title?: string;
+		assignmentType?: string;
+		dueDate?: string;
+		isPublished?: boolean;
+	},
+): Promise<CS17Assignment> {
+	const submissionType = options.submissionType ?? "Any";
+	return createDoc<CS17Assignment>(request, "CS17 Assignment", {
+		title:
+			options.title ??
+			`${TEST_ASSIGNMENT_PREFIX} ${submissionType} ${Date.now()}`,
+		cohort: options.cohort,
+		submission_type: submissionType,
+		assignment_type: options.assignmentType ?? "Not Graded",
+		due_date: options.dueDate ?? "2030-01-01 00:00:00",
+		is_published: options.isPublished === false ? 0 : 1,
+	});
+}
+
+export async function cleanupTestAssignments(
+	request: APIRequestContext,
+): Promise<void> {
+	const assignments = await getList<CS17Assignment>(request, "CS17 Assignment", {
+		fields: ["name"],
+		filters: { title: ["like", `${TEST_ASSIGNMENT_PREFIX}%`] },
+		limit: 200,
+	});
+	for (const assignment of assignments) {
+		try {
+			await deleteDoc(request, "CS17 Assignment", assignment.name);
+		} catch (error) {
+			console.warn(`Failed to delete assignment ${assignment.name}:`, error);
+		}
+	}
+}
+
+export async function cleanupTestSubmissions(
+	request: APIRequestContext,
+): Promise<void> {
+	const submissions = await getList<{ name: string }>(
+		request,
+		"CS17 Assignment Submission",
+		{
+			fields: ["name"],
+			filters: { full_name: ["like", `${TEST_FIRST_NAME} %`] },
+			limit: 500,
+		},
+	);
+	for (const submission of submissions) {
+		try {
+			await deleteDoc(request, "CS17 Assignment Submission", submission.name);
+		} catch (error) {
+			console.warn(`Failed to delete submission ${submission.name}:`, error);
+		}
+	}
+}
+
+// Gives the API session user a Faculty profile so it can seed assignments.
+// Returns the created profile name, or null if one already existed.
+export async function ensureSessionFaculty(
+	request: APIRequestContext,
+	user = "Administrator",
+): Promise<string | null> {
+	const existing = await getProfileForUser(request, user);
+	if (existing) return null;
+	const created = await createTestProfile(request, {
+		profileType: "Faculty",
+		user,
+	});
+	return created.name;
+}
+
+export async function createTestStudent(
+	request: APIRequestContext,
+	cohort: string,
+): Promise<TestStudent> {
+	const suffix = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+	const email = `e2e-student-${suffix}${TEST_USER_DOMAIN}`;
+	const password = "e2e-Test-Pass-123";
+
+	await createDoc(request, "User", {
+		email,
+		first_name: TEST_FIRST_NAME,
+		new_password: password,
+		send_welcome_email: 0,
+		enabled: 1,
+		roles: [{ role: "CS17 Student" }],
+	});
+
+	const profile = await createTestProfile(request, {
+		profileType: "Student",
+		user: email,
+		cohort,
+	});
+
+	return { email, password, profileName: profile.name, cohort };
 }
