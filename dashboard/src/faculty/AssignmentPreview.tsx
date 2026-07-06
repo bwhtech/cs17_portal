@@ -19,8 +19,8 @@ interface Props {
 
 // Renders a draft exactly as a student sees it on AssignmentDetailPage.
 export default function AssignmentPreview({ draft }: Props) {
-  const isGradeScale =
-    draft.assignment_type === "Graded" && draft.remarks === "Grade";
+  const evaluationType =
+    draft.assignment_type === "Graded" ? draft.remarks : "Non-graded";
 
   return (
     <div className="flex flex-col md:flex-row gap-6">
@@ -34,15 +34,9 @@ export default function AssignmentPreview({ draft }: Props) {
       <div className="md:w-56 shrink-0">
         <div className="border border-border rounded-xl p-4 space-y-3">
           <Meta label="Due" value={draft.due_date ? formatDateTime(draft.due_date) : "—"} />
-          {!isGradeScale && (
-            <Meta
-              label="Max Marks"
-              value={
-                draft.assignment_type === "Not Graded"
-                  ? "Non Graded"
-                  : draft.max_marks || "—"
-              }
-            />
+          <Meta label="Evaluation Type" value={evaluationType} />
+          {evaluationType === "Marks" && (
+            <Meta label="Max Marks" value={draft.max_marks || "—"} />
           )}
           <Button variant="outline" className="w-full" disabled>
             Submit Assignment

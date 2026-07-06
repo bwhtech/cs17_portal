@@ -11,11 +11,21 @@ import {
 	createTestCohort,
 	createTestProfile,
 	createTestSubmission,
+	deleteTestProfile,
 	ensureSessionFaculty,
 } from "../helpers/cs17";
-import { callGetMethod, callMethod, getDoc } from "../helpers/frappe";
+import {
+	callGetMethod,
+	callMethod,
+	deleteDoc,
+	docExists,
+	getDoc,
+} from "../helpers/frappe";
 
 const CREATE = "cs17_portal.api.create_assignment";
+const UPDATE = "cs17_portal.api.update_assignment";
+const DELETE = "cs17_portal.api.delete_assignment";
+const PUBLISH = "cs17_portal.api.publish_assignment";
 const GRADE = "cs17_portal.api.grade_submission";
 const LIST = "cs17_portal.api.get_faculty_assignments";
 const SUBMISSIONS = "cs17_portal.api.get_assignment_submissions";
@@ -73,6 +83,8 @@ test.describe("Faculty assignment management", () => {
 		await cleanupTestGrades(request);
 		await cleanupTestSubmissions(request);
 		await cleanupTestAssignments(request);
+		await deleteTestProfile(request, student.name);
+		await deleteDoc(request, "CS17 Cohort", cohort.name);
 	});
 
 	test("saves a draft assignment that stays unpublished", async ({ request }) => {
@@ -103,6 +115,110 @@ test.describe("Faculty assignment management", () => {
 		expect(doc.publish_on).toContain("2030-06-01");
 
 		await expect(createAssignment(request, { publish: "schedule" })).rejects.toThrow();
+	});
+
+	test("publishes an existing draft now", async ({ request }) => {
+		const name = await createAssignment(request, { publish: "draft" });
+		await callMethod(request, PUBLISH, { assignment: name, publish: "now" });
+
+		const doc = await getDoc<CS17Assignment>(request, "CS17 Assignment", name);
+		expect(doc.is_published).toBe(1);
+	});
+
+	test("schedules an existing draft for later", async ({ request }) => {
+		const name = await createAssignment(request, { publish: "draft" });
+		await callMethod(request, PUBLISH, {
+			assignment: name,
+			publish: "schedule",
+			publish_on: "2030-07-01 09:00:00",
+		});
+
+		const doc = await getDoc<CS17Assignment & { publish_on: string }>(
+			request,
+			"CS17 Assignment",
+			name,
+		);
+		expect(doc.is_published).toBe(0);
+		expect(doc.publish_on).toContain("2030-07-01");
+	});
+
+	test("saves a draft with only a title (cohort/due date optional)", async ({ request }) => {
+		const name = await callMethod<string>(request, CREATE, {
+			title: assignmentTitle(),
+			cohort: "",
+			due_date: "",
+			publish: "draft",
+		});
+		const doc = await getDoc<CS17Assignment>(request, "CS17 Assignment", name);
+		expect(doc.is_published).toBe(0);
+	});
+
+	test("refuses to publish a draft missing cohort or due date", async ({ request }) => {
+		const name = await callMethod<string>(request, CREATE, {
+			title: assignmentTitle(),
+			cohort: "",
+			due_date: "",
+			publish: "draft",
+		});
+		await expect(
+			callMethod(request, PUBLISH, { assignment: name, publish: "now" }),
+		).rejects.toThrow();
+	});
+
+	test("get_assignment returns editable fields for a draft", async ({ request }) => {
+		const name = await createAssignment(request, {
+			publish: "draft",
+			assignment_type: "Graded",
+			remarks: "Marks",
+			max_marks: 20,
+		});
+
+		const doc = await callGetMethod<{
+			name: string;
+			assignment_type: string;
+			remarks: string;
+			max_marks: number;
+		}>(request, "cs17_portal.api.get_assignment", { assignment: name });
+		expect(doc.name).toBe(name);
+		expect(doc.assignment_type).toBe("Graded");
+		expect(doc.remarks).toBe("Marks");
+		expect(doc.max_marks).toBe(20);
+	});
+
+	test("continues a draft: updates fields and publishes it", async ({ request }) => {
+		const name = await createAssignment(request, { publish: "draft" });
+		const newTitle = `${TEST_ASSIGNMENT_PREFIX} Continued ${Date.now()}`;
+		await callMethod(request, UPDATE, {
+			assignment: name,
+			title: newTitle,
+			cohort: cohort.name,
+			due_date: "2030-02-02 00:00:00",
+			publish: "now",
+		});
+
+		const doc = await getDoc<CS17Assignment & { title: string }>(
+			request,
+			"CS17 Assignment",
+			name,
+		);
+		expect(doc.title).toBe(newTitle);
+		expect(doc.is_published).toBe(1);
+	});
+
+	test("deletes a draft assignment", async ({ request }) => {
+		const name = await createAssignment(request, { publish: "draft" });
+		await callMethod(request, DELETE, { assignment: name });
+		expect(await docExists(request, "CS17 Assignment", name)).toBe(false);
+	});
+
+	test("refuses to delete an assignment that has submissions", async ({ request }) => {
+		const assignment = await createAssignment(request, { publish: "now" });
+		await createTestSubmission(request, { assignment, student: student.name });
+
+		await expect(
+			callMethod(request, DELETE, { assignment }),
+		).rejects.toThrow();
+		expect(await docExists(request, "CS17 Assignment", assignment)).toBe(true);
 	});
 
 	test("names graded assignments with the graded series", async ({ request }) => {
@@ -150,6 +266,32 @@ test.describe("Faculty assignment management", () => {
 		});
 		const row = after.submissions.find((s) => s.name === submission.name);
 		expect(row?.grade?.grade).toBe("A");
+		expect(row?.grade?.is_published).toBe(1);
+	});
+
+	test("publishes an existing draft grade", async ({ request }) => {
+		const assignment = await gradableAssignment(request);
+		const submission = await createTestSubmission(request, {
+			assignment,
+			student: student.name,
+		});
+
+		await callMethod(request, GRADE, {
+			submission: submission.name,
+			grade: "C",
+			publish: "draft",
+		});
+		await callMethod(request, GRADE, {
+			submission: submission.name,
+			grade: "C",
+			publish: "now",
+		});
+
+		const result = await callGetMethod<SubmissionsResult>(request, SUBMISSIONS, {
+			assignment,
+		});
+		const row = result.submissions.find((s) => s.name === submission.name);
+		expect(row?.grade?.grade).toBe("C");
 		expect(row?.grade?.is_published).toBe(1);
 	});
 

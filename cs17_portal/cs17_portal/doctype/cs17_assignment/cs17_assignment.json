@@ -39,16 +39,14 @@
    "fieldname": "due_date",
    "fieldtype": "Datetime",
    "in_list_view": 1,
-   "label": "Due Date",
-   "reqd": 1
+   "label": "Due Date"
   },
   {
    "fieldname": "cohort",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Cohort",
-   "options": "CS17 Cohort",
-   "reqd": 1
+   "options": "CS17 Cohort"
   },
   {
    "default": "Any",

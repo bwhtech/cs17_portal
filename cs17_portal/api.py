@@ -18,23 +18,6 @@ def get_user_profile() -> dict | None:
 
 
 @frappe.whitelist(methods=["GET"])
-def get_recent_submissions(faculty: str, limit: int = 5) -> list:
-	profile = frappe.get_doc("CS17 Profile", faculty)
-	if profile.user != frappe.session.user:
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	if not profile.cohort:
-		return []
-	return frappe.get_list(
-		"CS17 Assignment Submission",
-		filters=[["assignment.cohort", "=", profile.cohort]],
-		fields=["name", "student", "full_name", "assignment", "assignment_title", "submitted_at"],
-		order_by="submitted_at desc",
-		limit=limit,
-		ignore_permissions=True,
-	)
-
-
-@frappe.whitelist(methods=["GET"])
 def get_faculty_assignments(cohort: str | None = None) -> list:
 	validate_membership("Faculty")
 	filters = {"cohort": cohort} if cohort else {}
@@ -87,7 +70,51 @@ def create_assignment(
 ) -> str:
 	validate_membership("Faculty")
 	assignment = frappe.new_doc("CS17 Assignment")
-	assignment.update(
+	assignment.naming_series = _naming_series(assignment_type)
+	_set_assignment_fields(
+		assignment, title, cohort, due_date, submission_type, description, assignment_type, max_marks, remarks
+	)
+	_apply_publish_state(assignment, publish, publish_on)
+	assignment.insert(ignore_permissions=True)
+	return assignment.name
+
+
+@frappe.whitelist(methods=["POST"])
+def update_assignment(
+	assignment: str,
+	title: str,
+	cohort: str,
+	due_date: str,
+	submission_type: str = "Any",
+	description: str | None = None,
+	assignment_type: str = "Not Graded",
+	max_marks: float = 0,
+	remarks: str = "Grade",
+	publish: str = "draft",
+	publish_on: str | None = None,
+) -> str:
+	validate_membership("Faculty")
+	doc = frappe.get_doc("CS17 Assignment", assignment)
+	_set_assignment_fields(
+		doc, title, cohort, due_date, submission_type, description, assignment_type, max_marks, remarks
+	)
+	_apply_publish_state(doc, publish, publish_on)
+	doc.save(ignore_permissions=True)
+	return doc.name
+
+
+def _set_assignment_fields(
+	doc: "Document",
+	title: str,
+	cohort: str,
+	due_date: str,
+	submission_type: str,
+	description: str | None,
+	assignment_type: str,
+	max_marks: float,
+	remarks: str,
+) -> None:
+	doc.update(
 		{
 			"title": title,
 			"cohort": cohort,
@@ -95,15 +122,52 @@ def create_assignment(
 			"submission_type": submission_type,
 			"description": description,
 			"assignment_type": assignment_type,
-			"naming_series": _naming_series(assignment_type),
 		}
 	)
 	if assignment_type == "Graded":
-		assignment.max_marks = max_marks
-		assignment.remarks = remarks
-	_apply_publish_state(assignment, publish, publish_on)
-	assignment.insert(ignore_permissions=True)
-	return assignment.name
+		doc.max_marks = max_marks
+		doc.remarks = remarks
+
+
+@frappe.whitelist(methods=["GET"])
+def get_assignment(assignment: str) -> dict | None:
+	validate_membership("Faculty")
+	return frappe.db.get_value(
+		"CS17 Assignment",
+		assignment,
+		[
+			"name",
+			"title",
+			"description",
+			"due_date",
+			"cohort",
+			"submission_type",
+			"assignment_type",
+			"max_marks",
+			"remarks",
+			"is_published",
+			"publish_on",
+		],
+		as_dict=True,
+	)
+
+
+@frappe.whitelist(methods=["POST"])
+def delete_assignment(assignment: str) -> None:
+	validate_membership("Faculty")
+	if frappe.db.exists("CS17 Assignment Submission", {"assignment": assignment}):
+		frappe.throw(_("Cannot delete an assignment that already has submissions"))
+	frappe.delete_doc("CS17 Assignment", assignment, ignore_permissions=True)
+
+
+@frappe.whitelist(methods=["POST"])
+def publish_assignment(
+	assignment: str, publish: str = "now", publish_on: str | None = None
+) -> None:
+	validate_membership("Faculty")
+	doc = frappe.get_doc("CS17 Assignment", assignment)
+	_apply_publish_state(doc, publish, publish_on)
+	doc.save(ignore_permissions=True)
 
 
 def _naming_series(assignment_type: str) -> str:
@@ -157,6 +221,7 @@ def get_assignment_submissions(assignment: str) -> dict:
 			"submitted_at",
 			"submission_document",
 			"submission_url",
+			"_assign",
 		],
 		order_by="submitted_at desc",
 	)
@@ -212,6 +277,82 @@ def grade_submission(
 	_apply_publish_state(doc, publish, publish_on, "published_on")
 	doc.save(ignore_permissions=True)
 	return {"name": doc.name}
+
+
+ASSIGNMENT_SUBMISSION = "CS17 Assignment Submission"
+
+
+@frappe.whitelist(methods=["GET"])
+def get_assigned_submissions(limit: int = 10) -> list:
+	validate_membership("Faculty")
+	names = _assigned_submission_names(frappe.session.user, limit)
+	if not names:
+		return []
+	submissions = frappe.get_all(
+		ASSIGNMENT_SUBMISSION,
+		filters=[["name", "in", names]],
+		fields=["name", "student", "full_name", "assignment", "assignment_title", "submitted_at"],
+		ignore_permissions=True,
+	)
+	_attach_grades(submissions)
+	return _order_by_names(submissions, names)
+
+
+def _assigned_submission_names(user: str, limit: int) -> list:
+	todos = frappe.get_all(
+		"ToDo",
+		filters={"reference_type": ASSIGNMENT_SUBMISSION, "allocated_to": user, "status": "Open"},
+		fields=["reference_name"],
+		order_by="creation desc",
+		limit=limit,
+	)
+	return [todo["reference_name"] for todo in todos]
+
+
+def _order_by_names(rows: list, ordered_names: list) -> list:
+	by_name = {row["name"]: row for row in rows}
+	return [by_name[name] for name in ordered_names if name in by_name]
+
+
+@frappe.whitelist(methods=["POST"])
+def assign_submission(submission: str, assign_to: str) -> None:
+	validate_membership("Faculty")
+	_assign_submission_to(submission, assign_to)
+
+
+@frappe.whitelist(methods=["POST"])
+def assign_submissions(submissions: list | str, assign_to: str) -> None:
+	validate_membership("Faculty")
+	for submission in frappe.parse_json(submissions):
+		_assign_submission_to(submission, assign_to)
+
+
+def _assign_submission_to(submission: str, assign_to: str) -> None:
+	from frappe.desk.form.assign_to import add
+
+	add(
+		{"doctype": ASSIGNMENT_SUBMISSION, "name": submission, "assign_to": [assign_to]},
+		ignore_permissions=True,
+	)
+
+
+@frappe.whitelist(methods=["POST"])
+def unassign_submission(submission: str, assign_to: str) -> None:
+	validate_membership("Faculty")
+	from frappe.desk.form.assign_to import remove
+
+	remove(ASSIGNMENT_SUBMISSION, submission, assign_to, ignore_permissions=True)
+
+
+@frappe.whitelist(methods=["GET"])
+def get_faculty_members() -> list:
+	validate_membership("Faculty")
+	return frappe.get_all(
+		"CS17 Profile",
+		filters={"profile_type": "Faculty", "user": ["is", "set"]},
+		fields=["user", "full_name"],
+		order_by="full_name asc",
+	)
 
 
 def get_current_profile_name(profile_type: str) -> str | None:

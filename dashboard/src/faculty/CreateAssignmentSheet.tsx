@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useFrappePostCall } from "frappe-react-sdk";
+import { useEffect, useState } from "react";
+import { useFrappeGetCall, useFrappePostCall } from "frappe-react-sdk";
 import {
   Sheet,
   SheetContent,
@@ -21,6 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Eye, Pencil } from "lucide-react";
 import AssignmentPreview, { type AssignmentDraft } from "@/faculty/AssignmentPreview";
+import DeleteAssignmentDialog from "@/faculty/DeleteAssignmentDialog";
 
 const SUBMISSION_TYPES = ["Any", "PDF", "URL", "Image", "ZIP"];
 const PUBLISH_MODES = [
@@ -40,11 +41,23 @@ const EMPTY_DRAFT: AssignmentDraft = {
   description: "",
 };
 
+interface AssignmentDoc {
+  title?: string;
+  cohort?: string;
+  submission_type?: string;
+  assignment_type?: string;
+  max_marks?: number;
+  remarks?: string;
+  due_date?: string;
+  description?: string;
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   cohorts: string[];
   onCreated: () => void;
+  draftName?: string | null;
 }
 
 // Frappe stores Datetime as "YYYY-MM-DD HH:mm:ss"; datetime-local gives "YYYY-MM-DDTHH:mm".
@@ -52,17 +65,49 @@ function toFrappeDatetime(value: string): string {
   return value ? value.replace("T", " ") + ":00" : "";
 }
 
+function toDatetimeLocal(value?: string | null): string {
+  return value ? value.replace(" ", "T").slice(0, 16) : "";
+}
+
 export default function CreateAssignmentSheet({
   open,
   onOpenChange,
   cohorts,
   onCreated,
+  draftName,
 }: Props) {
   const [draft, setDraft] = useState<AssignmentDraft>(EMPTY_DRAFT);
   const [publish, setPublish] = useState("draft");
   const [publishOn, setPublishOn] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const { call, loading } = useFrappePostCall("cs17_portal.api.create_assignment");
+  const [savedName, setSavedName] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const { call: createCall, loading } = useFrappePostCall(
+    "cs17_portal.api.create_assignment",
+  );
+  const { call: updateCall } = useFrappePostCall("cs17_portal.api.update_assignment");
+  const { data: existingData } = useFrappeGetCall<{ message: AssignmentDoc }>(
+    "cs17_portal.api.get_assignment",
+    draftName ? { assignment: draftName } : undefined,
+    draftName ? undefined : null,
+  );
+  const existing = existingData?.message;
+
+  useEffect(() => {
+    if (!open || !draftName || !existing || savedName === draftName) return;
+    setDraft({
+      title: existing.title ?? "",
+      cohort: existing.cohort ?? "",
+      submission_type: existing.submission_type ?? "Any",
+      assignment_type: existing.assignment_type ?? "Not Graded",
+      max_marks: existing.max_marks ? String(existing.max_marks) : "",
+      remarks: existing.remarks || "Grade",
+      due_date: toDatetimeLocal(existing.due_date),
+      description: existing.description ?? "",
+    });
+    setPublish("draft");
+    setSavedName(draftName);
+  }, [open, draftName, existing, savedName]);
 
   // Single "Evaluation Type" control fronts the stored assignment_type + remarks.
   const evaluationType =
@@ -86,17 +131,60 @@ export default function CreateAssignmentSheet({
     setPublish("draft");
     setPublishOn("");
     setError(null);
+    setSavedName(null);
+  }
+
+  function payload(publishMode: string) {
+    return {
+      title: draft.title,
+      cohort: draft.cohort,
+      due_date: toFrappeDatetime(draft.due_date),
+      submission_type: draft.submission_type,
+      description: draft.description,
+      assignment_type: draft.assignment_type,
+      max_marks: draft.max_marks || 0,
+      remarks: draft.remarks,
+      publish: publishMode,
+      publish_on: toFrappeDatetime(publishOn),
+    };
+  }
+
+  async function persist(publishMode: string): Promise<string> {
+    if (savedName) {
+      await updateCall({ assignment: savedName, ...payload(publishMode) });
+      return savedName;
+    }
+    return createCall(payload(publishMode));
+  }
+
+  function hasRequiredFields(): boolean {
+    return Boolean(draft.title.trim());
+  }
+
+  async function autoSaveDraft() {
+    if (!hasRequiredFields()) return;
+    try {
+      await persist("draft");
+      onCreated();
+    } catch {
+      // Sheet has closed; nothing to surface.
+    }
   }
 
   function handleOpenChange(next: boolean) {
-    if (!next) reset();
+    if (!next) {
+      autoSaveDraft();
+      reset();
+    }
     onOpenChange(next);
   }
 
   function validate(): string | null {
     if (!draft.title.trim()) return "Title is required.";
-    if (!draft.cohort) return "Cohort is required.";
-    if (!draft.due_date) return "Due date is required.";
+    if (publish !== "draft") {
+      if (!draft.cohort) return "Cohort is required to publish.";
+      if (!draft.due_date) return "Due date is required to publish.";
+    }
     if (publish === "schedule" && !publishOn) return "Pick a publish date.";
     return null;
   }
@@ -108,33 +196,26 @@ export default function CreateAssignmentSheet({
       return;
     }
     try {
-      await call({
-        title: draft.title,
-        cohort: draft.cohort,
-        due_date: toFrappeDatetime(draft.due_date),
-        submission_type: draft.submission_type,
-        description: draft.description,
-        assignment_type: draft.assignment_type,
-        max_marks: draft.max_marks || 0,
-        remarks: draft.remarks,
-        publish,
-        publish_on: toFrappeDatetime(publishOn),
-      });
+      await persist(publish);
       reset();
       onOpenChange(false);
       onCreated();
     } catch (err: any) {
-      setError(err?.message ?? "Could not create the assignment.");
+      setError(err?.message ?? "Could not save the assignment.");
     }
   }
 
+  const deletableName = savedName ?? draftName ?? null;
+
   return (
+    <>
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent className="sm:max-w-3xl">
         <SheetHeader>
-          <SheetTitle>New Assignment</SheetTitle>
+          <SheetTitle>{draftName ? "Continue Draft" : "New Assignment"}</SheetTitle>
           <SheetDescription>
             Fill in the details, then switch to Preview to see the student view.
+            Closing keeps your work as a draft.
           </SheetDescription>
         </SheetHeader>
 
@@ -274,13 +355,35 @@ export default function CreateAssignmentSheet({
           </TabsContent>
         </Tabs>
 
-        <SheetFooter>
+        <SheetFooter className="sm:justify-between">
+          {deletableName ? (
+            <Button variant="destructive" onClick={() => setConfirmDelete(true)}>
+              Delete
+            </Button>
+          ) : (
+            <span />
+          )}
           <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? "Saving…" : "Create Assignment"}
+            {loading ? "Saving…" : draftName ? "Save Assignment" : "Create Assignment"}
           </Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>
+
+    {confirmDelete && deletableName && (
+      <DeleteAssignmentDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        assignment={{ name: deletableName, title: draft.title }}
+        onSuccess={() => {
+          setConfirmDelete(false);
+          reset();
+          onOpenChange(false);
+          onCreated();
+        }}
+      />
+    )}
+    </>
   );
 }
 

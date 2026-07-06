@@ -2,25 +2,22 @@ import { useFrappeGetCall, useFrappeGetDocCount } from "frappe-react-sdk";
 import { useCurrentProfile } from "@/hooks/useCurrentProfile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
-import { formatDateTime } from "@/lib/dayjs";
 
-interface RecentSubmission {
+interface AssignedSubmission {
   name: string;
-  student: string;
   full_name: string;
   assignment: string;
   assignment_title: string;
-  submitted_at: string;
+  grade?: { is_published?: number } | null;
 }
 
 export default function FacultyDashboardPage() {
   const { profile } = useCurrentProfile();
 
-  const { data: recentSubmissions, isLoading: submissionsLoading } =
-    useFrappeGetCall<{ message: RecentSubmission[] }>(
-      "cs17_portal.api.get_recent_submissions",
-      profile ? { faculty: profile.name, limit: 5 } : undefined,
-      profile ? undefined : null,
+  const { data: assignedSubmissions, isLoading: assignedLoading } =
+    useFrappeGetCall<{ message: AssignedSubmission[] }>(
+      "cs17_portal.api.get_assigned_submissions",
+      { limit: 5 },
     );
 
   const { data: publishedCount } = useFrappeGetDocCount(
@@ -28,27 +25,13 @@ export default function FacultyDashboardPage() {
     [["is_published", "=", 1]],
   );
 
-  const { data: totalSubmissions } = useFrappeGetDocCount(
-    "CS17 Assignment Submission",
-  );
-
-  const { data: gradedCount } = useFrappeGetDocCount(
-    "CS17 Assignment Grade",
-    [["submission", "!=", ""]],
-  );
-
-  const pendingCount =
-    totalSubmissions != null && gradedCount != null
-      ? Math.max(0, totalSubmissions - gradedCount)
-      : null;
-
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     day: "numeric",
     month: "long",
   });
 
-  const submissions: RecentSubmission[] = recentSubmissions?.message ?? [];
+  const assigned: AssignedSubmission[] = assignedSubmissions?.message ?? [];
 
   return (
     <div className="space-y-6">
@@ -64,37 +47,28 @@ export default function FacultyDashboardPage() {
           label="Published Assignments"
           value={publishedCount ?? null}
         />
-        <StatChip
-          label="Pending Submissions"
-          value={pendingCount}
-        />
       </div>
 
       <div className="bg-background border border-border rounded-xl p-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold">Latest submissions</h3>
-          <Link
-            to="/faculty/assignments"
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            View all →
-          </Link>
-        </div>
+        <h3 className="text-sm font-semibold">Assigned to you</h3>
 
-        {submissionsLoading ? (
+        {assignedLoading ? (
           <div className="space-y-3">
             {[0, 1, 2].map((i) => (
               <Skeleton key={i} className="h-10 w-full" />
             ))}
           </div>
-        ) : submissions.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No submissions yet.</p>
+        ) : assigned.length === 0 ? (
+          <p className="text-xs text-muted-foreground">
+            No submissions assigned to you yet.
+          </p>
         ) : (
           <div className="divide-y divide-border">
-            {submissions.map((sub) => (
-              <div
+            {assigned.map((sub) => (
+              <Link
                 key={sub.name}
-                className="py-3 flex items-center justify-between gap-4"
+                to={`/faculty/assignments/${sub.assignment}`}
+                className="py-3 flex items-center justify-between gap-4 hover:bg-muted/50 -mx-2 px-2 rounded-md transition-colors"
               >
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">{sub.full_name}</p>
@@ -102,10 +76,14 @@ export default function FacultyDashboardPage() {
                     {sub.assignment_title}
                   </p>
                 </div>
-                <p className="text-xs text-muted-foreground shrink-0">
-                  {sub.submitted_at ? formatDateTime(sub.submitted_at) : "—"}
-                </p>
-              </div>
+                <span className="text-xs shrink-0">
+                  {sub.grade ? (
+                    <span className="text-muted-foreground">Graded</span>
+                  ) : (
+                    <span className="text-foreground font-medium">Needs grading</span>
+                  )}
+                </span>
+              </Link>
             ))}
           </div>
         )}
