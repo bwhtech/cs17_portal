@@ -161,9 +161,7 @@ def delete_assignment(assignment: str) -> None:
 
 
 @frappe.whitelist(methods=["POST"])
-def publish_assignment(
-	assignment: str, publish: str = "now", publish_on: str | None = None
-) -> None:
+def publish_assignment(assignment: str, publish: str = "now", publish_on: str | None = None) -> None:
 	validate_membership("Faculty")
 	doc = frappe.get_doc("CS17 Assignment", assignment)
 	_apply_publish_state(doc, publish, publish_on)
