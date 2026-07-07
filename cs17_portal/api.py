@@ -328,10 +328,7 @@ def assign_submissions(submissions: list | str, assign_to: str) -> None:
 def _assign_submission_to(submission: str, assign_to: str) -> None:
 	from frappe.desk.form.assign_to import add
 
-	add(
-		{"doctype": ASSIGNMENT_SUBMISSION, "name": submission, "assign_to": [assign_to]},
-		ignore_permissions=True,
-	)
+	add({"doctype": ASSIGNMENT_SUBMISSION, "name": submission, "assign_to": [assign_to]})
 
 
 @frappe.whitelist(methods=["POST"])
@@ -339,7 +336,7 @@ def unassign_submission(submission: str, assign_to: str) -> None:
 	validate_membership("Faculty")
 	from frappe.desk.form.assign_to import remove
 
-	remove(ASSIGNMENT_SUBMISSION, submission, assign_to, ignore_permissions=True)
+	remove(ASSIGNMENT_SUBMISSION, submission, assign_to)
 
 
 @frappe.whitelist(methods=["GET"])
