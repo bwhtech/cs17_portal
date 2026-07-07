@@ -326,11 +326,9 @@ def assign_submissions(submissions: list | str, assign_to: str) -> None:
 
 
 def _assign_submission_to(submission: str, assign_to: str) -> None:
-	from frappe.desk.form import assign_to as assign_to_api
+	from frappe.desk.form.assign_to import add
 
-	# frappe develop exposes ignore_permissions on add(); version-15 keeps it on the private _add().
-	assign = getattr(assign_to_api, "_add", assign_to_api.add)
-	assign(
+	add(
 		{"doctype": ASSIGNMENT_SUBMISSION, "name": submission, "assign_to": [assign_to]},
 		ignore_permissions=True,
 	)
@@ -339,10 +337,9 @@ def _assign_submission_to(submission: str, assign_to: str) -> None:
 @frappe.whitelist(methods=["POST"])
 def unassign_submission(submission: str, assign_to: str) -> None:
 	validate_membership("Faculty")
-	from frappe.desk.form import assign_to as assign_to_api
+	from frappe.desk.form.assign_to import remove
 
-	unassign = getattr(assign_to_api, "_remove", assign_to_api.remove)
-	unassign(ASSIGNMENT_SUBMISSION, submission, assign_to, ignore_permissions=True)
+	remove(ASSIGNMENT_SUBMISSION, submission, assign_to, ignore_permissions=True)
 
 
 @frappe.whitelist(methods=["GET"])

@@ -64,7 +64,7 @@ jobs:
       - name: Setup Frappe Bench
         run: |
           pip install frappe-bench
-          bench init --skip-redis-config-generation --skip-assets --python "$(which python)" ~/frappe-bench
+          bench init --frappe-branch develop --skip-redis-config-generation --skip-assets --python "$(which python)" ~/frappe-bench
 
       - name: Install App
         working-directory: /home/runner/frappe-bench
