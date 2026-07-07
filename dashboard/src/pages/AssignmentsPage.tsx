@@ -1,5 +1,6 @@
 import { useFrappeGetDocList } from "frappe-react-sdk";
 import { useCurrentStudent } from "@/hooks/useCurrentStudent";
+import { useStudentAssignments } from "@/hooks/useStudentAssignments";
 import { LIVE_LIST_OPTIONS } from "@/lib/liveQuery";
 import AssignmentTable from "@/components/ui/AssignmentTable";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,16 +10,8 @@ import GradeDialog from "@/components/ui/GradeDialog";
 export default function AssignmentsPage() {
   const { student, isLoading: studentLoading } = useCurrentStudent();
 
-  const { data: assignments, isLoading: assignmentsLoading } = useFrappeGetDocList(
-    "CS17 Assignment",
-    {
-      filters: [["cohort", "=", student?.cohort ?? ""], ["is_published", "=", 1]],
-      fields: ["name", "title", "due_date", "max_marks", "assignment_type", "submission_type"],
-      orderBy: { field: "due_date", order: "desc" },
-      limit: 100,
-    },
-    student?.cohort ? undefined : null,
-    LIVE_LIST_OPTIONS,
+  const { assignments, isLoading: assignmentsLoading } = useStudentAssignments(
+    student?.cohort,
   );
 
   const {

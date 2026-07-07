@@ -1,5 +1,6 @@
 import { useFrappeGetDocList } from "frappe-react-sdk";
 import { useCurrentStudent } from "@/hooks/useCurrentStudent";
+import { useStudentAssignments } from "@/hooks/useStudentAssignments";
 import { LIVE_LIST_OPTIONS } from "@/lib/liveQuery";
 import AssignmentTable from "@/components/ui/AssignmentTable";
 import AlertBanner from "@/components/ui/AlertBanner";
@@ -25,17 +26,7 @@ export default function DashboardPage() {
     student?.cohort ? undefined : null,
   );
 
-  const { data: assignments } = useFrappeGetDocList(
-    "CS17 Assignment",
-    {
-      filters: [["cohort", "=", student?.cohort ?? ""], ["is_published", "=", 1]],
-      fields: ["name", "title", "due_date", "max_marks", "assignment_type", "submission_type"],
-      orderBy: { field: "creation", order: "desc" },
-      limit: 20,
-    },
-    student?.cohort ? undefined : null,
-    LIVE_LIST_OPTIONS,
-  );
+  const { assignments } = useStudentAssignments(student?.cohort);
 
   const {
     data: submissions,
@@ -92,6 +83,7 @@ export default function DashboardPage() {
   const now = new Date();
   const upcomingAssignments = (assignments ?? [])
     .filter((a) => new Date(a.due_date) >= now)
+    .sort((a, b) => +new Date(b.modified) - +new Date(a.modified))
     .slice(0, 3);
 
   const today = new Date().toLocaleDateString("en-US", {

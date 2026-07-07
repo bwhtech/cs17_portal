@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 import frappe
 from frappe import _
+from frappe.utils import now_datetime
 
 if TYPE_CHECKING:
 	from frappe.model.document import Document
@@ -53,6 +54,41 @@ def _attach_submission_counts(assignments: list) -> None:
 	counts = {row["assignment"]: row["count"] for row in rows}
 	for assignment in assignments:
 		assignment["submission_count"] = counts.get(assignment["name"], 0)
+
+
+@frappe.whitelist(methods=["GET"])
+def get_student_assignments(cohort: str) -> dict:
+	"""Assignments a student can see now, plus the next scheduled publish time.
+
+	Visibility is gated on server time, not the scheduler flag: an assignment shows the
+	instant `publish_on` passes, so a scheduled publish is exact to the second regardless of
+	when the background job flips `is_published`. `next_publish_on` lets the client reveal the
+	next one at the precise moment without polling.
+	"""
+	now = now_datetime()
+	assignments = frappe.get_all(
+		"CS17 Assignment",
+		filters={"cohort": cohort},
+		or_filters=[["is_published", "=", 1], ["publish_on", "<=", now]],
+		fields=[
+			"name",
+			"title",
+			"due_date",
+			"max_marks",
+			"assignment_type",
+			"submission_type",
+			"modified",
+		],
+		order_by="due_date desc",
+	)
+	upcoming = frappe.get_all(
+		"CS17 Assignment",
+		filters=[["cohort", "=", cohort], ["is_published", "=", 0], ["publish_on", ">", now]],
+		fields=["publish_on"],
+		order_by="publish_on asc",
+		limit=1,
+	)
+	return {"assignments": assignments, "next_publish_on": upcoming[0].publish_on if upcoming else None}
 
 
 @frappe.whitelist(methods=["POST"])

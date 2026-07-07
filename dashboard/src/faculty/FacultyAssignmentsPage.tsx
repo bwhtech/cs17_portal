@@ -292,6 +292,14 @@ function AssignmentTable({
 
 function StatusBadge({ assignment }: { assignment: FacultyAssignment }) {
   if (assignment.is_published) return <Badge>Published</Badge>;
-  if (assignment.publish_on) return <Badge variant="secondary">Scheduled</Badge>;
+  if (assignment.publish_on)
+    return (
+      <div className="flex flex-col items-start gap-1">
+        <Badge variant="secondary">Scheduled</Badge>
+        <span className="text-xs text-muted-foreground">
+          {formatDateTime(assignment.publish_on)}
+        </span>
+      </div>
+    );
   return <Badge variant="outline">Draft</Badge>;
 }
