@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useFrappeGetDoc, useFrappeGetDocList } from "frappe-react-sdk";
 import { useCurrentStudent } from "@/hooks/useCurrentStudent";
+import { LIVE_LIST_OPTIONS } from "@/lib/liveQuery";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -46,6 +47,7 @@ export default function AssignmentDetailPage() {
       limit: 1,
     },
     submission?.name ? undefined : null,
+    LIVE_LIST_OPTIONS,
   );
 
   const gradeDoc = grades?.[0] ?? null;

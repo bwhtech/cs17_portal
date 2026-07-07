@@ -1,5 +1,6 @@
 import { useFrappeGetDocList } from "frappe-react-sdk";
 import { useCurrentStudent } from "@/hooks/useCurrentStudent";
+import { LIVE_LIST_OPTIONS } from "@/lib/liveQuery";
 import AssignmentTable from "@/components/ui/AssignmentTable";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
@@ -17,6 +18,7 @@ export default function AssignmentsPage() {
       limit: 100,
     },
     student?.cohort ? undefined : null,
+    LIVE_LIST_OPTIONS,
   );
 
   const {
@@ -47,6 +49,7 @@ export default function AssignmentsPage() {
       limit: 100,
     },
     assignmentNames.length > 0 ? undefined : null,
+    LIVE_LIST_OPTIONS,
   );
 
   const gradeMap = Object.fromEntries(
