@@ -89,21 +89,29 @@ class TestCS17Project(FrappeTestCase):
 		drop("CS17 Cohort", [c for c in cohorts if frappe.db.exists("CS17 Cohort", c)])
 
 	def make_cohort(self, code: str) -> str:
-		return frappe.get_doc(
-			{"doctype": "CS17 Cohort", "cohort_code": code, "start_date": frappe.utils.nowdate()}
-		).insert(ignore_permissions=True).name
+		return (
+			frappe.get_doc(
+				{"doctype": "CS17 Cohort", "cohort_code": code, "start_date": frappe.utils.nowdate()}
+			)
+			.insert(ignore_permissions=True)
+			.name
+		)
 
 	def make_profile(self, profile_type: str, user: str, cohort: str) -> str:
-		return frappe.get_doc(
-			{
-				"doctype": "CS17 Profile",
-				"profile_type": profile_type,
-				"first_name": user.split("@")[0],
-				"last_name": "Test",
-				"user": user,
-				"cohort": cohort,
-			}
-		).insert(ignore_permissions=True).name
+		return (
+			frappe.get_doc(
+				{
+					"doctype": "CS17 Profile",
+					"profile_type": profile_type,
+					"first_name": user.split("@")[0],
+					"last_name": "Test",
+					"user": user,
+					"cohort": cohort,
+				}
+			)
+			.insert(ignore_permissions=True)
+			.name
+		)
 
 	def make_scratch_assignment(self, cohort: str) -> str:
 		# before_insert enforces Faculty membership of the acting user, so create it as a cohort faculty.
@@ -159,9 +167,7 @@ class TestCS17Project(FrappeTestCase):
 	def test_student_cannot_submit_others_project(self):
 		project = self.make_saved_project()
 		frappe.set_user(STUDENT2_USER)
-		self.assertRaises(
-			frappe.PermissionError, api.submit_scratch_project, self.assignment, project
-		)
+		self.assertRaises(frappe.PermissionError, api.submit_scratch_project, self.assignment, project)
 
 	def test_submitted_snapshot_is_immutable(self):
 		frappe.set_user(STUDENT1_USER)
@@ -170,11 +176,15 @@ class TestCS17Project(FrappeTestCase):
 		submission = api.submit_scratch_project(self.assignment, project)["name"]
 
 		snapshot_url = frappe.db.get_value("CS17 Assignment Submission", submission, "submission_document")
-		snapshot_before = frappe.get_doc("File", {"file_url": snapshot_url, "attached_to_name": submission}).get_content()
+		snapshot_before = frappe.get_doc(
+			"File", {"file_url": snapshot_url, "attached_to_name": submission}
+		).get_content()
 
 		# Editing the live project after submission must not touch the snapshot bytes.
 		api.save_project(project, "project.sb3", b64(b"PK\x03\x04edited-after-submit"))
-		snapshot_after = frappe.get_doc("File", {"file_url": snapshot_url, "attached_to_name": submission}).get_content()
+		snapshot_after = frappe.get_doc(
+			"File", {"file_url": snapshot_url, "attached_to_name": submission}
+		).get_content()
 
 		self.assertEqual(snapshot_before, b"PK\x03\x04original")
 		self.assertEqual(snapshot_before, snapshot_after)
@@ -255,6 +265,4 @@ class TestCS17Project(FrappeTestCase):
 
 		self.assertEqual(first["name"], second["name"])
 		self.assertEqual(second["marks_obtained"], 90)
-		self.assertEqual(
-			frappe.db.count("CS17 Assignment Grade", filters={"submission": submission}), 1
-		)
+		self.assertEqual(frappe.db.count("CS17 Assignment Grade", filters={"submission": submission}), 1)

@@ -101,8 +101,10 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 		make_profile("Faculty", cls.cohort_28, cls.faculty_28_user, "Faculty 28")
 		cls.student_27 = make_profile("Student", cls.cohort_27, cls.student_user, "Student 27")
 
+		frappe.set_user(cls.faculty_27_user)
 		cls.assignment_27 = make_assignment(cls.cohort_27, "Scratch Task 27", "Scratch", 20)
 		cls.assignment_28 = make_assignment(cls.cohort_28, "Scratch Task 28", "PDF", 50)
+		frappe.set_user("Administrator")
 
 		cls.submission_27 = make_submission(
 			cls.assignment_27, cls.student_27, "Student 27", "Scratch Task 27"
