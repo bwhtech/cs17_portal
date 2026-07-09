@@ -20,9 +20,10 @@ class CS17Assignment(Document):
 		due_date: DF.Datetime
 		is_published: DF.Check
 		max_marks: DF.Float
-		naming_series: DF.Literal["GRADED-{cohort}-.###", "NOT-GRADED-{cohort}-.###"]
+		naming_series: DF.Literal["GRADED-.{cohort}.-.###", "NOT-GRADED-.{cohort}.-.###"]
 		publish_on: DF.Datetime | None
 		remarks: DF.Literal["Grade", "Marks"]
+		submission_type: DF.Literal["Any", "PDF", "URL", "Image", "ZIP", "Scratch"]
 		title: DF.Data
 	# end: auto-generated types
 

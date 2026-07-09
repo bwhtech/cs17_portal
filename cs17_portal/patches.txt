@@ -5,3 +5,4 @@
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
 cs17_portal.patches.v1_0.migrate_student_faculty_to_profile
+cs17_portal.patches.v1_0.rename_literal_cohort_in_assignment_names

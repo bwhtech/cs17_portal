@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CS17 Scratch bridge harness</title>
+<style>
+  body { font: 14px/1.5 system-ui, sans-serif; margin: 0; display: flex; height: 100vh; }
+  #side { width: 340px; padding: 12px; box-sizing: border-box; border-right: 1px solid #ccc; overflow: auto; }
+  #frameWrap { flex: 1; }
+  iframe { width: 100%; height: 100%; border: 0; }
+  button { display: block; margin: 6px 0; padding: 6px 10px; }
+  #log { white-space: pre-wrap; font-family: ui-monospace, monospace; font-size: 12px; background: #111; color: #0f0; padding: 8px; border-radius: 4px; height: 40vh; overflow: auto; }
+  .ok { color: #0f0; } .err { color: #f55; }
+</style>
+</head>
+<body>
+<div id="side">
+  <h3>CS17 bridge harness</h3>
+  <label>editor bundle:
+    <select id="src">
+      <option value="editor.html">editor.html (full)</option>
+      <option value="editor.html?readonly=1">editor.html?readonly=1 (player)</option>
+      <option value="index.html">index.html (player)</option>
+    </select>
+  </label>
+  <button id="reload">(re)load iframe</button>
+  <button id="load" disabled>1. send load-project (sample.sb3)</button>
+  <button id="request" disabled>2. send request-sb3</button>
+  <button id="auto" disabled>run full round-trip (auto)</button>
+  <div id="log"></div>
+</div>
+<div id="frameWrap"><iframe id="frame" allow="autoplay"></iframe></div>
+
+<script>
+const log = (msg, cls) => {
+  const el = document.getElementById('log');
+  el.innerHTML += `<span class="${cls||''}">${new Date().toISOString().slice(11,23)} ${msg}</span>\n`;
+  el.scrollTop = el.scrollHeight;
+};
+const frame = document.getElementById('frame');
+let ready = false;
+let sampleBuf = null;
+let lastReceived = null;
+
+async function fetchSample() {
+  const res = await fetch('sample.sb3');
+  sampleBuf = await res.arrayBuffer();
+  log(`fetched sample.sb3 (${sampleBuf.byteLength} bytes)`);
+}
+fetchSample();
+
+function post(msg, transfer) {
+  frame.contentWindow.postMessage(msg, '*', transfer || []);
+  log(`-> sent ${msg.type}`);
+}
+
+window.addEventListener('message', ev => {
+  const d = ev.data || {};
+  if (!d.type) return;
+  if (d.type === 'ready') {
+    ready = true;
+    ['load','request','auto'].forEach(id => document.getElementById(id).disabled = false);
+    log('<- READY', 'ok');
+  } else if (d.type === 'dirty') {
+    log('<- dirty');
+  } else if (d.type === 'project-sb3') {
+    lastReceived = d.sb3;
+    log(`<- project-sb3 (${d.sb3.byteLength} bytes, thumbnail=${d.thumbnail ? d.thumbnail.slice(0,30)+'...' : 'none'})`, 'ok');
+    window.__lastSb3 = d.sb3;
+    window.__lastThumb = d.thumbnail;
+  } else {
+    log(`<- ${d.type}`);
+  }
+});
+
+document.getElementById('reload').onclick = () => {
+  ready = false;
+  ['load','request','auto'].forEach(id => document.getElementById(id).disabled = true);
+  frame.src = document.getElementById('src').value;
+  log('reloading iframe: ' + frame.src);
+};
+
+document.getElementById('load').onclick = () => {
+  // send a COPY so the harness keeps its own buffer (transfer neuters it)
+  const copy = sampleBuf.slice(0);
+  post({ type: 'load-project', sb3: copy }, [copy]);
+};
+document.getElementById('request').onclick = () => post({ type: 'request-sb3' });
+
+document.getElementById('auto').onclick = async () => {
+  window.__roundtripDone = false;
+  const copy = sampleBuf.slice(0);
+  post({ type: 'load-project', sb3: copy }, [copy]);
+  await new Promise(r => setTimeout(r, 2500)); // let project load + render
+  post({ type: 'request-sb3' });
+  await new Promise(r => setTimeout(r, 2500));
+  if (window.__lastSb3 && window.__lastSb3.byteLength > 0) {
+    log(`ROUND-TRIP OK: got ${window.__lastSb3.byteLength} bytes back`, 'ok');
+    window.__roundtripDone = true;
+  } else {
+    log('ROUND-TRIP FAILED: no project-sb3 received', 'err');
+  }
+};
+
+// auto-load iframe on first open
+frame.src = document.getElementById('src').value;
+log('initial iframe: ' + frame.src);
+</script>
+</body>
+</html>
