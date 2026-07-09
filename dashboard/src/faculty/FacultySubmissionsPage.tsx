@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useFrappeGetCall } from "frappe-react-sdk";
 import {
   Table,
@@ -11,9 +11,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import ScratchGradingDialog, {
-  type GradingSubmission,
-} from "@/components/ui/ScratchGradingDialog";
 import { formatDateTime } from "@/lib/dayjs";
 
 interface CohortSubmission {
@@ -31,26 +28,15 @@ interface CohortSubmission {
 }
 
 export default function FacultySubmissionsPage() {
-  const [grading, setGrading] = useState<GradingSubmission | null>(null);
+  const navigate = useNavigate();
 
-  const {
-    data: submissionsData,
-    isLoading,
-    mutate: refreshSubmissions,
-  } = useFrappeGetCall<{ message: CohortSubmission[] }>(
-    "cs17_portal.api.list_cohort_submissions",
-  );
+  const { data: submissionsData, isLoading } = useFrappeGetCall<{
+    message: CohortSubmission[];
+  }>("cs17_portal.api.list_cohort_submissions");
   const submissions = submissionsData?.message ?? [];
 
   function openGrading(submission: CohortSubmission) {
-    setGrading({
-      name: submission.name,
-      assignment: submission.assignment,
-      assignment_title: submission.assignment_title,
-      full_name: submission.full_name,
-      submission_type: submission.submission_type ?? undefined,
-      max_marks: submission.max_marks ?? 0,
-    });
+    navigate(`/faculty/submissions/${submission.name}`);
   }
 
   return (
@@ -91,7 +77,11 @@ export default function FacultySubmissionsPage() {
               </TableRow>
             ) : (
               submissions.map((submission) => (
-                <TableRow key={submission.name}>
+                <TableRow
+                  key={submission.name}
+                  onClick={() => openGrading(submission)}
+                  className="cursor-pointer transition-colors hover:bg-muted"
+                >
                   <TableCell className="font-medium">{submission.full_name}</TableCell>
                   <TableCell>{submission.assignment_title}</TableCell>
                   <TableCell>
@@ -118,7 +108,14 @@ export default function FacultySubmissionsPage() {
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button size="sm" onClick={() => openGrading(submission)}>
+                    <Button
+                      size="sm"
+                      className="cursor-pointer transition-colors hover:bg-primary/90"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        openGrading(submission);
+                      }}
+                    >
                       {submission.graded ? "Review" : "Grade"}
                     </Button>
                   </TableCell>
@@ -128,19 +125,6 @@ export default function FacultySubmissionsPage() {
           </TableBody>
         </Table>
       </div>
-
-      {grading && (
-        <ScratchGradingDialog
-          open={!!grading}
-          onOpenChange={(open) => {
-            if (!open) setGrading(null);
-          }}
-          submission={grading}
-          onGraded={() => {
-            refreshSubmissions();
-          }}
-        />
-      )}
     </div>
   );
 }
