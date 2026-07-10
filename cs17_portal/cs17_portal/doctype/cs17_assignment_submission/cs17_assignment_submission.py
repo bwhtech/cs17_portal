@@ -33,12 +33,27 @@ class CS17AssignmentSubmission(Document):
 	# end: auto-generated types
 
 	def validate(self):
+		self.validate_deadline()
+		self.validate_scratch_acceptance()
+
+	def validate_deadline(self):
 		student_user = frappe.db.get_value("CS17 Profile", self.student, "user")
 		if frappe.session.user != student_user:
 			return
 		due_date = frappe.db.get_value("CS17 Assignment", self.assignment, "due_date")
 		if due_date and frappe.utils.now_datetime() > due_date:
 			frappe.throw(_("The deadline for this assignment has passed."))
+
+	def validate_scratch_acceptance(self):
+		if not self.project:
+			return
+		assignment = frappe.db.get_value(
+			"CS17 Assignment", self.assignment, ["submission_type", "is_published"], as_dict=True
+		)
+		if not assignment or assignment.submission_type != "Scratch":
+			frappe.throw(_("This assignment does not accept Scratch projects."))
+		if not assignment.is_published:
+			frappe.throw(_("This assignment is not open for submission."))
 
 
 def get_permission_query_conditions(user: str | None = None) -> str:
@@ -47,40 +62,18 @@ def get_permission_query_conditions(user: str | None = None) -> str:
 		return ""
 
 	profile = get_owner_profile(user)
-	if not profile:
-		return "1 = 0"
-
-	if profile.profile_type == "Student":
+	if profile and profile.profile_type == "Student":
 		return f"`tabCS17 Assignment Submission`.student = {frappe.db.escape(profile.name)}"
-
-	# Faculty may read every submission for an assignment in their cohort.
-	if profile.cohort:
-		return (
-			"`tabCS17 Assignment Submission`.assignment in "
-			f"(select name from `tabCS17 Assignment` where cohort = {frappe.db.escape(profile.cohort)})"
-		)
 	return "1 = 0"
 
 
-# `ptype` is the parameter name Frappe's has_permission hook passes (framework contract), so it must
-# match exactly for the permission type to bind.
 def has_permission(doc: Document, ptype: str | None = None, user: str | None = None) -> bool:
 	user = user or frappe.session.user
 	if "System Manager" in frappe.get_roles(user):
 		return True
 
 	profile = get_owner_profile(user)
-	if not profile:
-		return False
-
-	if profile.profile_type == "Student":
-		return doc.student == profile.name
-
-	# Faculty get read-only access, scoped to submissions for assignments in their own cohort.
-	if ptype not in (None, "read", "select", "report", "export", "print", "email", "share"):
-		return False
-	assignment_cohort = frappe.db.get_value("CS17 Assignment", doc.assignment, "cohort")
-	return bool(profile.cohort) and assignment_cohort == profile.cohort
+	return bool(profile and profile.profile_type == "Student" and doc.student == profile.name)
 
 
 SUBMISSION_EXTENSIONS = {
@@ -107,7 +100,6 @@ def is_valid_url(value: str) -> bool:
 
 
 def resolve_submission(assignment: str, file_url: str) -> dict:
-	# URLs go to submission_url, uploaded files to submission_document.
 	submission_type = frappe.db.get_value("CS17 Assignment", assignment, "submission_type")
 	validate_submission_value(submission_type, file_url)
 	if submission_type == "URL":

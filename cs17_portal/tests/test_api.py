@@ -4,7 +4,7 @@
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from cs17_portal.api import get_submission_grade, list_cohort_submissions
+from cs17_portal.api import get_recent_submissions, get_submission_grade, list_cohort_submissions
 
 
 def make_user(email: str) -> str:
@@ -155,6 +155,21 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 	def test_student_is_blocked(self):
 		frappe.set_user(self.student_user)
 		self.assertRaises(frappe.PermissionError, list_cohort_submissions)
+
+	def test_get_recent_submissions_blocks_student(self):
+		# Regression: get_recent_submissions must resolve the faculty from the session, not a caller-supplied
+		# profile — a student passing their own profile once leaked their whole cohort's submissions.
+		frappe.set_user(self.student_user)
+		self.assertRaises(frappe.PermissionError, get_recent_submissions)
+
+	def test_get_recent_submissions_scoped_to_own_cohort(self):
+		frappe.set_user(self.faculty_27_user)
+		self.assertEqual([row.name for row in get_recent_submissions()], [self.submission_27])
+
+		frappe.set_user(self.faculty_28_user)
+		names = [row.name for row in get_recent_submissions()]
+		self.assertIn(self.submission_28, names)
+		self.assertNotIn(self.submission_27, names)
 
 	def test_get_submission_grade_prefill(self):
 		frappe.set_user(self.faculty_27_user)

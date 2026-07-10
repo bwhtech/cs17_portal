@@ -47,7 +47,7 @@ class TestCS17Project(FrappeTestCase):
 		self.make_profile("Faculty", FACULTY_IN_USER, self.cohort_in)
 		self.make_profile("Faculty", FACULTY_OUT_USER, self.cohort_out)
 
-		self.assignment = self.make_scratch_assignment(self.cohort_in)
+		self.assignment = self.make_assignment(self.cohort_in)
 		self.addCleanup(lambda: frappe.set_user("Administrator"))
 
 	def cleanup_fixtures(self):
@@ -113,7 +113,13 @@ class TestCS17Project(FrappeTestCase):
 			.name
 		)
 
-	def make_scratch_assignment(self, cohort: str) -> str:
+	def make_assignment(
+		self,
+		cohort: str,
+		submission_type: str = "Scratch",
+		is_published: int = 1,
+		assignment_type: str = "Graded",
+	) -> str:
 		# before_insert enforces Faculty membership of the acting user, so create it as a cohort faculty.
 		frappe.set_user(FACULTY_IN_USER)
 		assignment = frappe.get_doc(
@@ -121,11 +127,11 @@ class TestCS17Project(FrappeTestCase):
 				"doctype": "CS17 Assignment",
 				"title": "Scratch Test Assignment",
 				"cohort": cohort,
-				"submission_type": "Scratch",
-				"assignment_type": "Graded",
+				"submission_type": submission_type,
+				"assignment_type": assignment_type,
 				"remarks": "Marks",
 				"max_marks": 100,
-				"is_published": 1,
+				"is_published": is_published,
 				"due_date": frappe.utils.add_days(frappe.utils.now_datetime(), 7),
 			}
 		).insert(ignore_permissions=True)
@@ -266,3 +272,20 @@ class TestCS17Project(FrappeTestCase):
 		self.assertEqual(first["name"], second["name"])
 		self.assertEqual(second["marks_obtained"], 90)
 		self.assertEqual(frappe.db.count("CS17 Assignment Grade", filters={"submission": submission}), 1)
+
+	def test_submit_to_non_scratch_assignment_rejected(self):
+		pdf_assignment = self.make_assignment(self.cohort_in, submission_type="PDF")
+		project = self.make_saved_project()
+		self.assertRaises(frappe.ValidationError, api.submit_scratch_project, pdf_assignment, project)
+
+	def test_submit_to_unpublished_assignment_rejected(self):
+		unpublished = self.make_assignment(self.cohort_in, is_published=0)
+		project = self.make_saved_project()
+		self.assertRaises(frappe.ValidationError, api.submit_scratch_project, unpublished, project)
+
+	def test_grade_on_not_graded_assignment_rejected(self):
+		not_graded = self.make_assignment(self.cohort_in, assignment_type="Not Graded")
+		project = self.make_saved_project()
+		submission = api.submit_scratch_project(not_graded, project)["name"]
+		frappe.set_user(FACULTY_IN_USER)
+		self.assertRaises(frappe.ValidationError, api.save_grade, submission, 50)
