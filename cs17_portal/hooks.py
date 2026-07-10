@@ -126,13 +126,15 @@ app_license = "mit"
 # -----------
 # Permissions evaluated in scripted ways
 
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
+permission_query_conditions = {
+	"CS17 Project": "cs17_portal.cs17_portal.doctype.cs17_project.cs17_project.get_permission_query_conditions",
+	"CS17 Assignment Submission": "cs17_portal.cs17_portal.doctype.cs17_assignment_submission.cs17_assignment_submission.get_permission_query_conditions",
+}
+
+has_permission = {
+	"CS17 Project": "cs17_portal.cs17_portal.doctype.cs17_project.cs17_project.has_permission",
+	"CS17 Assignment Submission": "cs17_portal.cs17_portal.doctype.cs17_assignment_submission.cs17_assignment_submission.has_permission",
+}
 
 # Document Events
 # ---------------

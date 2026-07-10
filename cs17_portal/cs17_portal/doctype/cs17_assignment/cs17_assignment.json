@@ -55,7 +55,7 @@
    "fieldname": "submission_type",
    "fieldtype": "Select",
    "label": "Submission Type",
-   "options": "Any\nPDF\nURL\nImage\nZIP",
+   "options": "Any\nPDF\nURL\nImage\nZIP\nScratch",
    "reqd": 1
   },
   {
@@ -65,12 +65,12 @@
    "label": "Max Marks"
   },
   {
-   "default": "GRADED-{cohort}-.###",
+   "default": "GRADED-.{cohort}.-.###",
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "hidden": 1,
    "label": "Naming Series",
-   "options": "GRADED-{cohort}-.###\nNOT-GRADED-{cohort}-.###"
+   "options": "GRADED-.{cohort}.-.###\nNOT-GRADED-.{cohort}.-.###"
   },
   {
    "fieldname": "section_break_ojuv",
