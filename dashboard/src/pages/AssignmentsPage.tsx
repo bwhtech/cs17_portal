@@ -67,7 +67,7 @@ export default function AssignmentsPage() {
         </p>
       </div>
 
-      <div className="bg-background border border-border rounded-xl p-5">
+      <div className="md:bg-background md:border md:border-border md:rounded-xl md:p-5">
         <AssignmentTable
           assignments={assignments ?? []}
           submissionMap={submissionMap}

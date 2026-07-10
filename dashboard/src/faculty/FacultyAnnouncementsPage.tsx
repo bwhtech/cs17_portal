@@ -1,13 +1,6 @@
 import { useState } from "react";
 import { useFrappeGetCall, useFrappeGetDocList } from "frappe-react-sdk";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import ResponsiveTable, { type Column } from "@/components/ui/ResponsiveTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -81,7 +74,7 @@ export default function FacultyAnnouncementsPage() {
         </Button>
       </div>
 
-      <div className="bg-background border border-border rounded-xl p-5">
+      <div className="md:bg-background md:border md:border-border md:rounded-xl md:p-5">
         {isLoading ? (
           <div className="space-y-2">
             <Skeleton className="h-10 w-full" />
@@ -144,89 +137,88 @@ function AnnouncementTable({
   const [publishTarget, setPublishTarget] =
     useState<FacultyAnnouncement | null>(null);
 
-  if (announcements.length === 0) {
-    return (
-      <p className="text-center text-muted-foreground py-8">
-        No announcements yet.
-      </p>
-    );
-  }
+  const columns: Column<FacultyAnnouncement>[] = [
+    {
+      header: "Title",
+      variant: "primary",
+      cell: (a) => a.title,
+    },
+    {
+      header: "Cohort",
+      cellClassName: "text-sm text-muted-foreground",
+      cell: (a) => a.cohort ?? "All cohorts",
+    },
+    {
+      header: "Variant",
+      cell: (a) => (
+        <span className="flex items-center gap-2 text-sm capitalize">
+          <span
+            className={`w-2 h-2 rounded-full ${
+              variantColor[a.alert_variant] ?? variantColor.info
+            }`}
+          />
+          {a.alert_variant}
+        </span>
+      ),
+    },
+    {
+      header: "Status",
+      cell: (a) => <StatusBadge announcement={a} />,
+    },
+    {
+      header: "",
+      variant: "actions",
+      cellClassName: "text-right",
+      cell: (a) => (
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-label={`Preview ${a.title}`}
+            onClick={() => onPreview(a)}
+          >
+            <Eye className="w-4 h-4 text-muted-foreground" />
+          </Button>
+          {!a.is_published && (
+            <>
+              <Button
+                size="sm"
+                variant="ghost"
+                aria-label={`Edit ${a.title}`}
+                onClick={() => onEdit(a)}
+              >
+                <Pencil className="w-4 h-4 text-muted-foreground" />
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setPublishTarget(a)}
+              >
+                Publish
+              </Button>
+            </>
+          )}
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-label={`Delete ${a.title}`}
+            onClick={() => onDelete(a)}
+          >
+            <Trash2 className="w-4 h-4 text-muted-foreground" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <>
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Title</TableHead>
-          <TableHead>Cohort</TableHead>
-          <TableHead>Variant</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="text-right"></TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {announcements.map((announcement) => (
-          <TableRow key={announcement.name}>
-            <TableCell className="font-medium">{announcement.title}</TableCell>
-            <TableCell className="text-sm text-muted-foreground">
-              {announcement.cohort ?? "All cohorts"}
-            </TableCell>
-            <TableCell>
-              <span className="flex items-center gap-2 text-sm capitalize">
-                <span
-                  className={`w-2 h-2 rounded-full ${
-                    variantColor[announcement.alert_variant] ?? variantColor.info
-                  }`}
-                />
-                {announcement.alert_variant}
-              </span>
-            </TableCell>
-            <TableCell>
-              <StatusBadge announcement={announcement} />
-            </TableCell>
-            <TableCell className="text-right">
-              <div className="flex items-center justify-end gap-2">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  aria-label={`Preview ${announcement.title}`}
-                  onClick={() => onPreview(announcement)}
-                >
-                  <Eye className="w-4 h-4 text-muted-foreground" />
-                </Button>
-                {!announcement.is_published && (
-                  <>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      aria-label={`Edit ${announcement.title}`}
-                      onClick={() => onEdit(announcement)}
-                    >
-                      <Pencil className="w-4 h-4 text-muted-foreground" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setPublishTarget(announcement)}
-                    >
-                      Publish
-                    </Button>
-                  </>
-                )}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  aria-label={`Delete ${announcement.title}`}
-                  onClick={() => onDelete(announcement)}
-                >
-                  <Trash2 className="w-4 h-4 text-muted-foreground" />
-                </Button>
-              </div>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <ResponsiveTable
+      columns={columns}
+      rows={announcements}
+      rowKey={(a) => a.name}
+      empty="No announcements yet."
+    />
 
     {publishTarget && (
       <PublishAnnouncementDialog

@@ -1,14 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFrappeGetCall, useFrappeGetDocList } from "frappe-react-sdk";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import ResponsiveTable, { type Column } from "@/components/ui/ResponsiveTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -110,7 +103,7 @@ export default function FacultyAssignmentsPage() {
         </Select>
       </div>
 
-      <div className="bg-background border border-border rounded-xl p-5">
+      <div className="md:bg-background md:border md:border-border md:rounded-xl md:p-5">
         {isLoading ? (
           <div className="space-y-2">
             <Skeleton className="h-10 w-full" />
@@ -199,84 +192,78 @@ function AssignmentTable({
   const [publishTarget, setPublishTarget] = useState<FacultyAssignment | null>(
     null,
   );
+
+  const columns: Column<FacultyAssignment>[] = [
+    {
+      header: "Title",
+      variant: "primary",
+      cell: (a) => (
+        <button
+          className="text-left hover:underline"
+          onClick={() => navigate(`/faculty/assignments/${a.name}`)}
+        >
+          {a.title}
+        </button>
+      ),
+    },
+    {
+      header: "Cohort",
+      cellClassName: "text-sm text-muted-foreground",
+      cell: (a) => a.cohort,
+    },
+    {
+      header: "Type",
+      cell: (a) => <Badge variant="secondary">{a.submission_type}</Badge>,
+    },
+    {
+      header: "Due",
+      cellClassName: "text-sm text-muted-foreground",
+      cell: (a) => formatDateTime(a.due_date),
+    },
+    {
+      header: "Submissions",
+      cell: (a) => <Badge variant="outline">{a.submission_count}</Badge>,
+    },
+    {
+      header: "Status",
+      cell: (a) => <StatusBadge assignment={a} />,
+    },
+    {
+      header: "",
+      variant: "actions",
+      cellClassName: "text-right",
+      cell: (a) => (
+        <div className="flex items-center justify-end gap-2">
+          {!a.is_published && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setPublishTarget(a)}
+            >
+              {a.publish_on ? "Reschedule" : "Publish"}
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-label={`Delete ${a.title}`}
+            onClick={() => onDelete(a)}
+          >
+            <Trash2 className="w-4 h-4 text-muted-foreground" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Title</TableHead>
-            <TableHead>Cohort</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Due</TableHead>
-            <TableHead>Submissions</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {assignments.length === 0 ? (
-            <TableRow>
-              <TableCell
-                colSpan={7}
-                className="text-center text-muted-foreground py-8"
-              >
-                No assignments yet.
-              </TableCell>
-            </TableRow>
-          ) : (
-            assignments.map((assignment) => (
-              <TableRow key={assignment.name}>
-                <TableCell className="font-medium">
-                  <button
-                    className="text-left hover:underline"
-                    onClick={() =>
-                      navigate(`/faculty/assignments/${assignment.name}`)
-                    }
-                  >
-                    {assignment.title}
-                  </button>
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {assignment.cohort}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="secondary">{assignment.submission_type}</Badge>
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {formatDateTime(assignment.due_date)}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline">{assignment.submission_count}</Badge>
-                </TableCell>
-                <TableCell>
-                  <StatusBadge assignment={assignment} />
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    {!assignment.is_published && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setPublishTarget(assignment)}
-                      >
-                        {assignment.publish_on ? "Reschedule" : "Publish"}
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      aria-label={`Delete ${assignment.title}`}
-                      onClick={() => onDelete(assignment)}
-                    >
-                      <Trash2 className="w-4 h-4 text-muted-foreground" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+      <ResponsiveTable
+        columns={columns}
+        rows={assignments}
+        rowKey={(a) => a.name}
+        empty="No assignments yet."
+      />
 
       {publishTarget && (
         <PublishAssignmentDialog
