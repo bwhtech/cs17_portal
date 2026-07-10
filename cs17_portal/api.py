@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 import frappe
 from frappe import _
-from frappe.utils import now_datetime
+from frappe.utils import now_datetime, today
 
 if TYPE_CHECKING:
 	from frappe.model.document import Document
@@ -384,6 +384,72 @@ def get_faculty_members() -> list:
 		fields=["user", "full_name"],
 		order_by="full_name asc",
 	)
+
+
+@frappe.whitelist(methods=["GET"])
+def get_faculty_announcements() -> list:
+	validate_membership("Faculty")
+	return frappe.get_all(
+		"CS17 Announcement",
+		fields=[
+			"name",
+			"title",
+			"content",
+			"alert_variant",
+			"cohort",
+			"is_dismissible",
+			"is_published",
+			"published_date",
+		],
+		order_by="creation desc",
+	)
+
+
+@frappe.whitelist(methods=["POST"])
+def create_announcement(
+	title: str,
+	content: str,
+	alert_variant: str = "info",
+	cohort: str | None = None,
+	is_dismissible: int = 1,
+	publish: str = "draft",
+) -> str:
+	validate_membership("Faculty")
+	announcement = frappe.new_doc("CS17 Announcement")
+	announcement.update(
+		{
+			"title": title,
+			"content": content,
+			"alert_variant": alert_variant,
+			"cohort": cohort,
+			"is_dismissible": is_dismissible,
+		}
+	)
+	_apply_announcement_publish(announcement, publish)
+	announcement.insert(ignore_permissions=True)
+	return announcement.name
+
+
+def _apply_announcement_publish(doc: "Document", publish: str) -> None:
+	if publish == "now":
+		doc.is_published = 1
+		doc.published_date = today()
+	else:
+		doc.is_published = 0
+
+
+@frappe.whitelist(methods=["POST"])
+def publish_announcement(announcement: str) -> None:
+	validate_membership("Faculty")
+	doc = frappe.get_doc("CS17 Announcement", announcement)
+	_apply_announcement_publish(doc, "now")
+	doc.save(ignore_permissions=True)
+
+
+@frappe.whitelist(methods=["POST"])
+def delete_announcement(announcement: str) -> None:
+	validate_membership("Faculty")
+	frappe.delete_doc("CS17 Announcement", announcement, ignore_permissions=True)
 
 
 def get_current_profile_name(profile_type: str) -> str | None:

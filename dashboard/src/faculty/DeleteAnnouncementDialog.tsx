@@ -14,35 +14,35 @@ import { useFrappePostCall } from "frappe-react-sdk";
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  assignment: { name: string; title: string } | null;
+  announcement: { name: string; title: string } | null;
   onSuccess: () => void;
 }
 
-export default function DeleteAssignmentDialog({
+export default function DeleteAnnouncementDialog({
   open,
   onOpenChange,
-  assignment,
+  announcement,
   onSuccess,
 }: Props) {
   const [error, setError] = useState<string | null>(null);
   const { call, loading } = useFrappePostCall(
-    "cs17_portal.api.delete_assignment",
+    "cs17_portal.api.delete_announcement",
   );
 
   useEffect(() => {
     setError(null);
-  }, [assignment]);
+  }, [announcement]);
 
   async function handleDelete(event: React.MouseEvent) {
-    // Keep the dialog open so a backend guard error stays visible.
+    // Keep the dialog open so a backend error stays visible.
     event.preventDefault();
     setError(null);
     try {
-      await call({ assignment: assignment!.name });
+      await call({ announcement: announcement!.name });
       onSuccess();
       onOpenChange(false);
     } catch (err: any) {
-      setError(err?.message ?? "Could not delete the assignment.");
+      setError(err?.message ?? "Could not delete the announcement.");
     }
   }
 
@@ -50,9 +50,9 @@ export default function DeleteAssignmentDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete "{assignment?.title}"?</AlertDialogTitle>
+          <AlertDialogTitle>Delete "{announcement?.title}"?</AlertDialogTitle>
           <AlertDialogDescription>
-            This permanently removes the assignment. This cannot be undone.
+            This permanently removes the announcement. This cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         {error && <p className="text-sm text-destructive">{error}</p>}

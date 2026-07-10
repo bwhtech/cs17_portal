@@ -14,7 +14,7 @@ interface Props {
   alerts: Alert[];
 }
 
-const styles = {
+export const alertStyles = {
   error: {
     wrapper: "bg-red-50 border border-red-100",
     iconBg: "bg-red-100",
@@ -66,7 +66,7 @@ export default function AlertBanner({ alerts }: Props) {
   return (
     <div className="space-y-2">
       {visible.map((alert) => {
-        const s = styles[alert.variant ?? "info"];
+        const s = alertStyles[alert.variant ?? "info"];
 
         return (
           <div

@@ -248,6 +248,40 @@ export async function cleanupTestGrades(
 	}
 }
 
+export interface CS17Announcement {
+	name: string;
+	title: string;
+	content: string;
+	alert_variant: string;
+	cohort?: string | null;
+	is_dismissible?: number;
+	is_published?: number;
+	published_date?: string | null;
+}
+
+export const TEST_ANNOUNCEMENT_PREFIX = "E2E Announcement";
+
+export async function cleanupTestAnnouncements(
+	request: APIRequestContext,
+): Promise<void> {
+	const announcements = await getList<{ name: string }>(
+		request,
+		"CS17 Announcement",
+		{
+			fields: ["name"],
+			filters: { title: ["like", `${TEST_ANNOUNCEMENT_PREFIX}%`] },
+			limit: 200,
+		},
+	);
+	for (const announcement of announcements) {
+		try {
+			await deleteDoc(request, "CS17 Announcement", announcement.name);
+		} catch (error) {
+			console.warn(`Failed to delete announcement ${announcement.name}:`, error);
+		}
+	}
+}
+
 // Gives the API session user a Faculty profile so it can seed assignments.
 // Returns the created profile name, or null if one already existed.
 export async function ensureSessionFaculty(
