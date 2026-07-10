@@ -59,7 +59,6 @@ def _attach_submission_counts(assignments: list) -> None:
 
 @frappe.whitelist(methods=["GET"])
 def get_student_assignments(cohort: str) -> dict:
-
 	now = now_datetime()
 	assignments = frappe.get_all(
 		"CS17 Assignment",
@@ -419,7 +418,7 @@ def get_student_announcements(cohort: str) -> dict:
 			table.published_date,
 		)
 		.where(in_scope & visible)
-		.orderby(table.published_date, order=Order.desc)
+		.orderby(table.creation, order=Order.desc)
 	).run(as_dict=True)
 	upcoming = (
 		frappe.qb.from_(table)
