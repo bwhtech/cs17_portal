@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useCurrentProfile } from "@/hooks/useCurrentProfile";
 import { cn } from "@/lib/utils";
+import SidebarShell from "@/components/ui/SidebarShell";
 import logoUrl from "@/assets/CS17.svg";
 
 type InternalItem = { icon: ElementType; label: string; to: string };
@@ -52,12 +53,20 @@ const navSections = [
   },
 ];
 
-export default function FacultySidebar() {
+type FacultySidebarProps = {
+  mobileOpen: boolean;
+  onMobileOpenChange: (open: boolean) => void;
+};
+
+export default function FacultySidebar({
+  mobileOpen,
+  onMobileOpenChange,
+}: FacultySidebarProps) {
   const location = useLocation();
   const { profile } = useCurrentProfile();
 
   return (
-    <aside className="w-56 shrink-0 border-r border-border bg-background flex flex-col h-screen sticky top-0">
+    <SidebarShell mobileOpen={mobileOpen} onMobileOpenChange={onMobileOpenChange}>
       <div className="px-5 py-4 border-b border-border flex items-center gap-2">
         <img src={logoUrl} alt="CS17" className="h-5" />
         <span className="text-[10px] font-semibold bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full leading-none">
@@ -158,6 +167,6 @@ export default function FacultySidebar() {
           </ul>
         </div>
       </nav>
-    </aside>
+    </SidebarShell>
   );
 }
