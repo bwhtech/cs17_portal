@@ -12,20 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDateTime } from "@/lib/dayjs";
-
-interface CohortSubmission {
-  name: string;
-  student: string;
-  full_name: string;
-  assignment: string;
-  assignment_title: string;
-  submission_type: string | null;
-  max_marks: number;
-  submitted_at: string;
-  marks_obtained: number | null;
-  grade: string | null;
-  graded: boolean;
-}
+import { GradeBadge } from "./GradeBadge";
+import type { CohortSubmission } from "./types";
 
 export default function FacultySubmissionsPage() {
   const navigate = useNavigate();
@@ -97,15 +85,7 @@ export default function FacultySubmissionsPage() {
                       : "—"}
                   </TableCell>
                   <TableCell>
-                    {submission.graded ? (
-                      <Badge variant="default">
-                        {submission.marks_obtained != null
-                          ? `${submission.marks_obtained} / ${submission.max_marks}`
-                          : (submission.grade ?? "Graded")}
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary">Pending</Badge>
-                    )}
+                    <GradeBadge submission={submission} />
                   </TableCell>
                   <TableCell className="text-right">
                     <Button

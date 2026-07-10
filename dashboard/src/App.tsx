@@ -1,5 +1,6 @@
 import { FrappeProvider } from "frappe-react-sdk";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ZenModeProvider } from "@/context/ZenModeContext";
 import Layout from "@/components/ui/Layout";
 import DashboardPage from "@/pages/DashboardPage";
 import AssignmentsPage from "@/pages/AssignmentsPage";
@@ -18,7 +19,8 @@ function App() {
   return (
     <FrappeProvider>
       <BrowserRouter basename="/dashboard">
-        <Routes>
+        <ZenModeProvider>
+          <Routes>
           <Route element={<Layout />}>
             <Route index element={<DashboardPage />} />
             <Route path="/assignments" element={<AssignmentsPage />} />
@@ -35,7 +37,8 @@ function App() {
             <Route path="submissions/:submissionId" element={<FacultyGradingPage />} />
             <Route path="settings" element={<FacultySettingsPage />} />
           </Route>
-        </Routes>
+          </Routes>
+        </ZenModeProvider>
       </BrowserRouter>
     </FrappeProvider>
   );

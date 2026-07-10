@@ -4,7 +4,6 @@ import { useFrappeGetCall, useFrappePostCall } from "frappe-react-sdk";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
 	SCRATCH_READONLY_EDITOR_URL,
@@ -12,21 +11,10 @@ import {
 	SCRATCH_TARGET_ORIGIN,
 	base64ToArrayBuffer,
 } from "@/lib/scratch";
-
-interface CohortSubmission {
-	name: string;
-	student: string;
-	full_name: string;
-	assignment: string;
-	assignment_title: string;
-	submission_type: string | null;
-	submission_document?: string | null;
-	max_marks: number;
-	submitted_at: string;
-	marks_obtained: number | null;
-	grade: string | null;
-	graded: boolean;
-}
+import { GradeBadge } from "./GradeBadge";
+import { ZenToggleButton } from "@/components/ui/ZenToggleButton";
+import { useZenMode, useZenOnMount } from "@/context/ZenModeContext";
+import type { CohortSubmission } from "./types";
 
 interface ExistingGrade {
 	name: string;
@@ -39,6 +27,8 @@ const GRADE_OPTIONS = ["A", "B", "C", "D", "E"];
 
 export default function FacultyGradingPage() {
 	const { submissionId } = useParams<{ submissionId: string }>();
+	useZenOnMount();
+	const { isZen } = useZenMode();
 
 	const {
 		data: submissionsData,
@@ -78,53 +68,69 @@ export default function FacultyGradingPage() {
 
 	const isScratch = submission.submission_type === "Scratch";
 
+	const headerBar = (
+		<div className="flex items-center gap-4 px-6 py-3 border-b border-border bg-background shrink-0">
+			<Button
+				variant="ghost"
+				size="sm"
+				asChild
+				className="cursor-pointer transition-colors"
+			>
+				<Link to="/faculty/assignments">
+					<ArrowLeft className="w-4 h-4" />
+					Submissions
+				</Link>
+			</Button>
+			<div className="min-w-0">
+				<h1 className="font-semibold truncate">{submission.assignment_title}</h1>
+				<p className="text-xs text-muted-foreground truncate">
+					{submission.full_name} · out of {submission.max_marks} marks
+				</p>
+			</div>
+			<div className="ml-auto shrink-0 flex items-center gap-3">
+				<ZenToggleButton />
+				<GradeBadge submission={submission} />
+			</div>
+		</div>
+	);
+
+	const playerPane = (
+		<div className="flex-1 min-h-0 bg-muted">
+			{isScratch ? (
+				<ReadOnlyPlayer submission={submission.name} />
+			) : (
+				<SubmissionFile fileUrl={submission.submission_document} />
+			)}
+		</div>
+	);
+
+	const gradeForm = (
+		<div className="shrink-0 border-t border-border bg-background">
+			<GradeFormLoader
+				submission={submission}
+				onGraded={() => refreshSubmissions()}
+			/>
+		</div>
+	);
+
+	if (isZen) {
+		return (
+			<div className="flex flex-col -m-6">
+				<div className="flex flex-col h-[100dvh]">
+					{headerBar}
+					{playerPane}
+				</div>
+				{gradeForm}
+			</div>
+		);
+	}
+
 	return (
 		<div className="flex flex-col h-full -m-6">
-			<div className="flex items-center gap-4 px-6 py-3 border-b border-border bg-background shrink-0">
-				<Button
-					variant="ghost"
-					size="sm"
-					asChild
-					className="cursor-pointer transition-colors"
-				>
-					<Link to="/faculty/assignments">
-						<ArrowLeft className="w-4 h-4" />
-						Submissions
-					</Link>
-				</Button>
-				<div className="min-w-0">
-					<h1 className="font-semibold truncate">{submission.assignment_title}</h1>
-					<p className="text-xs text-muted-foreground truncate">
-						{submission.full_name} · out of {submission.max_marks} marks
-					</p>
-				</div>
-				<div className="ml-auto shrink-0">
-					{submission.graded ? (
-						<Badge variant="default">
-							{submission.marks_obtained != null
-								? `${submission.marks_obtained} / ${submission.max_marks}`
-								: (submission.grade ?? "Graded")}
-						</Badge>
-					) : (
-						<Badge variant="secondary">Pending</Badge>
-					)}
-				</div>
-			</div>
-
+			{headerBar}
 			<div className="flex flex-1 min-h-0 flex-col">
-				<div className="flex-1 min-h-0 bg-muted">
-					{isScratch ? (
-						<ReadOnlyPlayer submission={submission.name} />
-					) : (
-						<SubmissionFile fileUrl={submission.submission_document} />
-					)}
-				</div>
-				<div className="shrink-0 border-t border-border bg-background">
-					<GradeFormLoader
-						submission={submission}
-						onGraded={() => refreshSubmissions()}
-					/>
-				</div>
+				{playerPane}
+				{gradeForm}
 			</div>
 		</div>
 	);
@@ -154,8 +160,6 @@ function ReadOnlyPlayer({ submission }: { submission: string }) {
 		);
 	}, [sb3Content]);
 
-	// The snapshot content may resolve after the editor already sent `ready`, so try loading
-	// whenever either side becomes available.
 	useEffect(() => {
 		loadIntoPlayer();
 	}, [loadIntoPlayer]);
@@ -230,7 +234,6 @@ function GradeFormLoader({
 	}
 
 	const existingGrade = data?.message ?? null;
-	// Keyed so the form remounts with fresh initial state once the grade resolves.
 	return (
 		<GradeForm
 			key={existingGrade?.name ?? "new"}
@@ -289,8 +292,10 @@ function GradeForm({
 			});
 			setSaved(true);
 			onGraded();
-		} catch (err) {
-			setError((err as { message?: string })?.message ?? "Could not save the grade.");
+		} catch (error) {
+			setError(
+				(error as { message?: string })?.message ?? "Could not save the grade.",
+			);
 		}
 	}
 

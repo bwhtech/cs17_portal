@@ -7,6 +7,7 @@ import {
 } from "frappe-react-sdk";
 import { ArrowLeft, Save, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ZenToggleButton } from "@/components/ui/ZenToggleButton";
 import {
 	Dialog,
 	DialogContent,
@@ -16,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentStudent } from "@/hooks/useCurrentStudent";
+import { useZenOnMount } from "@/context/ZenModeContext";
 import {
 	SCRATCH_EDITOR_URL,
 	SCRATCH_MESSAGE,
@@ -43,6 +45,7 @@ interface ScratchAssignment {
 export default function ProjectEditorPage() {
 	const { id: projectId } = useParams<{ id: string }>();
 	const { student } = useCurrentStudent();
+	useZenOnMount();
 
 	const {
 		data: project,
@@ -58,15 +61,12 @@ export default function ProjectEditorPage() {
 	const iframeRef = useRef<HTMLIFrameElement>(null);
 	const editorReadyRef = useRef(false);
 	const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-	// The editor answers request-sb3 with a single project-sb3; this remembers whether
-	// that reply belongs to a manual Save or a silent autosave so the status reads right.
 	const pendingSaveKindRef = useRef<"manual" | "auto" | null>(null);
 
 	const [status, setStatus] = useState<SaveStatus>("idle");
 	const [submitOpen, setSubmitOpen] = useState(false);
 	const [submitError, setSubmitError] = useState<string | null>(null);
 
-	// The freshest sb3_file url, without waiting for a project refetch after the first save.
 	const sb3FileRef = useRef<string | null>(null);
 	useEffect(() => {
 		sb3FileRef.current = project?.sb3_file ?? null;
@@ -158,6 +158,7 @@ export default function ProjectEditorPage() {
 				<h1 className="font-semibold truncate">{project?.project_title}</h1>
 				<span className="text-xs text-muted-foreground ml-2">{statusLabel(status)}</span>
 				<div className="ml-auto flex items-center gap-2">
+					<ZenToggleButton />
 					<Button variant="outline" size="sm" onClick={() => requestSb3("manual")}>
 						<Save className="w-4 h-4" />
 						Save
@@ -188,13 +189,11 @@ export default function ProjectEditorPage() {
 				onSubmit={async (assignment) => {
 					setSubmitError(null);
 					try {
-						// Submit snapshots the last saved .sb3 (the API rejects an unsaved project);
-						// it deliberately does NOT trigger a fresh save, which would race the snapshot read.
 						await submitScratchProject({ assignment, project: projectId });
 						setSubmitOpen(false);
-					} catch (err) {
+					} catch (error) {
 						setSubmitError(
-							(err as { message?: string })?.message ?? "Could not submit the project.",
+							(error as { message?: string })?.message ?? "Could not submit the project.",
 						);
 					}
 				}}

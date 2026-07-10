@@ -35,10 +35,14 @@ export default function ProjectsPage() {
 		setError(null);
 		try {
 			const response = await createProject({ project_title: projectTitle });
-			await mutate();
+			// Refresh the list in the background; we navigate straight to the editor and don't await it.
+			mutate();
 			navigate(`/projects/${response.message.name}/edit`);
-		} catch (err) {
-			setError((err as { message?: string })?.message ?? "Could not create the project.");
+		} catch (error) {
+			setError(
+				(error as { message?: string })?.message ??
+					"Could not create the project.",
+			);
 		}
 	}
 
