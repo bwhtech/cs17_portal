@@ -7,8 +7,6 @@ import {
   type ReactNode,
 } from "react";
 
-const STORAGE_KEY = "scratch-zen";
-
 type ZenModeContextType = {
   isZen: boolean;
   setIsZen: (value: boolean) => void;
@@ -24,13 +22,7 @@ const ZenModeContext = createContext<ZenModeContextType>({
 export function ZenModeProvider({ children }: { children: ReactNode }) {
   const [isZen, setIsZen] = useState(false);
 
-  const toggleZen = useCallback(() => {
-    setIsZen((current) => {
-      const next = !current;
-      localStorage.setItem(STORAGE_KEY, next ? "on" : "off");
-      return next;
-    });
-  }, []);
+  const toggleZen = useCallback(() => setIsZen((current) => !current), []);
 
   return (
     <ZenModeContext.Provider value={{ isZen, setIsZen, toggleZen }}>
@@ -46,7 +38,7 @@ export function useZenMode() {
 export function useZenOnMount() {
   const { setIsZen } = useZenMode();
   useLayoutEffect(() => {
-    setIsZen(localStorage.getItem(STORAGE_KEY) !== "off");
+    setIsZen(true);
     return () => setIsZen(false);
   }, [setIsZen]);
 }
