@@ -101,7 +101,7 @@ export default function DashboardPage() {
 
       {alerts.length > 0 && <AlertBanner alerts={alerts} />}
 
-      <div className="bg-background border border-border rounded-xl p-5 space-y-4">
+      <div className="space-y-4 md:bg-background md:border md:border-border md:rounded-xl md:p-5">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold">Upcoming assignments</h3>
           <Link

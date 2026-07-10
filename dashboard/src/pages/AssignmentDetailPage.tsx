@@ -91,13 +91,13 @@ export default function AssignmentDetailPage() {
         Assignments
       </button>
 
-      <div className="flex gap-6">
+      <div className="flex flex-col md:flex-row gap-6">
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold mb-4">{assignment.title}</h1>
           <RichText content={assignment.description} />
         </div>
 
-        <div className="w-64 shrink-0 space-y-4">
+        <div className="w-full md:w-64 shrink-0 space-y-4">
           <div className="border border-border rounded-xl p-4 space-y-3">
             <div>
               <p className="text-xs text-muted-foreground">Due</p>
