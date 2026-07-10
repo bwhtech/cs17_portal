@@ -1,4 +1,4 @@
-import { type ElementType } from "react";
+import { type ElementType, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useCurrentStudent } from "@/hooks/useCurrentStudent";
 import { cn } from "@/lib/utils";
+import SidebarShell from "@/components/ui/SidebarShell";
 import logoUrl from "@/assets/CS17.svg";
 
 type InternalItem = { icon: ElementType; label: string; to: string };
@@ -52,12 +53,21 @@ const navSections = [
   },
 ];
 
-export default function Sidebar() {
+type SidebarProps = {
+  mobileOpen: boolean;
+  onMobileOpenChange: (open: boolean) => void;
+};
+
+export default function Sidebar({ mobileOpen, onMobileOpenChange }: SidebarProps) {
   const location = useLocation();
   const { student } = useCurrentStudent();
 
+  useEffect(() => {
+    onMobileOpenChange(false);
+  }, [location.pathname, onMobileOpenChange]);
+
   return (
-    <aside className="w-56 shrink-0 border-r border-border bg-background flex flex-col h-screen sticky top-0">
+    <SidebarShell mobileOpen={mobileOpen} onMobileOpenChange={onMobileOpenChange}>
       {/* Brand */}
       <div className="px-5 py-4 border-b border-border flex items-center gap-2">
         <img src={logoUrl} alt="CS17" className="h-5" />
@@ -161,6 +171,6 @@ export default function Sidebar() {
           </ul>
         </div>
       </nav>
-    </aside>
+    </SidebarShell>
   );
 }
