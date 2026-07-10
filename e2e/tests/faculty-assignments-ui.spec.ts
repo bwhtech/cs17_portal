@@ -14,7 +14,7 @@ import {
 	deleteTestProfile,
 	ensureSessionFaculty,
 } from "../helpers/cs17";
-import { deleteDoc, getDoc, getList } from "../helpers/frappe";
+import { deleteDoc } from "../helpers/frappe";
 
 let cohort: CS17Cohort;
 let student: CS17Profile;
@@ -67,38 +67,21 @@ test.describe("Faculty assignment portal", () => {
 		await expect(row.getByText("Published")).toBeVisible();
 	});
 
-	test("auto-saves every filled field as a draft on close", async ({ page, request }) => {
-		const title = `${TEST_ASSIGNMENT_PREFIX} Autosave ${Date.now()}`;
+	test("keeps filled fields after a misclick close and reopen", async ({ page }) => {
+		const title = `${TEST_ASSIGNMENT_PREFIX} Persist ${Date.now()}`;
 		await page.goto("/dashboard/faculty/assignments");
 		await page.getByRole("button", { name: "New Assignment" }).click();
 
 		await page.getByPlaceholder("Assignment title").fill(title);
-		await page.locator('input[type="datetime-local"]').fill("2030-03-03T10:00");
-		await page.getByPlaceholder(/What should students do/).fill("Draft body text");
+		await page.getByPlaceholder(/What should students do/).fill("Persisted body text");
 
 		await page.keyboard.press("Escape");
-		await page.waitForResponse(
-			(r) => r.url().includes("create_assignment") && r.status() === 200,
-		);
+		await expect(page.getByPlaceholder("Assignment title")).not.toBeVisible();
 
-		const rows = await getList<{ name: string }>(request, "CS17 Assignment", {
-			fields: ["name"],
-			filters: { title },
-			limit: 1,
-		});
-		expect(rows.length).toBe(1);
-		const doc = await getDoc<{ due_date: string; description: string }>(
-			request,
-			"CS17 Assignment",
-			rows[0].name,
-		);
-		expect(doc.due_date).toContain("2030-03-03");
-		expect(doc.description).toContain("Draft body text");
-
-		await page.getByRole("button", { name: /Drafts \(/ }).click();
-		await page.getByRole("button", { name: title }).first().click();
+		await page.getByRole("button", { name: "New Assignment" }).click();
+		await expect(page.getByPlaceholder("Assignment title")).toHaveValue(title);
 		await expect(page.getByPlaceholder(/What should students do/)).toHaveValue(
-			"Draft body text",
+			"Persisted body text",
 		);
 	});
 

@@ -13,28 +13,28 @@ import { toFrappeDatetime } from "@/lib/datetime";
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  assignment: { name: string; title: string } | null;
+  announcement: { name: string; title: string } | null;
   onSuccess: () => void;
 }
 
-export default function PublishAssignmentDialog({
+export default function PublishAnnouncementDialog({
   open,
   onOpenChange,
-  assignment,
+  announcement,
   onSuccess,
 }: Props) {
   const [publish, setPublish] = useState("now");
   const [publishOn, setPublishOn] = useState("");
   const [error, setError] = useState<string | null>(null);
   const { call, loading } = useFrappePostCall(
-    "cs17_portal.api.publish_assignment",
+    "cs17_portal.api.publish_announcement",
   );
 
   useEffect(() => {
     setPublish("now");
     setPublishOn("");
     setError(null);
-  }, [assignment]);
+  }, [announcement]);
 
   async function handlePublish() {
     setError(null);
@@ -44,14 +44,14 @@ export default function PublishAssignmentDialog({
     }
     try {
       await call({
-        assignment: assignment!.name,
+        announcement: announcement!.name,
         publish,
         publish_on: toFrappeDatetime(publishOn),
       });
       onSuccess();
       onOpenChange(false);
     } catch (err: any) {
-      setError(err?.message ?? "Could not publish the assignment.");
+      setError(err?.message ?? "Could not publish the announcement.");
     }
   }
 
@@ -59,7 +59,9 @@ export default function PublishAssignmentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Publish: {assignment?.title ?? "Assignment"}</DialogTitle>
+          <DialogTitle>
+            Publish: {announcement?.title ?? "Announcement"}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <PublishScheduleFields
@@ -70,7 +72,7 @@ export default function PublishAssignmentDialog({
               setError(null);
               setPublishOn(value);
             }}
-            hint="Published assignments are visible to students in the cohort."
+            hint="Published announcements are visible to students in the cohort."
           />
 
           {error && <p className="text-sm text-destructive">{error}</p>}

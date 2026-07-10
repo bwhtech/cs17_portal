@@ -1,9 +1,5 @@
 import { useState } from "react";
-import {
-  useFrappeGetCall,
-  useFrappeGetDocList,
-  useFrappePostCall,
-} from "frappe-react-sdk";
+import { useFrappeGetCall, useFrappeGetDocList } from "frappe-react-sdk";
 import {
   Table,
   TableBody,
@@ -15,10 +11,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash2 } from "lucide-react";
-import { formatDate } from "@/lib/dayjs";
+import { Eye, Pencil, Plus, Trash2 } from "lucide-react";
+import { formatDate, formatDateTime } from "@/lib/dayjs";
 import CreateAnnouncementDialog from "@/faculty/CreateAnnouncementDialog";
 import DeleteAnnouncementDialog from "@/faculty/DeleteAnnouncementDialog";
+import PreviewAnnouncementDialog from "@/faculty/PreviewAnnouncementDialog";
+import PublishAnnouncementDialog from "@/faculty/PublishAnnouncementDialog";
 
 interface FacultyAnnouncement {
   name: string;
@@ -29,6 +27,7 @@ interface FacultyAnnouncement {
   is_dismissible: number;
   is_published: number;
   published_date: string | null;
+  publish_on: string | null;
 }
 
 const variantColor: Record<string, string> = {
@@ -39,9 +38,22 @@ const variantColor: Record<string, string> = {
 
 export default function FacultyAnnouncementsPage() {
   const [createOpen, setCreateOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<FacultyAnnouncement | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<FacultyAnnouncement | null>(
     null,
   );
+  const [previewTarget, setPreviewTarget] =
+    useState<FacultyAnnouncement | null>(null);
+
+  function openNew() {
+    setEditTarget(null);
+    setCreateOpen(true);
+  }
+
+  function openEdit(announcement: FacultyAnnouncement) {
+    setEditTarget(announcement);
+    setCreateOpen(true);
+  }
 
   const { data: cohortDocs } = useFrappeGetDocList("CS17 Cohort", {
     fields: ["name"],
@@ -63,7 +75,7 @@ export default function FacultyAnnouncementsPage() {
             {announcements.length} total
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
+        <Button onClick={openNew}>
           <Plus className="w-4 h-4 mr-1.5" />
           New Announcement
         </Button>
@@ -80,16 +92,22 @@ export default function FacultyAnnouncementsPage() {
           <AnnouncementTable
             announcements={announcements}
             onChange={mutate}
+            onEdit={openEdit}
             onDelete={setDeleteTarget}
+            onPreview={setPreviewTarget}
           />
         )}
       </div>
 
       <CreateAnnouncementDialog
         open={createOpen}
-        onOpenChange={setCreateOpen}
+        onOpenChange={(open) => {
+          setCreateOpen(open);
+          if (!open) setEditTarget(null);
+        }}
         cohorts={cohorts}
         onCreated={mutate}
+        editTarget={editTarget}
       />
 
       {deleteTarget && (
@@ -100,6 +118,12 @@ export default function FacultyAnnouncementsPage() {
           onSuccess={mutate}
         />
       )}
+
+      <PreviewAnnouncementDialog
+        open={!!previewTarget}
+        onOpenChange={(open) => !open && setPreviewTarget(null)}
+        announcement={previewTarget}
+      />
     </div>
   );
 }
@@ -107,20 +131,18 @@ export default function FacultyAnnouncementsPage() {
 function AnnouncementTable({
   announcements,
   onChange,
+  onEdit,
   onDelete,
+  onPreview,
 }: {
   announcements: FacultyAnnouncement[];
   onChange: () => void;
+  onEdit: (announcement: FacultyAnnouncement) => void;
   onDelete: (announcement: FacultyAnnouncement) => void;
+  onPreview: (announcement: FacultyAnnouncement) => void;
 }) {
-  const { call: publish } = useFrappePostCall(
-    "cs17_portal.api.publish_announcement",
-  );
-
-  async function handlePublish(name: string) {
-    await publish({ announcement: name });
-    onChange();
-  }
+  const [publishTarget, setPublishTarget] =
+    useState<FacultyAnnouncement | null>(null);
 
   if (announcements.length === 0) {
     return (
@@ -131,6 +153,7 @@ function AnnouncementTable({
   }
 
   return (
+    <>
     <Table>
       <TableHeader>
         <TableRow>
@@ -159,29 +182,36 @@ function AnnouncementTable({
               </span>
             </TableCell>
             <TableCell>
-              {announcement.is_published ? (
-                <div className="flex flex-col items-start gap-1">
-                  <Badge>Published</Badge>
-                  {announcement.published_date && (
-                    <span className="text-xs text-muted-foreground">
-                      {formatDate(announcement.published_date)}
-                    </span>
-                  )}
-                </div>
-              ) : (
-                <Badge variant="outline">Draft</Badge>
-              )}
+              <StatusBadge announcement={announcement} />
             </TableCell>
             <TableCell className="text-right">
               <div className="flex items-center justify-end gap-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  aria-label={`Preview ${announcement.title}`}
+                  onClick={() => onPreview(announcement)}
+                >
+                  <Eye className="w-4 h-4 text-muted-foreground" />
+                </Button>
                 {!announcement.is_published && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handlePublish(announcement.name)}
-                  >
-                    Publish
-                  </Button>
+                  <>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      aria-label={`Edit ${announcement.title}`}
+                      onClick={() => onEdit(announcement)}
+                    >
+                      <Pencil className="w-4 h-4 text-muted-foreground" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setPublishTarget(announcement)}
+                    >
+                      Publish
+                    </Button>
+                  </>
                 )}
                 <Button
                   size="sm"
@@ -197,5 +227,39 @@ function AnnouncementTable({
         ))}
       </TableBody>
     </Table>
+
+    {publishTarget && (
+      <PublishAnnouncementDialog
+        open={!!publishTarget}
+        onOpenChange={(open) => !open && setPublishTarget(null)}
+        announcement={publishTarget}
+        onSuccess={onChange}
+      />
+    )}
+    </>
   );
+}
+
+function StatusBadge({ announcement }: { announcement: FacultyAnnouncement }) {
+  if (announcement.is_published)
+    return (
+      <div className="flex flex-col items-start gap-1">
+        <Badge>Published</Badge>
+        {announcement.published_date && (
+          <span className="text-xs text-muted-foreground">
+            {formatDate(announcement.published_date)}
+          </span>
+        )}
+      </div>
+    );
+  if (announcement.publish_on)
+    return (
+      <div className="flex flex-col items-start gap-1">
+        <Badge variant="secondary">Scheduled</Badge>
+        <span className="text-xs text-muted-foreground">
+          {formatDateTime(announcement.publish_on)}
+        </span>
+      </div>
+    );
+  return <Badge variant="outline">Draft</Badge>;
 }

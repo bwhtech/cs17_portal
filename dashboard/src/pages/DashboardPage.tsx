@@ -1,6 +1,7 @@
 import { useFrappeGetDocList } from "frappe-react-sdk";
 import { useCurrentStudent } from "@/hooks/useCurrentStudent";
 import { useStudentAssignments } from "@/hooks/useStudentAssignments";
+import { useStudentAnnouncements } from "@/hooks/useStudentAnnouncements";
 import { LIVE_LIST_OPTIONS } from "@/lib/liveQuery";
 import AssignmentTable from "@/components/ui/AssignmentTable";
 import AlertBanner from "@/components/ui/AlertBanner";
@@ -12,19 +13,7 @@ import GradeDialog from "@/components/ui/GradeDialog";
 export default function DashboardPage() {
   const { student, isLoading: studentLoading } = useCurrentStudent();
 
-  const { data: announcements } = useFrappeGetDocList(
-    "CS17 Announcement",
-    {
-      filters: [
-        ["is_published", "=", 1],
-        ["cohort", "=", student?.cohort ?? ""],
-      ],
-      fields: ["name", "title", "content", "alert_variant", "is_dismissible"],
-      orderBy: { field: "published_date", order: "desc" },
-      limit: 10,
-    },
-    student?.cohort ? undefined : null,
-  );
+  const { announcements } = useStudentAnnouncements(student?.cohort);
 
   const { assignments } = useStudentAssignments(student?.cohort);
 
@@ -83,7 +72,7 @@ export default function DashboardPage() {
   const now = new Date();
   const upcomingAssignments = (assignments ?? [])
     .filter((a) => new Date(a.due_date) >= now)
-    .sort((a, b) => +new Date(b.modified) - +new Date(a.modified))
+    .sort((a, b) => +new Date(b.creation) - +new Date(a.creation))
     .slice(0, 3);
 
   const today = new Date().toLocaleDateString("en-US", {

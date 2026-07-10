@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFrappePostCall } from "frappe-react-sdk";
 import {
   Dialog,
@@ -18,9 +18,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { alertStyles } from "@/components/ui/AlertBanner";
-import { cn } from "@/lib/utils";
-import { X } from "lucide-react";
+import AnnouncementPreview from "@/faculty/AnnouncementPreview";
+import PublishScheduleFields from "@/faculty/PublishScheduleFields";
+import { toFrappeDatetime, toDatetimeLocal } from "@/lib/datetime";
 
 const VARIANTS = ["info", "warning", "error"] as const;
 const ALL_COHORTS = "all";
@@ -33,11 +33,22 @@ const EMPTY_DRAFT = {
   is_dismissible: true,
 };
 
+export interface AnnouncementRow {
+  name: string;
+  title: string;
+  content: string;
+  alert_variant: string;
+  cohort: string | null;
+  is_dismissible: number;
+  publish_on: string | null;
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   cohorts: string[];
   onCreated: () => void;
+  editTarget?: AnnouncementRow | null;
 }
 
 export default function CreateAnnouncementDialog({
@@ -45,12 +56,38 @@ export default function CreateAnnouncementDialog({
   onOpenChange,
   cohorts,
   onCreated,
+  editTarget,
 }: Props) {
   const [draft, setDraft] = useState(EMPTY_DRAFT);
+  const [publish, setPublish] = useState("draft");
+  const [publishOn, setPublishOn] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const { call, loading } = useFrappePostCall(
+  const { call: createCall, loading } = useFrappePostCall(
     "cs17_portal.api.create_announcement",
   );
+  const { call: updateCall } = useFrappePostCall(
+    "cs17_portal.api.update_announcement",
+  );
+  const loadedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!open) {
+      loadedRef.current = null;
+      return;
+    }
+    if (editTarget && loadedRef.current !== editTarget.name) {
+      setDraft({
+        title: editTarget.title ?? "",
+        content: editTarget.content ?? "",
+        alert_variant: (editTarget.alert_variant ??
+          "info") as (typeof VARIANTS)[number],
+        cohort: editTarget.cohort ?? ALL_COHORTS,
+        is_dismissible: Boolean(editTarget.is_dismissible),
+      });
+      setPublish(editTarget.publish_on ? "schedule" : "draft");
+      setPublishOn(toDatetimeLocal(editTarget.publish_on));
+      loadedRef.current = editTarget.name;
+    }
+  }, [open, editTarget]);
 
   function update(partial: Partial<typeof EMPTY_DRAFT>) {
     setError(null);
@@ -59,26 +96,30 @@ export default function CreateAnnouncementDialog({
 
   function reset() {
     setDraft(EMPTY_DRAFT);
+    setPublish("draft");
+    setPublishOn("");
     setError(null);
   }
 
-  function handleOpenChange(next: boolean) {
-    if (!next) reset();
-    onOpenChange(next);
-  }
-
-  async function submit(publish: "now" | "draft") {
+  async function submit() {
     if (!draft.title.trim()) return setError("Title is required.");
-    if (!draft.content.trim()) return setError("Content is required.");
+    if (publish === "schedule" && !publishOn)
+      return setError("Pick a publish date.");
+    const payload = {
+      title: draft.title,
+      content: draft.content,
+      alert_variant: draft.alert_variant,
+      cohort: draft.cohort === ALL_COHORTS ? undefined : draft.cohort,
+      is_dismissible: draft.is_dismissible ? 1 : 0,
+      publish,
+      publish_on: toFrappeDatetime(publishOn),
+    };
     try {
-      await call({
-        title: draft.title,
-        content: draft.content,
-        alert_variant: draft.alert_variant,
-        cohort: draft.cohort === ALL_COHORTS ? undefined : draft.cohort,
-        is_dismissible: draft.is_dismissible ? 1 : 0,
-        publish,
-      });
+      if (editTarget) {
+        await updateCall({ announcement: editTarget.name, ...payload });
+      } else {
+        await createCall(payload);
+      }
       reset();
       onOpenChange(false);
       onCreated();
@@ -88,16 +129,18 @@ export default function CreateAnnouncementDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-3xl">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-5xl">
         <DialogHeader>
-          <DialogTitle>New Announcement</DialogTitle>
+          <DialogTitle>
+            {editTarget ? "Edit Announcement" : "New Announcement"}
+          </DialogTitle>
           <DialogDescription>
             Fill in the details; the preview shows how students will see it.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-6 py-2 md:grid-cols-2">
+        <div className="grid gap-6 py-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
           <div className="space-y-4">
             <Field label="Title">
               <Input
@@ -165,6 +208,17 @@ export default function CreateAnnouncementDialog({
               />
             </div>
 
+            <PublishScheduleFields
+              includeDraft
+              publish={publish}
+              onPublishChange={setPublish}
+              publishOn={publishOn}
+              onPublishOnChange={(value) => {
+                setError(null);
+                setPublishOn(value);
+              }}
+            />
+
             {error && <p className="text-sm text-destructive">{error}</p>}
           </div>
 
@@ -182,48 +236,12 @@ export default function CreateAnnouncementDialog({
         </div>
 
         <div className="flex justify-end gap-2">
-          <Button
-            variant="outline"
-            onClick={() => submit("draft")}
-            disabled={loading}
-          >
-            Save as Draft
-          </Button>
-          <Button onClick={() => submit("now")} disabled={loading}>
-            {loading ? "Saving…" : "Publish Now"}
+          <Button onClick={submit} disabled={loading}>
+            {loading ? "Saving…" : editTarget ? "Save Changes" : "Save"}
           </Button>
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-// Static AlertBanner row: the dismiss X is decorative so the preview never
-// touches the shared dismissed-alerts localStorage.
-function AnnouncementPreview({ draft }: { draft: typeof EMPTY_DRAFT }) {
-  const s = alertStyles[draft.alert_variant];
-  return (
-    <div className={cn("flex items-start gap-4 rounded-xl px-5 py-4", s.wrapper)}>
-      <div
-        className={cn(
-          "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5",
-          s.iconBg,
-        )}
-      >
-        {s.icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className={cn("text-sm", s.title)}>
-          {draft.title || "Announcement title"}
-        </p>
-        {draft.content && (
-          <p className={cn("text-xs mt-0.5", s.body)}>{draft.content}</p>
-        )}
-      </div>
-      {draft.is_dismissible && (
-        <X className={cn("w-4 h-4 shrink-0 mt-0.5", s.dismiss)} />
-      )}
-    </div>
   );
 }
 

@@ -24,7 +24,7 @@ import { formatDateTime } from "@/lib/dayjs";
 import CreateAssignmentSheet from "@/faculty/CreateAssignmentSheet";
 import PublishAssignmentDialog from "@/faculty/PublishAssignmentDialog";
 import DeleteAssignmentDialog from "@/faculty/DeleteAssignmentDialog";
-import { Trash2, ChevronDown } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 interface FacultyAssignment {
   name: string;
@@ -43,7 +43,6 @@ const ALL_COHORTS = "all";
 export default function FacultyAssignmentsPage() {
   const [cohortFilter, setCohortFilter] = useState(ALL_COHORTS);
   const [createOpen, setCreateOpen] = useState(false);
-  const [editDraft, setEditDraft] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<FacultyAssignment | null>(
     null,
   );
@@ -61,19 +60,6 @@ export default function FacultyAssignmentsPage() {
   });
 
   const assignments = data?.message ?? [];
-  const drafts = assignments.filter(
-    (assignment) => !assignment.is_published && !assignment.publish_on,
-  );
-
-  function openNew() {
-    setEditDraft(null);
-    setCreateOpen(true);
-  }
-
-  function openDraft(name: string) {
-    setEditDraft(name);
-    setCreateOpen(true);
-  }
 
   return (
     <div className="space-y-6">
@@ -84,15 +70,11 @@ export default function FacultyAssignmentsPage() {
             {assignments.length} total
           </p>
         </div>
-        <Button onClick={openNew}>
+        <Button onClick={() => setCreateOpen(true)}>
           <Plus className="w-4 h-4 mr-1.5" />
           New Assignment
         </Button>
       </div>
-
-      {drafts.length > 0 && (
-        <DraftsSection drafts={drafts} onOpen={openDraft} />
-      )}
 
       <div className="flex items-center gap-3">
         <Select value={cohortFilter} onValueChange={setCohortFilter}>
@@ -128,13 +110,9 @@ export default function FacultyAssignmentsPage() {
 
       <CreateAssignmentSheet
         open={createOpen}
-        onOpenChange={(open) => {
-          setCreateOpen(open);
-          if (!open) setEditDraft(null);
-        }}
+        onOpenChange={setCreateOpen}
         cohorts={cohorts}
         onCreated={mutate}
-        draftName={editDraft}
       />
 
       {deleteTarget && (
@@ -144,43 +122,6 @@ export default function FacultyAssignmentsPage() {
           assignment={deleteTarget}
           onSuccess={mutate}
         />
-      )}
-    </div>
-  );
-}
-
-function DraftsSection({
-  drafts,
-  onOpen,
-}: {
-  drafts: FacultyAssignment[];
-  onOpen: (name: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => setOpen((prev) => !prev)}
-      >
-        Drafts ({drafts.length})
-        <ChevronDown
-          className={`w-4 h-4 ml-1 transition-transform ${open ? "rotate-180" : ""}`}
-        />
-      </Button>
-      {open && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {drafts.map((draft) => (
-            <button
-              key={draft.name}
-              onClick={() => onOpen(draft.name)}
-              className="text-sm border border-border rounded-lg px-3 py-1.5 hover:bg-muted/50 transition-colors"
-            >
-              {draft.title || "Untitled"}
-            </button>
-          ))}
-        </div>
       )}
     </div>
   );

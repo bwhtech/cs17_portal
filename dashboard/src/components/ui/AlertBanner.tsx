@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AlertTriangle, Zap, Info, X } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 
 interface Alert {
@@ -87,7 +88,9 @@ export default function AlertBanner({ alerts }: Props) {
             <div className="flex-1 min-w-0">
               <p className={cn("text-sm", s.title)}>{alert.title}</p>
               {alert.content && (
-                <p className={cn("text-xs mt-0.5", s.body)}>{alert.content}</p>
+                <div className={cn("text-xs mt-0.5", s.body)}>
+                  <ReactMarkdown>{alert.content}</ReactMarkdown>
+                </div>
               )}
             </div>
             {alert.is_dismissible && (

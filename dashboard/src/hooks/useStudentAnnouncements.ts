@@ -2,19 +2,17 @@ import { useEffect } from "react";
 import { useFrappeGetCall } from "frappe-react-sdk";
 import { LIVE_LIST_OPTIONS } from "@/lib/liveQuery";
 
-export interface StudentAssignment {
+export interface StudentAnnouncement {
   name: string;
   title: string;
-  due_date: string;
-  max_marks: number;
-  assignment_type: string;
-  submission_type: string;
-  creation: string;
-  modified: string;
+  content: string;
+  alert_variant: string;
+  is_dismissible: number;
+  published_date: string | null;
 }
 
 interface Response {
-  assignments: StudentAssignment[];
+  announcements: StudentAnnouncement[];
   next_publish_on: string | null;
 }
 
@@ -22,9 +20,9 @@ function msUntil(datetime: string): number {
   return new Date(datetime.replace(" ", "T")).getTime() - Date.now();
 }
 
-export function useStudentAssignments(cohort?: string) {
+export function useStudentAnnouncements(cohort?: string) {
   const { data, isLoading, mutate } = useFrappeGetCall<{ message: Response }>(
-    "cs17_portal.api.get_student_assignments",
+    "cs17_portal.api.get_student_announcements",
     { cohort },
     cohort ? undefined : null,
     LIVE_LIST_OPTIONS,
@@ -39,7 +37,7 @@ export function useStudentAssignments(cohort?: string) {
   }, [nextPublishOn, mutate]);
 
   return {
-    assignments: data?.message?.assignments ?? [],
+    announcements: data?.message?.announcements ?? [],
     isLoading,
     mutate,
   };

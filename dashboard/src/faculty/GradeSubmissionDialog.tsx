@@ -16,6 +16,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useFrappePostCall } from "frappe-react-sdk";
+import PublishScheduleFields from "@/faculty/PublishScheduleFields";
+import { toFrappeDatetime, toDatetimeLocal } from "@/lib/datetime";
 
 export interface GradeInfo {
   grade?: string;
@@ -41,20 +43,6 @@ interface Props {
 }
 
 const GRADES = ["A", "B", "C", "D", "E"];
-const PUBLISH_MODES = [
-  { value: "draft", label: "Save as Draft" },
-  { value: "now", label: "Publish Now" },
-  { value: "schedule", label: "Schedule" },
-];
-
-// Frappe stores Datetime as "YYYY-MM-DD HH:mm:ss"; datetime-local uses "YYYY-MM-DDTHH:mm".
-function toFrappeDatetime(value: string): string {
-  return value ? value.replace("T", " ") + ":00" : "";
-}
-
-function toDatetimeLocal(value?: string | null): string {
-  return value ? value.replace(" ", "T").slice(0, 16) : "";
-}
 
 export default function GradeSubmissionDialog({
   open,
@@ -177,38 +165,17 @@ export default function GradeSubmissionDialog({
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Publishing</label>
-            <Select value={publish} onValueChange={setPublish}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PUBLISH_MODES.map((mode) => (
-                  <SelectItem key={mode.value} value={mode.value}>
-                    {mode.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground mt-1.5">
-              Published grades are visible to the student.
-            </p>
-          </div>
-
-          {publish === "schedule" && (
-            <div>
-              <label className="block text-sm font-medium mb-2">Publish On</label>
-              <Input
-                type="datetime-local"
-                value={publishOn}
-                onChange={(e) => {
-                  setError(null);
-                  setPublishOn(e.target.value);
-                }}
-              />
-            </div>
-          )}
+          <PublishScheduleFields
+            includeDraft
+            publish={publish}
+            onPublishChange={setPublish}
+            publishOn={publishOn}
+            onPublishOnChange={(value) => {
+              setError(null);
+              setPublishOn(value);
+            }}
+            hint="Published grades are visible to the student."
+          />
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 

@@ -257,6 +257,7 @@ export interface CS17Announcement {
 	is_dismissible?: number;
 	is_published?: number;
 	published_date?: string | null;
+	publish_on?: string | null;
 }
 
 export const TEST_ANNOUNCEMENT_PREFIX = "E2E Announcement";
