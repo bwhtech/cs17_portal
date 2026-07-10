@@ -26,7 +26,10 @@ class CS17Announcement(Document):
 
 	def on_update(self):
 		if self.is_published and self.has_value_changed("is_published"):
-			self.send_announcement_email()
+			try:
+				self.send_announcement_email()
+			except Exception:
+				frappe.log_error(title=f"Announcement email failed: {self.name}")
 
 	def send_announcement_email(self):
 		filters = {"user": ["is", "set"], "profile_type": "Student"}
