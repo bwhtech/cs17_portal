@@ -1,6 +1,5 @@
-from typing import TYPE_CHECKING
-
 import base64
+from typing import TYPE_CHECKING
 
 import frappe
 from frappe import _
@@ -199,6 +198,8 @@ def grade_submission(
 	_apply_publish_state(doc, publish, publish_on, "published_on")
 	doc.save(ignore_permissions=True)
 	return {"name": doc.name}
+
+
 def get_current_profile_name(profile_type: str) -> str | None:
 	return frappe.db.get_value(
 		"CS17 Profile",
