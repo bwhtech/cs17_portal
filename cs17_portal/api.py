@@ -506,6 +506,7 @@ def save_grade(
 
 # --- Faculty assignment management (from feat/faculty/dashboard-page) ---
 
+
 @frappe.whitelist(methods=["GET"])
 def get_student_assignments(cohort: str) -> dict:
 	"""Assignments a student can see now, plus the next scheduled publish time.
@@ -698,4 +699,3 @@ def get_faculty_members() -> list:
 		fields=["user", "full_name"],
 		order_by="full_name asc",
 	)
-
