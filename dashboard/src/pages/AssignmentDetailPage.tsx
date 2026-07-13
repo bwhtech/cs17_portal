@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import SubmitAssignmentDialog from "@/components/ui/SubmitAssignmentDialog";
+import RichText from "@/components/ui/RichText";
 import { formatDateTime } from "@/lib/dayjs";
 import { ArrowLeft } from "lucide-react";
 import { useBreadcrumb } from "@/context/BreadcrumbContext";
@@ -75,6 +76,8 @@ export default function AssignmentDetailPage() {
   }
 
   const isOverdue = new Date(assignment.due_date) < new Date();
+  const evaluationType =
+    assignment.assignment_type === "Graded" ? assignment.remarks : "Non-graded";
 
   return (
     <div className="space-y-4">
@@ -89,13 +92,7 @@ export default function AssignmentDetailPage() {
       <div className="flex gap-6">
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold mb-4">{assignment.title}</h1>
-          <div
-            className="ql-editor read-mode prose prose-sm max-w-none"
-            dangerouslySetInnerHTML={{
-              __html:
-                assignment.description ?? "<p>No description provided.</p>",
-            }}
-          />
+          <RichText content={assignment.description} />
         </div>
 
         <div className="w-64 shrink-0 space-y-4">
@@ -110,13 +107,16 @@ export default function AssignmentDetailPage() {
             </div>
 
             <div>
-              <p className="text-xs text-muted-foreground">Max Marks</p>
-              <p className="text-sm font-medium">
-                {assignment.assignment_type === "Not Graded"
-                  ? "Non Graded"
-                  : assignment.max_marks}
-              </p>
+              <p className="text-xs text-muted-foreground">Evaluation Type</p>
+              <p className="text-sm font-medium">{evaluationType}</p>
             </div>
+
+            {evaluationType === "Marks" && (
+              <div>
+                <p className="text-xs text-muted-foreground">Max Marks</p>
+                <p className="text-sm font-medium">{assignment.max_marks}</p>
+              </div>
+            )}
 
             {submission ? (
               <>

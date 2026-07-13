@@ -206,7 +206,7 @@ export default function AssignmentTable({
               setPreviewSubmission(null);
             }
           }}
-          title={previewAssignment.title}
+          title={`Your Submission: ${previewAssignment.title}`}
           submissionType={previewAssignment.submission_type}
           fileUrl={
             previewSubmission?.submission_document ||

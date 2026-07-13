@@ -152,7 +152,10 @@ has_permission = {
 # ---------------
 
 scheduler_events = {
-	"all": ["cs17_portal.tasks.auto_publish_assignments"],
+	"all": [
+		"cs17_portal.tasks.auto_publish_assignments",
+		"cs17_portal.tasks.auto_publish_grades",
+	],
 }
 
 # Testing
