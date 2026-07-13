@@ -41,6 +41,30 @@ const EMPTY_DRAFT: AssignmentDraft = {
   description: "",
 };
 
+const DRAFT_KEY = "cs17-new-assignment-draft";
+
+interface StoredDraft {
+  draft: AssignmentDraft;
+  publish: string;
+  publishOn: string;
+}
+
+function loadDraft(): Partial<StoredDraft> {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (raw) return JSON.parse(raw) as StoredDraft;
+  } catch {
+    return {};
+  }
+  return {};
+}
+
+function isDraftDirty(draft: AssignmentDraft): boolean {
+  return Boolean(
+    draft.title.trim() || draft.description.trim() || draft.cohort || draft.due_date,
+  );
+}
+
 interface AssignmentDoc {
   title?: string;
   cohort?: string;
@@ -76,9 +100,12 @@ export default function CreateAssignmentSheet({
   onCreated,
   draftName,
 }: Props) {
-  const [draft, setDraft] = useState<AssignmentDraft>(EMPTY_DRAFT);
-  const [publish, setPublish] = useState("draft");
-  const [publishOn, setPublishOn] = useState("");
+  const [initialDraft] = useState<Partial<StoredDraft>>(() =>
+    draftName ? {} : loadDraft(),
+  );
+  const [draft, setDraft] = useState<AssignmentDraft>(initialDraft.draft ?? EMPTY_DRAFT);
+  const [publish, setPublish] = useState(initialDraft.publish ?? "draft");
+  const [publishOn, setPublishOn] = useState(initialDraft.publishOn ?? "");
   const [error, setError] = useState<string | null>(null);
   const [savedName, setSavedName] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -109,7 +136,15 @@ export default function CreateAssignmentSheet({
     setSavedName(draftName);
   }, [open, draftName, existing, savedName]);
 
-  // Single "Evaluation Type" control fronts the stored assignment_type + remarks.
+  useEffect(() => {
+    if (draftName) return;
+    if (isDraftDirty(draft) || publish !== "draft" || publishOn) {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ draft, publish, publishOn }));
+    } else {
+      localStorage.removeItem(DRAFT_KEY);
+    }
+  }, [draftName, draft, publish, publishOn]);
+
   const evaluationType =
     draft.assignment_type === "Graded" ? draft.remarks : "Non-graded";
 
@@ -157,25 +192,7 @@ export default function CreateAssignmentSheet({
     return createCall(payload(publishMode));
   }
 
-  function hasRequiredFields(): boolean {
-    return Boolean(draft.title.trim());
-  }
-
-  async function autoSaveDraft() {
-    if (!hasRequiredFields()) return;
-    try {
-      await persist("draft");
-      onCreated();
-    } catch {
-      // Sheet has closed; nothing to surface.
-    }
-  }
-
   function handleOpenChange(next: boolean) {
-    if (!next) {
-      autoSaveDraft();
-      reset();
-    }
     onOpenChange(next);
   }
 
@@ -197,6 +214,7 @@ export default function CreateAssignmentSheet({
     }
     try {
       await persist(publish);
+      localStorage.removeItem(DRAFT_KEY);
       reset();
       onOpenChange(false);
       onCreated();
