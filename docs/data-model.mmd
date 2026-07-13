@@ -1,0 +1,53 @@
+%% CS17 Portal — current data model (Mermaid ER diagram)
+%% Edit this text and re-render; renders natively on GitHub / VS Code / mermaid.live
+erDiagram
+    CS17_Cohort ||--o{ CS17_Profile : "cohort"
+    CS17_Cohort ||--o{ CS17_Assignment : "cohort"
+    CS17_Profile ||--o{ CS17_Project : "student"
+    CS17_Profile ||--o{ CS17_Assignment_Submission : "student"
+    CS17_Assignment ||--o{ CS17_Assignment_Submission : "assignment"
+    CS17_Assignment ||--o{ CS17_Assignment_Grade : "assignment"
+    CS17_Project ||--o{ CS17_Assignment_Submission : "project (Scratch only)"
+    CS17_Assignment_Submission ||--|| CS17_Assignment_Grade : "submission"
+
+    CS17_Cohort {
+        Data cohort_code PK
+        Date start_date
+    }
+    CS17_Profile {
+        Select profile_type "Student | Faculty"
+        Data full_name
+        Link cohort FK "CS17 Cohort"
+        Link user FK "User"
+    }
+    CS17_Assignment {
+        Data title
+        Link cohort FK "CS17 Cohort"
+        Select assignment_type "Graded | Not Graded"
+        Select submission_type "Any|PDF|URL|Image|ZIP|Scratch"
+        Float max_marks
+        Check is_published
+    }
+    CS17_Project {
+        Data project_title
+        Link student FK "CS17 Profile"
+        Attach sb3_file "live .sb3"
+        AttachImage thumbnail
+        Datetime last_saved_at
+    }
+    CS17_Assignment_Submission {
+        Link assignment FK "CS17 Assignment"
+        Link student FK "CS17 Profile"
+        Link project FK "CS17 Project (Scratch)"
+        Attach submission_document ".sb3 snapshot / file"
+        Data submission_url
+        Datetime submitted_at
+    }
+    CS17_Assignment_Grade {
+        Link assignment FK "CS17 Assignment"
+        Link submission FK "CS17 Assignment Submission"
+        Float marks_obtained
+        Select grade "A..E"
+        Link graded_by FK "User"
+        Check is_published
+    }

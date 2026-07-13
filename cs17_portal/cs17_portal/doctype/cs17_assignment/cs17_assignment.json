@@ -53,7 +53,7 @@
    "fieldname": "submission_type",
    "fieldtype": "Select",
    "label": "Submission Type",
-   "options": "Any\nPDF\nURL\nImage\nZIP",
+   "options": "Any\nPDF\nURL\nImage\nZIP\nScratch",
    "reqd": 1
   },
   {
@@ -63,6 +63,7 @@
    "label": "Max Marks"
   },
   {
+   "default": "GRADED-.{cohort}.-.###",
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "hidden": 1,
