@@ -23,7 +23,7 @@ class CS17Assignment(Document):
 		naming_series: DF.Literal["GRADED-.{cohort}.-.###", "NOT-GRADED-.{cohort}.-.###"]
 		publish_on: DF.Datetime | None
 		remarks: DF.Literal["Grade", "Marks"]
-		submission_type: DF.Literal["Any", "PDF", "URL", "Image", "ZIP"]
+		submission_type: DF.Literal["Any", "PDF", "URL", "Image", "ZIP", "Scratch"]
 		title: DF.Data
 	# end: auto-generated types
 

@@ -19,7 +19,7 @@ export default function FacultyDashboardPage() {
   const { data: recentSubmissions, isLoading: submissionsLoading } =
     useFrappeGetCall<{ message: RecentSubmission[] }>(
       "cs17_portal.api.get_recent_submissions",
-      profile ? { faculty: profile.name, limit: 5 } : undefined,
+      profile ? { limit: 5 } : undefined,
       profile ? undefined : null,
     );
 
@@ -91,19 +91,23 @@ export default function FacultyDashboardPage() {
           <p className="text-xs text-muted-foreground">No submissions yet.</p>
         ) : (
           <div className="divide-y divide-border">
-            {submissions.map((sub) => (
+            {submissions.map((submission) => (
               <div
-                key={sub.name}
+                key={submission.name}
                 className="py-3 flex items-center justify-between gap-4"
               >
                 <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{sub.full_name}</p>
+                  <p className="text-sm font-medium truncate">
+                    {submission.full_name}
+                  </p>
                   <p className="text-xs text-muted-foreground truncate">
-                    {sub.assignment_title}
+                    {submission.assignment_title}
                   </p>
                 </div>
                 <p className="text-xs text-muted-foreground shrink-0">
-                  {sub.submitted_at ? formatDateTime(sub.submitted_at) : "—"}
+                  {submission.submitted_at
+                    ? formatDateTime(submission.submitted_at)
+                    : "—"}
                 </p>
               </div>
             ))}

@@ -1,4 +1,4 @@
-exclude: 'node_modules|.git'
+exclude: 'node_modules|\.git|cs17_portal/public/scratch/'
 default_stages: [pre-commit]
 fail_fast: false
 

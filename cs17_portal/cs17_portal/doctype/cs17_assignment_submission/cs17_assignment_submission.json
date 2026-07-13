@@ -18,6 +18,7 @@
   "column_break_hiss",
   "submission_document",
   "submission_url",
+  "project",
   "submitted_at"
  ],
  "fields": [
@@ -95,6 +96,14 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Assignment Title",
+   "read_only": 1
+  },
+  {
+   "description": "Scratch project this submission was created from. The immutable .sb3 snapshot lives in Submission Document.",
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "CS17 Project",
    "read_only": 1
   }
  ],
