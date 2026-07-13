@@ -9,6 +9,7 @@
  "field_order": [
   "section_break_iphc",
   "is_published",
+  "publish_on",
   "alert_variant",
   "is_dismissible",
   "section_break_pybi",
@@ -30,8 +31,7 @@
    "fieldname": "content",
    "fieldtype": "Markdown Editor",
    "in_list_view": 1,
-   "label": "Content",
-   "reqd": 1
+   "label": "Content"
   },
   {
    "default": "0",
@@ -43,6 +43,12 @@
    "fieldname": "published_date",
    "fieldtype": "Date",
    "label": "Published Date"
+  },
+  {
+   "depends_on": "eval:!doc.is_published",
+   "fieldname": "publish_on",
+   "fieldtype": "Datetime",
+   "label": "Publish On"
   },
   {
    "fieldname": "cohort",
@@ -79,8 +85,8 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-04 17:47:33.102031",
- "modified_by": "Administrator",
+ "modified": "2026-07-10 14:48:22.277649",
+ "modified_by": "ishadewangan055@gmail.com",
  "module": "CS17 Portal",
  "name": "CS17 Announcement",
  "naming_rule": "Expression",

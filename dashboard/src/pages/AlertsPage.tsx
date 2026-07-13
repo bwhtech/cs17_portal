@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useFrappeGetDocList } from "frappe-react-sdk";
 import { useCurrentStudent } from "@/hooks/useCurrentStudent";
+import { useStudentAnnouncements } from "@/hooks/useStudentAnnouncements";
 import { Skeleton } from "@/components/ui/skeleton";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,19 +31,7 @@ export default function AlertsPage() {
   const { student, isLoading: studentLoading } = useCurrentStudent();
   const [dismissed, setDismissed] = useState<Set<string>>(loadDismissed);
 
-  const { data: announcements, isLoading } = useFrappeGetDocList(
-    "CS17 Announcement",
-    {
-      filters: [
-        ["is_published", "=", 1],
-        ["cohort", "=", student?.cohort ?? ""],
-      ],
-      fields: ["name", "title", "content", "alert_variant", "published_date"],
-      orderBy: { field: "published_date", order: "desc" },
-      limit: 50,
-    },
-    student?.cohort ? undefined : null,
-  );
+  const { announcements, isLoading } = useStudentAnnouncements(student?.cohort);
 
   function dismiss(name: string) {
     setDismissed((prev) => {

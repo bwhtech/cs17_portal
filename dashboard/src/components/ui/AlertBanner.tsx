@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AlertTriangle, Zap, Info, X } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 
 interface Alert {
@@ -14,7 +15,7 @@ interface Props {
   alerts: Alert[];
 }
 
-const styles = {
+export const alertStyles = {
   error: {
     wrapper: "bg-red-50 border border-red-100",
     iconBg: "bg-red-100",
@@ -66,7 +67,7 @@ export default function AlertBanner({ alerts }: Props) {
   return (
     <div className="space-y-2">
       {visible.map((alert) => {
-        const s = styles[alert.variant ?? "info"];
+        const s = alertStyles[alert.variant ?? "info"];
 
         return (
           <div
@@ -87,7 +88,9 @@ export default function AlertBanner({ alerts }: Props) {
             <div className="flex-1 min-w-0">
               <p className={cn("text-sm", s.title)}>{alert.title}</p>
               {alert.content && (
-                <p className={cn("text-xs mt-0.5", s.body)}>{alert.content}</p>
+                <div className={cn("text-xs mt-0.5", s.body)}>
+                  <ReactMarkdown>{alert.content}</ReactMarkdown>
+                </div>
               )}
             </div>
             {alert.is_dismissible && (

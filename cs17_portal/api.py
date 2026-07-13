@@ -3,8 +3,9 @@ from typing import TYPE_CHECKING
 
 import frappe
 from frappe import _
+from frappe.query_builder import Order
 from frappe.rate_limiter import rate_limit
-from frappe.utils import flt, now_datetime
+from frappe.utils import flt, now_datetime, today
 
 if TYPE_CHECKING:
 	from frappe.model.document import Document
@@ -41,6 +42,10 @@ def get_faculty_assignments(cohort: str | None = None) -> list:
 		],
 		order_by="creation desc",
 	)
+	now = now_datetime()
+	for assignment in assignments:
+		if not assignment["is_published"] and assignment["publish_on"] and assignment["publish_on"] <= now:
+			assignment["is_published"] = 1
 	_attach_submission_counts(assignments)
 	return assignments
 
@@ -720,3 +725,159 @@ def get_faculty_members() -> list:
 		fields=["user", "full_name"],
 		order_by="full_name asc",
 	)
+
+
+@frappe.whitelist(methods=["GET"])
+def get_faculty_announcements() -> list:
+	validate_membership("Faculty")
+	return frappe.get_all(
+		"CS17 Announcement",
+		fields=[
+			"name",
+			"title",
+			"content",
+			"alert_variant",
+			"cohort",
+			"is_dismissible",
+			"is_published",
+			"published_date",
+			"publish_on",
+		],
+		order_by="creation desc",
+	)
+
+
+@frappe.whitelist(methods=["GET"])
+def get_student_announcements(cohort: str) -> dict:
+	now = now_datetime()
+	table = frappe.qb.DocType("CS17 Announcement")
+	in_scope = (table.cohort == cohort) | table.cohort.isnull() | (table.cohort == "")
+	visible = (table.is_published == 1) | (table.publish_on <= now)
+	announcements = (
+		frappe.qb.from_(table)
+		.select(
+			table.name,
+			table.title,
+			table.content,
+			table.alert_variant,
+			table.is_dismissible,
+			table.published_date,
+		)
+		.where(in_scope & visible)
+		.orderby(table.creation, order=Order.desc)
+	).run(as_dict=True)
+	upcoming = (
+		frappe.qb.from_(table)
+		.select(table.publish_on)
+		.where(in_scope & (table.is_published == 0) & table.publish_on.isnotnull() & (table.publish_on > now))
+		.orderby(table.publish_on, order=Order.asc)
+		.limit(1)
+	).run(as_dict=True)
+	return {"announcements": announcements, "next_publish_on": upcoming[0].publish_on if upcoming else None}
+
+
+@frappe.whitelist(methods=["POST"])
+def create_announcement(
+	title: str,
+	content: str,
+	alert_variant: str = "info",
+	cohort: str | None = None,
+	is_dismissible: int = 1,
+	publish: str = "draft",
+	publish_on: str | None = None,
+) -> str:
+	validate_membership("Faculty")
+	announcement = frappe.new_doc("CS17 Announcement")
+	_set_announcement_fields(announcement, title, content, alert_variant, cohort, is_dismissible)
+	_apply_announcement_publish(announcement, publish, publish_on)
+	announcement.insert(ignore_permissions=True)
+	return announcement.name
+
+
+@frappe.whitelist(methods=["POST"])
+def update_announcement(
+	announcement: str,
+	title: str,
+	content: str,
+	alert_variant: str = "info",
+	cohort: str | None = None,
+	is_dismissible: int = 1,
+	publish: str = "draft",
+	publish_on: str | None = None,
+) -> str:
+	validate_membership("Faculty")
+	doc = frappe.get_doc("CS17 Announcement", announcement)
+	if doc.is_published:
+		frappe.throw(_("A published announcement can no longer be edited"))
+	_set_announcement_fields(doc, title, content, alert_variant, cohort, is_dismissible)
+	_apply_announcement_publish(doc, publish, publish_on)
+	doc.save(ignore_permissions=True)
+	return doc.name
+
+
+def _set_announcement_fields(
+	doc: "Document",
+	title: str,
+	content: str,
+	alert_variant: str,
+	cohort: str | None,
+	is_dismissible: int,
+) -> None:
+	doc.update(
+		{
+			"title": title,
+			"content": content,
+			"alert_variant": alert_variant,
+			"cohort": cohort,
+			"is_dismissible": is_dismissible,
+		}
+	)
+
+
+def _apply_announcement_publish(doc: "Document", publish: str, publish_on: str | None = None) -> None:
+	if publish == "now":
+		doc.is_published = 1
+		doc.published_date = today()
+		doc.publish_on = None
+	elif publish == "schedule":
+		if not publish_on:
+			frappe.throw(_("A publish date is required to schedule"))
+		doc.is_published = 0
+		doc.publish_on = publish_on
+	else:
+		doc.is_published = 0
+		doc.publish_on = None
+
+
+@frappe.whitelist(methods=["GET"])
+def get_announcement(announcement: str) -> dict | None:
+	validate_membership("Faculty")
+	return frappe.db.get_value(
+		"CS17 Announcement",
+		announcement,
+		[
+			"name",
+			"title",
+			"content",
+			"alert_variant",
+			"cohort",
+			"is_dismissible",
+			"is_published",
+			"publish_on",
+		],
+		as_dict=True,
+	)
+
+
+@frappe.whitelist(methods=["POST"])
+def publish_announcement(announcement: str, publish: str = "now", publish_on: str | None = None) -> None:
+	validate_membership("Faculty")
+	doc = frappe.get_doc("CS17 Announcement", announcement)
+	_apply_announcement_publish(doc, publish, publish_on)
+	doc.save(ignore_permissions=True)
+
+
+@frappe.whitelist(methods=["POST"])
+def delete_announcement(announcement: str) -> None:
+	validate_membership("Faculty")
+	frappe.delete_doc("CS17 Announcement", announcement, ignore_permissions=True)

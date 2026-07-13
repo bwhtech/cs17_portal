@@ -13,6 +13,7 @@ import FacultyLayout from "@/faculty/FacultyLayout";
 import FacultyDashboardPage from "@/faculty/FacultyDashboardPage";
 import FacultyAssignmentsPage from "@/faculty/FacultyAssignmentsPage";
 import FacultyAssignmentDetailPage from "@/faculty/FacultyAssignmentDetailPage";
+import FacultyAnnouncementsPage from "@/faculty/FacultyAnnouncementsPage";
 import FacultySubmissionsPage from "@/faculty/FacultySubmissionsPage";
 import FacultyGradingPage from "@/faculty/FacultyGradingPage";
 import FacultySettingsPage from "@/faculty/FacultySettingsPage";
@@ -37,6 +38,7 @@ function App() {
             <Route index element={<FacultyDashboardPage />} />
             <Route path="assignments" element={<FacultyAssignmentsPage />} />
             <Route path="assignments/:assignmentId" element={<FacultyAssignmentDetailPage />} />
+            <Route path="announcements" element={<FacultyAnnouncementsPage />} />
             <Route path="submissions" element={<FacultySubmissionsPage />} />
             <Route path="submissions/:submissionId" element={<FacultyGradingPage />} />
             <Route path="settings" element={<FacultySettingsPage />} />

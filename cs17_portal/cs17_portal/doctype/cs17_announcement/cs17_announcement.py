@@ -16,16 +16,20 @@ class CS17Announcement(Document):
 
 		alert_variant: DF.Literal["info", "warning", "error"]
 		cohort: DF.Link | None
-		content: DF.MarkdownEditor
+		content: DF.MarkdownEditor | None
 		is_dismissible: DF.Check
 		is_published: DF.Check
+		publish_on: DF.Datetime | None
 		published_date: DF.Date | None
 		title: DF.Data
 	# end: auto-generated types
 
 	def on_update(self):
 		if self.is_published and self.has_value_changed("is_published"):
-			self.send_announcement_email()
+			try:
+				self.send_announcement_email()
+			except Exception:
+				frappe.log_error(title=f"Announcement email failed: {self.name}")
 
 	def send_announcement_email(self):
 		filters = {"user": ["is", "set"], "profile_type": "Student"}
@@ -48,5 +52,5 @@ class CS17Announcement(Document):
 		frappe.sendmail(
 			recipients=recipients,
 			subject=self.title,
-			message=frappe.utils.md_to_html(self.content),
+			message=frappe.utils.md_to_html(self.content or ""),
 		)
