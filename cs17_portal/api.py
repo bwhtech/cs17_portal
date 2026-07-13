@@ -158,11 +158,7 @@ def _attach_grades(submissions: list) -> None:
 
 def _get_or_new_grade(submission: str, assignment: str) -> "Document":
 	name = frappe.db.get_value("CS17 Assignment Grade", {"submission": submission}, "name")
-	doc = (
-		frappe.get_doc("CS17 Assignment Grade", name)
-		if name
-		else frappe.new_doc("CS17 Assignment Grade")
-	)
+	doc = frappe.get_doc("CS17 Assignment Grade", name) if name else frappe.new_doc("CS17 Assignment Grade")
 	doc.assignment = assignment
 	doc.submission = submission
 	return doc
