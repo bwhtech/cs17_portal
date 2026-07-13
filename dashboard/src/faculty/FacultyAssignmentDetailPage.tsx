@@ -17,6 +17,8 @@ import RichText from "@/components/ui/RichText";
 import SubmissionPreviewDialog from "@/components/ui/SubmissionPreviewDialog";
 import GradeSubmissionDialog from "@/faculty/GradeSubmissionDialog";
 import type { GradeInfo } from "@/faculty/GradeSubmissionDialog";
+import AssignSubmissionDialog from "@/faculty/AssignSubmissionDialog";
+import BulkAssignBar from "@/faculty/BulkAssignBar";
 import { formatDateTime } from "@/lib/dayjs";
 import { useBreadcrumb } from "@/context/BreadcrumbContext";
 
@@ -40,6 +42,16 @@ interface Submission {
   submission_document?: string;
   submission_url?: string;
   grade?: GradeInfo | null;
+  _assign?: string | null;
+}
+
+function parseAssignees(value?: string | null): string[] {
+  if (!value) return [];
+  try {
+    return JSON.parse(value);
+  } catch {
+    return [];
+  }
 }
 
 export default function FacultyAssignmentDetailPage() {
@@ -47,7 +59,9 @@ export default function FacultyAssignmentDetailPage() {
   const navigate = useNavigate();
   const { setBreadcrumb } = useBreadcrumb();
   const [gradeTarget, setGradeTarget] = useState<Submission | null>(null);
+  const [assignTarget, setAssignTarget] = useState<Submission | null>(null);
   const [preview, setPreview] = useState<Submission | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const { data, isLoading, mutate } = useFrappeGetCall<{
     message: { assignment: Assignment; submissions: Submission[] };
@@ -55,6 +69,27 @@ export default function FacultyAssignmentDetailPage() {
 
   const assignment = data?.message.assignment;
   const submissions = data?.message.submissions ?? [];
+
+  function toggle(name: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(name) ? next.delete(name) : next.add(name);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    setSelected((prev) =>
+      prev.size === submissions.length
+        ? new Set()
+        : new Set(submissions.map((s) => s.name)),
+    );
+  }
+
+  function clearSelection() {
+    setSelected(new Set());
+    mutate();
+  }
 
   useEffect(() => {
     if (!assignment) return;
@@ -81,6 +116,7 @@ export default function FacultyAssignmentDetailPage() {
 
   const isGraded = assignment.assignment_type === "Graded";
   const isGradeScale = isGraded && assignment.remarks === "Grade";
+  const evaluationType = isGraded ? assignment.remarks : "Non-graded";
 
   return (
     <div className="space-y-6">
@@ -110,7 +146,11 @@ export default function FacultyAssignmentDetailPage() {
               <p className="text-xs text-muted-foreground">Cohort</p>
               <p className="text-sm font-medium">{assignment.cohort}</p>
             </div>
-            {isGraded && !isGradeScale && (
+            <div>
+              <p className="text-xs text-muted-foreground">Evaluation Type</p>
+              <p className="text-sm font-medium">{evaluationType}</p>
+            </div>
+            {evaluationType === "Marks" && (
               <div>
                 <p className="text-xs text-muted-foreground">Max Marks</p>
                 <p className="text-sm font-medium">{assignment.max_marks}</p>
@@ -124,10 +164,28 @@ export default function FacultyAssignmentDetailPage() {
         <h2 className="text-lg font-semibold mb-3">
           Submissions ({submissions.length})
         </h2>
+        {selected.size > 0 && (
+          <BulkAssignBar
+            submissions={[...selected]}
+            onDone={clearSelection}
+          />
+        )}
         <div className="bg-background border border-border rounded-xl p-5">
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-border align-middle"
+                    checked={
+                      submissions.length > 0 &&
+                      selected.size === submissions.length
+                    }
+                    onChange={toggleAll}
+                    aria-label="Select all submissions"
+                  />
+                </TableHead>
                 <TableHead>Student</TableHead>
                 <TableHead>Submitted</TableHead>
                 <TableHead>Grade</TableHead>
@@ -138,7 +196,7 @@ export default function FacultyAssignmentDetailPage() {
               {submissions.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
+                    colSpan={5}
                     className="text-center text-muted-foreground py-8"
                   >
                     No submissions yet.
@@ -147,6 +205,15 @@ export default function FacultyAssignmentDetailPage() {
               ) : (
                 submissions.map((submission) => (
                   <TableRow key={submission.name}>
+                    <TableCell>
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-border align-middle"
+                        checked={selected.has(submission.name)}
+                        onChange={() => toggle(submission.name)}
+                        aria-label={`Select ${submission.full_name ?? submission.student}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">
                       {submission.full_name ?? submission.student}
                     </TableCell>
@@ -168,6 +235,15 @@ export default function FacultyAssignmentDetailPage() {
                           onClick={() => setPreview(submission)}
                         >
                           Preview
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setAssignTarget(submission)}
+                        >
+                          {parseAssignees(submission._assign).length > 0
+                            ? "Assigned"
+                            : "Assign"}
                         </Button>
                         {isGraded && (
                           <Button
@@ -195,6 +271,24 @@ export default function FacultyAssignmentDetailPage() {
           title={`Submission: ${preview.full_name ?? preview.student}`}
           submissionType={assignment.submission_type}
           fileUrl={preview.submission_document || preview.submission_url}
+        />
+      )}
+
+      {assignTarget && (
+        <AssignSubmissionDialog
+          open={!!assignTarget}
+          onOpenChange={(open) => !open && setAssignTarget(null)}
+          submission={(() => {
+            const live =
+              submissions.find((s) => s.name === assignTarget.name) ??
+              assignTarget;
+            return {
+              name: live.name,
+              full_name: live.full_name,
+              assignedTo: parseAssignees(live._assign),
+            };
+          })()}
+          onSuccess={mutate}
         />
       )}
 

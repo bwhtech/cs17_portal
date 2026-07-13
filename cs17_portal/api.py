@@ -4,10 +4,12 @@ from typing import TYPE_CHECKING
 import frappe
 from frappe import _
 from frappe.rate_limiter import rate_limit
-from frappe.utils import flt
+from frappe.utils import flt, now_datetime
 
 if TYPE_CHECKING:
 	from frappe.model.document import Document
+
+ASSIGNMENT_SUBMISSION = "CS17 Assignment Submission"
 
 
 @frappe.whitelist(methods=["GET"])
@@ -73,20 +75,10 @@ def create_assignment(
 ) -> str:
 	validate_membership("Faculty")
 	assignment = frappe.new_doc("CS17 Assignment")
-	assignment.update(
-		{
-			"title": title,
-			"cohort": cohort,
-			"due_date": due_date,
-			"submission_type": submission_type,
-			"description": description,
-			"assignment_type": assignment_type,
-			"naming_series": _naming_series(assignment_type),
-		}
+	_set_assignment_fields(
+		assignment, title, cohort, due_date, submission_type, description, assignment_type, max_marks, remarks
 	)
-	if assignment_type == "Graded":
-		assignment.max_marks = max_marks
-		assignment.remarks = remarks
+	assignment.naming_series = _naming_series(assignment_type)
 	_apply_publish_state(assignment, publish, publish_on)
 	assignment.insert(ignore_permissions=True)
 	return assignment.name
@@ -164,6 +156,14 @@ def _attach_grades(submissions: list) -> None:
 		submission["grade"] = grade_by_submission.get(submission["name"])
 
 
+def _get_or_new_grade(submission: str, assignment: str) -> "Document":
+	name = frappe.db.get_value("CS17 Assignment Grade", {"submission": submission}, "name")
+	doc = frappe.get_doc("CS17 Assignment Grade", name) if name else frappe.new_doc("CS17 Assignment Grade")
+	doc.assignment = assignment
+	doc.submission = submission
+	return doc
+
+
 @frappe.whitelist(methods=["POST"])
 def grade_submission(
 	submission: str,
@@ -178,16 +178,9 @@ def grade_submission(
 	evaluation_type = frappe.db.get_value("CS17 Assignment", sub_doc.assignment, "remarks")
 	if evaluation_type not in ("Grade", "Marks"):
 		frappe.throw(_("This assignment is not gradable"))
-	existing = frappe.db.get_value("CS17 Assignment Grade", {"submission": submission}, "name")
-	doc = (
-		frappe.get_doc("CS17 Assignment Grade", existing)
-		if existing
-		else frappe.new_doc("CS17 Assignment Grade")
-	)
+	doc = _get_or_new_grade(submission, sub_doc.assignment)
 	doc.update(
 		{
-			"assignment": sub_doc.assignment,
-			"submission": submission,
 			"evaluation_type": evaluation_type,
 			"graded_by": frappe.session.user,
 			"grade": grade if evaluation_type == "Grade" else None,
@@ -479,14 +472,7 @@ def save_grade(
 
 	require_faculty_for_assignment(assignment)
 
-	grade_name = frappe.db.get_value("CS17 Assignment Grade", {"submission": submission}, "name")
-	grade_doc = (
-		frappe.get_doc("CS17 Assignment Grade", grade_name)
-		if grade_name
-		else frappe.new_doc("CS17 Assignment Grade")
-	)
-	grade_doc.assignment = assignment
-	grade_doc.submission = submission
+	grade_doc = _get_or_new_grade(submission, assignment)
 	grade_doc.marks_obtained = flt(marks_obtained) if marks_obtained is not None else None
 	grade_doc.grade = grade
 	grade_doc.remarks = remarks
@@ -500,3 +486,237 @@ def save_grade(
 		"graded_by": grade_doc.graded_by,
 		"is_published": grade_doc.is_published,
 	}
+
+
+@frappe.whitelist(methods=["GET"])
+def get_student_assignments(cohort: str) -> dict:
+	"""Assignments a student can see now, plus the next scheduled publish time.
+
+	Visibility is gated on server time, not the scheduler flag: an assignment shows the
+	instant `publish_on` passes, so a scheduled publish is exact to the second regardless of
+	when the background job flips `is_published`. `next_publish_on` lets the client reveal the
+	next one at the precise moment without polling.
+	"""
+	now = now_datetime()
+	assignments = frappe.get_all(
+		"CS17 Assignment",
+		filters={"cohort": cohort},
+		or_filters=[["is_published", "=", 1], ["publish_on", "<=", now]],
+		fields=[
+			"name",
+			"title",
+			"due_date",
+			"max_marks",
+			"assignment_type",
+			"submission_type",
+			"modified",
+		],
+		order_by="due_date desc",
+	)
+	upcoming = frappe.get_all(
+		"CS17 Assignment",
+		filters=[["cohort", "=", cohort], ["is_published", "=", 0], ["publish_on", ">", now]],
+		fields=["publish_on"],
+		order_by="publish_on asc",
+		limit=1,
+	)
+	return {"assignments": assignments, "next_publish_on": upcoming[0].publish_on if upcoming else None}
+
+
+@frappe.whitelist(methods=["GET"])
+def get_student_grades() -> dict:
+	student = require_current_student()
+	submissions = frappe.get_all(
+		"CS17 Assignment Submission",
+		filters={"student": student},
+		pluck="name",
+	)
+	if not submissions:
+		return {"grades": [], "next_publish_on": None}
+	now = now_datetime()
+	grades = frappe.get_all(
+		"CS17 Assignment Grade",
+		filters=[["submission", "in", submissions]],
+		or_filters=[["is_published", "=", 1], ["published_on", "<=", now]],
+		fields=[
+			"name",
+			"assignment",
+			"submission",
+			"marks_obtained",
+			"grade",
+			"evaluation_type",
+			"remarks",
+			"is_published",
+		],
+	)
+	upcoming = frappe.get_all(
+		"CS17 Assignment Grade",
+		filters=[
+			["submission", "in", submissions],
+			["is_published", "=", 0],
+			["published_on", ">", now],
+		],
+		fields=["published_on"],
+		order_by="published_on asc",
+		limit=1,
+	)
+	return {"grades": grades, "next_publish_on": upcoming[0].published_on if upcoming else None}
+
+
+@frappe.whitelist(methods=["POST"])
+def update_assignment(
+	assignment: str,
+	title: str,
+	cohort: str,
+	due_date: str,
+	submission_type: str = "Any",
+	description: str | None = None,
+	assignment_type: str = "Not Graded",
+	max_marks: float = 0,
+	remarks: str = "Grade",
+	publish: str = "draft",
+	publish_on: str | None = None,
+) -> str:
+	validate_membership("Faculty")
+	doc = frappe.get_doc("CS17 Assignment", assignment)
+	_set_assignment_fields(
+		doc, title, cohort, due_date, submission_type, description, assignment_type, max_marks, remarks
+	)
+	_apply_publish_state(doc, publish, publish_on)
+	doc.save(ignore_permissions=True)
+	return doc.name
+
+
+def _set_assignment_fields(
+	doc: "Document",
+	title: str,
+	cohort: str,
+	due_date: str,
+	submission_type: str,
+	description: str | None,
+	assignment_type: str,
+	max_marks: float,
+	remarks: str,
+) -> None:
+	doc.update(
+		{
+			"title": title,
+			"cohort": cohort,
+			"due_date": due_date,
+			"submission_type": submission_type,
+			"description": description,
+			"assignment_type": assignment_type,
+		}
+	)
+	if assignment_type == "Graded":
+		doc.max_marks = max_marks
+		doc.remarks = remarks
+
+
+@frappe.whitelist(methods=["GET"])
+def get_assignment(assignment: str) -> dict | None:
+	validate_membership("Faculty")
+	return frappe.db.get_value(
+		"CS17 Assignment",
+		assignment,
+		[
+			"name",
+			"title",
+			"description",
+			"due_date",
+			"cohort",
+			"submission_type",
+			"assignment_type",
+			"max_marks",
+			"remarks",
+			"is_published",
+			"publish_on",
+		],
+		as_dict=True,
+	)
+
+
+@frappe.whitelist(methods=["POST"])
+def delete_assignment(assignment: str) -> None:
+	validate_membership("Faculty")
+	if frappe.db.exists("CS17 Assignment Submission", {"assignment": assignment}):
+		frappe.throw(_("Cannot delete an assignment that already has submissions"))
+	frappe.delete_doc("CS17 Assignment", assignment, ignore_permissions=True)
+
+
+@frappe.whitelist(methods=["POST"])
+def publish_assignment(assignment: str, publish: str = "now", publish_on: str | None = None) -> None:
+	validate_membership("Faculty")
+	doc = frappe.get_doc("CS17 Assignment", assignment)
+	_apply_publish_state(doc, publish, publish_on)
+	doc.save(ignore_permissions=True)
+
+
+@frappe.whitelist(methods=["GET"])
+def get_assigned_submissions(limit: int = 10) -> list:
+	validate_membership("Faculty")
+	names = _assigned_submission_names(frappe.session.user, limit)
+	if not names:
+		return []
+	submissions = frappe.get_all(
+		ASSIGNMENT_SUBMISSION,
+		filters=[["name", "in", names]],
+		fields=["name", "student", "full_name", "assignment", "assignment_title", "submitted_at"],
+		ignore_permissions=True,
+	)
+	_attach_grades(submissions)
+	return _order_by_names(submissions, names)
+
+
+def _assigned_submission_names(user: str, limit: int) -> list:
+	todos = frappe.get_all(
+		"ToDo",
+		filters={"reference_type": ASSIGNMENT_SUBMISSION, "allocated_to": user, "status": "Open"},
+		fields=["reference_name"],
+		order_by="creation desc",
+		limit=limit,
+	)
+	return [todo["reference_name"] for todo in todos]
+
+
+def _order_by_names(rows: list, ordered_names: list) -> list:
+	by_name = {row["name"]: row for row in rows}
+	return [by_name[name] for name in ordered_names if name in by_name]
+
+
+@frappe.whitelist(methods=["POST"])
+def assign_submission(submission: str, assign_to: str) -> None:
+	validate_membership("Faculty")
+	_assign_submission_to(submission, assign_to)
+
+
+@frappe.whitelist(methods=["POST"])
+def assign_submissions(submissions: list | str, assign_to: str) -> None:
+	validate_membership("Faculty")
+	for submission in frappe.parse_json(submissions):
+		_assign_submission_to(submission, assign_to)
+
+
+def _assign_submission_to(submission: str, assign_to: str) -> None:
+	from frappe.desk.form.assign_to import add
+
+	add({"doctype": ASSIGNMENT_SUBMISSION, "name": submission, "assign_to": [assign_to]})
+
+
+@frappe.whitelist(methods=["POST"])
+def unassign_submission(submission: str, assign_to: str) -> None:
+	validate_membership("Faculty")
+	from frappe.desk.form.assign_to import remove
+
+	remove(ASSIGNMENT_SUBMISSION, submission, assign_to)
+
+
+@frappe.whitelist(methods=["GET"])
+def get_faculty_members() -> list:
+	validate_membership("Faculty")
+	return frappe.get_all(
+		"CS17 Profile",
+		filters={"profile_type": "Faculty", "user": ["is", "set"]},
+		fields=["user", "full_name"],
+		order_by="full_name asc",
+	)

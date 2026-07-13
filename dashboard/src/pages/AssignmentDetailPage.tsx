@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useFrappeGetDoc, useFrappeGetDocList } from "frappe-react-sdk";
 import { useCurrentStudent } from "@/hooks/useCurrentStudent";
+import { useStudentGrades } from "@/hooks/useStudentGrades";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -38,17 +39,9 @@ export default function AssignmentDetailPage() {
 
   const submission = submissions?.[0] ?? null;
 
-  const { data: grades } = useFrappeGetDocList(
-    "CS17 Assignment Grade",
-    {
-      filters: [["submission", "=", submission?.name ?? ""], ["is_published", "=", 1]],
-      fields: ["name", "evaluation_type", "marks_obtained", "grade", "remarks", "is_published"],
-      limit: 1,
-    },
-    submission?.name ? undefined : null,
-  );
+  const { grades } = useStudentGrades(!!student?.name);
 
-  const gradeDoc = grades?.[0] ?? null;
+  const gradeDoc = grades.find((g) => g.submission === submission?.name) ?? null;
   const isGraded = !!gradeDoc;
 
   useEffect(() => {

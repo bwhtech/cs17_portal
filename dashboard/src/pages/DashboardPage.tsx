@@ -1,5 +1,7 @@
 import { useFrappeGetDocList } from "frappe-react-sdk";
 import { useCurrentStudent } from "@/hooks/useCurrentStudent";
+import { useStudentAssignments } from "@/hooks/useStudentAssignments";
+import { useStudentGrades } from "@/hooks/useStudentGrades";
 import AssignmentTable from "@/components/ui/AssignmentTable";
 import AlertBanner from "@/components/ui/AlertBanner";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,16 +26,7 @@ export default function DashboardPage() {
     student?.cohort ? undefined : null,
   );
 
-  const { data: assignments } = useFrappeGetDocList(
-    "CS17 Assignment",
-    {
-      filters: [["cohort", "=", student?.cohort ?? ""], ["is_published", "=", 1]],
-      fields: ["name", "title", "due_date", "max_marks", "assignment_type", "submission_type"],
-      orderBy: { field: "creation", order: "desc" },
-      limit: 20,
-    },
-    student?.cohort ? undefined : null,
-  );
+  const { assignments } = useStudentAssignments(student?.cohort);
 
   const {
     data: submissions,
@@ -53,20 +46,11 @@ export default function DashboardPage() {
   );
 
   const submissionNames = new Set((submissions ?? []).map((s) => s.name));
-  const assignmentNames = (assignments ?? []).map((a) => a.name);
 
-  const { data: grades, mutate: mutateGrades } = useFrappeGetDocList(
-    "CS17 Assignment Grade",
-    {
-      filters: [["assignment", "in", assignmentNames]],
-      fields: ["name", "assignment", "submission", "marks_obtained", "grade", "evaluation_type", "remarks"],
-      limit: 100,
-    },
-    assignmentNames.length > 0 ? undefined : null,
-  );
+  const { grades, mutate: mutateGrades } = useStudentGrades(!!student?.name);
 
   const gradeMap = Object.fromEntries(
-    (grades ?? [])
+    grades
       .filter((g) =>
         g.submission
           ? submissionNames.has(g.submission)
@@ -89,6 +73,7 @@ export default function DashboardPage() {
   const now = new Date();
   const upcomingAssignments = (assignments ?? [])
     .filter((a) => new Date(a.due_date) >= now)
+    .sort((a, b) => +new Date(b.modified) - +new Date(a.modified))
     .slice(0, 3);
 
   const today = new Date().toLocaleDateString("en-US", {
