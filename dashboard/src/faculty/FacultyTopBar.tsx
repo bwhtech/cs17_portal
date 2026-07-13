@@ -8,7 +8,7 @@ import { useLocation, Link } from "react-router-dom";
 const routeLabels: Record<string, string> = {
   "/faculty/": "Dashboard",
   "/faculty": "Dashboard",
-  "/faculty/assignments": "Assignments",
+  "/faculty/assignments": "Submissions",
   "/faculty/announcements": "Announcements",
   "/faculty/settings": "Settings",
 };

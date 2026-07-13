@@ -4,6 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import flt
 
 
 class CS17AssignmentGrade(Document):
@@ -33,6 +34,14 @@ class CS17AssignmentGrade(Document):
 		self.graded_by = frappe.session.user
 
 	def validate(self):
-		assignment_type = frappe.db.get_value("CS17 Assignment", self.assignment, "assignment_type")
-		if assignment_type == "Not Graded":
+		assignment = frappe.db.get_value(
+			"CS17 Assignment", self.assignment, ["assignment_type", "max_marks"], as_dict=True
+		)
+		if not assignment:
+			return
+		if assignment.assignment_type == "Not Graded":
 			frappe.throw(_("Cannot grade a Not Graded assignment."))
+
+		max_marks = flt(assignment.max_marks)
+		if flt(self.marks_obtained) < 0 or flt(self.marks_obtained) > max_marks:
+			frappe.throw(_("Marks must be between 0 and {0}.").format(max_marks))
