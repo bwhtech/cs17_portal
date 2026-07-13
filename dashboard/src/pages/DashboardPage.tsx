@@ -1,7 +1,7 @@
 import { useFrappeGetDocList } from "frappe-react-sdk";
 import { useCurrentStudent } from "@/hooks/useCurrentStudent";
 import { useStudentAssignments } from "@/hooks/useStudentAssignments";
-import { LIVE_LIST_OPTIONS } from "@/lib/liveQuery";
+import { useStudentGrades } from "@/hooks/useStudentGrades";
 import AssignmentTable from "@/components/ui/AssignmentTable";
 import AlertBanner from "@/components/ui/AlertBanner";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -46,21 +46,11 @@ export default function DashboardPage() {
   );
 
   const submissionNames = new Set((submissions ?? []).map((s) => s.name));
-  const assignmentNames = (assignments ?? []).map((a) => a.name);
 
-  const { data: grades, mutate: mutateGrades } = useFrappeGetDocList(
-    "CS17 Assignment Grade",
-    {
-      filters: [["assignment", "in", assignmentNames], ["is_published", "=", 1]],
-      fields: ["name", "assignment", "submission", "marks_obtained", "grade", "evaluation_type", "remarks"],
-      limit: 100,
-    },
-    assignmentNames.length > 0 ? undefined : null,
-    LIVE_LIST_OPTIONS,
-  );
+  const { grades, mutate: mutateGrades } = useStudentGrades(!!student?.name);
 
   const gradeMap = Object.fromEntries(
-    (grades ?? [])
+    grades
       .filter((g) =>
         g.submission
           ? submissionNames.has(g.submission)

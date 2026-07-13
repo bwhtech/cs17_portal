@@ -523,6 +523,46 @@ def get_student_assignments(cohort: str) -> dict:
 	return {"assignments": assignments, "next_publish_on": upcoming[0].publish_on if upcoming else None}
 
 
+@frappe.whitelist(methods=["GET"])
+def get_student_grades() -> dict:
+	student = require_current_student()
+	submissions = frappe.get_all(
+		"CS17 Assignment Submission",
+		filters={"student": student},
+		pluck="name",
+	)
+	if not submissions:
+		return {"grades": [], "next_publish_on": None}
+	now = now_datetime()
+	grades = frappe.get_all(
+		"CS17 Assignment Grade",
+		filters=[["submission", "in", submissions]],
+		or_filters=[["is_published", "=", 1], ["published_on", "<=", now]],
+		fields=[
+			"name",
+			"assignment",
+			"submission",
+			"marks_obtained",
+			"grade",
+			"evaluation_type",
+			"remarks",
+			"is_published",
+		],
+	)
+	upcoming = frappe.get_all(
+		"CS17 Assignment Grade",
+		filters=[
+			["submission", "in", submissions],
+			["is_published", "=", 0],
+			["published_on", ">", now],
+		],
+		fields=["published_on"],
+		order_by="published_on asc",
+		limit=1,
+	)
+	return {"grades": grades, "next_publish_on": upcoming[0].published_on if upcoming else None}
+
+
 @frappe.whitelist(methods=["POST"])
 def update_assignment(
 	assignment: str,
