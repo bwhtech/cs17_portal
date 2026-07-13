@@ -75,20 +75,10 @@ def create_assignment(
 ) -> str:
 	validate_membership("Faculty")
 	assignment = frappe.new_doc("CS17 Assignment")
-	assignment.update(
-		{
-			"title": title,
-			"cohort": cohort,
-			"due_date": due_date,
-			"submission_type": submission_type,
-			"description": description,
-			"assignment_type": assignment_type,
-			"naming_series": _naming_series(assignment_type),
-		}
+	_set_assignment_fields(
+		assignment, title, cohort, due_date, submission_type, description, assignment_type, max_marks, remarks
 	)
-	if assignment_type == "Graded":
-		assignment.max_marks = max_marks
-		assignment.remarks = remarks
+	assignment.naming_series = _naming_series(assignment_type)
 	_apply_publish_state(assignment, publish, publish_on)
 	assignment.insert(ignore_permissions=True)
 	return assignment.name
@@ -166,6 +156,18 @@ def _attach_grades(submissions: list) -> None:
 		submission["grade"] = grade_by_submission.get(submission["name"])
 
 
+def _get_or_new_grade(submission: str, assignment: str) -> "Document":
+	name = frappe.db.get_value("CS17 Assignment Grade", {"submission": submission}, "name")
+	doc = (
+		frappe.get_doc("CS17 Assignment Grade", name)
+		if name
+		else frappe.new_doc("CS17 Assignment Grade")
+	)
+	doc.assignment = assignment
+	doc.submission = submission
+	return doc
+
+
 @frappe.whitelist(methods=["POST"])
 def grade_submission(
 	submission: str,
@@ -180,16 +182,9 @@ def grade_submission(
 	evaluation_type = frappe.db.get_value("CS17 Assignment", sub_doc.assignment, "remarks")
 	if evaluation_type not in ("Grade", "Marks"):
 		frappe.throw(_("This assignment is not gradable"))
-	existing = frappe.db.get_value("CS17 Assignment Grade", {"submission": submission}, "name")
-	doc = (
-		frappe.get_doc("CS17 Assignment Grade", existing)
-		if existing
-		else frappe.new_doc("CS17 Assignment Grade")
-	)
+	doc = _get_or_new_grade(submission, sub_doc.assignment)
 	doc.update(
 		{
-			"assignment": sub_doc.assignment,
-			"submission": submission,
 			"evaluation_type": evaluation_type,
 			"graded_by": frappe.session.user,
 			"grade": grade if evaluation_type == "Grade" else None,
@@ -481,14 +476,7 @@ def save_grade(
 
 	require_faculty_for_assignment(assignment)
 
-	grade_name = frappe.db.get_value("CS17 Assignment Grade", {"submission": submission}, "name")
-	grade_doc = (
-		frappe.get_doc("CS17 Assignment Grade", grade_name)
-		if grade_name
-		else frappe.new_doc("CS17 Assignment Grade")
-	)
-	grade_doc.assignment = assignment
-	grade_doc.submission = submission
+	grade_doc = _get_or_new_grade(submission, assignment)
 	grade_doc.marks_obtained = flt(marks_obtained) if marks_obtained is not None else None
 	grade_doc.grade = grade
 	grade_doc.remarks = remarks
@@ -502,9 +490,6 @@ def save_grade(
 		"graded_by": grade_doc.graded_by,
 		"is_published": grade_doc.is_published,
 	}
-
-
-# --- Faculty assignment management (from feat/faculty/dashboard-page) ---
 
 
 @frappe.whitelist(methods=["GET"])
