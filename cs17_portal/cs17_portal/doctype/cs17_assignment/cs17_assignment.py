@@ -38,11 +38,3 @@ class CS17Assignment(Document):
 			self.max_marks = 0
 			self.remarks = ""
 		self._validate_publishable()
-
-	def _validate_publishable(self):
-		if not (self.is_published or self.publish_on):
-			return
-		if not self.cohort:
-			frappe.throw(_("A cohort is required to publish an assignment"))
-		if not self.due_date:
-			frappe.throw(_("A due date is required to publish an assignment"))
