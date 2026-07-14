@@ -1,5 +1,5 @@
 import frappe
-from frappe.utils import now_datetime
+from frappe.utils import now_datetime, today
 
 
 def publish_all_existing_assignments():
@@ -18,6 +18,19 @@ def auto_publish_assignments():
 
 def auto_publish_grades():
 	_publish_due("CS17 Assignment Grade", "published_on")
+
+
+def auto_publish_announcements():
+	names = frappe.get_all(
+		"CS17 Announcement",
+		filters=[["is_published", "=", 0], ["publish_on", "is", "set"], ["publish_on", "<=", now_datetime()]],
+		pluck="name",
+	)
+	for name in names:
+		doc = frappe.get_doc("CS17 Announcement", name)
+		doc.is_published = 1
+		doc.published_date = today()
+		doc.save(ignore_permissions=True)
 
 
 def _publish_due(doctype: str, publish_on_field: str) -> None:

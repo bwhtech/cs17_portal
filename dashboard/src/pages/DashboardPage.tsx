@@ -2,6 +2,7 @@ import { useFrappeGetDocList } from "frappe-react-sdk";
 import { useCurrentStudent } from "@/hooks/useCurrentStudent";
 import { useStudentAssignments } from "@/hooks/useStudentAssignments";
 import { useStudentGrades } from "@/hooks/useStudentGrades";
+import { useStudentAnnouncements } from "@/hooks/useStudentAnnouncements";
 import AssignmentTable from "@/components/ui/AssignmentTable";
 import AlertBanner from "@/components/ui/AlertBanner";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,19 +13,7 @@ import GradeDialog from "@/components/ui/GradeDialog";
 export default function DashboardPage() {
   const { student, isLoading: studentLoading } = useCurrentStudent();
 
-  const { data: announcements } = useFrappeGetDocList(
-    "CS17 Announcement",
-    {
-      filters: [
-        ["is_published", "=", 1],
-        ["cohort", "=", student?.cohort ?? ""],
-      ],
-      fields: ["name", "title", "content", "alert_variant", "is_dismissible"],
-      orderBy: { field: "published_date", order: "desc" },
-      limit: 10,
-    },
-    student?.cohort ? undefined : null,
-  );
+  const { announcements } = useStudentAnnouncements(student?.cohort);
 
   const { assignments } = useStudentAssignments(student?.cohort);
 
