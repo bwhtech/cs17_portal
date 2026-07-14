@@ -1,4 +1,4 @@
-import { Bell, X } from "lucide-react";
+import { Bell, X, Menu } from "lucide-react";
 import { useFrappeGetDocList } from "frappe-react-sdk";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -36,7 +36,11 @@ function saveDismissed(set: Set<string>) {
   } catch {}
 }
 
-export default function FacultyTopBar() {
+type FacultyTopBarProps = {
+  onMenuClick: () => void;
+};
+
+export default function FacultyTopBar({ onMenuClick }: FacultyTopBarProps) {
   const location = useLocation();
   const { items } = useBreadcrumb();
   const pageLabel = routeLabels[location.pathname] ?? "Dashboard";
@@ -72,8 +76,15 @@ export default function FacultyTopBar() {
   }, []);
 
   return (
-    <header className="h-12 border-b border-border bg-background flex items-center px-6 gap-4 sticky top-0 z-10">
-      <div className="flex items-center gap-1.5 text-sm text-muted-foreground flex-1">
+    <header className="h-12 border-b border-border bg-background flex items-center px-4 md:px-6 gap-3 md:gap-4 sticky top-0 z-10">
+      <button
+        className="md:hidden -ml-1 p-1.5 rounded-md hover:bg-accent transition-colors"
+        onClick={onMenuClick}
+        aria-label="Open menu"
+      >
+        <Menu className="w-5 h-5" />
+      </button>
+      <div className="flex items-center gap-1.5 text-sm text-muted-foreground flex-1 min-w-0">
         <Link to="/faculty/" className="hover:text-foreground transition-colors">
           Workspace
         </Link>

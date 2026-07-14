@@ -5,14 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import ResponsiveTable, { type Column } from "@/components/ui/ResponsiveTable";
 import RichText from "@/components/ui/RichText";
 import SubmissionPreviewDialog from "@/components/ui/SubmissionPreviewDialog";
 import GradeSubmissionDialog from "@/faculty/GradeSubmissionDialog";
@@ -118,6 +111,74 @@ export default function FacultyAssignmentDetailPage() {
   const isGradeScale = isGraded && assignment.remarks === "Grade";
   const evaluationType = isGraded ? assignment.remarks : "Non-graded";
 
+  const selection = {
+    header: (
+      <input
+        type="checkbox"
+        className="h-4 w-4 rounded border-border align-middle"
+        checked={submissions.length > 0 && selected.size === submissions.length}
+        onChange={toggleAll}
+        aria-label="Select all submissions"
+      />
+    ),
+    cell: (submission: Submission) => (
+      <input
+        type="checkbox"
+        className="h-4 w-4 rounded border-border align-middle"
+        checked={selected.has(submission.name)}
+        onChange={() => toggle(submission.name)}
+        aria-label={`Select ${submission.full_name ?? submission.student}`}
+      />
+    ),
+  };
+
+  const columns: Column<Submission>[] = [
+    {
+      header: "Student",
+      variant: "primary",
+      cell: (s) => s.full_name ?? s.student,
+    },
+    {
+      header: "Submitted",
+      cellClassName: "text-sm text-muted-foreground",
+      cell: (s) => formatDateTime(s.submitted_at),
+    },
+    {
+      header: "Grade",
+      cell: (s) => (
+        <GradeCell
+          grade={s.grade}
+          isGradeScale={isGradeScale}
+          isGraded={isGraded}
+        />
+      ),
+    },
+    {
+      header: "",
+      variant: "actions",
+      cellClassName: "text-right",
+      cell: (s) => (
+        <div className="flex items-center justify-end gap-2">
+          <Button size="sm" variant="ghost" onClick={() => setPreview(s)}>
+            Preview
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setAssignTarget(s)}>
+            {parseAssignees(s._assign).length > 0 ? "Assigned" : "Assign"}
+          </Button>
+          {isGraded && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setGradeTarget(s)}
+            >
+              {s.grade ? "Edit Grade" : "Grade"}
+            </Button>
+          )}
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <button
@@ -128,13 +189,13 @@ export default function FacultyAssignmentDetailPage() {
         Assignments
       </button>
 
-      <div className="flex gap-6">
+      <div className="flex flex-col md:flex-row gap-6">
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold mb-4">{assignment.title}</h1>
           <RichText content={assignment.description} />
         </div>
 
-        <div className="w-64 shrink-0">
+        <div className="w-full md:w-64 shrink-0">
           <div className="border border-border rounded-xl p-4 space-y-3">
             <div>
               <p className="text-xs text-muted-foreground">Due</p>
@@ -170,97 +231,14 @@ export default function FacultyAssignmentDetailPage() {
             onDone={clearSelection}
           />
         )}
-        <div className="bg-background border border-border rounded-xl p-5">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-10">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-border align-middle"
-                    checked={
-                      submissions.length > 0 &&
-                      selected.size === submissions.length
-                    }
-                    onChange={toggleAll}
-                    aria-label="Select all submissions"
-                  />
-                </TableHead>
-                <TableHead>Student</TableHead>
-                <TableHead>Submitted</TableHead>
-                <TableHead>Grade</TableHead>
-                <TableHead className="text-right"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {submissions.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="text-center text-muted-foreground py-8"
-                  >
-                    No submissions yet.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                submissions.map((submission) => (
-                  <TableRow key={submission.name}>
-                    <TableCell>
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-border align-middle"
-                        checked={selected.has(submission.name)}
-                        onChange={() => toggle(submission.name)}
-                        aria-label={`Select ${submission.full_name ?? submission.student}`}
-                      />
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {submission.full_name ?? submission.student}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatDateTime(submission.submitted_at)}
-                    </TableCell>
-                    <TableCell>
-                      <GradeCell
-                        grade={submission.grade}
-                        isGradeScale={isGradeScale}
-                        isGraded={isGraded}
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setPreview(submission)}
-                        >
-                          Preview
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setAssignTarget(submission)}
-                        >
-                          {parseAssignees(submission._assign).length > 0
-                            ? "Assigned"
-                            : "Assign"}
-                        </Button>
-                        {isGraded && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setGradeTarget(submission)}
-                          >
-                            {submission.grade ? "Edit Grade" : "Grade"}
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+        <div className="md:bg-background md:border md:border-border md:rounded-xl md:p-5">
+          <ResponsiveTable
+            columns={columns}
+            rows={submissions}
+            rowKey={(s) => s.name}
+            selection={selection}
+            empty="No submissions yet."
+          />
         </div>
       </div>
 
