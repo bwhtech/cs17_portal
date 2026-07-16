@@ -45,11 +45,10 @@ class CS17AssignmentSubmission(Document):
 			frappe.throw(_("The deadline for this assignment has passed."))
 
 	def validate_not_graded(self):
-		# A student can revise their submission until it's graded and published.
 		if self.is_new() or not self._edited_by_owner():
 			return
 		if frappe.db.exists("CS17 Assignment Grade", {"submission": self.name, "is_published": 1}):
-			frappe.throw(_("This submission has been graded and can no longer be edited."))
+			frappe.throw(_("Closed assignments cannot be resubmitted."))
 
 	def _edited_by_owner(self) -> bool:
 		student_user = frappe.db.get_value("CS17 Profile", self.student, "user")

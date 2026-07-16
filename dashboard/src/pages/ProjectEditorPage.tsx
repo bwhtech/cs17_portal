@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useParams, useSearchParams, useNavigate, Link } from "react-router-dom";
 import {
 	useFrappeGetDoc,
 	useFrappeGetDocList,
+	useFrappeGetCall,
 	useFrappePostCall,
 } from "frappe-react-sdk";
 import { ArrowLeft, Save, Send } from "lucide-react";
@@ -18,11 +19,14 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentStudent } from "@/hooks/useCurrentStudent";
+import { frappeErrorMessage } from "@/lib/frappeError";
 import { useZenOnMount } from "@/context/ZenModeContext";
 import {
 	SCRATCH_EDITOR_URL,
 	SCRATCH_MESSAGE,
 	SCRATCH_TARGET_ORIGIN,
+	applyScratchDefaults,
+	applyScratchReadOnly,
 	arrayBufferToBase64,
 	dataUrlToBase64,
 } from "@/lib/scratch";
@@ -50,12 +54,20 @@ export default function ProjectEditorPage() {
 	const presetAssignment = searchParams.get("assignment");
 	const { student } = useCurrentStudent();
 	useZenOnMount();
+	useLayoutEffect(() => applyScratchDefaults(), []);
 
 	const {
 		data: project,
 		isLoading: projectLoading,
 		mutate: mutateProject,
 	} = useFrappeGetDoc<ProjectDoc>("CS17 Project", projectId);
+
+	const { data: closed } = useFrappeGetCall<{ message: boolean }>(
+		"cs17_portal.api.is_assignment_closed",
+		{ assignment: presetAssignment },
+		presetAssignment ? undefined : null,
+	);
+	const readOnly = searchParams.get("readonly") === "1" || closed?.message === true;
 
 	const { call: saveProject } = useFrappePostCall("cs17_portal.api.save_project");
 	const { call: submitScratchProject, loading: submitting } = useFrappePostCall(
@@ -128,7 +140,9 @@ export default function ProjectEditorPage() {
 			if (data.type === SCRATCH_MESSAGE.ready) {
 				editorReadyRef.current = true;
 				await loadExistingProject();
+				if (readOnly) applyScratchReadOnly(iframeRef.current);
 			} else if (data.type === SCRATCH_MESSAGE.dirty) {
+				if (readOnly) return;
 				if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
 				autosaveTimerRef.current = setTimeout(() => requestSb3("auto"), AUTOSAVE_IDLE_MS);
 			} else if (data.type === SCRATCH_MESSAGE.projectSb3) {
@@ -143,7 +157,7 @@ export default function ProjectEditorPage() {
 			window.removeEventListener("message", handleMessage);
 			if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
 		};
-	}, [loadExistingProject, requestSb3, performSave]);
+	}, [loadExistingProject, requestSb3, performSave, readOnly]);
 
 	if (projectLoading) {
 		return <Skeleton className="h-[70vh] w-full" />;
@@ -159,17 +173,23 @@ export default function ProjectEditorPage() {
 					</Link>
 				</Button>
 				<h1 className="font-semibold truncate">{project?.project_title}</h1>
-				<span className="text-xs text-muted-foreground ml-2">{statusLabel(status)}</span>
+				<span className="text-xs text-muted-foreground ml-2">
+					{readOnly ? "View only" : statusLabel(status)}
+				</span>
 				<div className="ml-auto flex items-center gap-2">
 					<ZenToggleButton />
-					<Button variant="outline" size="sm" onClick={() => requestSb3("manual")}>
-						<Save className="w-4 h-4" />
-						Save
-					</Button>
-					<Button size="sm" onClick={() => setSubmitOpen(true)}>
-						<Send className="w-4 h-4" />
-						Submit
-					</Button>
+					{!readOnly && (
+						<>
+							<Button variant="outline" size="sm" onClick={() => requestSb3("manual")}>
+								<Save className="w-4 h-4" />
+								Save
+							</Button>
+							<Button size="sm" onClick={() => setSubmitOpen(true)}>
+								<Send className="w-4 h-4" />
+								Submit
+							</Button>
+						</>
+					)}
 				</div>
 			</div>
 
@@ -177,6 +197,7 @@ export default function ProjectEditorPage() {
 				ref={iframeRef}
 				src={SCRATCH_EDITOR_URL}
 				title="Scratch editor"
+				onLoad={() => readOnly && applyScratchReadOnly(iframeRef.current)}
 				className="flex-1 w-full border-0"
 			/>
 
@@ -239,7 +260,6 @@ function SubmitProjectDialog({
 	const [succeeded, setSucceeded] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
-	// Reset the phase each time the dialog opens (adjust state during render).
 	const [wasOpen, setWasOpen] = useState(open);
 	if (open !== wasOpen) {
 		setWasOpen(open);
@@ -251,7 +271,6 @@ function SubmitProjectDialog({
 	}
 
 	const list = assignments ?? [];
-	// When the student came from a specific assignment, confirm against it directly.
 	const preset = presetAssignment
 		? list.find((assignment) => assignment.name === presetAssignment) ?? null
 		: null;
@@ -264,9 +283,7 @@ function SubmitProjectDialog({
 			await onSubmit(target.name);
 			setSucceeded(true);
 		} catch (err) {
-			setError(
-				(err as { message?: string })?.message ?? "Could not submit the project.",
-			);
+			setError(frappeErrorMessage(err, "Could not submit the project."));
 		}
 	}
 
@@ -274,74 +291,128 @@ function SubmitProjectDialog({
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent>
 				{succeeded ? (
-					<>
-						<DialogHeader>
-							<DialogTitle>Submission successful</DialogTitle>
-							<DialogDescription>
-								Your project was submitted to {target?.title}.
-							</DialogDescription>
-						</DialogHeader>
-						<DialogFooter>
-							<Button variant="outline" onClick={() => onOpenChange(false)}>
-								Cancel
-							</Button>
-							<Button onClick={onGoToDashboard}>Go to Dashboard</Button>
-						</DialogFooter>
-					</>
+					<SubmitSuccess
+						title={target?.title}
+						onClose={() => onOpenChange(false)}
+						onGoToDashboard={onGoToDashboard}
+					/>
 				) : target ? (
-					<>
-						<DialogHeader>
-							<DialogTitle>Submit this project?</DialogTitle>
-							<DialogDescription>
-								It will be submitted to {target.title}. Your current project is
-								snapshotted; you can revise it until the deadline.
-							</DialogDescription>
-						</DialogHeader>
-						{error && <p className="text-sm text-destructive">{error}</p>}
-						<DialogFooter>
-							<Button
-								variant="outline"
-								disabled={submitting}
-								onClick={() => (chosen ? setChosen(null) : onOpenChange(false))}
-							>
-								Cancel
-							</Button>
-							<Button disabled={submitting} onClick={confirmSubmit}>
-								{submitting ? "Submitting…" : "Submit"}
-							</Button>
-						</DialogFooter>
-					</>
+					<SubmitConfirm
+						title={target.title}
+						error={error}
+						submitting={submitting}
+						onCancel={() => (chosen ? setChosen(null) : onOpenChange(false))}
+						onSubmit={confirmSubmit}
+					/>
 				) : (
-					<>
-						<DialogHeader>
-							<DialogTitle>Submit to an assignment</DialogTitle>
-							<DialogDescription>
-								Pick a Scratch assignment to submit this project to.
-							</DialogDescription>
-						</DialogHeader>
-						<div className="space-y-2 py-2">
-							{isLoading ? (
-								<Skeleton className="h-10 w-full" />
-							) : list.length === 0 ? (
-								<p className="text-sm text-muted-foreground">
-									No open Scratch assignments in your cohort.
-								</p>
-							) : (
-								list.map((assignment) => (
-									<Button
-										key={assignment.name}
-										variant="outline"
-										className="w-full justify-start"
-										onClick={() => setChosen(assignment)}
-									>
-										{assignment.title}
-									</Button>
-								))
-							)}
-						</div>
-					</>
+					<SubmitPicker
+						assignments={list}
+						isLoading={isLoading}
+						onPick={setChosen}
+					/>
 				)}
 			</DialogContent>
 		</Dialog>
+	);
+}
+
+function SubmitSuccess({
+	title,
+	onClose,
+	onGoToDashboard,
+}: {
+	title?: string;
+	onClose: () => void;
+	onGoToDashboard: () => void;
+}) {
+	return (
+		<>
+			<DialogHeader>
+				<DialogTitle>Submission successful</DialogTitle>
+				<DialogDescription>Your project was submitted to {title}.</DialogDescription>
+			</DialogHeader>
+			<DialogFooter>
+				<Button variant="outline" onClick={onClose}>
+					Cancel
+				</Button>
+				<Button onClick={onGoToDashboard}>Go to Dashboard</Button>
+			</DialogFooter>
+		</>
+	);
+}
+
+function SubmitConfirm({
+	title,
+	error,
+	submitting,
+	onCancel,
+	onSubmit,
+}: {
+	title: string;
+	error: string | null;
+	submitting: boolean;
+	onCancel: () => void;
+	onSubmit: () => void;
+}) {
+	return (
+		<>
+			<DialogHeader>
+				<DialogTitle>Submit this project?</DialogTitle>
+				<DialogDescription>
+					It will be submitted to {title}. Your current project is snapshotted; you
+					can revise it until the deadline.
+				</DialogDescription>
+			</DialogHeader>
+			{error && <p className="text-sm text-destructive">{error}</p>}
+			<DialogFooter>
+				<Button variant="outline" disabled={submitting} onClick={onCancel}>
+					Cancel
+				</Button>
+				<Button disabled={submitting} onClick={onSubmit}>
+					{submitting ? "Submitting…" : "Submit"}
+				</Button>
+			</DialogFooter>
+		</>
+	);
+}
+
+function SubmitPicker({
+	assignments,
+	isLoading,
+	onPick,
+}: {
+	assignments: ScratchAssignment[];
+	isLoading: boolean;
+	onPick: (assignment: ScratchAssignment) => void;
+}) {
+	return (
+		<>
+			<DialogHeader>
+				<DialogTitle>Submit to an assignment</DialogTitle>
+				<DialogDescription>
+					Pick a Scratch assignment to submit this project to.
+				</DialogDescription>
+			</DialogHeader>
+			<div className="space-y-2 py-2">
+				{isLoading ? (
+					<Skeleton className="h-10 w-full" />
+				) : assignments.length === 0 ? (
+					<p className="text-sm text-muted-foreground">
+						No open Scratch assignments in your cohort.
+					</p>
+				) : (
+					assignments.map((assignment) => (
+						<Button
+							key={assignment.name}
+							variant="outline"
+							className="w-full justify-start"
+							onClick={() => onPick(assignment)}
+						>
+							{assignment.title}
+						</Button>
+					))
+				)}
+			</div>
+		</>
 	);
 }

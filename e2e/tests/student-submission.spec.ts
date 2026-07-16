@@ -4,11 +4,12 @@ import {
 	CS17Assignment,
 	TEST_ASSIGNMENT_PREFIX,
 	cleanupTestAssignments,
+	cleanupTestGrades,
 	cleanupTestSubmissions,
 	createTestAssignment,
 	ensureSessionFaculty,
 } from "../helpers/cs17";
-import { deleteDoc, getList } from "../helpers/frappe";
+import { createDoc, deleteDoc, getList } from "../helpers/frappe";
 
 interface StudentInfo {
 	email: string;
@@ -120,6 +121,7 @@ test.describe("Student submission types", () => {
 	let uiPdf: CS17Assignment;
 	let uiUrl: CS17Assignment;
 	let scratch: CS17Assignment;
+	let scratchGraded: CS17Assignment;
 
 	test.beforeAll(async ({ request }) => {
 		const studentInfo: StudentInfo = JSON.parse(
@@ -145,10 +147,16 @@ test.describe("Student submission types", () => {
 			submissionType: "Scratch",
 			title: `E2E Assignment Scratch ${Date.now()}`,
 		});
+		scratchGraded = await createTestAssignment(request, {
+			cohort,
+			submissionType: "Scratch",
+			assignmentType: "Graded",
+			title: `E2E Assignment Scratch Graded ${Date.now()}`,
+		});
 	});
 
 	test.afterAll(async ({ request }) => {
-		// Cohort and student belong to the student-setup project; leave them.
+		await cleanupTestGrades(request);
 		await cleanupTestSubmissions(request);
 		await cleanupTestAssignments(request);
 		const projects = await getList<{ name: string }>(request, "CS17 Project", {
@@ -218,7 +226,6 @@ test.describe("Student submission types", () => {
 		const row = page.locator("tr", { hasText: scratch.title });
 		await row.getByRole("button", { name: "Submit" }).click();
 
-		// A project was created automatically and the student landed in the editor.
 		await page.waitForURL(
 			(url) =>
 				url.pathname.includes("/projects/") &&
@@ -226,18 +233,23 @@ test.describe("Student submission types", () => {
 				url.searchParams.get("assignment") === scratch.name,
 		);
 
-		// The auto-created project is empty; save it so the snapshot submit succeeds.
+		const editorDefaults = await page.evaluate(() => ({
+			theme: localStorage.getItem("tw:theme"),
+			pauseEnabled: JSON.parse(localStorage.getItem("tw:addons") ?? "{}").pause
+				?.enabled,
+		}));
+		expect(editorDefaults.theme).toBe("light");
+		expect(editorDefaults.pauseEnabled).toBe(false);
+
 		const projectId = page.url().match(/\/projects\/([^/]+)\/edit/)![1];
 		const saved = await saveProjectAsStudent(page, projectId);
 		expect(saved.ok).toBeTruthy();
 
-		// Submit opens a confirmation preselected to that assignment.
 		await page.getByRole("button", { name: "Submit", exact: true }).click();
 		const dialog = page.getByRole("dialog");
 		await expect(dialog.getByText("Submit this project?")).toBeVisible();
 		await expect(dialog.getByText(scratch.title)).toBeVisible();
 
-		// Confirm → success dialog → go to dashboard.
 		await dialog.getByRole("button", { name: "Submit", exact: true }).click();
 		await expect(dialog.getByText("Submission successful")).toBeVisible();
 		await dialog.getByRole("button", { name: "Go to Dashboard" }).click();
@@ -251,8 +263,6 @@ test.describe("Student submission types", () => {
 	}) => {
 		const project = await submitScratchAsStudent(page, scratch.name, scratch.title);
 
-		// Preview must work from the dashboard's assignment table too, not only the
-		// full assignments page (the dashboard fetch was missing the project link).
 		await page.goto("/dashboard");
 		const row = page.locator("tr", { hasText: scratch.title });
 		await row.getByRole("button", { name: "Preview" }).click();
@@ -261,6 +271,69 @@ test.describe("Student submission types", () => {
 			(url) => url.pathname === `/dashboard/projects/${project}/edit`,
 		);
 		await expect(page.getByTitle("Scratch editor")).toBeVisible();
+	});
+
+	test("a graded scratch assignment opens read-only from preview and direct link", async ({
+		page,
+		request,
+	}) => {
+		const project = await submitScratchAsStudent(
+			page,
+			scratchGraded.name,
+			scratchGraded.title,
+		);
+		const [submission] = await getList<{ name: string }>(
+			request,
+			"CS17 Assignment Submission",
+			{ fields: ["name"], filters: { assignment: scratchGraded.name }, limit: 1 },
+		);
+		await createDoc(request, "CS17 Assignment Grade", {
+			assignment: scratchGraded.name,
+			submission: submission.name,
+			marks_obtained: 0,
+			is_published: 1,
+		});
+
+		await page.goto("/dashboard/assignments");
+		const row = page.locator("tr", { hasText: scratchGraded.title });
+		await row.getByRole("button", { name: "Preview" }).click();
+		await page.waitForURL(
+			(url) =>
+				url.pathname.endsWith("/edit") &&
+				url.searchParams.get("readonly") === "1",
+		);
+		await expect(page.getByTitle("Scratch editor")).toBeVisible();
+
+		await expect(page.getByText("View only")).toBeVisible();
+		await expect(
+			page.getByRole("button", { name: "Submit", exact: true }),
+		).toHaveCount(0);
+		await expect(
+			page.getByRole("button", { name: "Save", exact: true }),
+		).toHaveCount(0);
+
+		const frame = page
+			.frames()
+			.find((f) => f.url().includes("scratch/editor.html"))!;
+		await expect
+			.poll(() =>
+				frame.evaluate(() => {
+					const canvas = document.querySelector(".blocklyBlockCanvas");
+					return canvas ? getComputedStyle(canvas).pointerEvents : "missing";
+				}),
+			)
+			.toBe("none");
+
+		await page.goto(
+			`/dashboard/projects/${project}/edit?assignment=${scratchGraded.name}`,
+		);
+		await expect(page.getByText("View only")).toBeVisible();
+		await expect(
+			page.getByRole("button", { name: "Submit", exact: true }),
+		).toHaveCount(0);
+		await expect(
+			page.getByRole("button", { name: "Save", exact: true }),
+		).toHaveCount(0);
 	});
 
 	test("submit dialog adapts to the assignment type", async ({ page }) => {

@@ -145,8 +145,6 @@ test.describe("Faculty assignment portal", () => {
 		expect(stored).toBeNull();
 	});
 
-	// The seeded faculty has no cohort, so this also guards get_submission_project
-	// against denying a faculty who can already view/grade the submission.
 	test("previews a Scratch submission in the read-only editor", async ({
 		page,
 		request,
@@ -180,9 +178,6 @@ test.describe("Faculty assignment portal", () => {
 		).toBeVisible();
 		await expect(page.getByRole("button", { name: "Open file" })).toHaveCount(0);
 
-		// Review view applied inside the same-origin editor: the code canvas and
-		// the runnable stage stay; all other chrome (menu bar, tabs, sprite/stage
-		// panel, Find, scrollbars) is hidden, and blocks can't be edited.
 		const frame = page
 			.frames()
 			.find((f) => f.url().includes("scratch/editor.html"))!;

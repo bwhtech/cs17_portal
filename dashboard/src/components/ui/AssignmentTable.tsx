@@ -6,10 +6,7 @@ import SubmitAssignmentDialog from "@/components/ui/SubmitAssignmentDialog";
 import SubmissionPreviewDialog from "@/components/ui/SubmissionPreviewDialog";
 import { formatDateTime } from "@/lib/dayjs";
 import { useNavigate } from "react-router-dom";
-import {
-  useStartScratchSubmission,
-  scratchEditorPath,
-} from "@/hooks/useStartScratchSubmission";
+import { useScratchEditor } from "@/hooks/useScratchEditor";
 
 interface Assignment {
   name: string;
@@ -66,16 +63,15 @@ export default function AssignmentTable({
     null,
   );
   const navigate = useNavigate();
-  const { start: startScratch } = useStartScratchSubmission();
+  const scratch = useScratchEditor();
+
+  const isScratch = (a: Assignment) => a.submission_type === "Scratch";
+  const isClosed = (a: Assignment, s?: Submission) =>
+    getStatus(a, s, !!gradeMap?.[a.name]) === "closed";
 
   function openSubmit(assignment: Assignment, existing: Submission | null) {
-    if (assignment.submission_type === "Scratch") {
-      // Editing reopens the submitted project; a first submission makes a new one.
-      if (existing?.project) {
-        navigate(scratchEditorPath(existing.project, assignment.name));
-      } else {
-        startScratch({ name: assignment.name, title: assignment.title });
-      }
+    if (isScratch(assignment)) {
+      scratch.open(assignment, existing);
       return;
     }
     setDialogAssignment(assignment);
@@ -83,10 +79,10 @@ export default function AssignmentTable({
   }
 
   function openPreview(assignment: Assignment, submission: Submission) {
-    // A Scratch submission opens the student's project in the editor, not a
-    // .sb3 download — they can review and revise it there.
-    if (assignment.submission_type === "Scratch" && submission.project) {
-      navigate(scratchEditorPath(submission.project, assignment.name));
+    if (isScratch(assignment)) {
+      scratch.open(assignment, submission, {
+        readOnly: isClosed(assignment, submission),
+      });
       return;
     }
     setPreviewAssignment(assignment);
@@ -152,7 +148,7 @@ export default function AssignmentTable({
               <Button size="sm" variant="ghost" onClick={() => onViewGrade(a.name)}>
                 View Grade
               </Button>
-            ) : status === "submitted" && a.submission_type !== "Scratch" ? (
+            ) : status === "submitted" && !isScratch(a) ? (
               <Button
                 size="sm"
                 variant="outline"

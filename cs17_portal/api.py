@@ -243,8 +243,6 @@ def get_current_faculty() -> "frappe._dict":
 def require_faculty_for_assignment(assignment: str) -> None:
 	faculty = get_current_faculty()
 	assignment_cohort = frappe.db.get_value("CS17 Assignment", assignment, "cohort")
-	# A faculty assigned to a cohort is limited to it; one with no cohort set is an
-	# unrestricted reviewer (any cohort).
 	if faculty.cohort and faculty.cohort != assignment_cohort:
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
@@ -356,9 +354,6 @@ def submit_scratch_project(assignment: str, project: str) -> dict:
 
 	source_file = frappe.get_doc("File", {"file_url": project_doc.sb3_file, "attached_to_name": project})
 
-	# One submission per student per assignment — resubmitting revises it in place.
-	# The doctype's validate() blocks the revision once the deadline passes or the
-	# grade is published.
 	submission = _get_or_new_submission(assignment, project_doc.student)
 	submission.flags.ignore_permissions = True
 	submission.project = project
@@ -387,6 +382,22 @@ def _get_or_new_submission(assignment: str, student: str) -> "frappe.model.docum
 	submission.student = student
 	submission.assignment = assignment
 	return submission
+
+
+@frappe.whitelist(methods=["GET"])
+def is_assignment_closed(assignment: str) -> bool:
+	"""True once the student can no longer revise: deadline passed or grade published."""
+	student = require_current_student()
+	due_date = frappe.db.get_value("CS17 Assignment", assignment, "due_date")
+	if due_date and now_datetime() > due_date:
+		return True
+	submission = frappe.db.get_value(
+		ASSIGNMENT_SUBMISSION, {"assignment": assignment, "student": student}, "name"
+	)
+	return bool(
+		submission
+		and frappe.db.exists("CS17 Assignment Grade", {"submission": submission, "is_published": 1})
+	)
 
 
 @frappe.whitelist()
