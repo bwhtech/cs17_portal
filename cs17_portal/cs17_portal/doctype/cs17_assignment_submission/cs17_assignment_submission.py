@@ -34,15 +34,26 @@ class CS17AssignmentSubmission(Document):
 
 	def validate(self):
 		self.validate_deadline()
+		self.validate_not_graded()
 		self.validate_scratch_acceptance()
 
 	def validate_deadline(self):
-		student_user = frappe.db.get_value("CS17 Profile", self.student, "user")
-		if frappe.session.user != student_user:
+		if not self._edited_by_owner():
 			return
 		due_date = frappe.db.get_value("CS17 Assignment", self.assignment, "due_date")
 		if due_date and frappe.utils.now_datetime() > due_date:
 			frappe.throw(_("The deadline for this assignment has passed."))
+
+	def validate_not_graded(self):
+		# A student can revise their submission until it's graded and published.
+		if self.is_new() or not self._edited_by_owner():
+			return
+		if frappe.db.exists("CS17 Assignment Grade", {"submission": self.name, "is_published": 1}):
+			frappe.throw(_("This submission has been graded and can no longer be edited."))
+
+	def _edited_by_owner(self) -> bool:
+		student_user = frappe.db.get_value("CS17 Profile", self.student, "user")
+		return frappe.session.user == student_user
 
 	def validate_scratch_acceptance(self):
 		if not self.project:

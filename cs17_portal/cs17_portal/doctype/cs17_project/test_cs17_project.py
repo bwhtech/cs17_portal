@@ -289,3 +289,35 @@ class TestCS17Project(FrappeTestCase):
 		submission = api.submit_scratch_project(not_graded, project)["name"]
 		frappe.set_user(FACULTY_IN_USER)
 		self.assertRaises(frappe.ValidationError, api.save_grade, submission, 50)
+
+	def test_resubmit_revises_the_same_submission(self):
+		frappe.set_user(STUDENT1_USER)
+		project = api.create_project("Revise Project")["name"]
+		api.save_project(project, "project.sb3", b64(b"PK\x03\x04v1"))
+		first = api.submit_scratch_project(self.assignment, project)["name"]
+		api.save_project(project, "project.sb3", b64(b"PK\x03\x04v2"))
+		second = api.submit_scratch_project(self.assignment, project)["name"]
+
+		self.assertEqual(first, second)
+		self.assertEqual(
+			frappe.db.count(
+				"CS17 Assignment Submission",
+				{"assignment": self.assignment, "student": self.student1},
+			),
+			1,
+		)
+
+	def test_cannot_resubmit_after_grade_published(self):
+		frappe.set_user(STUDENT1_USER)
+		project = api.create_project("Graded Project")["name"]
+		api.save_project(project, "project.sb3", b64(b"PK\x03\x04v1"))
+		submission = api.submit_scratch_project(self.assignment, project)["name"]
+
+		frappe.set_user(FACULTY_IN_USER)
+		api.save_grade(submission, marks_obtained=80)
+
+		frappe.set_user(STUDENT1_USER)
+		api.save_project(project, "project.sb3", b64(b"PK\x03\x04v2"))
+		self.assertRaises(
+			frappe.ValidationError, api.submit_scratch_project, self.assignment, project
+		)

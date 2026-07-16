@@ -1,16 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useFrappeGetCall, useFrappePostCall } from "frappe-react-sdk";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-	SCRATCH_READONLY_EDITOR_URL,
-	SCRATCH_MESSAGE,
-	SCRATCH_TARGET_ORIGIN,
-	base64ToArrayBuffer,
-} from "@/lib/scratch";
+import ScratchSubmissionPlayer from "@/components/ui/ScratchSubmissionPlayer";
 import { GradeBadge } from "./GradeBadge";
 import { ZenToggleButton } from "@/components/ui/ZenToggleButton";
 import { useZenMode, useZenOnMount } from "@/context/ZenModeContext";
@@ -97,7 +92,7 @@ export default function FacultyGradingPage() {
 	const playerPane = (
 		<div className="flex-1 min-h-0 bg-muted">
 			{isScratch ? (
-				<ReadOnlyPlayer submission={submission.name} />
+				<ScratchSubmissionPlayer submission={submission.name} />
 			) : (
 				<SubmissionFile fileUrl={submission.submission_document} />
 			)}
@@ -132,66 +127,6 @@ export default function FacultyGradingPage() {
 				{playerPane}
 				{gradeForm}
 			</div>
-		</div>
-	);
-}
-
-function ReadOnlyPlayer({ submission }: { submission: string }) {
-	const iframeRef = useRef<HTMLIFrameElement>(null);
-	const readyRef = useRef(false);
-	const loadedRef = useRef(false);
-
-	const { data, isLoading, error } = useFrappeGetCall<{ message: { content: string } }>(
-		"cs17_portal.api.get_submission_project",
-		{ submission },
-		`grading-project-${submission}`,
-	);
-	const sb3Content = data?.message?.content ?? null;
-
-	const loadIntoPlayer = useCallback(() => {
-		if (loadedRef.current || !readyRef.current || !sb3Content) return;
-		if (!iframeRef.current?.contentWindow) return;
-		const sb3 = base64ToArrayBuffer(sb3Content);
-		loadedRef.current = true;
-		iframeRef.current.contentWindow.postMessage(
-			{ type: SCRATCH_MESSAGE.loadProject, sb3 },
-			SCRATCH_TARGET_ORIGIN,
-			[sb3],
-		);
-	}, [sb3Content]);
-
-	useEffect(() => {
-		loadIntoPlayer();
-	}, [loadIntoPlayer]);
-
-	useEffect(() => {
-		function handleMessage(event: MessageEvent) {
-			if (event.data?.type === SCRATCH_MESSAGE.ready) {
-				readyRef.current = true;
-				loadIntoPlayer();
-			}
-		}
-		window.addEventListener("message", handleMessage);
-		return () => window.removeEventListener("message", handleMessage);
-	}, [loadIntoPlayer]);
-
-	if (error) {
-		return (
-			<div className="flex h-full items-center justify-center p-6 text-sm text-muted-foreground">
-				Could not load the submitted project.
-			</div>
-		);
-	}
-
-	return (
-		<div className="relative h-full w-full">
-			{isLoading && <Skeleton className="absolute inset-0" />}
-			<iframe
-				ref={iframeRef}
-				src={SCRATCH_READONLY_EDITOR_URL}
-				title="Scratch submission player"
-				className="h-full w-full border-0"
-			/>
 		</div>
 	);
 }

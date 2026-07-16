@@ -248,6 +248,7 @@ export default function FacultyAssignmentDetailPage() {
           onOpenChange={(open) => !open && setPreview(null)}
           title={`Submission: ${preview.full_name ?? preview.student}`}
           submissionType={assignment.submission_type}
+          submission={preview.name}
           fileUrl={preview.submission_document || preview.submission_url}
         />
       )}

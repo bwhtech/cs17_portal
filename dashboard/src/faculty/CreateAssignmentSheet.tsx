@@ -23,7 +23,7 @@ import { Eye, Pencil } from "lucide-react";
 import AssignmentPreview, { type AssignmentDraft } from "@/faculty/AssignmentPreview";
 import DeleteAssignmentDialog from "@/faculty/DeleteAssignmentDialog";
 
-const SUBMISSION_TYPES = ["Any", "PDF", "URL", "Image", "ZIP"];
+const SUBMISSION_TYPES = ["Any", "PDF", "URL", "Image", "ZIP", "Scratch"];
 const PUBLISH_MODES = [
   { value: "draft", label: "Save as Draft" },
   { value: "now", label: "Publish Now" },

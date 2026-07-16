@@ -1,7 +1,5 @@
 export const SCRATCH_EDITOR_URL = "/assets/cs17_portal/scratch/editor.html";
 
-export const SCRATCH_READONLY_EDITOR_URL = `${SCRATCH_EDITOR_URL}?readonly=1`;
-
 export const SCRATCH_TARGET_ORIGIN = "*";
 
 export const SCRATCH_MESSAGE = {

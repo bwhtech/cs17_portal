@@ -2,12 +2,13 @@ import * as fs from "fs";
 import { test, expect, Page } from "@playwright/test";
 import {
 	CS17Assignment,
+	TEST_ASSIGNMENT_PREFIX,
 	cleanupTestAssignments,
 	cleanupTestSubmissions,
 	createTestAssignment,
 	ensureSessionFaculty,
 } from "../helpers/cs17";
-import { getList } from "../helpers/frappe";
+import { deleteDoc, getList } from "../helpers/frappe";
 
 interface StudentInfo {
 	email: string;
@@ -45,12 +46,80 @@ async function submitAsStudent(page: Page, assignment: string, fileUrl: string) 
 	);
 }
 
+async function saveProjectAsStudent(page: Page, project: string) {
+	await page.waitForFunction(
+		() =>
+			(window as any).csrf_token !== undefined ||
+			(window as any).frappe?.csrf_token !== undefined,
+		{ timeout: 15000 },
+	);
+	return page.evaluate(
+		async ({ project }) => {
+			const token =
+				(window as any).csrf_token ?? (window as any).frappe?.csrf_token;
+			const resp = await fetch("/api/method/cs17_portal.api.save_project", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"X-Frappe-CSRF-Token": token,
+				},
+				body: JSON.stringify({
+					project,
+					filename: "project.sb3",
+					content: btoa("PKtest"),
+				}),
+			});
+			return { ok: resp.ok, status: resp.status };
+		},
+		{ project },
+	);
+}
+
+async function submitScratchAsStudent(page: Page, assignment: string, title: string) {
+	await page.goto("/dashboard");
+	await page.waitForFunction(
+		() =>
+			(window as any).csrf_token !== undefined ||
+			(window as any).frappe?.csrf_token !== undefined,
+		{ timeout: 15000 },
+	);
+	return page.evaluate(
+		async ({ assignment, title }) => {
+			const token =
+				(window as any).csrf_token ?? (window as any).frappe?.csrf_token;
+			const call = async (method: string, body: unknown) => {
+				const resp = await fetch(`/api/method/${method}`, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						"X-Frappe-CSRF-Token": token,
+					},
+					body: JSON.stringify(body),
+				});
+				return resp.json();
+			};
+			const project = (
+				await call("cs17_portal.api.create_project", { project_title: title })
+			).message.name;
+			await call("cs17_portal.api.save_project", {
+				project,
+				filename: "p.sb3",
+				content: btoa("PKtest"),
+			});
+			await call("cs17_portal.api.submit_scratch_project", { assignment, project });
+			return project as string;
+		},
+		{ assignment, title },
+	);
+}
+
 test.describe("Student submission types", () => {
 	let pdf: CS17Assignment;
 	let url: CS17Assignment;
 	let anyType: CS17Assignment;
 	let uiPdf: CS17Assignment;
 	let uiUrl: CS17Assignment;
+	let scratch: CS17Assignment;
 
 	test.beforeAll(async ({ request }) => {
 		const studentInfo: StudentInfo = JSON.parse(
@@ -71,12 +140,25 @@ test.describe("Student submission types", () => {
 			submissionType: "URL",
 			title: `E2E Assignment UI-URL ${Date.now()}`,
 		});
+		scratch = await createTestAssignment(request, {
+			cohort,
+			submissionType: "Scratch",
+			title: `E2E Assignment Scratch ${Date.now()}`,
+		});
 	});
 
 	test.afterAll(async ({ request }) => {
 		// Cohort and student belong to the student-setup project; leave them.
 		await cleanupTestSubmissions(request);
 		await cleanupTestAssignments(request);
+		const projects = await getList<{ name: string }>(request, "CS17 Project", {
+			fields: ["name"],
+			filters: { project_title: ["like", `${TEST_ASSIGNMENT_PREFIX}%`] },
+			limit: 200,
+		});
+		for (const project of projects) {
+			await deleteDoc(request, "CS17 Project", project.name);
+		}
 	});
 
 	test("rejects a non-PDF and accepts a PDF for a PDF assignment", async ({ page }) => {
@@ -127,6 +209,58 @@ test.describe("Student submission types", () => {
 			},
 		);
 		expect(subs[0].submission_document).toBe("/files/notes.txt");
+	});
+
+	test("scratch submit: auto-project, confirm + success dialogs, then dashboard", async ({
+		page,
+	}) => {
+		await page.goto("/dashboard/assignments");
+		const row = page.locator("tr", { hasText: scratch.title });
+		await row.getByRole("button", { name: "Submit" }).click();
+
+		// A project was created automatically and the student landed in the editor.
+		await page.waitForURL(
+			(url) =>
+				url.pathname.includes("/projects/") &&
+				url.pathname.endsWith("/edit") &&
+				url.searchParams.get("assignment") === scratch.name,
+		);
+
+		// The auto-created project is empty; save it so the snapshot submit succeeds.
+		const projectId = page.url().match(/\/projects\/([^/]+)\/edit/)![1];
+		const saved = await saveProjectAsStudent(page, projectId);
+		expect(saved.ok).toBeTruthy();
+
+		// Submit opens a confirmation preselected to that assignment.
+		await page.getByRole("button", { name: "Submit", exact: true }).click();
+		const dialog = page.getByRole("dialog");
+		await expect(dialog.getByText("Submit this project?")).toBeVisible();
+		await expect(dialog.getByText(scratch.title)).toBeVisible();
+
+		// Confirm → success dialog → go to dashboard.
+		await dialog.getByRole("button", { name: "Submit", exact: true }).click();
+		await expect(dialog.getByText("Submission successful")).toBeVisible();
+		await dialog.getByRole("button", { name: "Go to Dashboard" }).click();
+		await page.waitForURL(
+			(url) => url.pathname === "/dashboard" || url.pathname === "/dashboard/",
+		);
+	});
+
+	test("previewing a submitted scratch assignment opens its project in the editor", async ({
+		page,
+	}) => {
+		const project = await submitScratchAsStudent(page, scratch.name, scratch.title);
+
+		// Preview must work from the dashboard's assignment table too, not only the
+		// full assignments page (the dashboard fetch was missing the project link).
+		await page.goto("/dashboard");
+		const row = page.locator("tr", { hasText: scratch.title });
+		await row.getByRole("button", { name: "Preview" }).click();
+
+		await page.waitForURL(
+			(url) => url.pathname === `/dashboard/projects/${project}/edit`,
+		);
+		await expect(page.getByTitle("Scratch editor")).toBeVisible();
 	});
 
 	test("submit dialog adapts to the assignment type", async ({ page }) => {
