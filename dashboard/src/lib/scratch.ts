@@ -22,19 +22,15 @@ const READONLY_CSS = `
 	.blocklyBlockCanvas { pointer-events: none !important; }
 `;
 
-// The editor shares this app's origin, so it reads these localStorage keys on boot.
-// Seed them before the iframe loads: light theme by default (TurboWarp otherwise
-// follows the OS and shows dark), and the pause button addon off.
 export function applyScratchDefaults(): void {
 	try {
-		if (!localStorage.getItem("tw:theme")) {
-			localStorage.setItem("tw:theme", "light");
-		}
+		const isDark = document.documentElement.classList.contains("dark");
+		localStorage.setItem("tw:theme", isDark ? "dark" : "light");
 		const addons = parseAddonSettings(localStorage.getItem("tw:addons"));
 		addons.pause = { ...addons.pause, enabled: false };
 		localStorage.setItem("tw:addons", JSON.stringify(addons));
 	} catch {
-		// No localStorage — the editor falls back to its own defaults.
+		return;
 	}
 }
 
