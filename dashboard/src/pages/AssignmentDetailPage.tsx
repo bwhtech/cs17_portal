@@ -10,10 +10,7 @@ import RichText from "@/components/ui/RichText";
 import { formatDateTime } from "@/lib/dayjs";
 import { ArrowLeft } from "lucide-react";
 import { useBreadcrumb } from "@/context/BreadcrumbContext";
-import {
-  useStartScratchSubmission,
-  scratchEditorPath,
-} from "@/hooks/useStartScratchSubmission";
+import { useScratchEditor } from "@/hooks/useScratchEditor";
 import { useEffect } from "react";
 
 export default function AssignmentDetailPage() {
@@ -21,7 +18,7 @@ export default function AssignmentDetailPage() {
   const { student } = useCurrentStudent();
   const [dialogOpen, setDialogOpen] = useState(false);
   const navigate = useNavigate();
-  const { start: startScratch } = useStartScratchSubmission();
+  const scratch = useScratchEditor();
   const { setBreadcrumb } = useBreadcrumb();
 
   const { data: assignment, isLoading: assignmentLoading } = useFrappeGetDoc(
@@ -160,18 +157,11 @@ export default function AssignmentDetailPage() {
                 variant="outline"
                 className="w-full"
                 disabled={isOverdue}
-                onClick={() => {
-                  if (assignment.submission_type !== "Scratch") {
-                    setDialogOpen(true);
-                  } else if (submission?.project) {
-                    navigate(scratchEditorPath(submission.project, assignment.name));
-                  } else {
-                    startScratch({
-                      name: assignment.name,
-                      title: assignment.title,
-                    });
-                  }
-                }}
+                onClick={() =>
+                  assignment.submission_type === "Scratch"
+                    ? scratch.open(assignment, submission)
+                    : setDialogOpen(true)
+                }
               >
                 {isOverdue ? "Deadline Passed" : "Submit Assignment"}
               </Button>

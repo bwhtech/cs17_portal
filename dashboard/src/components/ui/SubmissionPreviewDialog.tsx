@@ -15,8 +15,6 @@ interface Props {
   title: string;
   submissionType?: string;
   fileUrl?: string | null;
-  // Submission name — when set for a Scratch submission, the project opens in
-  // the read-only editor (faculty only) instead of a .sb3 download link.
   submission?: string | null;
 }
 
