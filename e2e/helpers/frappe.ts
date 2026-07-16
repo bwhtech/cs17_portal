@@ -89,6 +89,44 @@ function apiHeaders(extra: Record<string, string> = {}): Record<string, string> 
 }
 
 /**
+ * Upload a file and attach it to a document via Frappe's upload_file method.
+ * When `fieldname` is given the target field is set to the new file_url too.
+ */
+export async function uploadFile(
+	request: APIRequestContext,
+	options: {
+		fileName: string;
+		content: Buffer;
+		doctype: string;
+		docname: string;
+		fieldname?: string;
+		isPrivate?: boolean;
+	},
+): Promise<{ file_url: string; name: string }> {
+	const response = await request.post(`${API_BASE}/api/method/upload_file`, {
+		headers: apiHeaders(),
+		multipart: {
+			file: {
+				name: options.fileName,
+				mimeType: "application/octet-stream",
+				buffer: options.content,
+			},
+			is_private: options.isPrivate === false ? "0" : "1",
+			doctype: options.doctype,
+			docname: options.docname,
+			...(options.fieldname ? { fieldname: options.fieldname } : {}),
+		},
+	});
+
+	if (!response.ok()) {
+		throw new Error(`Failed to upload file: ${await response.text()}`);
+	}
+
+	const result = await response.json();
+	return result.message as { file_url: string; name: string };
+}
+
+/**
  * Create a new document via Frappe REST API.
  */
 export async function createDoc<T = Record<string, unknown>>(

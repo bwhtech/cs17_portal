@@ -10,6 +10,10 @@ import RichText from "@/components/ui/RichText";
 import { formatDateTime } from "@/lib/dayjs";
 import { ArrowLeft } from "lucide-react";
 import { useBreadcrumb } from "@/context/BreadcrumbContext";
+import {
+  useStartScratchSubmission,
+  scratchEditorPath,
+} from "@/hooks/useStartScratchSubmission";
 import { useEffect } from "react";
 
 export default function AssignmentDetailPage() {
@@ -17,6 +21,7 @@ export default function AssignmentDetailPage() {
   const { student } = useCurrentStudent();
   const [dialogOpen, setDialogOpen] = useState(false);
   const navigate = useNavigate();
+  const { start: startScratch } = useStartScratchSubmission();
   const { setBreadcrumb } = useBreadcrumb();
 
   const { data: assignment, isLoading: assignmentLoading } = useFrappeGetDoc(
@@ -31,7 +36,7 @@ export default function AssignmentDetailPage() {
         ["student", "=", student?.name ?? ""],
         ["assignment", "=", assignmentId ?? ""],
       ],
-      fields: ["name", "assignment", "submitted_at", "modified"],
+      fields: ["name", "assignment", "submitted_at", "modified", "project"],
       limit: 1,
     },
     student?.name && assignmentId ? undefined : null,
@@ -155,7 +160,18 @@ export default function AssignmentDetailPage() {
                 variant="outline"
                 className="w-full"
                 disabled={isOverdue}
-                onClick={() => setDialogOpen(true)}
+                onClick={() => {
+                  if (assignment.submission_type !== "Scratch") {
+                    setDialogOpen(true);
+                  } else if (submission?.project) {
+                    navigate(scratchEditorPath(submission.project, assignment.name));
+                  } else {
+                    startScratch({
+                      name: assignment.name,
+                      title: assignment.title,
+                    });
+                  }
+                }}
               >
                 {isOverdue ? "Deadline Passed" : "Submit Assignment"}
               </Button>

@@ -7,6 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { previewKind } from "@/lib/submissionTypes";
+import ScratchSubmissionPlayer from "@/components/ui/ScratchSubmissionPlayer";
 
 interface Props {
   open: boolean;
@@ -14,6 +15,9 @@ interface Props {
   title: string;
   submissionType?: string;
   fileUrl?: string | null;
+  // Submission name — when set for a Scratch submission, the project opens in
+  // the read-only editor (faculty only) instead of a .sb3 download link.
+  submission?: string | null;
 }
 
 export default function SubmissionPreviewDialog({
@@ -22,17 +26,29 @@ export default function SubmissionPreviewDialog({
   title,
   submissionType,
   fileUrl,
+  submission,
 }: Props) {
+  const isScratch = submissionType === "Scratch" && !!submission;
   const kind = previewKind(submissionType, fileUrl);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent
+        className={
+          isScratch
+            ? "flex h-[92vh] w-[96vw] max-w-[96vw] flex-col sm:max-w-[96vw]"
+            : "max-w-2xl"
+        }
+      >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <div className="py-2">
-          {!fileUrl ? (
+        <div className={isScratch ? "min-h-0 flex-1 pt-2" : "py-2"}>
+          {isScratch ? (
+            <div className="h-full overflow-hidden rounded-md border border-border">
+              <ScratchSubmissionPlayer submission={submission} />
+            </div>
+          ) : !fileUrl ? (
             <p className="text-sm text-muted-foreground">
               No submission found.
             </p>

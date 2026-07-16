@@ -243,7 +243,9 @@ def get_current_faculty() -> "frappe._dict":
 def require_faculty_for_assignment(assignment: str) -> None:
 	faculty = get_current_faculty()
 	assignment_cohort = frappe.db.get_value("CS17 Assignment", assignment, "cohort")
-	if not faculty.cohort or faculty.cohort != assignment_cohort:
+	# A faculty assigned to a cohort is limited to it; one with no cohort set is an
+	# unrestricted reviewer (any cohort).
+	if faculty.cohort and faculty.cohort != assignment_cohort:
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 
@@ -354,12 +356,14 @@ def submit_scratch_project(assignment: str, project: str) -> dict:
 
 	source_file = frappe.get_doc("File", {"file_url": project_doc.sb3_file, "attached_to_name": project})
 
-	submission = frappe.new_doc("CS17 Assignment Submission")
-	submission.student = project_doc.student
-	submission.assignment = assignment
+	# One submission per student per assignment — resubmitting revises it in place.
+	# The doctype's validate() blocks the revision once the deadline passes or the
+	# grade is published.
+	submission = _get_or_new_submission(assignment, project_doc.student)
+	submission.flags.ignore_permissions = True
 	submission.project = project
 	submission.submitted_at = frappe.utils.now_datetime()
-	submission.insert(ignore_permissions=True)
+	submission.save()
 
 	snapshot = attach_private_file(
 		"CS17 Assignment Submission",
@@ -369,9 +373,20 @@ def submit_scratch_project(assignment: str, project: str) -> dict:
 		source_file.get_content(),
 	)
 	submission.submission_document = snapshot.file_url
-	submission.flags.ignore_permissions = True
-	submission.submit()
+	submission.save()
 	return {"name": submission.name, "submission_document": submission.submission_document}
+
+
+def _get_or_new_submission(assignment: str, student: str) -> "frappe.model.document.Document":
+	name = frappe.db.get_value(
+		"CS17 Assignment Submission", {"assignment": assignment, "student": student}, "name"
+	)
+	if name:
+		return frappe.get_doc("CS17 Assignment Submission", name)
+	submission = frappe.new_doc("CS17 Assignment Submission")
+	submission.student = student
+	submission.assignment = assignment
+	return submission
 
 
 @frappe.whitelist()
