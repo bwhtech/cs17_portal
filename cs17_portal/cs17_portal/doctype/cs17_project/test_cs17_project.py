@@ -318,6 +318,4 @@ class TestCS17Project(FrappeTestCase):
 
 		frappe.set_user(STUDENT1_USER)
 		api.save_project(project, "project.sb3", b64(b"PK\x03\x04v2"))
-		self.assertRaises(
-			frappe.ValidationError, api.submit_scratch_project, self.assignment, project
-		)
+		self.assertRaises(frappe.ValidationError, api.submit_scratch_project, self.assignment, project)
