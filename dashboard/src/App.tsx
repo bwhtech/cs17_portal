@@ -38,6 +38,8 @@ function App() {
             <Route index element={<FacultyDashboardPage />} />
             <Route path="assignments" element={<FacultyAssignmentsPage />} />
             <Route path="assignments/:assignmentId" element={<FacultyAssignmentDetailPage />} />
+            <Route path="projects" element={<ProjectsPage />} />
+            <Route path="projects/:id/edit" element={<ProjectEditorPage />} />
             <Route path="announcements" element={<FacultyAnnouncementsPage />} />
             <Route path="submissions" element={<FacultySubmissionsPage />} />
             <Route path="submissions/:submissionId" element={<FacultyGradingPage />} />

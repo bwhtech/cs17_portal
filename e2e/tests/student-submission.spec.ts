@@ -273,6 +273,51 @@ test.describe("Student submission types", () => {
 		await expect(page.getByTitle("Scratch editor")).toBeVisible();
 	});
 
+	test("cannot rename or delete a project submitted to an assignment", async ({ page }) => {
+		const project = await submitScratchAsStudent(page, scratch.name, scratch.title);
+		await page.goto("/dashboard/projects");
+
+		const call = (method: string, body: unknown) =>
+			page.evaluate(
+				async ({ method, body }) => {
+					const token =
+						(window as any).csrf_token ?? (window as any).frappe?.csrf_token;
+					const resp = await fetch(`/api/method/${method}`, {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+							"X-Frappe-CSRF-Token": token,
+						},
+						body: JSON.stringify(body),
+					});
+					return { ok: resp.ok, body: await resp.json() };
+				},
+				{ method, body },
+			);
+
+		const renamed = await call("cs17_portal.api.rename_project", {
+			project,
+			project_title: "Sneaky rename",
+		});
+		expect(renamed.ok).toBe(false);
+		expect(renamed.body._server_messages).toContain("cannot be renamed or deleted");
+
+		const deleted = await call("cs17_portal.api.delete_project", { project });
+		expect(deleted.ok).toBe(false);
+		expect(deleted.body._server_messages).toContain("cannot be renamed or deleted");
+
+		await page.reload();
+		const card = page.locator("[data-slot='card']", { hasText: scratch.title }).first();
+		await expect(card.getByRole("button", { name: /^Rename / })).toBeDisabled();
+		await expect(card.getByRole("button", { name: /^Delete / })).toBeDisabled();
+
+		const reason = card.locator("span[title]").first();
+		await expect(reason).toHaveAttribute("title", /cannot be renamed or deleted/);
+		expect(
+			await reason.evaluate((el) => getComputedStyle(el).pointerEvents),
+		).not.toBe("none");
+	});
+
 	test("a graded scratch assignment opens read-only from preview and direct link", async ({
 		page,
 		request,

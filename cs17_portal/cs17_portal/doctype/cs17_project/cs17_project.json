@@ -1,13 +1,13 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "PROJ-.{student}.-.####",
+ "autoname": "PROJ-.{profile}.-.####",
  "creation": "2026-07-07 00:00:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "project_title",
-  "student",
+  "profile",
   "column_break_main",
   "last_saved_at",
   "section_break_files",
@@ -23,10 +23,10 @@
    "reqd": 1
   },
   {
-   "fieldname": "student",
+   "fieldname": "profile",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Student",
+   "label": "Profile",
    "options": "CS17 Profile",
    "read_only": 1,
    "reqd": 1

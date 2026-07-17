@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentStudent } from "@/hooks/useCurrentStudent";
+import { useProjectsPortal } from "@/hooks/useProjectsPortal";
 import { frappeErrorMessage } from "@/lib/frappeError";
 import { useZenOnMount } from "@/context/ZenModeContext";
 import {
@@ -53,6 +54,7 @@ export default function ProjectEditorPage() {
 	const navigate = useNavigate();
 	const presetAssignment = searchParams.get("assignment");
 	const { student } = useCurrentStudent();
+	const { isFaculty, projectsPath } = useProjectsPortal();
 	useZenOnMount();
 	useLayoutEffect(() => applyScratchDefaults(), []);
 
@@ -167,7 +169,7 @@ export default function ProjectEditorPage() {
 		<div className="flex flex-col h-full -m-6">
 			<div className="flex items-center gap-4 px-6 py-3 border-b border-border bg-background shrink-0">
 				<Button variant="ghost" size="sm" asChild>
-					<Link to="/projects">
+					<Link to={projectsPath}>
 						<ArrowLeft className="w-4 h-4" />
 						Projects
 					</Link>
@@ -184,10 +186,12 @@ export default function ProjectEditorPage() {
 								<Save className="w-4 h-4" />
 								Save
 							</Button>
-							<Button size="sm" onClick={() => setSubmitOpen(true)}>
-								<Send className="w-4 h-4" />
-								Submit
-							</Button>
+							{!isFaculty && (
+								<Button size="sm" onClick={() => setSubmitOpen(true)}>
+									<Send className="w-4 h-4" />
+									Submit
+								</Button>
+							)}
 						</>
 					)}
 				</div>
@@ -201,17 +205,19 @@ export default function ProjectEditorPage() {
 				className="flex-1 w-full border-0"
 			/>
 
-			<SubmitProjectDialog
-				open={submitOpen}
-				onOpenChange={setSubmitOpen}
-				cohort={student?.cohort ?? null}
-				presetAssignment={presetAssignment}
-				submitting={submitting}
-				onSubmit={(assignment) =>
-					submitScratchProject({ assignment, project: projectId })
-				}
-				onGoToDashboard={() => navigate("/")}
-			/>
+			{!isFaculty && (
+				<SubmitProjectDialog
+					open={submitOpen}
+					onOpenChange={setSubmitOpen}
+					cohort={student?.cohort ?? null}
+					presetAssignment={presetAssignment}
+					submitting={submitting}
+					onSubmit={(assignment) =>
+						submitScratchProject({ assignment, project: projectId })
+					}
+					onGoToDashboard={() => navigate("/")}
+				/>
+			)}
 		</div>
 	);
 }

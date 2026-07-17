@@ -60,7 +60,7 @@ class TestCS17Project(FrappeTestCase):
 			else []
 		)
 		projects = (
-			frappe.get_all("CS17 Project", filters={"student": ["in", profiles]}, pluck="name")
+			frappe.get_all("CS17 Project", filters={"profile": ["in", profiles]}, pluck="name")
 			if profiles
 			else []
 		)

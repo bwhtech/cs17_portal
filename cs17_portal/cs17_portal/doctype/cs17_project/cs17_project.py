@@ -15,9 +15,9 @@ class CS17Project(Document):
 		from frappe.types import DF
 
 		last_saved_at: DF.Datetime | None
+		profile: DF.Link
 		project_title: DF.Data
 		sb3_file: DF.Attach | None
-		student: DF.Link
 		thumbnail: DF.AttachImage | None
 	# end: auto-generated types
 
@@ -39,8 +39,8 @@ def get_permission_query_conditions(user: str | None = None) -> str:
 		return ""
 
 	profile = get_owner_profile(user)
-	if profile and profile.profile_type == "Student":
-		return f"`tabCS17 Project`.student = {frappe.db.escape(profile.name)}"
+	if profile:
+		return f"`tabCS17 Project`.profile = {frappe.db.escape(profile.name)}"
 	return "1 = 0"
 
 
@@ -50,4 +50,4 @@ def has_permission(doc: Document, ptype: str | None = None, user: str | None = N
 		return True
 
 	profile = get_owner_profile(user)
-	return bool(profile and profile.profile_type == "Student" and doc.student == profile.name)
+	return bool(profile and doc.profile == profile.name)

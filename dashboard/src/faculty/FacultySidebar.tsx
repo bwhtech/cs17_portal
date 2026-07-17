@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   ClipboardList,
+  Blocks,
   BookOpen,
   GraduationCap,
   Inbox,
@@ -30,6 +31,7 @@ const navSections = [
     items: [
       { icon: LayoutDashboard, label: "Dashboard", to: "/faculty/" },
       { icon: ClipboardList, label: "Assignments", to: "/faculty/assignments" },
+      { icon: Blocks, label: "Projects", to: "/faculty/projects" },
     ] as NavItem[],
   },
   {
