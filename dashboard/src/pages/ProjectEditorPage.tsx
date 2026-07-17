@@ -41,6 +41,7 @@ interface ProjectDoc {
 	project_title: string;
 	sb3_file: string | null;
 	last_saved_at: string | null;
+	assignment: string | null;
 }
 
 interface ScratchAssignment {
@@ -52,7 +53,7 @@ export default function ProjectEditorPage() {
 	const { id: projectId } = useParams<{ id: string }>();
 	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
-	const presetAssignment = searchParams.get("assignment");
+	const assignmentParam = searchParams.get("assignment");
 	const { student } = useCurrentStudent();
 	const { isFaculty, projectsPath } = useProjectsPortal();
 	useZenOnMount();
@@ -66,10 +67,11 @@ export default function ProjectEditorPage() {
 
 	const { data: closed } = useFrappeGetCall<{ message: boolean }>(
 		"cs17_portal.api.is_assignment_closed",
-		{ assignment: presetAssignment },
-		presetAssignment ? undefined : null,
+		{ assignment: assignmentParam },
+		assignmentParam ? undefined : null,
 	);
 	const readOnly = searchParams.get("readonly") === "1" || closed?.message === true;
+	const submitAssignment = assignmentParam ?? project?.assignment ?? null;
 
 	const { call: saveProject } = useFrappePostCall("cs17_portal.api.save_project");
 	const { call: submitScratchProject, loading: submitting } = useFrappePostCall(
@@ -210,7 +212,7 @@ export default function ProjectEditorPage() {
 					open={submitOpen}
 					onOpenChange={setSubmitOpen}
 					cohort={student?.cohort ?? null}
-					presetAssignment={presetAssignment}
+					presetAssignment={submitAssignment}
 					submitting={submitting}
 					onSubmit={(assignment) =>
 						submitScratchProject({ assignment, project: projectId })

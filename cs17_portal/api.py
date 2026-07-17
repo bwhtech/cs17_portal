@@ -307,11 +307,12 @@ def replace_project_file(
 
 
 @frappe.whitelist()
-def create_project(project_title: str) -> dict:
+def create_project(project_title: str, assignment: str | None = None) -> dict:
 	profile = require_current_profile()
 	project_doc = frappe.new_doc("CS17 Project")
 	project_doc.project_title = _validate_project_title(project_title)
 	project_doc.profile = profile
+	project_doc.assignment = assignment
 	project_doc.insert()
 	return {"name": project_doc.name, "project_title": project_doc.project_title}
 
@@ -363,9 +364,7 @@ def delete_project(project: str) -> None:
 
 def _require_unsubmitted_project(project: str) -> None:
 	if frappe.db.exists(ASSIGNMENT_SUBMISSION, {"project": project}):
-		frappe.throw(
-			_("This project is submitted to an assignment, so it cannot be renamed or deleted.")
-		)
+		frappe.throw(_("This project is submitted to an assignment, so it cannot be renamed or deleted."))
 
 
 def _validate_project_title(project_title: str) -> str:
@@ -409,6 +408,9 @@ def submit_scratch_project(assignment: str, project: str) -> dict:
 		frappe.throw(_("Save the project before submitting it."))
 
 	source_file = frappe.get_doc("File", {"file_url": project_doc.sb3_file, "attached_to_name": project})
+
+	if project_doc.assignment != assignment:
+		project_doc.db_set("assignment", assignment)
 
 	submission = _get_or_new_submission(assignment, student)
 	submission.flags.ignore_permissions = True
@@ -726,9 +728,16 @@ def get_assignment(assignment: str) -> dict | None:
 @frappe.whitelist(methods=["POST"])
 def delete_assignment(assignment: str) -> None:
 	validate_membership("Faculty")
-	if frappe.db.exists("CS17 Assignment Submission", {"assignment": assignment}):
+	if frappe.db.exists(ASSIGNMENT_SUBMISSION, {"assignment": assignment}):
 		frappe.throw(_("Cannot delete an assignment that already has submissions"))
+	_unlink_projects_from_assignment(assignment)
 	frappe.delete_doc("CS17 Assignment", assignment, ignore_permissions=True)
+
+
+def _unlink_projects_from_assignment(assignment: str) -> None:
+	projects = frappe.get_all("CS17 Project", filters={"assignment": assignment}, pluck="name")
+	for project in projects:
+		frappe.db.set_value("CS17 Project", project, "assignment", None, update_modified=False)
 
 
 @frappe.whitelist(methods=["POST"])

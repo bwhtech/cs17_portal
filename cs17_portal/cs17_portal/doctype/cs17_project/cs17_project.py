@@ -14,6 +14,7 @@ class CS17Project(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
+		assignment: DF.Link | None
 		last_saved_at: DF.Datetime | None
 		profile: DF.Link
 		project_title: DF.Data
