@@ -2,6 +2,8 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Wire the shadcn design tokens (defined as --primary etc. below) to the Tailwind
    color namespace so utilities like bg-primary / hover:bg-muted actually generate.
    Without this the component variants render transparent (buttons looked like plain text). */
