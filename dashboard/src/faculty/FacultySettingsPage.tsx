@@ -9,29 +9,11 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-
-function getInitialTheme(): "light" | "dark" {
-  try {
-    const stored = localStorage.getItem("theme");
-    if (stored === "dark" || stored === "light") return stored;
-  } catch {}
-  return document.documentElement.classList.contains("dark") ? "dark" : "light";
-}
-
-function applyTheme(theme: "light" | "dark") {
-  if (theme === "dark") {
-    document.documentElement.classList.add("dark");
-  } else {
-    document.documentElement.classList.remove("dark");
-  }
-  try {
-    localStorage.setItem("theme", theme);
-  } catch {}
-}
+import { applyTheme, getStoredTheme, type Theme } from "@/lib/theme";
 
 export default function FacultySettingsPage() {
   const { profile } = useCurrentProfile();
-  const [theme, setTheme] = useState<"light" | "dark">(getInitialTheme);
+  const [theme, setTheme] = useState<Theme>(getStoredTheme);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   function toggleTheme() {
