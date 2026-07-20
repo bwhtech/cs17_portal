@@ -68,7 +68,7 @@ export default function Sidebar({ mobileOpen, onMobileOpenChange }: SidebarProps
     <SidebarShell mobileOpen={mobileOpen} onMobileOpenChange={onMobileOpenChange}>
       {/* Brand */}
       <div className="px-5 py-4 border-b border-border flex items-center gap-2">
-        <img src={logoUrl} alt="CS17" className="h-5 [.dark_&]:invert" />
+        <img src={logoUrl} alt="CS17" className="h-5 dark:invert" />
         <span className="text-[10px] font-semibold bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full leading-none">
           Beta
         </span>

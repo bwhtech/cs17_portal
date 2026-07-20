@@ -211,6 +211,14 @@ test.describe("Student submission types", () => {
 			await deleteDoc(request, "CS17 Project", project.name);
 		}
 		await cleanupTestAssignments(request);
+		const projects = await getList<{ name: string }>(request, "CS17 Project", {
+			fields: ["name"],
+			filters: { project_title: ["like", `${TEST_ASSIGNMENT_PREFIX}%`] },
+			limit: 200,
+		});
+		for (const project of projects) {
+			await deleteDoc(request, "CS17 Project", project.name);
+		}
 	});
 
 	test("rejects a non-PDF and accepts a PDF for a PDF assignment", async ({ page }) => {
