@@ -221,6 +221,13 @@ def require_current_student() -> str:
 	return validate_membership("Student")
 
 
+def require_current_profile() -> str:
+	name = frappe.db.get_value("CS17 Profile", {"user": frappe.session.user}, "name")
+	if not name:
+		frappe.throw(_("No profile found for current user"), frappe.PermissionError)
+	return name
+
+
 def with_current_student(fn):
 	"""Inject the caller's Student profile name as a `student` kwarg; 403 if they aren't a student."""
 
