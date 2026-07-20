@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useCurrentProfile } from "@/hooks/useCurrentProfile";
+import FacultyProfileCard from "@/faculty/FacultyProfileCard";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { applyTheme, getStoredTheme, type Theme } from "@/lib/theme";
 
 export default function FacultySettingsPage() {
-  const { profile } = useCurrentProfile();
   const [theme, setTheme] = useState<Theme>(getStoredTheme);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
@@ -38,25 +37,7 @@ export default function FacultySettingsPage() {
         <h2 className="text-xs font-semibold text-muted-foreground tracking-widest uppercase mb-3">
           Profile
         </h2>
-        <div className="border border-border rounded-xl p-4 space-y-3">
-          <div className="flex items-center gap-4">
-            {profile?.profile_picture ? (
-              <img
-                src={profile.profile_picture}
-                alt={profile?.full_name}
-                className="w-12 h-12 rounded-full object-cover shrink-0"
-              />
-            ) : (
-              <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-lg font-semibold shrink-0">
-                {profile?.full_name?.[0] ?? "?"}
-              </div>
-            )}
-            <div>
-              <p className="text-sm font-medium">{profile?.full_name ?? "—"}</p>
-              <p className="text-xs text-muted-foreground">Faculty</p>
-            </div>
-          </div>
-        </div>
+        <FacultyProfileCard />
       </div>
 
       <div>
