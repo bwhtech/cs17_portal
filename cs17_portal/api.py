@@ -1,4 +1,5 @@
 import base64
+import functools
 from typing import TYPE_CHECKING
 
 import frappe
@@ -220,11 +221,15 @@ def require_current_student() -> str:
 	return validate_membership("Student")
 
 
-def require_current_profile() -> str:
-	name = frappe.db.get_value("CS17 Profile", {"user": frappe.session.user}, "name")
-	if not name:
-		frappe.throw(_("No profile found for current user"), frappe.PermissionError)
-	return name
+def with_current_student(fn):
+	"""Inject the caller's Student profile name as a `student` kwarg; 403 if they aren't a student."""
+
+	@functools.wraps(fn)
+	def wrapper(*args, **kwargs):
+		kwargs["student"] = require_current_student()
+		return fn(*args, **kwargs)
+
+	return wrapper
 
 
 def require_owned_project(project: str) -> "frappe.model.document.Document":
@@ -443,9 +448,9 @@ def _get_or_new_submission(assignment: str, student: str) -> "frappe.model.docum
 
 
 @frappe.whitelist(methods=["GET"])
-def is_assignment_closed(assignment: str) -> bool:
+@with_current_student
+def is_assignment_closed(assignment: str, student: str | None = None) -> bool:
 	"""True once the student can no longer revise: deadline passed or grade published."""
-	student = require_current_student()
 	due_date = frappe.db.get_value("CS17 Assignment", assignment, "due_date")
 	if due_date and now_datetime() > due_date:
 		return True
