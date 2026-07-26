@@ -221,6 +221,13 @@ def require_current_student() -> str:
 	return validate_membership("Student")
 
 
+def require_current_profile() -> str:
+	name = frappe.db.get_value("CS17 Profile", {"user": frappe.session.user}, "name")
+	if not name:
+		frappe.throw(_("No profile found for current user"), frappe.PermissionError)
+	return name
+
+
 def with_current_student(fn):
 	"""Inject the caller's Student profile name as a `student` kwarg; 403 if they aren't a student."""
 
@@ -233,9 +240,9 @@ def with_current_student(fn):
 
 
 def require_owned_project(project: str) -> "frappe.model.document.Document":
-	student = require_current_student()
+	profile = require_current_profile()
 	project_doc = frappe.get_doc("CS17 Project", project)
-	if project_doc.student != student:
+	if project_doc.profile != profile:
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	return project_doc
 
@@ -312,24 +319,71 @@ def replace_project_file(
 
 
 @frappe.whitelist()
-def create_project(project_title: str) -> dict:
-	student = require_current_student()
+def create_project(project_title: str, assignment: str | None = None) -> dict:
+	profile = require_current_profile()
 	project_doc = frappe.new_doc("CS17 Project")
-	project_doc.project_title = project_title
-	project_doc.student = student
+	project_doc.project_title = _validate_project_title(project_title)
+	project_doc.profile = profile
+	project_doc.assignment = assignment
 	project_doc.insert()
 	return {"name": project_doc.name, "project_title": project_doc.project_title}
 
 
 @frappe.whitelist()
 def list_my_projects() -> list:
-	student = require_current_student()
-	return frappe.get_all(
+	profile = require_current_profile()
+	projects = frappe.get_all(
 		"CS17 Project",
-		filters={"student": student},
+		filters={"profile": profile},
 		fields=["name", "project_title", "thumbnail", "last_saved_at"],
 		order_by="creation desc",
 	)
+	_attach_submitted_flags(projects)
+	return projects
+
+
+def _attach_submitted_flags(projects: list) -> None:
+	names = [project["name"] for project in projects]
+	if not names:
+		return
+	submitted = set(
+		frappe.get_all(
+			ASSIGNMENT_SUBMISSION,
+			filters=[["project", "in", names]],
+			pluck="project",
+			ignore_permissions=True,
+		)
+	)
+	for project in projects:
+		project["is_submitted"] = project["name"] in submitted
+
+
+@frappe.whitelist(methods=["POST"])
+def rename_project(project: str, project_title: str) -> dict:
+	project_doc = require_owned_project(project)
+	_require_unsubmitted_project(project)
+	project_doc.project_title = _validate_project_title(project_title)
+	project_doc.save()
+	return {"name": project_doc.name, "project_title": project_doc.project_title}
+
+
+@frappe.whitelist(methods=["POST"])
+def delete_project(project: str) -> None:
+	require_owned_project(project)
+	_require_unsubmitted_project(project)
+	frappe.delete_doc("CS17 Project", project, ignore_permissions=True)
+
+
+def _require_unsubmitted_project(project: str) -> None:
+	if frappe.db.exists(ASSIGNMENT_SUBMISSION, {"project": project}):
+		frappe.throw(_("This project is submitted to an assignment, so it cannot be renamed or deleted."))
+
+
+def _validate_project_title(project_title: str) -> str:
+	title = (project_title or "").strip()
+	if not title:
+		frappe.throw(_("Give the project a name."))
+	return title
 
 
 @frappe.whitelist()
@@ -360,13 +414,17 @@ def save_project(
 @frappe.whitelist()
 @rate_limit(key="project", limit=30, seconds=60, methods=["POST"], ip_based=False)
 def submit_scratch_project(assignment: str, project: str) -> dict:
+	student = require_current_student()
 	project_doc = require_owned_project(project)
 	if not project_doc.sb3_file:
 		frappe.throw(_("Save the project before submitting it."))
 
 	source_file = frappe.get_doc("File", {"file_url": project_doc.sb3_file, "attached_to_name": project})
 
-	submission = _get_or_new_submission(assignment, project_doc.student)
+	if project_doc.assignment != assignment:
+		project_doc.db_set("assignment", assignment)
+
+	submission = _get_or_new_submission(assignment, student)
 	submission.flags.ignore_permissions = True
 	submission.project = project
 	submission.submitted_at = frappe.utils.now_datetime()
@@ -682,9 +740,16 @@ def get_assignment(assignment: str) -> dict | None:
 @frappe.whitelist(methods=["POST"])
 def delete_assignment(assignment: str) -> None:
 	validate_membership("Faculty")
-	if frappe.db.exists("CS17 Assignment Submission", {"assignment": assignment}):
+	if frappe.db.exists(ASSIGNMENT_SUBMISSION, {"assignment": assignment}):
 		frappe.throw(_("Cannot delete an assignment that already has submissions"))
+	_unlink_projects_from_assignment(assignment)
 	frappe.delete_doc("CS17 Assignment", assignment, ignore_permissions=True)
+
+
+def _unlink_projects_from_assignment(assignment: str) -> None:
+	projects = frappe.get_all("CS17 Project", filters={"assignment": assignment}, pluck="name")
+	for project in projects:
+		frappe.db.set_value("CS17 Project", project, "assignment", None, update_modified=False)
 
 
 @frappe.whitelist(methods=["POST"])

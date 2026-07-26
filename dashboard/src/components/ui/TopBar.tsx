@@ -9,6 +9,7 @@ import { useLocation, Link } from "react-router-dom";
 const routeLabels: Record<string, string> = {
   "/": "Dashboard",
   "/assignments": "Assignments",
+  "/projects": "Projects",
   "/announcements": "Announcements",
   "/settings": "Settings",
 };

@@ -76,6 +76,50 @@ async function saveProjectAsStudent(page: Page, project: string) {
 	);
 }
 
+async function createAssignmentProjectAsStudent(
+	page: Page,
+	assignment: string,
+	title: string,
+): Promise<string> {
+	await page.goto("/dashboard/projects");
+	await page.waitForFunction(
+		() =>
+			(window as any).csrf_token !== undefined ||
+			(window as any).frappe?.csrf_token !== undefined,
+		{ timeout: 15000 },
+	);
+	return page.evaluate(
+		async ({ assignment, title }) => {
+			const token =
+				(window as any).csrf_token ?? (window as any).frappe?.csrf_token;
+			const call = async (method: string, body: unknown) => {
+				const resp = await fetch(`/api/method/${method}`, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						"X-Frappe-CSRF-Token": token,
+					},
+					body: JSON.stringify(body),
+				});
+				return resp.json();
+			};
+			const project = (
+				await call("cs17_portal.api.create_project", {
+					project_title: title,
+					assignment,
+				})
+			).message.name;
+			await call("cs17_portal.api.save_project", {
+				project,
+				filename: "p.sb3",
+				content: btoa("PKtest"),
+			});
+			return project as string;
+		},
+		{ assignment, title },
+	);
+}
+
 async function submitScratchAsStudent(page: Page, assignment: string, title: string) {
 	await page.goto("/dashboard");
 	await page.waitForFunction(
@@ -158,7 +202,6 @@ test.describe("Student submission types", () => {
 	test.afterAll(async ({ request }) => {
 		await cleanupTestGrades(request);
 		await cleanupTestSubmissions(request);
-		await cleanupTestAssignments(request);
 		const projects = await getList<{ name: string }>(request, "CS17 Project", {
 			fields: ["name"],
 			filters: { project_title: ["like", `${TEST_ASSIGNMENT_PREFIX}%`] },
@@ -167,6 +210,7 @@ test.describe("Student submission types", () => {
 		for (const project of projects) {
 			await deleteDoc(request, "CS17 Project", project.name);
 		}
+		await cleanupTestAssignments(request);
 	});
 
 	test("rejects a non-PDF and accepts a PDF for a PDF assignment", async ({ page }) => {
@@ -258,6 +302,24 @@ test.describe("Student submission types", () => {
 		);
 	});
 
+	test("reopening an assignment project submits to it without the picker", async ({
+		page,
+	}) => {
+		const projectId = await createAssignmentProjectAsStudent(
+			page,
+			scratch.name,
+			`${TEST_ASSIGNMENT_PREFIX} Reopen ${Date.now()}`,
+		);
+
+		await page.goto(`/dashboard/projects/${projectId}/edit`);
+		await page.getByRole("button", { name: "Submit", exact: true }).click();
+
+		const dialog = page.getByRole("dialog");
+		await expect(dialog.getByText("Submit this project?")).toBeVisible();
+		await expect(dialog.getByText(scratch.title)).toBeVisible();
+		await expect(dialog.getByText("Pick a Scratch assignment")).toHaveCount(0);
+	});
+
 	test("previewing a submitted scratch assignment opens its project in the editor", async ({
 		page,
 	}) => {
@@ -271,6 +333,51 @@ test.describe("Student submission types", () => {
 			(url) => url.pathname === `/dashboard/projects/${project}/edit`,
 		);
 		await expect(page.getByTitle("Scratch editor")).toBeVisible();
+	});
+
+	test("cannot rename or delete a project submitted to an assignment", async ({ page }) => {
+		const project = await submitScratchAsStudent(page, scratch.name, scratch.title);
+		await page.goto("/dashboard/projects");
+
+		const call = (method: string, body: unknown) =>
+			page.evaluate(
+				async ({ method, body }) => {
+					const token =
+						(window as any).csrf_token ?? (window as any).frappe?.csrf_token;
+					const resp = await fetch(`/api/method/${method}`, {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+							"X-Frappe-CSRF-Token": token,
+						},
+						body: JSON.stringify(body),
+					});
+					return { ok: resp.ok, body: await resp.json() };
+				},
+				{ method, body },
+			);
+
+		const renamed = await call("cs17_portal.api.rename_project", {
+			project,
+			project_title: "Sneaky rename",
+		});
+		expect(renamed.ok).toBe(false);
+		expect(renamed.body._server_messages).toContain("cannot be renamed or deleted");
+
+		const deleted = await call("cs17_portal.api.delete_project", { project });
+		expect(deleted.ok).toBe(false);
+		expect(deleted.body._server_messages).toContain("cannot be renamed or deleted");
+
+		await page.reload();
+		const card = page.locator("[data-slot='card']", { hasText: scratch.title }).first();
+		await expect(card.getByRole("button", { name: /^Rename / })).toBeDisabled();
+		await expect(card.getByRole("button", { name: /^Delete / })).toBeDisabled();
+
+		const reason = card.locator("span[title]").first();
+		await expect(reason).toHaveAttribute("title", /cannot be renamed or deleted/);
+		expect(
+			await reason.evaluate((el) => getComputedStyle(el).pointerEvents),
+		).not.toBe("none");
 	});
 
 	test("a graded scratch assignment opens read-only from preview and direct link", async ({

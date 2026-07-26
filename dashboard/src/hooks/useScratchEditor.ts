@@ -23,10 +23,11 @@ export function useScratchEditor() {
 	const navigate = useNavigate();
 	const { call: createProject } = useFrappePostCall("cs17_portal.api.create_project");
 
-	async function createNewProject(title?: string): Promise<string | null> {
+	async function createNewProject(assignment: ScratchAssignment): Promise<string | null> {
 		try {
 			const { message } = await createProject({
-				project_title: title || "Scratch project",
+				project_title: assignment.title || "Scratch project",
+				assignment: assignment.name,
 			});
 			return message?.name ?? null;
 		} catch {
@@ -40,7 +41,7 @@ export function useScratchEditor() {
 		submission?: ScratchSubmission | null,
 		options: { readOnly?: boolean } = {},
 	) {
-		const project = submission?.project ?? (await createNewProject(assignment.title));
+		const project = submission?.project ?? (await createNewProject(assignment));
 		if (project) {
 			navigate(scratchEditorPath(project, assignment.name, options.readOnly));
 		}

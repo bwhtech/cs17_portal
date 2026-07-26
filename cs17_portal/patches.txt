@@ -7,3 +7,5 @@
 cs17_portal.patches.v1_0.migrate_student_faculty_to_profile
 cs17_portal.patches.v1_0.rename_literal_cohort_in_assignment_names
 cs17_portal.patches.v1_0.reset_submitted_submissions_to_draft
+cs17_portal.patches.v1_0.rename_project_student_to_profile
+cs17_portal.patches.v1_0.link_projects_to_submitted_assignment

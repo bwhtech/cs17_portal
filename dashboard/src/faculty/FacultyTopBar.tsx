@@ -9,6 +9,7 @@ const routeLabels: Record<string, string> = {
   "/faculty/": "Dashboard",
   "/faculty": "Dashboard",
   "/faculty/assignments": "Submissions",
+  "/faculty/projects": "Projects",
   "/faculty/announcements": "Announcements",
   "/faculty/settings": "Settings",
 };
