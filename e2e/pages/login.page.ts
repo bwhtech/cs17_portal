@@ -11,9 +11,12 @@ export class LoginPage {
 		this.page = page;
 		this.emailInput = page.locator("#login_email");
 		this.passwordInput = page.locator("#login_password");
-		this.submitButton = page.locator(
-			"button.btn-login:not(.btn-login-with-email-link)",
-		);
+		// Match the credentials submit button across Frappe versions: older builds
+		// render "Login" (.btn-login), newer ones render "Continue". Anchored to
+		// avoid matching "Login with Email Link" / "Send login link".
+		this.submitButton = page
+			.getByRole("button", { name: /^(continue|log ?in|sign in)$/i })
+			.first();
 		this.errorMessage = page.locator(".msgprint, .alert-danger").first();
 	}
 
