@@ -1,0 +1,99 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "autoname": "field:pattern_name",
+ "creation": "2026-08-15 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "pattern_name",
+  "column_break_ptrn",
+  "total_weightage",
+  "description",
+  "section_break_comp",
+  "components"
+ ],
+ "fields": [
+  {
+   "fieldname": "pattern_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Pattern Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_ptrn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Must add up to 100.",
+   "fieldname": "total_weightage",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Total Weightage %",
+   "read_only": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "section_break_comp",
+   "fieldtype": "Section Break",
+   "label": "Components"
+  },
+  {
+   "description": "How a subject's marks are split. Each component's max marks are derived from the exam's max marks for that subject.",
+   "fieldname": "components",
+   "fieldtype": "Table",
+   "label": "Components",
+   "options": "CS17 Subject Pattern Component",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [
+  {
+   "link_doctype": "CS17 Subject Marks",
+   "link_fieldname": "subject_pattern"
+  }
+ ],
+ "modified": "2026-08-15 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "CS17 Portal",
+ "name": "CS17 Subject Pattern",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "CS17 Student",
+   "share": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

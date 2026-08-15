@@ -1,0 +1,100 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "autoname": "field:scale_name",
+ "creation": "2026-08-13 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "scale_name",
+  "column_break_kqpx",
+  "passing_percentage",
+  "is_default",
+  "section_break_bands",
+  "bands"
+ ],
+ "fields": [
+  {
+   "fieldname": "scale_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Scale Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_kqpx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "40",
+   "description": "A subject is marked as passed when its percentage is at or above this value.",
+   "fieldname": "passing_percentage",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Passing Percentage",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "label": "Is Default"
+  },
+  {
+   "fieldname": "section_break_bands",
+   "fieldtype": "Section Break",
+   "label": "Grade Bands"
+  },
+  {
+   "fieldname": "bands",
+   "fieldtype": "Table",
+   "label": "Bands",
+   "options": "CS17 Grade Band",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [
+  {
+   "link_doctype": "CS17 Exam",
+   "link_fieldname": "grading_scale"
+  }
+ ],
+ "modified": "2026-08-13 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "CS17 Portal",
+ "name": "CS17 Grading Scale",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "CS17 Student",
+   "share": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

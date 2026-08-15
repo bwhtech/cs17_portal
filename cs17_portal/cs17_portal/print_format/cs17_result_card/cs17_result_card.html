@@ -1,0 +1,149 @@
+{%- set exam = frappe.db.get_value(
+	"CS17 Exam", doc.exam, ["exam_name", "start_date", "end_date"], as_dict=True
+) or {} -%}
+
+<style>
+	.rc {
+		font-family: "Geist Variable", "Geist", ui-sans-serif, -apple-system,
+			"Segoe UI", Helvetica, Arial, sans-serif;
+		color: #111111;
+		font-size: 10.5pt;
+		line-height: 1.5;
+	}
+	.rc table { width: 100%; border-collapse: collapse; }
+
+	.rc .head {
+		border-bottom: 1px solid #111111;
+		padding-bottom: 8px;
+		margin-bottom: 26px;
+	}
+	.rc .brand img { width: 250px; height: auto; display: block; }
+	.rc .title { text-align: right; color: #666666; vertical-align: bottom; }
+
+	.rc .info { margin-bottom: 30px; }
+	.rc .info th {
+		width: 150px;
+		text-align: left;
+		font-weight: 400;
+		color: #666666;
+		padding: 3px 0;
+		vertical-align: top;
+	}
+	.rc .info td { padding: 3px 0; vertical-align: top; }
+
+	.rc .grades th {
+		text-align: left;
+		font-weight: 400;
+		color: #666666;
+		font-size: 9pt;
+		padding: 0 0 7px 0;
+		border-bottom: 1px solid #111111;
+	}
+	.rc .grades td { padding: 10px 0; border-bottom: 1px solid #eeeeee; }
+	/* collapsed borders: drop the light rule so the dark tfoot rule draws */
+	.rc .grades tbody tr:last-child td { border-bottom: none; }
+	.rc .grades tfoot td {
+		border-bottom: none;
+		border-top: 1px solid #111111;
+		padding-top: 12px;
+		font-weight: 600;
+	}
+	.rc .grades tfoot tr + tr td { border-top: none; padding-top: 0; }
+	.rc .r,
+	.rc .grades th.r { text-align: right; }
+
+	.rc .foot {
+		margin-top: 34px;
+		color: #666666;
+		font-size: 8.5pt;
+	}
+</style>
+
+<div class="rc">
+	<table class="head">
+		<tr>
+			<td class="brand">
+				<img src="/assets/cs17_portal/images/cs17-logo.png" alt="CS17 Software Development Programme" />
+			</td>
+			<td class="title">Statement of Results</td>
+		</tr>
+	</table>
+
+	<table class="info">
+		<tr>
+			<th>Student</th>
+			<td>{{ doc.student_name or doc.student }}</td>
+		</tr>
+		<tr>
+			<th>Student ID</th>
+			<td>{{ doc.student }}</td>
+		</tr>
+		<tr>
+			<th>Cohort</th>
+			<td>{{ doc.cohort or "-" }}</td>
+		</tr>
+		<tr>
+			<th>Examination</th>
+			<td>{{ exam.exam_name or doc.exam }}</td>
+		</tr>
+		{% if exam.start_date %}
+		<tr>
+			<th>Date</th>
+			<td>
+				{{ frappe.utils.formatdate(exam.start_date, "d MMM yyyy") }}
+				{%- if exam.end_date and exam.end_date != exam.start_date %}
+				- {{ frappe.utils.formatdate(exam.end_date, "d MMM yyyy") }}
+				{%- endif %}
+			</td>
+		</tr>
+		{% endif %}
+	</table>
+
+	<table class="grades">
+		<thead>
+			<tr>
+				<th>Subject</th>
+				<th class="r">Grade</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for row in doc.scores %}
+			<tr>
+				<td>{{ row.subject_name or row.subject }}</td>
+				<td class="r">{{ row.grade or "-" }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+		<tfoot>
+			<tr>
+				<td>Overall Grade</td>
+				<td class="r">{{ doc.overall_grade or "-" }}</td>
+			</tr>
+			<tr>
+				<td>Result</td>
+				<td class="r">{{ doc.result_status or "-" }}</td>
+			</tr>
+		</tfoot>
+	</table>
+
+	{% if doc.remarks %}
+	<table class="info" style="margin-top: 30px; margin-bottom: 0">
+		<tr>
+			<th>Remarks</th>
+			<td>{{ doc.remarks }}</td>
+		</tr>
+	</table>
+	{% endif %}
+
+	<table class="foot">
+		<tr>
+			<td>{{ doc.name }}</td>
+			<td class="r">
+				{% if doc.is_published and doc.published_on %}
+					Issued {{ frappe.utils.formatdate(doc.published_on, "d MMM yyyy") }}.
+				{% endif %}
+				Computer generated, no signature required.
+			</td>
+		</tr>
+	</table>
+</div>

@@ -9,6 +9,17 @@ erDiagram
     CS17_Assignment ||--o{ CS17_Assignment_Grade : "assignment"
     CS17_Project ||--o{ CS17_Assignment_Submission : "project (Scratch only)"
     CS17_Assignment_Submission ||--|| CS17_Assignment_Grade : "submission"
+    CS17_Cohort ||--o{ CS17_Exam : "cohort"
+    CS17_Grading_Scale ||--o{ CS17_Grade_Band : "bands"
+    CS17_Grading_Scale ||--o{ CS17_Exam : "grading_scale (default)"
+    CS17_Grading_Scale ||--o{ CS17_Exam_Subject : "grading_scale (override)"
+    CS17_Profile ||--o{ CS17_Exam_Subject : "examiner"
+    CS17_Exam ||--o{ CS17_Exam_Subject : "subjects"
+    CS17_Subject ||--o{ CS17_Exam_Subject : "subject"
+    CS17_Exam ||--o{ CS17_Result : "exam"
+    CS17_Profile ||--o{ CS17_Result : "student"
+    CS17_Result ||--o{ CS17_Result_Subject_Score : "scores"
+    CS17_Subject ||--o{ CS17_Result_Subject_Score : "subject"
 
     CS17_Cohort {
         Data cohort_code PK
@@ -50,4 +61,51 @@ erDiagram
         Select grade "A..E"
         Link graded_by FK "User"
         Check is_published
+    }
+    CS17_Subject {
+        Data subject_code PK
+        Data subject_name
+        Check is_active
+    }
+    CS17_Grading_Scale {
+        Data scale_name PK
+        Float passing_percentage
+        Check is_default
+    }
+    CS17_Grade_Band {
+        Data grade
+        Float min_percent
+        Float max_percent
+        Float grade_point
+    }
+    CS17_Exam {
+        Data exam_name
+        Link cohort FK "CS17 Cohort"
+        Link grading_scale FK "CS17 Grading Scale"
+        Date start_date
+        Float total_max_marks "derived"
+    }
+    CS17_Exam_Subject {
+        Link subject FK "CS17 Subject"
+        Float max_marks
+        Link grading_scale FK "CS17 Grading Scale (overrides exam)"
+        Link examiner FK "CS17 Profile (Faculty)"
+    }
+    CS17_Result {
+        Link exam FK "CS17 Exam"
+        Link student FK "CS17 Profile"
+        Link cohort FK "CS17 Cohort (fetched)"
+        Float percentage "derived"
+        Data overall_grade "derived"
+        Select result_status "Pass | Fail"
+        Check is_published
+    }
+    CS17_Result_Subject_Score {
+        Link subject FK "CS17 Subject"
+        Float max_marks "from exam"
+        Link grading_scale FK "CS17 Grading Scale (from exam)"
+        Float marks_obtained
+        Float percentage "derived"
+        Data grade "derived"
+        Check is_pass "derived"
     }

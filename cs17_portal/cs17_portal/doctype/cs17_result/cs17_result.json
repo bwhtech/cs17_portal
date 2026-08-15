@@ -1,0 +1,205 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "autoname": "naming_series:[naming_series]",
+ "creation": "2026-08-13 00:00:00.000000",
+ "default_print_format": "CS17 Result Card",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "exam",
+  "student",
+  "student_name",
+  "column_break_hjra",
+  "cohort",
+  "grading_scale",
+  "is_published",
+  "published_on",
+  "section_break_scores",
+  "scores",
+  "section_break_summary",
+  "total_marks_obtained",
+  "total_max_marks",
+  "percentage",
+  "column_break_pmvz",
+  "overall_grade",
+  "result_status",
+  "section_break_remarks",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "default": "RES-.{exam}.-.###",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Naming Series",
+   "options": "RES-.{exam}.-.###"
+  },
+  {
+   "fieldname": "exam",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Exam",
+   "options": "CS17 Exam",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "student",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Student",
+   "options": "CS17 Profile",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fetch_from": "student.full_name",
+   "fieldname": "student_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Student Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_hjra",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "student.cohort",
+   "fieldname": "cohort",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Cohort",
+   "options": "CS17 Cohort",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "exam.grading_scale",
+   "fieldname": "grading_scale",
+   "fieldtype": "Link",
+   "label": "Overall Grading Scale",
+   "options": "CS17 Grading Scale",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_published",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Published"
+  },
+  {
+   "depends_on": "eval:!doc.is_published",
+   "fieldname": "published_on",
+   "fieldtype": "Datetime",
+   "label": "Publish On"
+  },
+  {
+   "fieldname": "section_break_scores",
+   "fieldtype": "Section Break",
+   "label": "Subject Scores"
+  },
+  {
+   "fieldname": "scores",
+   "fieldtype": "Table",
+   "label": "Scores",
+   "options": "CS17 Result Subject Score",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_summary",
+   "fieldtype": "Section Break",
+   "label": "Summary"
+  },
+  {
+   "fieldname": "total_marks_obtained",
+   "fieldtype": "Float",
+   "label": "Total Marks Obtained",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_max_marks",
+   "fieldtype": "Float",
+   "label": "Total Max Marks",
+   "read_only": 1
+  },
+  {
+   "fieldname": "percentage",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Percentage",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_pmvz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "overall_grade",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Overall Grade",
+   "read_only": 1
+  },
+  {
+   "fieldname": "result_status",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Result Status",
+   "options": "\nPass\nFail",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_remarks",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-13 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "CS17 Portal",
+ "name": "CS17 Result",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "CS17 Student",
+   "share": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "student_name"
+}

@@ -129,11 +129,13 @@ app_license = "mit"
 permission_query_conditions = {
 	"CS17 Project": "cs17_portal.cs17_portal.doctype.cs17_project.cs17_project.get_permission_query_conditions",
 	"CS17 Assignment Submission": "cs17_portal.cs17_portal.doctype.cs17_assignment_submission.cs17_assignment_submission.get_permission_query_conditions",
+	"CS17 Result": "cs17_portal.cs17_portal.doctype.cs17_result.cs17_result.get_permission_query_conditions",
 }
 
 has_permission = {
 	"CS17 Project": "cs17_portal.cs17_portal.doctype.cs17_project.cs17_project.has_permission",
 	"CS17 Assignment Submission": "cs17_portal.cs17_portal.doctype.cs17_assignment_submission.cs17_assignment_submission.has_permission",
+	"CS17 Result": "cs17_portal.cs17_portal.doctype.cs17_result.cs17_result.has_permission",
 }
 
 # Document Events
@@ -156,6 +158,7 @@ scheduler_events = {
 		"cs17_portal.tasks.auto_publish_assignments",
 		"cs17_portal.tasks.auto_publish_grades",
 		"cs17_portal.tasks.auto_publish_announcements",
+		"cs17_portal.tasks.auto_publish_results",
 	],
 }
 
