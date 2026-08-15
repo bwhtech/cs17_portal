@@ -1,0 +1,205 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "autoname": "naming_series:[naming_series]",
+ "creation": "2026-08-15 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "exam",
+  "student",
+  "student_name",
+  "column_break_smk",
+  "subject",
+  "subject_name",
+  "cohort",
+  "section_break_pat",
+  "subject_pattern",
+  "column_break_pat2",
+  "max_marks",
+  "grading_scale",
+  "section_break_comp",
+  "components",
+  "section_break_sum",
+  "total_marks_obtained",
+  "percentage",
+  "column_break_sum2",
+  "grade",
+  "is_pass"
+ ],
+ "fields": [
+  {
+   "default": "SM-.{exam}.-.###",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Naming Series",
+   "options": "SM-.{exam}.-.###"
+  },
+  {
+   "fieldname": "exam",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Exam",
+   "options": "CS17 Exam",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "student",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Student",
+   "options": "CS17 Profile",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fetch_from": "student.full_name",
+   "fieldname": "student_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Student Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_smk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "subject",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Subject",
+   "options": "CS17 Subject",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fetch_from": "subject.subject_name",
+   "fieldname": "subject_name",
+   "fieldtype": "Data",
+   "label": "Subject Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "student.cohort",
+   "fieldname": "cohort",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Cohort",
+   "options": "CS17 Cohort",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_pat",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "Taken from the exam's subject row.",
+   "fieldname": "subject_pattern",
+   "fieldtype": "Link",
+   "label": "Subject Pattern",
+   "options": "CS17 Subject Pattern",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_pat2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "max_marks",
+   "fieldtype": "Float",
+   "label": "Max Marks",
+   "read_only": 1
+  },
+  {
+   "fieldname": "grading_scale",
+   "fieldtype": "Link",
+   "label": "Grading Scale",
+   "options": "CS17 Grading Scale",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_comp",
+   "fieldtype": "Section Break",
+   "label": "Component Marks"
+  },
+  {
+   "fieldname": "components",
+   "fieldtype": "Table",
+   "label": "Components",
+   "options": "CS17 Subject Marks Component",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_sum",
+   "fieldtype": "Section Break",
+   "label": "Subject Total"
+  },
+  {
+   "fieldname": "total_marks_obtained",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Total Marks Obtained",
+   "read_only": 1
+  },
+  {
+   "fieldname": "percentage",
+   "fieldtype": "Float",
+   "label": "Percentage",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_sum2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "grade",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Grade",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_pass",
+   "fieldtype": "Check",
+   "label": "Passed",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-15 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "CS17 Portal",
+ "name": "CS17 Subject Marks",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "student_name"
+}

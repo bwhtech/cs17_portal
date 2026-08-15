@@ -20,6 +20,10 @@ def auto_publish_grades():
 	_publish_due("CS17 Assignment Grade", "published_on")
 
 
+def auto_publish_results():
+	_publish_due("CS17 Result", "published_on")
+
+
 def auto_publish_announcements():
 	names = frappe.get_all(
 		"CS17 Announcement",
