@@ -20,6 +20,11 @@ erDiagram
     CS17_Profile ||--o{ CS17_Result : "student"
     CS17_Result ||--o{ CS17_Result_Subject_Score : "scores"
     CS17_Subject ||--o{ CS17_Result_Subject_Score : "subject"
+    CS17_Quarter ||--o{ CS17_Assignment : "quarter"
+    CS17_Quarter ||--o{ CS17_Exam : "quarter"
+    CS17_Quarter ||--o{ CS17_Result : "quarter"
+    CS17_Result ||--o{ CS17_Result_Assignment_Score : "assignments"
+    CS17_Assignment ||--o{ CS17_Result_Assignment_Score : "assignment"
 
     CS17_Cohort {
         Data cohort_code PK
@@ -31,9 +36,15 @@ erDiagram
         Link cohort FK "CS17 Cohort"
         Link user FK "User"
     }
+    CS17_Quarter {
+        Data quarter_name PK "Q1, Q2, Q3..."
+        Date start_date
+        Date end_date
+    }
     CS17_Assignment {
         Data title
         Link cohort FK "CS17 Cohort"
+        Link quarter FK "CS17 Quarter"
         Select assignment_type "Graded | Not Graded"
         Select submission_type "Any|PDF|URL|Image|ZIP|Scratch"
         Float max_marks
@@ -81,6 +92,7 @@ erDiagram
     CS17_Exam {
         Data exam_name
         Link cohort FK "CS17 Cohort"
+        Link quarter FK "CS17 Quarter"
         Link grading_scale FK "CS17 Grading Scale"
         Date start_date
         Float total_max_marks "derived"
@@ -93,12 +105,20 @@ erDiagram
     }
     CS17_Result {
         Link exam FK "CS17 Exam"
+        Link quarter FK "CS17 Quarter (defaults from exam)"
         Link student FK "CS17 Profile"
         Link cohort FK "CS17 Cohort (fetched)"
-        Float percentage "derived"
+        Float percentage "derived, exam only"
         Data overall_grade "derived"
         Select result_status "Pass | Fail"
         Check is_published
+    }
+    CS17_Result_Assignment_Score {
+        Link assignment FK "CS17 Assignment"
+        Float max_marks "from assignment, Marks only"
+        Float marks_obtained "from CS17 Assignment Grade, Marks only"
+        Data grade "from CS17 Assignment Grade, Grade only"
+        Check is_submitted "derived"
     }
     CS17_Result_Subject_Score {
         Link subject FK "CS17 Subject"

@@ -15,6 +15,7 @@
   "remarks",
   "title",
   "cohort",
+  "quarter",
   "submission_type",
   "max_marks",
   "column_break_vtqn",
@@ -47,6 +48,14 @@
    "in_list_view": 1,
    "label": "Cohort",
    "options": "CS17 Cohort"
+  },
+  {
+   "fieldname": "quarter",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Quarter",
+   "options": "CS17 Quarter"
   },
   {
    "default": "Any",

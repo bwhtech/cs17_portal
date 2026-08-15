@@ -11,8 +11,10 @@ export class LoginPage {
 		this.page = page;
 		this.emailInput = page.locator("#login_email");
 		this.passwordInput = page.locator("#login_password");
+		// Frappe dropped the .btn-login class when the login page moved to the
+		// es-button design system, so target the submit button by role instead.
 		this.submitButton = page.locator(
-			"button.btn-login:not(.btn-login-with-email-link)",
+			"section.for-login form.form-login button[type='submit']",
 		);
 		this.errorMessage = page.locator(".msgprint, .alert-danger").first();
 	}

@@ -10,6 +10,7 @@
   "naming_series",
   "exam_name",
   "cohort",
+  "quarter",
   "column_break_wqzn",
   "grading_scale",
   "start_date",
@@ -43,6 +44,14 @@
    "options": "CS17 Cohort",
    "reqd": 1,
    "set_only_once": 1
+  },
+  {
+   "fieldname": "quarter",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Quarter",
+   "options": "CS17 Quarter"
   },
   {
    "fieldname": "column_break_wqzn",

@@ -2,39 +2,51 @@
  "actions": [],
  "allow_bulk_edit": 1,
  "allow_rename": 1,
- "creation": "2026-08-13 00:00:00.000000",
+ "creation": "2026-08-15 00:00:00.000000",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "subject",
-  "subject_name",
+  "assignment",
+  "assignment_title",
+  "assignment_type",
+  "evaluation_type",
   "max_marks",
   "marks_obtained",
-  "grading_scale",
-  "percentage",
   "grade",
-  "is_pass",
+  "is_submitted",
+  "due_date",
   "remarks"
  ],
  "fields": [
   {
    "columns": 2,
-   "fieldname": "subject",
+   "fieldname": "assignment",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Subject",
-   "options": "CS17 Subject",
+   "label": "Assignment",
+   "options": "CS17 Assignment",
    "read_only": 1,
    "reqd": 1
   },
   {
    "columns": 3,
-   "fetch_from": "subject.subject_name",
-   "fieldname": "subject_name",
+   "fieldname": "assignment_title",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Subject Name",
+   "label": "Assignment Title",
+   "read_only": 1
+  },
+  {
+   "fieldname": "assignment_type",
+   "fieldtype": "Data",
+   "label": "Assignment Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evaluation_type",
+   "fieldtype": "Data",
+   "label": "Evaluation Type",
    "read_only": 1
   },
   {
@@ -46,25 +58,12 @@
    "read_only": 1
   },
   {
-   "columns": 2,
+   "columns": 1,
    "default": "0",
    "fieldname": "marks_obtained",
    "fieldtype": "Float",
    "in_list_view": 1,
    "label": "Marks Obtained",
-   "read_only": 1
-  },
-  {
-   "fieldname": "grading_scale",
-   "fieldtype": "Link",
-   "label": "Grading Scale",
-   "options": "CS17 Grading Scale",
-   "read_only": 1
-  },
-  {
-   "fieldname": "percentage",
-   "fieldtype": "Float",
-   "label": "Percentage",
    "read_only": 1
   },
   {
@@ -76,26 +75,35 @@
    "read_only": 1
   },
   {
+   "columns": 1,
    "default": "0",
-   "fieldname": "is_pass",
+   "fieldname": "is_submitted",
    "fieldtype": "Check",
-   "label": "Passed",
+   "in_list_view": 1,
+   "label": "Submitted",
+   "read_only": 1
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Datetime",
+   "label": "Due Date",
    "read_only": 1
   },
   {
    "fieldname": "remarks",
-   "fieldtype": "Data",
-   "label": "Remarks"
+   "fieldtype": "Small Text",
+   "label": "Remarks",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-08-13 00:00:00.000000",
+ "modified": "2026-08-15 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
- "name": "CS17 Result Subject Score",
+ "name": "CS17 Result Assignment Score",
  "owner": "Administrator",
  "permissions": [],
  "row_format": "Dynamic",

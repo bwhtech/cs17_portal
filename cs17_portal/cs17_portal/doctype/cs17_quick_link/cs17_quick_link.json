@@ -4,6 +4,7 @@
  "allow_rename": 1,
  "creation": "2026-05-22 16:27:27.969614",
  "doctype": "DocType",
+ "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "title",

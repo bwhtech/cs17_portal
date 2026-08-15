@@ -45,3 +45,33 @@ class CS17AssignmentGrade(Document):
 		max_marks = flt(assignment.max_marks)
 		if flt(self.marks_obtained) < 0 or flt(self.marks_obtained) > max_marks:
 			frappe.throw(_("Marks must be between 0 and {0}.").format(max_marks))
+
+
+def get_student_grades(student: str, assignments: list[str]) -> dict[str, dict]:
+	"""One student's submission and grade per assignment, keyed by assignment.
+
+	A grade is reachable only through the submission it was given on, so an assignment the
+	student never submitted is absent from the map.
+	"""
+	if not assignments:
+		return {}
+
+	submissions = frappe.get_all(
+		"CS17 Assignment Submission",
+		filters={"student": student, "assignment": ("in", assignments), "docstatus": ("<", 2)},
+		fields=["name", "assignment"],
+	)
+	if not submissions:
+		return {}
+
+	by_assignment = {row.assignment: {"submission": row.name} for row in submissions}
+	grades = frappe.get_all(
+		"CS17 Assignment Grade",
+		filters={"submission": ("in", [row.name for row in submissions])},
+		fields=["assignment", "marks_obtained", "grade", "remarks"],
+	)
+	for grade in grades:
+		if grade.assignment in by_assignment:
+			by_assignment[grade.assignment].update(grade)
+
+	return by_assignment
