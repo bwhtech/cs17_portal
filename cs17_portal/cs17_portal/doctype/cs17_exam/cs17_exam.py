@@ -25,6 +25,7 @@ class CS17Exam(Document):
 		exam_name: DF.Data
 		grading_scale: DF.Link
 		naming_series: DF.Literal["EXAM-.{cohort}.-.###"]
+		quarter: DF.Link | None
 		start_date: DF.Date | None
 		subjects: DF.Table[CS17ExamSubject]
 		total_max_marks: DF.Float

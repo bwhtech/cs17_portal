@@ -2,64 +2,82 @@
 	"CS17 Exam", doc.exam, ["exam_name", "start_date", "end_date"], as_dict=True
 ) or {} -%}
 
+{#- the result mirrors the quarter's assignments at save time; re-read the quarter so any
+    assignment published since then still shows up, marked absent -#}
+{%- set scored_assignments = doc.assignments or [] -%}
+{%- set scored_names = scored_assignments | map(attribute="assignment") | list -%}
+{%- set quarter_assignments = frappe.get_all(
+	"CS17 Assignment",
+	filters={"quarter": doc.quarter, "cohort": doc.cohort, "is_published": 1},
+	fields=["name", "title"],
+	order_by="due_date asc, creation asc",
+) if doc.quarter and doc.cohort else [] -%}
+{%- set missing_assignments = quarter_assignments | rejectattr("name", "in", scored_names) | list -%}
+
 <style>
+	/* read by frappe.utils.pdf.read_options_from_html -> wkhtmltopdf */
+	.print-format { orientation: landscape; }
+
 	.rc {
 		font-family: "Geist Variable", "Geist", ui-sans-serif, -apple-system,
 			"Segoe UI", Helvetica, Arial, sans-serif;
 		color: #111111;
 		font-size: 10.5pt;
-		line-height: 1.5;
+		line-height: 1.35;
 	}
 	.rc table { width: 100%; border-collapse: collapse; }
 
 	.rc .head {
 		border-bottom: 1px solid #111111;
-		padding-bottom: 10px;
-		margin-bottom: 18px;
+		padding-bottom: 6px;
+		margin-bottom: 10px;
 	}
-	.rc .head img { width: 130px; height: auto; display: block; }
+	.rc .head img { width: 240px; height: auto; display: block; }
 	.rc .doctitle {
-		font-size: 11pt;
-		font-weight: 600;
-		margin-bottom: 24px;
+		font-size: 16pt;
+		font-weight: 700;
+		text-align: center;
+		margin-bottom: 12px;
 	}
 
-	.rc .info { margin-bottom: 30px; }
+	.rc .info { margin-bottom: 0; }
 	.rc .info th {
-		width: 150px;
 		text-align: left;
 		font-weight: 400;
 		color: #666666;
-		padding: 3px 0;
+		padding: 0;
+		line-height: 1.15;
 		vertical-align: top;
 	}
-	.rc .info td { padding: 3px 0; vertical-align: top; }
+	.rc .info td { padding: 0; line-height: 1.15; vertical-align: top; }
 
 	.rc .grades th {
 		text-align: left;
 		font-weight: 400;
 		color: #666666;
 		font-size: 9pt;
-		padding: 0 0 7px 0;
+		padding: 0 0 4px 0;
 		border-bottom: 1px solid #111111;
 	}
-	.rc .grades td { padding: 10px 0; border-bottom: 1px solid #eeeeee; }
+	.rc .grades td { padding: 5px 0; border-bottom: 1px solid #eeeeee; }
 	/* collapsed borders: drop the light rule so the dark tfoot rule draws */
 	.rc .grades tbody tr:last-child td { border-bottom: none; }
 	.rc .grades tfoot td {
 		border-bottom: none;
 		border-top: 1px solid #111111;
-		padding-top: 12px;
+		padding-top: 6px;
 		font-weight: 600;
 	}
 	.rc .grades tfoot tr + tr td { border-top: none; padding-top: 0; }
 	.rc .r,
 	.rc .grades th.r { text-align: right; }
 
-	.rc .foot {
-		margin-top: 34px;
-		color: #666666;
-		font-size: 8.5pt;
+	/* the only real separation between the stacked tables, so keep it obvious */
+	.rc .sectitle {
+		margin-top: 28px;
+		margin-bottom: 6px;
+		font-size: 10.5pt;
+		font-weight: 600;
 	}
 </style>
 
@@ -68,29 +86,31 @@
 		<img src="/assets/cs17_portal/images/cs17-logo.png" alt="CS17 Software Development Programme" />
 	</div>
 
-	<div class="doctitle">Statement of Results</div>
+	<div class="doctitle">Result</div>
 
 	<table class="info">
+		<colgroup>
+			<col style="width: 15%" />
+			<col style="width: 35%" />
+			<col style="width: 15%" />
+			<col style="width: 35%" />
+		</colgroup>
 		<tr>
 			<th>Student</th>
 			<td>{{ doc.student_name or doc.student }}</td>
-		</tr>
-		<tr>
-			<th>Student ID</th>
-			<td>{{ doc.student }}</td>
-		</tr>
-		<tr>
 			<th>Cohort</th>
 			<td>{{ doc.cohort or "-" }}</td>
 		</tr>
 		<tr>
+			<th>Student ID</th>
+			<td>{{ doc.student }}</td>
 			<th>Examination</th>
 			<td>{{ exam.exam_name or doc.exam }}</td>
 		</tr>
 		{% if exam.start_date %}
 		<tr>
 			<th>Date</th>
-			<td>
+			<td colspan="3">
 				{{ frappe.utils.formatdate(exam.start_date, "d MMM yyyy") }}
 				{%- if exam.end_date and exam.end_date != exam.start_date %}
 				- {{ frappe.utils.formatdate(exam.end_date, "d MMM yyyy") }}
@@ -100,6 +120,7 @@
 		{% endif %}
 	</table>
 
+	<div class="sectitle">Exam Grades</div>
 	<table class="grades">
 		<thead>
 			<tr>
@@ -127,24 +148,46 @@
 		</tfoot>
 	</table>
 
+	{% if scored_assignments or missing_assignments %}
+	<div class="sectitle">Assignments</div>
+	<table class="grades">
+		<thead>
+			<tr>
+				<th>Assignment</th>
+				<th class="r">Grade</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for row in scored_assignments %}
+			<tr>
+				<td>{{ row.assignment_title or row.assignment }}</td>
+				<td class="r">
+					{%- if not row.is_submitted -%}
+						Absent
+					{%- elif row.evaluation_type == "Marks" and row.max_marks -%}
+						{{ frappe.utils.flt(row.marks_obtained) }} / {{ frappe.utils.flt(row.max_marks) }}
+					{%- else -%}
+						{{ row.grade or "-" }}
+					{%- endif -%}
+				</td>
+			</tr>
+			{% endfor %}
+			{% for row in missing_assignments %}
+			<tr>
+				<td>{{ row.title }}</td>
+				<td class="r">Absent</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	{% endif %}
+
 	{% if doc.remarks %}
-	<table class="info" style="margin-top: 30px; margin-bottom: 0">
+	<table class="info" style="margin-top: 16px; margin-bottom: 0">
 		<tr>
 			<th>Remarks</th>
 			<td>{{ doc.remarks }}</td>
 		</tr>
 	</table>
 	{% endif %}
-
-	<table class="foot">
-		<tr>
-			<td>{{ doc.name }}</td>
-			<td class="r">
-				{% if doc.is_published and doc.published_on %}
-					Issued {{ frappe.utils.formatdate(doc.published_on, "d MMM yyyy") }}.
-				{% endif %}
-				Computer generated, no signature required.
-			</td>
-		</tr>
-	</table>
 </div>

@@ -10,6 +10,7 @@
  "field_order": [
   "naming_series",
   "exam",
+  "quarter",
   "student",
   "student_name",
   "column_break_hjra",
@@ -19,6 +20,8 @@
   "published_on",
   "section_break_scores",
   "scores",
+  "section_break_assignments",
+  "assignments",
   "section_break_summary",
   "total_marks_obtained",
   "total_max_marks",
@@ -47,6 +50,15 @@
    "options": "CS17 Exam",
    "reqd": 1,
    "set_only_once": 1
+  },
+  {
+   "description": "Pulls every published assignment of this quarter for the cohort.",
+   "fieldname": "quarter",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Quarter",
+   "options": "CS17 Quarter"
   },
   {
    "fieldname": "student",
@@ -112,9 +124,23 @@
    "reqd": 1
   },
   {
+   "depends_on": "quarter",
+   "fieldname": "section_break_assignments",
+   "fieldtype": "Section Break",
+   "label": "Quarter Assignments"
+  },
+  {
+   "description": "Pulled from the quarter's published assignments. Reported alongside the exam; does not count toward the totals below.",
+   "fieldname": "assignments",
+   "fieldtype": "Table",
+   "label": "Assignments",
+   "options": "CS17 Result Assignment Score",
+   "read_only": 1
+  },
+  {
    "fieldname": "section_break_summary",
    "fieldtype": "Section Break",
-   "label": "Summary"
+   "label": "Exam Summary"
   },
   {
    "fieldname": "total_marks_obtained",

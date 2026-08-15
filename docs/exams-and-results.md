@@ -2,8 +2,9 @@
 
 Subject-wise exam results for a cohort, graded from marks and published to students.
 
-Eleven DocTypes: four masters (`CS17 Subject`, `CS17 Subject Pattern`, `CS17 Grading Scale`,
-`CS17 Exam`), two transactions (`CS17 Subject Marks`, `CS17 Result`), and five child tables.
+Thirteen DocTypes: five masters (`CS17 Subject`, `CS17 Subject Pattern`, `CS17 Grading Scale`,
+`CS17 Exam`, `CS17 Quarter`), two transactions (`CS17 Subject Marks`, `CS17 Result`), and six child
+tables.
 
 Marks flow in one direction. They are typed **only** into `CS17 Subject Marks`; everything
 downstream is derived:
@@ -93,8 +94,8 @@ one scale as the house default and unsets the flag on all others when saved.
 
 ### CS17 Exam (+ CS17 Exam Subject)
 One exam sitting for one cohort. Named `EXAM-{cohort}-###`. Holds the subject list with per-subject
-`max_marks`, `grading_scale` and `examiner`, the exam-level default `grading_scale`, and optional
-start/end dates. `total_max_marks` is summed on save.
+`max_marks`, `grading_scale` and `examiner`, the exam-level default `grading_scale`, an optional
+`quarter`, and optional start/end dates. `total_max_marks` is summed on save.
 
 `cohort` is `set_only_once` — an exam cannot be moved to a different cohort after creation.
 
@@ -143,6 +144,45 @@ One result per (exam, student) is enforced twice: a `validate` check for a reada
 and a unique index added by `cs17_portal.patches.v1_0.add_unique_result_per_exam_student` for the
 concurrent case.
 
+### CS17 Quarter
+A term label — `Q1`, `Q2`, `Q3` — named by `quarter_name`, with optional start/end dates and a
+description. Deliberately not scoped to a cohort: every cohort runs the same quarters.
+
+It is the join between the two halves of the portal. `CS17 Assignment.quarter` files an assignment
+under a quarter, `CS17 Exam.quarter` says which quarter an exam sits in, and `CS17 Result.quarter`
+says which quarter's assignments that result should report.
+
+A result takes its quarter from its exam when one is not already set, so tagging the exam is
+normally enough. Setting it on the result directly still wins — a result can report a quarter its
+exam does not belong to.
+
+### CS17 Result Assignment Score
+The assignment half of a result, filled by the same pull-don't-type rule as the subject scores.
+Setting `quarter` on a result rebuilds the table on every save from every **published** assignment
+of that quarter in the result's cohort, ordered by due date:
+
+```
+CS17 Assignment          quarter = Q1, cohort = 2026A, published
+        │
+CS17 Assignment Submission   the student's submission, if any
+        │
+CS17 Assignment Grade        marks or letter grade given on that submission
+        │
+CS17 Result.assignments      one read-only row per assignment
+```
+
+A grade is reachable only through the submission it was given on, so an assignment the student never
+submitted reads as `is_submitted = 0` with no marks. Each row records `assignment_type` and
+`evaluation_type` alongside the result, and reads only the side that was actually used — a
+Marks assignment fills `marks_obtained`, a Grade assignment fills `grade`, and a Not Graded one
+fills neither.
+
+**Assignments do not count toward the exam.** The table is the whole of it — there is no assignment
+subtotal on the result, and `total_marks_obtained`, `percentage`, `overall_grade` and
+`result_status` remain driven purely by the subject scores.
+
+Clearing `quarter` empties the table.
+
 ## Publishing
 
 Same pattern as assignments and grades: `is_published` plus a scheduled `published_on`. Setting a
@@ -165,9 +205,12 @@ direct document access.
    marks, a pattern where the subject is split, a grading scale where it differs, and the examiner.
 5. **CS17 Subject Marks** — one per student per subject. Pick exam, student, subject; the component
    rows load from the pattern with their max marks already worked out. Type the marks and save.
-6. **CS17 Result** — pick the exam and student. Every subject total is pulled in automatically,
-   nothing to type. Save — grades, totals and pass/fail fill in.
-7. Set `published_on` (or tick `is_published`) to release.
+6. **CS17 Quarter** — create `Q1`, `Q2`, `Q3` once, then set `quarter` on each assignment as it is
+   created and on the exam.
+7. **CS17 Result** — pick the exam and student. Every subject total is pulled in automatically,
+   nothing to type, and the quarter's assignments come with it once the exam is tagged with a
+   quarter. Save — grades, totals and pass/fail fill in.
+8. Set `published_on` (or tick `is_published`) to release.
 
 ## Assumptions
 
@@ -182,6 +225,19 @@ These were not specified and are easy to change:
   goes through a System Manager. A faculty-facing screen in the dashboard SPA, and the API methods
   behind it, are not part of this change.
 - **Attendance / absent** is not modelled; an absent student is currently a 0.
+- **Assignments are reported, not counted**, and carry no subtotal on the result. To total or weight
+  them, sum the `assignments` rows in `CS17Result.calculate` — deliberately not done, because a
+  quarter mixes mark-graded and letter-graded work that has no common denominator.
+- **Quarters are global**, not per cohort — `Q1` is the same record for every cohort. The assignment
+  list is still cohort-filtered, because each assignment carries its own cohort.
+- **The assignment table is a snapshot**, rebuilt when the result is saved. Nothing re-saves a result
+  when a grade is entered later, unlike `CS17 Subject Marks`, which does. Re-save the result (or add
+  the same `on_update` hook to `CS17 Assignment Grade`) to refresh it.
+- **A grade's own `is_published` is ignored** when pulling. The result's `is_published` is what gates
+  student visibility, so a grade scheduled to publish later can still appear inside a result that is
+  published first. Filter on `is_published` in `get_student_grades` if that ordering matters.
+- **Publishing is not blocked** by an ungraded assignment, unlike a subject with no marks — not
+  submitting is a legitimate outcome, not a data-entry gap.
 
 ## Not yet built
 

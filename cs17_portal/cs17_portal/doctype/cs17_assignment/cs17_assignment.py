@@ -23,6 +23,7 @@ class CS17Assignment(Document):
 		max_marks: DF.Float
 		naming_series: DF.Literal["GRADED-.{cohort}.-.###", "NOT-GRADED-.{cohort}.-.###"]
 		publish_on: DF.Datetime | None
+		quarter: DF.Link | None
 		remarks: DF.Literal["Grade", "Marks"]
 		submission_type: DF.Literal["Any", "PDF", "URL", "Image", "ZIP", "Scratch"]
 		title: DF.Data
@@ -46,3 +47,20 @@ class CS17Assignment(Document):
 			frappe.throw(_("A cohort is required to publish an assignment"))
 		if not self.due_date:
 			frappe.throw(_("A due date is required to publish an assignment"))
+
+
+def get_quarter_assignments(quarter: str, cohort: str) -> list[dict]:
+	"""Published assignments of one quarter for one cohort, in the order they fell due."""
+	return frappe.get_all(
+		"CS17 Assignment",
+		filters={"quarter": quarter, "cohort": cohort, "is_published": 1},
+		fields=[
+			"name",
+			"title",
+			"assignment_type",
+			"remarks as evaluation_type",
+			"max_marks",
+			"due_date",
+		],
+		order_by="due_date asc, creation asc",
+	)
