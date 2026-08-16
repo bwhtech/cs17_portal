@@ -1,6 +1,4 @@
-{%- set exam = frappe.db.get_value(
-	"CS17 Exam", doc.exam, ["exam_name", "start_date", "end_date"], as_dict=True
-) or {} -%}
+{%- set exam_name = frappe.db.get_value("CS17 Exam", doc.exam, "exam_name") -%}
 
 {#- the result mirrors the quarter's assignments at save time; re-read the quarter so any
     assignment published since then still shows up, marked absent -#}
@@ -13,181 +11,342 @@
 	order_by="due_date asc, creation asc",
 ) if doc.quarter and doc.cohort else [] -%}
 {%- set missing_assignments = quarter_assignments | rejectattr("name", "in", scored_names) | list -%}
+{%- set has_assignments = scored_assignments or missing_assignments -%}
+
+{#- marks are floats but almost always whole; don't print "45.0" on a certificate -#}
+{%- macro num(value, precision=2) -%}
+	{%- set v = frappe.utils.flt(value) -%}
+	{{- v | int if v == v | int else frappe.utils.flt(v, precision) -}}
+{%- endmacro -%}
+
+{%- macro lanes() -%}
+	<colgroup>
+		<col />
+		<col style="width: 82px" />
+		<col style="width: 64px" />
+		<col style="width: 48px" />
+		<col style="width: 12px" />
+	</colgroup>
+{%- endmacro -%}
+
+{%- macro column_headers(first) -%}
+	<thead>
+		<tr>
+			<th>{{ first }}</th>
+			<th class="rc-r">Marks</th>
+			<th class="rc-r">Percent</th>
+			<th class="rc-r">Grade</th>
+			<th></th>
+		</tr>
+	</thead>
+{%- endmacro -%}
+
+{%- macro exam_table() -%}
+<div class="rc-sectitle">Exam Grades</div>
+<table class="rc-grades">
+	{{ lanes() }}
+	{{ column_headers("Subject") }}
+	<tbody>
+		{% for row in doc.scores %}
+		<tr>
+			<td class="rc-name">{{ row.subject_name or row.subject }}</td>
+			<td class="rc-r">{{ num(row.marks_obtained) }} / {{ num(row.max_marks) }}</td>
+			<td class="rc-r">{{ num(row.percentage) }}%</td>
+			<td class="rc-r">{{ row.grade or "—" }}</td>
+			<td class="rc-r">{% if not row.is_pass %}<span class="rc-dot"></span>{% endif %}</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+	<tfoot>
+		<tr>
+			<td>Total</td>
+			<td class="rc-r">{{ num(doc.total_marks_obtained) }} / {{ num(doc.total_max_marks) }}</td>
+			<td class="rc-r">{{ num(doc.percentage) }}%</td>
+			<td class="rc-r">{{ doc.overall_grade or "—" }}</td>
+			<td></td>
+		</tr>
+	</tfoot>
+</table>
+{%- endmacro -%}
+
+{%- macro assignment_table() -%}
+<div class="rc-sectitle">Quarter Assignments</div>
+<table class="rc-grades">
+	{{ lanes() }}
+	{{ column_headers("Assignment") }}
+	<tbody>
+		{% for row in scored_assignments %}
+		{%- set by_marks = row.is_submitted and row.evaluation_type == "Marks" and row.max_marks -%}
+		<tr>
+			<td class="rc-name{% if not row.is_submitted %} rc-muted{% endif %}">
+				{{ row.assignment_title or row.assignment }}
+			</td>
+			{#- grade-only assignments leave the numeric lanes empty rather than filling every
+			    row with dashes; the Grade lane carries the value -#}
+			<td class="rc-r">
+				{%- if by_marks -%}
+				{{ num(row.marks_obtained) }} / {{ num(row.max_marks) }}
+				{%- endif -%}
+			</td>
+			<td class="rc-r">
+				{%- if by_marks -%}
+				{{ num(frappe.utils.flt(row.marks_obtained) * 100 / frappe.utils.flt(row.max_marks), 1) }}%
+				{%- endif -%}
+			</td>
+			<td class="rc-r">
+				{%- if not row.is_submitted -%}
+				<span class="rc-muted">Absent</span>
+				{%- else -%}
+				{{ row.grade or "—" }}
+				{%- endif -%}
+			</td>
+			<td></td>
+		</tr>
+		{% endfor %}
+		{% for row in missing_assignments %}
+		<tr>
+			<td class="rc-name rc-muted">{{ row.title }}</td>
+			<td class="rc-r"></td>
+			<td class="rc-r"></td>
+			<td class="rc-r"><span class="rc-muted">Absent</span></td>
+			<td></td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+{%- endmacro -%}
 
 <style>
 	/* read by frappe.utils.pdf.read_options_from_html -> wkhtmltopdf */
 	.print-format { orientation: landscape; }
 
+	/* Two constraints shape everything below.
+	   1. wkhtmltopdf runs an old WebKit: no grid, no custom properties, no flex gap.
+	      Layout is tables with fixed column lanes on purpose.
+	   2. Frappe's print bundle carries Bootstrap, which owns .label/.badge/.value, and
+	      forces `padding: 10px !important` on every td/th. Hence the rc- prefix on every
+	      class and the !important on padding. */
 	.rc {
 		font-family: "Geist Variable", "Geist", ui-sans-serif, -apple-system,
 			"Segoe UI", Helvetica, Arial, sans-serif;
-		color: #111111;
+		color: #18181b;
 		font-size: 10.5pt;
-		line-height: 1.35;
+		line-height: 1.4;
 	}
 	.rc table { width: 100%; border-collapse: collapse; }
+	.rc thead { display: table-header-group; }
+	.rc tr { page-break-inside: avoid; }
+	.rc td, .rc th { padding: 0 !important; vertical-align: top !important; }
 
-	.rc .head {
-		border-bottom: 1px solid #111111;
-		padding-bottom: 6px;
-		margin-bottom: 10px;
+	.rc-cap {
+		font-size: 7.5pt;
+		font-weight: 500;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: #6e6e78;
 	}
-	.rc .head img { width: 240px; height: auto; display: block; }
-	.rc .doctitle {
-		font-size: 16pt;
-		font-weight: 700;
-		text-align: center;
-		margin-bottom: 12px;
-	}
+	.rc-muted { color: #6e6e78; }
+	.rc-r { text-align: right; }
 
-	.rc .info { margin-bottom: 0; }
-	.rc .info th {
-		text-align: left;
-		font-weight: 400;
-		color: #666666;
-		padding: 0;
-		line-height: 1.15;
-		vertical-align: top;
-	}
-	.rc .info td { padding: 0; line-height: 1.15; vertical-align: top; }
+	/* header ------------------------------------------------------------- */
+	.rc-head { border-bottom: 1px solid #18181b; padding-bottom: 10px; }
+	.rc-head img { width: 200px; height: auto; display: block; }
+	.rc-head .rc-serial { text-align: right; white-space: nowrap; vertical-align: bottom !important; }
+	.rc-head .rc-no { font-size: 10.5pt; font-weight: 600; }
 
-	.rc .grades th {
-		text-align: left;
-		font-weight: 400;
-		color: #666666;
-		font-size: 9pt;
-		padding: 0 0 4px 0;
-		border-bottom: 1px solid #111111;
+	/* identity ----------------------------------------------------------- */
+	.rc-student {
+		font-size: 22pt;
+		font-weight: 600;
+		line-height: 1.1;
+		letter-spacing: -0.015em;
+		padding: 22px 0 14px 0;
 	}
-	.rc .grades td { padding: 5px 0; border-bottom: 1px solid #eeeeee; }
-	/* collapsed borders: drop the light rule so the dark tfoot rule draws */
-	.rc .grades tbody tr:last-child td { border-bottom: none; }
-	.rc .grades tfoot td {
-		border-bottom: none;
-		border-top: 1px solid #111111;
+	.rc-meta td { padding: 0 24px 0 0 !important; }
+	.rc-meta .rc-value { font-weight: 500; padding-top: 3px; }
+
+	/* verdict ------------------------------------------------------------ */
+	.rc-verdict {
+		margin-top: 22px;
+		background: #f7f2ff;
+		border-left: 3px solid #8900ff;
+	}
+	.rc-verdict td { padding: 14px 22px !important; width: 25%; }
+	.rc-verdict td + td { border-left: 1px solid #e4d8f7; }
+	.rc-verdict .rc-big {
+		font-size: 24pt;
+		font-weight: 600;
+		line-height: 1.05;
+		letter-spacing: -0.02em;
 		padding-top: 6px;
+	}
+	.rc-verdict .rc-caption { font-size: 8.5pt; color: #6e6e78; padding-top: 5px; }
+	.rc-verdict .rc-of { font-size: 13pt; font-weight: 500; color: #6e6e78; }
+
+	.rc-status {
+		display: inline-block;
+		margin-top: 10px;
+		padding: 4px 14px;
+		border-radius: 999px;
+		font-size: 11pt;
+		font-weight: 600;
+		letter-spacing: 0.02em;
+	}
+	/* border + text carry the meaning if the PDF drops backgrounds */
+	.rc-pass { background: #ecfdf3; border: 1px solid #a9efc5; color: #067647; }
+	.rc-fail { background: #fef3f2; border: 1px solid #fecdca; color: #b42318; }
+
+	/* the landscape page is wide enough to stand the two tables side by side;
+	   stacking them is what left the old card looking so empty */
+	.rc-cols { margin-top: 4px; }
+	.rc-cols > tbody > tr > td { width: 50%; padding: 0 44px 0 0 !important; }
+	.rc-cols > tbody > tr > td + td { padding: 0 0 0 44px !important; border-left: 1px solid #ececf0; }
+
+	/* tables ------------------------------------------------------------- */
+	.rc-sectitle {
+		margin-top: 26px;
+		margin-bottom: 10px;
+		font-size: 7.5pt;
+		font-weight: 500;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: #6e6e78;
+	}
+	.rc-grades th {
+		text-align: left;
+		font-size: 7.5pt;
+		font-weight: 500;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: #6e6e78;
+		padding: 0 0 7px 0 !important;
+		border-bottom: 1px solid #18181b;
+	}
+	.rc-grades td { padding: 8px 0 !important; border-bottom: 1px solid #ececf0; }
+	/* collapsed borders: drop the light rule so the dark tfoot rule draws */
+	.rc-grades tbody tr:last-child td { border-bottom: none; }
+	.rc-grades tfoot td {
+		border-bottom: none;
+		border-top: 1px solid #18181b;
+		padding-top: 9px !important;
 		font-weight: 600;
 	}
-	.rc .grades tfoot tr + tr td { border-top: none; padding-top: 0; }
-	.rc .r,
-	.rc .grades th.r { text-align: right; }
+	.rc-grades .rc-name { font-weight: 500; }
+	/* outranks the `text-align: left` on .rc-grades th above, which is more specific
+	   than .rc-r on its own — without this the numeric headers sit over the wrong edge */
+	.rc-grades th.rc-r { text-align: right; }
 
-	/* the only real separation between the stacked tables, so keep it obvious */
-	.rc .sectitle {
-		margin-top: 28px;
-		margin-bottom: 6px;
-		font-size: 10.5pt;
-		font-weight: 600;
+	/* fixed flag lane on the outer edge: empty on most rows, so names and figures
+	   keep their lanes and the left edge stays flush with the titles above */
+	.rc-dot {
+		display: inline-block;
+		width: 5px;
+		height: 5px;
+		border-radius: 50%;
+		background: #b42318;
+		vertical-align: middle;
+	}
+
+	/* remarks & footer --------------------------------------------------- */
+	.rc-remarks { margin-top: 26px; }
+	.rc-remarks .rc-body { padding-top: 5px; }
+	.rc-foot {
+		margin-top: 30px;
+		padding-top: 10px;
+		border-top: 1px solid #ececf0;
+		font-size: 8pt;
+		color: #6e6e78;
 	}
 </style>
 
 <div class="rc">
-	<div class="head">
-		<img src="/assets/cs17_portal/images/cs17-logo.png" alt="CS17 Software Development Programme" />
-	</div>
-
-	<div class="doctitle">Result</div>
-
-	<table class="info">
-		<colgroup>
-			<col style="width: 15%" />
-			<col style="width: 35%" />
-			<col style="width: 15%" />
-			<col style="width: 35%" />
-		</colgroup>
+	<table class="rc-head">
 		<tr>
-			<th>Student</th>
-			<td>{{ doc.student_name or doc.student }}</td>
-			<th>Cohort</th>
-			<td>{{ doc.cohort or "-" }}</td>
-		</tr>
-		<tr>
-			<th>Student ID</th>
-			<td>{{ doc.student }}</td>
-			<th>Examination</th>
-			<td>{{ exam.exam_name or doc.exam }}</td>
-		</tr>
-		{% if exam.start_date %}
-		<tr>
-			<th>Date</th>
-			<td colspan="3">
-				{{ frappe.utils.formatdate(exam.start_date, "d MMM yyyy") }}
-				{%- if exam.end_date and exam.end_date != exam.start_date %}
-				- {{ frappe.utils.formatdate(exam.end_date, "d MMM yyyy") }}
-				{%- endif %}
+			<td>
+				<img src="/assets/cs17_portal/images/cs17-logo.png" alt="CS17 Software Development Programme" />
+			</td>
+			<td class="rc-serial">
+				<div class="rc-cap">Result Card</div>
+				<div class="rc-no">{{ doc.name }}</div>
 			</td>
 		</tr>
-		{% endif %}
 	</table>
 
-	<div class="sectitle">Exam Grades</div>
-	<table class="grades">
-		<thead>
-			<tr>
-				<th>Subject</th>
-				<th class="r">Grade</th>
-			</tr>
-		</thead>
-		<tbody>
-			{% for row in doc.scores %}
-			<tr>
-				<td>{{ row.subject_name or row.subject }}</td>
-				<td class="r">{{ row.grade or "-" }}</td>
-			</tr>
+	<div class="rc-student">{{ doc.student_name or doc.student }}</div>
+
+	{#- the exam is usually named after its quarter; don't print the same value twice -#}
+	{%- set meta = [
+		("Student ID", doc.student),
+		("Cohort", doc.cohort or "—"),
+		("Examination", exam_name or doc.exam),
+	] -%}
+	{%- if doc.quarter and doc.quarter != (exam_name or doc.exam) -%}
+		{%- set _ = meta.append(("Quarter", doc.quarter)) -%}
+	{%- endif -%}
+	<table class="rc-meta">
+		<tr>
+			{% for label, value in meta %}
+			<td style="width: {{ (100 / meta | length) | round(2) }}%">
+				<div class="rc-cap">{{ label }}</div>
+				<div class="rc-value">{{ value }}</div>
+			</td>
 			{% endfor %}
-		</tbody>
-		<tfoot>
-			<tr>
-				<td>Overall Grade</td>
-				<td class="r">{{ doc.overall_grade or "-" }}</td>
-			</tr>
-			<tr>
-				<td>Result</td>
-				<td class="r">{{ doc.result_status or "-" }}</td>
-			</tr>
-		</tfoot>
+		</tr>
 	</table>
 
-	{% if scored_assignments or missing_assignments %}
-	<div class="sectitle">Assignments</div>
-	<table class="grades">
-		<thead>
-			<tr>
-				<th>Assignment</th>
-				<th class="r">Grade</th>
-			</tr>
-		</thead>
-		<tbody>
-			{% for row in scored_assignments %}
-			<tr>
-				<td>{{ row.assignment_title or row.assignment }}</td>
-				<td class="r">
-					{%- if not row.is_submitted -%}
-						Absent
-					{%- elif row.evaluation_type == "Marks" and row.max_marks -%}
-						{{ frappe.utils.flt(row.marks_obtained) }} / {{ frappe.utils.flt(row.max_marks) }}
-					{%- else -%}
-						{{ row.grade or "-" }}
-					{%- endif -%}
-				</td>
-			</tr>
-			{% endfor %}
-			{% for row in missing_assignments %}
-			<tr>
-				<td>{{ row.title }}</td>
-				<td class="r">Absent</td>
-			</tr>
-			{% endfor %}
-		</tbody>
+	<table class="rc-verdict">
+		<tr>
+			<td>
+				<div class="rc-cap">Percentage</div>
+				<div class="rc-big">{{ num(doc.percentage) }}%</div>
+				<div class="rc-caption">
+					{{ num(doc.total_marks_obtained) }} of {{ num(doc.total_max_marks) }} marks
+				</div>
+			</td>
+			<td>
+				<div class="rc-cap">Overall Grade</div>
+				<div class="rc-big">{{ doc.overall_grade or "—" }}</div>
+			</td>
+			{#- the landscape band is wide enough that three stats leave a dead lane -#}
+			{%- set passed = doc.scores | selectattr("is_pass") | list | length -%}
+			<td>
+				<div class="rc-cap">Subjects Passed</div>
+				<div class="rc-big">{{ passed }} <span class="rc-of">of {{ doc.scores | length }}</span></div>
+			</td>
+			<td>
+				<div class="rc-cap">Result</div>
+				{% if doc.result_status %}
+				<span class="rc-status rc-{{ doc.result_status | lower }}">{{ doc.result_status }}</span>
+				{% else %}
+				<div class="rc-big">—</div>
+				{% endif %}
+			</td>
+		</tr>
 	</table>
+
+	{% if has_assignments %}
+	<table class="rc-cols">
+		<tr>
+			<td>{{ exam_table() }}</td>
+			<td>{{ assignment_table() }}</td>
+		</tr>
+	</table>
+	{% else %}
+	{#- nothing to sit beside it, so don't squeeze the grades into half the page -#}
+	{{ exam_table() }}
 	{% endif %}
 
 	{% if doc.remarks %}
-	<table class="info" style="margin-top: 16px; margin-bottom: 0">
+	<div class="rc-remarks">
+		<div class="rc-cap">Remarks</div>
+		<div class="rc-body">{{ doc.remarks }}</div>
+	</div>
+	{% endif %}
+
+	<table class="rc-foot">
 		<tr>
-			<th>Remarks</th>
-			<td>{{ doc.remarks }}</td>
+			<td>CS17 Software Development Programme</td>
+			<td class="rc-r">This is a computer-generated result card.</td>
 		</tr>
 	</table>
-	{% endif %}
 </div>
