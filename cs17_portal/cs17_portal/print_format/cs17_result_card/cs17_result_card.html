@@ -203,17 +203,19 @@
 	   a page break intact rather than leaving the name stranded */
 	/* fixed layout, or auto layout collapses the empty spacer cell to nothing and
 	   stretches the rule across the whole page */
-	.rc-sign { margin-top: 76px; page-break-inside: avoid; table-layout: fixed; }
-	.rc-sign .rc-sign-rule { border-top: 1px solid #18181b; padding-top: 8px; }
+	.rc-sign { margin-top: 130px; page-break-inside: avoid; table-layout: fixed; }
+	.rc-sign .rc-sign-rule { border-top: 1px solid #18181b; padding-top: 14px; }
 	.rc-sign .rc-sign-name { font-weight: 600; }
 	.rc-sign .rc-sign-role { font-size: 8.5pt; color: #6e6e78; padding-top: 2px; }
 	.rc-foot {
 		margin-top: 30px;
-		padding-top: 10px;
 		border-top: 1px solid #ececf0;
 		font-size: 8pt;
 		color: #6e6e78;
 	}
+	/* the gap under the rule has to sit on the cell: padding on the table itself is
+	   unreliable once border-collapse is on */
+	.rc-foot td { padding-top: 16px !important; }
 </style>
 
 <div class="rc">
