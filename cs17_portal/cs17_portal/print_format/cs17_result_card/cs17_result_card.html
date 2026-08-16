@@ -13,19 +13,11 @@
 {%- set missing_assignments = quarter_assignments | rejectattr("name", "in", scored_names) | list -%}
 {%- set has_assignments = scored_assignments or missing_assignments -%}
 
-{#- marks are floats but almost always whole; don't print "45.0" on a certificate -#}
-{%- macro num(value, precision=2) -%}
-	{%- set v = frappe.utils.flt(value) -%}
-	{{- v | int if v == v | int else frappe.utils.flt(v, precision) -}}
-{%- endmacro -%}
-
+{#- the card reports grades only: no marks, no percentages anywhere on it -#}
 {%- macro lanes() -%}
 	<colgroup>
 		<col />
-		<col style="width: 82px" />
-		<col style="width: 64px" />
-		<col style="width: 48px" />
-		<col style="width: 12px" />
+		<col style="width: 60px" />
 	</colgroup>
 {%- endmacro -%}
 
@@ -33,10 +25,7 @@
 	<thead>
 		<tr>
 			<th>{{ first }}</th>
-			<th class="rc-r">Marks</th>
-			<th class="rc-r">Percent</th>
 			<th class="rc-r">Grade</th>
-			<th></th>
 		</tr>
 	</thead>
 {%- endmacro -%}
@@ -50,22 +39,10 @@
 		{% for row in doc.scores %}
 		<tr>
 			<td class="rc-name">{{ row.subject_name or row.subject }}</td>
-			<td class="rc-r">{{ num(row.marks_obtained) }} / {{ num(row.max_marks) }}</td>
-			<td class="rc-r">{{ num(row.percentage) }}%</td>
 			<td class="rc-r">{{ row.grade or "—" }}</td>
-			<td class="rc-r">{% if not row.is_pass %}<span class="rc-dot"></span>{% endif %}</td>
 		</tr>
 		{% endfor %}
 	</tbody>
-	<tfoot>
-		<tr>
-			<td>Total</td>
-			<td class="rc-r">{{ num(doc.total_marks_obtained) }} / {{ num(doc.total_max_marks) }}</td>
-			<td class="rc-r">{{ num(doc.percentage) }}%</td>
-			<td class="rc-r">{{ doc.overall_grade or "—" }}</td>
-			<td></td>
-		</tr>
-	</tfoot>
 </table>
 {%- endmacro -%}
 
@@ -76,22 +53,9 @@
 	{{ column_headers("Assignment") }}
 	<tbody>
 		{% for row in scored_assignments %}
-		{%- set by_marks = row.is_submitted and row.evaluation_type == "Marks" and row.max_marks -%}
 		<tr>
 			<td class="rc-name{% if not row.is_submitted %} rc-muted{% endif %}">
 				{{ row.assignment_title or row.assignment }}
-			</td>
-			{#- grade-only assignments leave the numeric lanes empty rather than filling every
-			    row with dashes; the Grade lane carries the value -#}
-			<td class="rc-r">
-				{%- if by_marks -%}
-				{{ num(row.marks_obtained) }} / {{ num(row.max_marks) }}
-				{%- endif -%}
-			</td>
-			<td class="rc-r">
-				{%- if by_marks -%}
-				{{ num(frappe.utils.flt(row.marks_obtained) * 100 / frappe.utils.flt(row.max_marks), 1) }}%
-				{%- endif -%}
 			</td>
 			<td class="rc-r">
 				{%- if not row.is_submitted -%}
@@ -100,16 +64,12 @@
 				{{ row.grade or "—" }}
 				{%- endif -%}
 			</td>
-			<td></td>
 		</tr>
 		{% endfor %}
 		{% for row in missing_assignments %}
 		<tr>
 			<td class="rc-name rc-muted">{{ row.title }}</td>
-			<td class="rc-r"></td>
-			<td class="rc-r"></td>
 			<td class="rc-r"><span class="rc-muted">Absent</span></td>
-			<td></td>
 		</tr>
 		{% endfor %}
 	</tbody>
@@ -171,7 +131,7 @@
 		background: #f7f2ff;
 		border-left: 3px solid #8900ff;
 	}
-	.rc-verdict td { padding: 14px 22px !important; width: 25%; }
+	.rc-verdict td { padding: 14px 22px !important; width: 33.33%; }
 	.rc-verdict td + td { border-left: 1px solid #e4d8f7; }
 	.rc-verdict .rc-big {
 		font-size: 24pt;
@@ -180,7 +140,6 @@
 		letter-spacing: -0.02em;
 		padding-top: 6px;
 	}
-	.rc-verdict .rc-caption { font-size: 8.5pt; color: #6e6e78; padding-top: 5px; }
 	.rc-verdict .rc-of { font-size: 13pt; font-weight: 500; color: #6e6e78; }
 
 	.rc-status {
@@ -236,20 +195,18 @@
 	   than .rc-r on its own — without this the numeric headers sit over the wrong edge */
 	.rc-grades th.rc-r { text-align: right; }
 
-	/* fixed flag lane on the outer edge: empty on most rows, so names and figures
-	   keep their lanes and the left edge stays flush with the titles above */
-	.rc-dot {
-		display: inline-block;
-		width: 5px;
-		height: 5px;
-		border-radius: 50%;
-		background: #b42318;
-		vertical-align: middle;
-	}
-
-	/* remarks & footer --------------------------------------------------- */
+	/* remarks, signature & footer ---------------------------------------- */
 	.rc-remarks { margin-top: 26px; }
 	.rc-remarks .rc-body { padding-top: 5px; }
+
+	/* the margin above the rule is the space signed into, so it has to survive
+	   a page break intact rather than leaving the name stranded */
+	/* fixed layout, or auto layout collapses the empty spacer cell to nothing and
+	   stretches the rule across the whole page */
+	.rc-sign { margin-top: 76px; page-break-inside: avoid; table-layout: fixed; }
+	.rc-sign .rc-sign-rule { border-top: 1px solid #18181b; padding-top: 8px; }
+	.rc-sign .rc-sign-name { font-weight: 600; }
+	.rc-sign .rc-sign-role { font-size: 8.5pt; color: #6e6e78; padding-top: 2px; }
 	.rc-foot {
 		margin-top: 30px;
 		padding-top: 10px;
@@ -297,17 +254,9 @@
 	<table class="rc-verdict">
 		<tr>
 			<td>
-				<div class="rc-cap">Percentage</div>
-				<div class="rc-big">{{ num(doc.percentage) }}%</div>
-				<div class="rc-caption">
-					{{ num(doc.total_marks_obtained) }} of {{ num(doc.total_max_marks) }} marks
-				</div>
-			</td>
-			<td>
 				<div class="rc-cap">Overall Grade</div>
 				<div class="rc-big">{{ doc.overall_grade or "—" }}</div>
 			</td>
-			{#- the landscape band is wide enough that three stats leave a dead lane -#}
 			{%- set passed = doc.scores | selectattr("is_pass") | list | length -%}
 			<td>
 				<div class="rc-cap">Subjects Passed</div>
@@ -342,6 +291,22 @@
 		<div class="rc-body">{{ doc.remarks }}</div>
 	</div>
 	{% endif %}
+
+	<table class="rc-sign">
+		<colgroup>
+			<col />
+			<col style="width: 240px" />
+		</colgroup>
+		<tr>
+			<td></td>
+			<td>
+				<div class="rc-sign-rule">
+					<div class="rc-sign-name">Md Hussain Nagaria</div>
+					<div class="rc-sign-role">Director of Academics</div>
+				</div>
+			</td>
+		</tr>
+	</table>
 
 	<table class="rc-foot">
 		<tr>
