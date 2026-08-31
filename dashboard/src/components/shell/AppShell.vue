@@ -28,11 +28,17 @@
 	<Teleport :to="pageHost">
 		<router-view />
 	</Teleport>
+
+	<!-- Settings is a dialog rather than a page, opened from the sidebar's
+	     account dropdown or the mobile "You" sheet. Mounted here, once, so it
+	     outlives both the zen flip and the breakpoint swap. -->
+	<SettingsDialog />
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import { DesktopShell, MobileShell, useColorScheme, usePageMeta } from 'frappe-ui'
+import SettingsDialog from '@/components/settings/SettingsDialog.vue'
 import AppMobileNav from '@/components/shell/AppMobileNav.vue'
 import AppSidebar from '@/components/shell/AppSidebar.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'

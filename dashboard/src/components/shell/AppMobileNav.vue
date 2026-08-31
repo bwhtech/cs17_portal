@@ -18,7 +18,11 @@
 	</MobileNav>
 
 	<!-- Everything the desktop sidebar carries that the four tabs don't. -->
-	<BottomSheet v-model:open="sheetOpen" :title="profile?.full_name ?? 'You'">
+	<BottomSheet
+		v-model:open="sheetOpen"
+		:title="profile?.full_name ?? 'You'"
+		@after-leave="onSheetClosed"
+	>
 		<div class="flex flex-col gap-1 pb-4">
 			<button
 				v-for="item in sheetItems"
@@ -34,6 +38,14 @@
 					aria-hidden="true"
 				/>
 			</button>
+
+			<button
+				class="flex items-center gap-3 rounded-4 px-3 py-2.5 text-left text-base text-ink-gray-8 hover:bg-surface-gray-2"
+				@click="openSettings"
+			>
+				<span class="lucide-settings size-4 text-ink-gray-6" aria-hidden="true" />
+				Settings
+			</button>
 		</div>
 	</BottomSheet>
 </template>
@@ -44,6 +56,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { Avatar, BottomSheet, MobileNav, MobileNavItem } from 'frappe-ui'
 import { isNavItemActive, navConfig, type NavItem } from '@/components/shell/nav'
 import { useSession } from '@/composables/useSession'
+import { useSettingsDialog } from '@/composables/useSettingsDialog'
 
 const route = useRoute()
 const router = useRouter()
@@ -59,6 +72,24 @@ const sheetItems = computed<NavItem[]>(() => {
 		.flatMap((section) => section.items)
 		.filter((item) => item.href || !inTabs.has(item.to))
 })
+
+const settings = useSettingsDialog()
+
+// The sheet and the settings dialog are both overlays: opening the dialog
+// while the sheet is still dismissing loses it to the same close. So the
+// sheet asks for it on the way out, and opens it once it has left.
+const openSettingsOnClose = ref(false)
+
+function openSettings() {
+	openSettingsOnClose.value = true
+	sheetOpen.value = false
+}
+
+function onSheetClosed() {
+	if (!openSettingsOnClose.value) return
+	openSettingsOnClose.value = false
+	settings.open()
+}
 
 function run(item: NavItem) {
 	sheetOpen.value = false

@@ -27,7 +27,6 @@ const routes: RouteRecordRaw[] = [
 		name: 'Announcements',
 		component: () => import('@/pages/AnnouncementsPage.vue'),
 	},
-	{ path: '/settings', name: 'Settings', component: () => import('@/pages/SettingsPage.vue') },
 
 	// Faculty
 	{
@@ -62,14 +61,6 @@ const routes: RouteRecordRaw[] = [
 		component: () => import('@/pages/FacultyGradingPage.vue'),
 		props: true,
 	},
-	{
-		// One settings page serves both roles; the sidebar links to the one
-		// that matches the signed-in profile.
-		path: '/faculty/settings',
-		name: 'FacultySettings',
-		component: () => import('@/pages/SettingsPage.vue'),
-	},
-
 	{
 		// Hidden sandbox rendering every shared contract. Not linked from anywhere.
 		path: '/dev',

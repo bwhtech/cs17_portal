@@ -54,7 +54,6 @@ const student: NavConfig = {
 			items: [
 				{ label: 'Open Chat', icon: 'lucide-message-square', href: CHAT_URL },
 				{ label: 'Open Inbox', icon: 'lucide-inbox', href: INBOX_URL },
-				{ label: 'Settings', icon: 'lucide-settings', to: '/settings' },
 			],
 		},
 	],
@@ -88,7 +87,6 @@ const faculty: NavConfig = {
 			items: [
 				{ label: 'Open Chat', icon: 'lucide-message-square', href: CHAT_URL },
 				{ label: 'Open Inbox', icon: 'lucide-inbox', href: INBOX_URL },
-				{ label: 'Settings', icon: 'lucide-settings', to: '/faculty/settings' },
 			],
 		},
 	],
