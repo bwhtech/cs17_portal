@@ -3,10 +3,10 @@
 	     whichever one is mounted. Below `md` the trail collapses to its last
 	     label — a breadcrumb strip has nowhere to go on a phone. -->
 	<PageHeaderMobile v-if="!isDesktop" :title="currentLabel">
-		<template #left>
+		<template #prefix>
 			<slot name="left-mobile" />
 		</template>
-		<template #right>
+		<template #suffix>
 			<slot name="actions" />
 			<AnnouncementsBell />
 		</template>

@@ -141,6 +141,9 @@ def get_assignment_submissions(assignment: str) -> dict:
 			"submitted_at",
 			"submission_document",
 			"submission_url",
+			# The detail page shows who a submission is assigned to, and the
+			# grading assignment is stored in Frappe's own ToDo-backed field.
+			"_assign",
 		],
 		order_by="submitted_at desc",
 	)

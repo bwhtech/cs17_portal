@@ -7,7 +7,7 @@ export default defineConfig({
 	plugins: [
 		frappeui({
 			frontendRoute: '/dashboard',
-			frappeProxy: { port: 8080 },
+			frappeProxy: { port: 8000 },
 			jinjaBootData: true,
 			lucideIcons: true,
 			buildConfig: {
