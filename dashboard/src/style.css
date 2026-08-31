@@ -1,0 +1,93 @@
+@import 'frappe-ui/style.css';
+@import '@fontsource-variable/geist';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	/* The shells size themselves with `h-full`, so the chain to <html> must be
+	   explicit, and the page needs a painted ground in both color schemes. */
+	html,
+	body,
+	#app {
+		height: 100%;
+	}
+
+	html {
+		font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+	}
+
+	body {
+		@apply bg-surface-base text-ink-gray-8 antialiased;
+	}
+}
+
+/*
+ * Assignment descriptions and announcement content are authored as Markdown
+ * and rendered by `MarkdownText.vue`. The rendered HTML carries no classes of
+ * its own, so the ladder lives here.
+ */
+@layer components {
+	.cs17-prose {
+		@apply text-p-base text-ink-gray-8;
+	}
+	/* The size utilities are composites that carry a weight of their own, so
+	   the weight has to come from the same class — a separate `font-semibold`
+	   is declared earlier and loses. */
+	.cs17-prose :where(h1, h2, h3, h4) {
+		@apply mb-1 mt-4 text-ink-gray-9 first:mt-0;
+	}
+	.cs17-prose :where(h1) {
+		@apply text-lg-semibold;
+	}
+	.cs17-prose :where(h2) {
+		@apply text-base-semibold;
+	}
+	.cs17-prose :where(h3, h4) {
+		@apply text-sm-semibold;
+	}
+	.cs17-prose :where(p) {
+		@apply my-1.5 first:mt-0 last:mb-0;
+	}
+	.cs17-prose :where(ul) {
+		@apply my-1.5 list-disc pl-5;
+	}
+	.cs17-prose :where(ol) {
+		@apply my-1.5 list-decimal pl-5;
+	}
+	.cs17-prose :where(li) {
+		@apply my-0.5;
+	}
+	.cs17-prose :where(a) {
+		@apply text-ink-blue-link underline underline-offset-2;
+	}
+	.cs17-prose :where(code) {
+		@apply rounded-1 bg-surface-gray-2 px-1 py-0.5 font-mono text-xs text-ink-gray-8;
+	}
+	.cs17-prose :where(pre) {
+		@apply my-2 overflow-x-auto rounded-3 bg-surface-gray-2 p-3 font-mono text-xs;
+	}
+	.cs17-prose :where(pre code) {
+		@apply bg-transparent p-0;
+	}
+	.cs17-prose :where(blockquote) {
+		@apply my-2 border-l-2 border-outline-gray-2 pl-3 text-ink-gray-7;
+	}
+	.cs17-prose :where(img) {
+		@apply my-2 max-w-full rounded-3;
+	}
+	/* A wide table scrolls inside the description rather than stretching it. */
+	.cs17-prose :where(table) {
+		@apply my-2 block w-full max-w-full table-auto overflow-x-auto border-collapse text-sm;
+	}
+	.cs17-prose :where(th, td) {
+		@apply border border-outline-gray-2 px-2 py-1 text-left;
+	}
+	.cs17-prose :where(th) {
+		@apply bg-surface-gray-2 font-medium text-ink-gray-9;
+	}
+	.cs17-prose :where(hr) {
+		@apply my-3 border-outline-gray-2;
+	}
+}

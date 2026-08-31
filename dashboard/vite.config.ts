@@ -1,24 +1,34 @@
-import path from 'path';
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react'
-import proxyOptions from './proxyOptions';
+import path from 'node:path'
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import frappeui from 'frappe-ui/vite'
 
-// https://vitejs.dev/config/
 export default defineConfig({
-	plugins: [react()],
-	server: {
-		port: 8080,
-		host: '0.0.0.0',
-		proxy: proxyOptions
-	},
+	plugins: [
+		frappeui({
+			frontendRoute: '/dashboard',
+			frappeProxy: { port: 8080 },
+			jinjaBootData: true,
+			lucideIcons: true,
+			buildConfig: {
+				indexHtmlPath: '../cs17_portal/www/dashboard.html',
+				outDir: '../cs17_portal/public/dashboard',
+				baseUrl: '/assets/cs17_portal/dashboard/',
+			},
+		}),
+		vue(),
+	],
 	resolve: {
 		alias: {
-			'@': path.resolve(__dirname, 'src')
-		}
+			'@': path.resolve(__dirname, 'src'),
+		},
 	},
-	build: {
-		outDir: '../cs17_portal/public/dashboard',
-		emptyOutDir: true,
-		target: 'es2015',
+	optimizeDeps: {
+		// frappe-ui ships unbuilt source with `~icons/lucide/*` virtual imports
+		// that esbuild's prebundler cannot resolve.
+		exclude: ['frappe-ui'],
+		// Transitive CJS deps that still need converting to ESM once frappe-ui
+		// itself is excluded from prebundling.
+		include: ['tippy.js', 'engine.io-client', 'socket.io-client', 'debug'],
 	},
-});
+})
