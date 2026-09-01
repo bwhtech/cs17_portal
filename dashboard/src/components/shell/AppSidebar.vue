@@ -7,40 +7,46 @@
 			:menu-items="accountOptions"
 		/>
 
-		<ScrollArea class="min-h-0 flex-1" viewport-class="px-1 pb-10 pt-2">
-			<SidebarSection
-				v-for="section in nav.sections"
-				:key="section.label"
-				:label="section.label"
-			>
-				<SidebarItem
-					v-for="item in section.items"
-					:key="item.label"
-					:icon="item.icon"
-					:label="item.label"
-					:to="item.to"
-					:active="isNavItemActive(item, route.path)"
-					@click="item.href && openExternal(item.href)"
-				>
-					<template v-if="item.href" #suffix>
-						<span
-							class="lucide-external-link mr-1 size-3 text-ink-gray-4"
-							aria-hidden="true"
-						/>
-					</template>
-				</SidebarItem>
-			</SidebarSection>
+		<!-- The app owns the scroll region; padding the viewport gives the active
+		     row's shadow room so `overflow-hidden` doesn't clip it. -->
+		<ScrollArea class="min-h-0 flex-1" viewport-class="px-2 pt-0.5 pb-10">
+			<template v-for="(section, index) in nav.sections" :key="section.label">
+				<div class="flex h-7 items-center" :class="index > 0 && 'mt-4'">
+					<SidebarLabel>{{ section.label }}</SidebarLabel>
+				</div>
+				<nav class="mt-0.5 space-y-0.5">
+					<SidebarItem
+						v-for="item in section.items"
+						:key="item.label"
+						:active="isNavItemActive(item, route.path)"
+						:to="item.to"
+						@click="item.href && openExternal(item.href)"
+					>
+						<template #prefix>
+							<span :class="item.icon" class="size-4" aria-hidden="true" />
+						</template>
+						<span class="flex-1 truncate text-sm">{{ item.label }}</span>
+						<template v-if="item.href" #suffix>
+							<span
+								class="lucide-external-link mr-1 size-3 text-ink-gray-4"
+								aria-hidden="true"
+							/>
+						</template>
+					</SidebarItem>
+				</nav>
+			</template>
 
-			<Divider class="my-2" />
-
-			<SidebarSection>
+			<nav class="mt-4 space-y-0.5">
 				<SidebarItem
-					:icon="nav.announcements.icon"
-					:label="nav.announcements.label"
-					:to="nav.announcements.to"
 					:active="isNavItemActive(nav.announcements, route.path)"
-				/>
-			</SidebarSection>
+					:to="nav.announcements.to"
+				>
+					<template #prefix>
+						<span :class="nav.announcements.icon" class="size-4" aria-hidden="true" />
+					</template>
+					<span class="flex-1 truncate text-sm">{{ nav.announcements.label }}</span>
+				</SidebarItem>
+			</nav>
 		</ScrollArea>
 	</Sidebar>
 </template>
@@ -48,15 +54,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import {
-	Divider,
-	ScrollArea,
-	Sidebar,
-	SidebarHeader,
-	SidebarItem,
-	SidebarSection,
-	dialog,
-} from 'frappe-ui'
+import { ScrollArea, Sidebar, SidebarHeader, SidebarItem, SidebarLabel, dialog } from 'frappe-ui'
 import logoUrl from '@/assets/CS17.svg'
 import { isNavItemActive, navConfig } from '@/components/shell/nav'
 import { useSession } from '@/composables/useSession'

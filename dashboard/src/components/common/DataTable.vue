@@ -5,7 +5,7 @@
 		:columns="trackSizes"
 		:selectable="selectable"
 		:selection="selection"
-		:row-height="44"
+		:row-height="rowHeight"
 		divider="full"
 		@update:selection="emit('update:selection', $event)"
 	>
@@ -143,8 +143,10 @@ const props = withDefaults(
 		/** The selected row keys. */
 		selection?: string[]
 		onRowClick?: (row: T) => void
+		/** Taller rows for a two-line primary cell; 44 is the dense default. */
+		rowHeight?: number
 	}>(),
-	{ empty: 'Nothing here yet.', selection: () => [] },
+	{ empty: 'Nothing here yet.', selection: () => [], rowHeight: 44 },
 )
 
 const emit = defineEmits<{ 'update:selection': [value: string[]] }>()

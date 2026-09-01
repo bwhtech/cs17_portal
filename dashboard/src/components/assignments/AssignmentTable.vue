@@ -4,19 +4,29 @@
 		:rows="assignments"
 		:row-key="rowKey"
 		:loading="loading"
+		:row-height="60"
 		empty="No assignments yet."
 	>
+		<!-- Two lines per row: the title, then what to hand in and when it is
+		     due — the pair a student scans for. -->
 		<template #cell-title="{ row }">
-			<RouterLink
-				:to="`/assignments/${row.name}/submission`"
-				class="truncate text-ink-gray-8 hover:underline"
-			>
-				{{ row.title }}
-			</RouterLink>
-		</template>
-
-		<template #cell-due="{ row }">
-			<span class="text-ink-gray-6">{{ formatDateTime(row.due_date) }}</span>
+			<div class="flex min-w-0 items-center gap-2.5">
+				<SubmissionTypeIcon :submission-type="row.submission_type" />
+				<div class="min-w-0">
+					<RouterLink
+						:to="`/assignments/${row.name}/submission`"
+						class="block truncate text-base font-normal text-ink-gray-8 hover:underline"
+					>
+						{{ row.title }}
+					</RouterLink>
+					<div class="mt-1.5 truncate text-sm font-normal text-ink-gray-5">
+						{{ row.submission_type ?? 'Any' }} ·
+						<span :class="isOverdue(row) && 'text-ink-red-6'">
+							Due {{ formatDateTime(row.due_date) }}
+						</span>
+					</div>
+				</div>
+			</div>
 		</template>
 
 		<template #cell-status="{ row }">
@@ -28,9 +38,17 @@
 		</template>
 
 		<template #cell-submitted="{ row }">
-			<span class="text-ink-gray-6">{{
-				formatDateTime(submissionMap[row.name]?.submitted_at)
-			}}</span>
+			<div class="min-w-0 leading-tight">
+				<div class="truncate text-base font-normal text-ink-gray-7">
+					{{ formatDateTime(submissionMap[row.name]?.submitted_at) || 'Not submitted' }}
+				</div>
+				<div
+					v-if="gradeLine(row)"
+					class="mt-1.5 truncate text-sm font-normal text-ink-gray-5"
+				>
+					{{ gradeLine(row) }}
+				</div>
+			</div>
 		</template>
 
 		<template #cell-actions="{ row }">
@@ -85,6 +103,7 @@ import { ref } from 'vue'
 import { Badge, Button } from 'frappe-ui'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import SubmissionPreviewDialog from '@/components/assignments/SubmissionPreviewDialog.vue'
+import SubmissionTypeIcon from '@/components/assignments/SubmissionTypeIcon.vue'
 import SubmitAssignmentDialog from '@/components/assignments/SubmitAssignmentDialog.vue'
 import { useScratchAssignment } from '@/components/assignments/scratchEditor'
 import { formatDateTime } from '@/lib/dates'
@@ -108,8 +127,7 @@ const emit = defineEmits<{
 }>()
 
 const columns: Column[] = [
-	{ header: 'Title', key: 'title', variant: 'primary' },
-	{ header: 'Due', key: 'due', width: '11rem' },
+	{ header: 'Assignment', key: 'title', variant: 'primary' },
 	{ header: 'Status', key: 'status', width: '8rem' },
 	{ header: 'Submitted', key: 'submitted', width: '11rem' },
 	{ header: '', key: 'actions', variant: 'actions', width: '12rem', align: 'right' },
@@ -134,6 +152,20 @@ function statusOf(assignment: CS17Assignment) {
 		props.submissionMap[assignment.name],
 		props.gradeMap?.[assignment.name],
 	)
+}
+
+function isOverdue(assignment: CS17Assignment): boolean {
+	return statusOf(assignment) !== 'Submitted' && new Date(assignment.due_date) < new Date()
+}
+
+/** The second line of the Submitted cell, once a grade is theirs to see. */
+function gradeLine(assignment: CS17Assignment): string {
+	if (!showsGrade(assignment)) return ''
+	const grade = props.gradeMap?.[assignment.name]
+	if (!grade) return ''
+	if (grade.grade) return `Grade ${grade.grade}`
+	if (grade.marks_obtained === null || grade.marks_obtained === undefined) return ''
+	return `${grade.marks_obtained} / ${assignment.max_marks ?? 0} marks`
 }
 
 function isScratch(assignment: CS17Assignment): boolean {
