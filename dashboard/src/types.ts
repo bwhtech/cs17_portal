@@ -90,6 +90,58 @@ export interface CS17Project {
 	last_saved_at: string | null
 }
 
+/** One row of `CS17 Result.scores` — a subject as it was graded. */
+export interface CS17ResultSubjectScore {
+	subject: string
+	subject_name: string | null
+	max_marks: number
+	marks_obtained: number
+	percentage: number
+	grade: string | null
+	is_pass: Bool
+	remarks: string | null
+}
+
+/**
+ * One row of `CS17 Result.assignments`. Reported beside the subjects, never
+ * counted into them — a Marks assignment fills `marks_obtained`, a Grade one
+ * fills `grade`, and a Not Graded one fills neither.
+ */
+export interface CS17ResultAssignmentScore {
+	assignment: string
+	assignment_title: string | null
+	assignment_type: AssignmentType | null
+	evaluation_type: EvaluationType | null
+	max_marks: number
+	marks_obtained: number | null
+	grade: string | null
+	is_submitted: Bool
+	due_date: string | null
+}
+
+/** A row of `get_student_results` — the report card without its tables. */
+export interface CS17ResultSummary {
+	name: string
+	exam: string
+	exam_name: string
+	quarter: string | null
+	total_marks_obtained: number
+	total_max_marks: number
+	percentage: number
+	overall_grade: string | null
+	result_status: 'Pass' | 'Fail' | null
+	published_on: string | null
+}
+
+/** `get_student_result` — one summary with its subject and assignment rows. */
+export interface CS17Result extends CS17ResultSummary {
+	cohort: string | null
+	student_name: string | null
+	remarks: string | null
+	scores: CS17ResultSubjectScore[]
+	assignments: CS17ResultAssignmentScore[]
+}
+
 /** One row of `list_cohort_submissions`. */
 export interface CohortSubmission {
 	name: string

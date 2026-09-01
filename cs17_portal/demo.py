@@ -105,9 +105,15 @@ def wipe():
 	profiles = frappe.get_all("CS17 Profile", filters={"user": ["in", users or [""]]}, pluck="name")
 	cohorts = [COHORT_NOW, COHORT_PAST]
 
+	exams = frappe.get_all("CS17 Exam", filters={"cohort": ["in", cohorts]}, pluck="name")
+
 	# Children before parents: grades hang off submissions, submissions off
-	# assignments, and every one of them off a profile.
+	# assignments, and every one of them off a profile. Results come before the
+	# marks they roll up, so deleting a marks document has no result to re-save.
 	for doctype, filters in [
+		("CS17 Result", {"exam": ["in", exams or [""]]}),
+		("CS17 Subject Marks", {"exam": ["in", exams or [""]]}),
+		("CS17 Exam", {"name": ["in", exams or [""]]}),
 		("CS17 Assignment Grade", {"assignment": ["in", assignments_in(cohorts) or [""]]}),
 		("CS17 Assignment Submission", {"student": ["in", profiles or [""]]}),
 		("CS17 Project", {"student": ["in", profiles or [""]]}),
@@ -158,6 +164,79 @@ def make_profile(email: str, first: str, last: str, kind: str, cohort: str | Non
 		}
 	).insert(ignore_permissions=True)
 	return profile.name
+
+
+# --------------------------------------------------------------------------- exams
+
+
+def ensure(doctype: str, key: dict, **values) -> str:
+	"""Get-or-create a shared master.
+
+	Quarters, subjects, patterns and grading scales are not scoped to a cohort, so
+	`wipe` leaves them alone and this reuses whatever is already there rather than
+	overwriting a real record that happens to share a name.
+	"""
+	existing = frappe.db.exists(doctype, key)
+	if existing:
+		return existing
+	return frappe.get_doc({"doctype": doctype, **key, **values}).insert(ignore_permissions=True).name
+
+
+def grade_bands(bands: list[tuple[str, float, float]]) -> list[dict]:
+	"""Grade bands from `(grade, min, max)` triples. Ranges may not overlap, so a
+	band ends just short of where the next one starts."""
+	return [{"grade": grade, "min_percent": low, "max_percent": high} for grade, low, high in bands]
+
+
+def split_marks(exam: str, student: str, subject: str, marks: tuple[float, float]) -> str:
+	"""Marks for a subject split by a pattern: theory first, then practical."""
+	theory, practical = marks
+	return subject_marks(
+		exam,
+		student,
+		subject,
+		[
+			{"component": "Theory", "marks_obtained": theory},
+			{"component": "Practical", "marks_obtained": practical},
+		],
+	)
+
+
+def total_marks(exam: str, student: str, subject: str, marks: float) -> str:
+	"""Marks for a subject with no pattern, scored as one total."""
+	return subject_marks(exam, student, subject, [{"component": "Total", "marks_obtained": marks}])
+
+
+def subject_marks(exam: str, student: str, subject: str, components: list[dict]) -> str:
+	doc = frappe.get_doc(
+		{
+			"doctype": "CS17 Subject Marks",
+			"exam": exam,
+			"student": student,
+			"subject": subject,
+			"components": components,
+		}
+	).insert(ignore_permissions=True)
+	return doc.name
+
+
+def result(exam: str, student: str, published_on: str | None = None, remarks: str | None = None) -> str:
+	"""One student's result, published when a timestamp is given.
+
+	Every total on it is pulled from the subject marks already entered, so this
+	types nothing but the two fields a human would: what to say, and when to release.
+	"""
+	doc = frappe.get_doc(
+		{
+			"doctype": "CS17 Result",
+			"exam": exam,
+			"student": student,
+			"remarks": remarks,
+			"is_published": 1 if published_on else 0,
+			"published_on": published_on,
+		}
+	).insert(ignore_permissions=True)
+	return doc.name
 
 
 # --------------------------------------------------------------------------- seed
@@ -491,6 +570,157 @@ def run():
 				"description": "Please mark this one.",
 			}
 		)
+	# `bench execute` has no request to commit for it.
+	frappe.db.commit()  # nosemgrep
+
+	# Exams and results, so the student results pages and the report card print
+	# format have something to show.
+	# Seeding as the record's real author, so the data reads true.
+	frappe.set_user("Administrator")  # nosemgrep
+
+	quarters = {
+		"Q2": ensure("CS17 Quarter", {"quarter_name": "Q2"}, description="Second term."),
+		"Q3": ensure("CS17 Quarter", {"quarter_name": "Q3"}, description="Third term."),
+	}
+
+	subjects = {
+		"python": ensure(
+			"CS17 Subject", {"subject_code": "PY101"}, subject_name="Python Basics", is_active=1
+		),
+		"scratch": ensure(
+			"CS17 Subject", {"subject_code": "SCR101"}, subject_name="Scratch & Games", is_active=1
+		),
+		"maths": ensure(
+			"CS17 Subject",
+			{"subject_code": "MATH101"},
+			subject_name="Computational Maths",
+			is_active=1,
+		),
+	}
+
+	pattern = ensure(
+		"CS17 Subject Pattern",
+		{"pattern_name": "Theory 40 / Practical 60"},
+		components=[
+			{"component": "Theory", "weightage": 40},
+			{"component": "Practical", "weightage": 60},
+		],
+	)
+
+	# Two scales, because a Scratch project and a written paper are not marked on
+	# the same curve — the per-subject scale is the point of the model.
+	standard_scale = ensure(
+		"CS17 Grading Scale",
+		{"scale_name": "CS17 Standard"},
+		passing_percentage=40,
+		is_default=1,
+		bands=grade_bands(
+			[("E", 0, 39.99), ("D", 40, 54.99), ("C", 55, 69.99), ("B", 70, 84.99), ("A", 85, 100)]
+		),
+	)
+	project_scale = ensure(
+		"CS17 Grading Scale",
+		{"scale_name": "CS17 Project"},
+		passing_percentage=35,
+		bands=grade_bands(
+			[("E", 0, 34.99), ("D", 35, 49.99), ("C", 50, 64.99), ("B", 65, 79.99), ("A", 80, 100)]
+		),
+	)
+
+	# The result reports the quarter's assignments beside the exam, so the two
+	# published ones are filed under the quarter the current exam sits in.
+	for key in ("poster", "worksheet"):
+		frappe.db.set_value("CS17 Assignment", assignments[key], "quarter", quarters["Q3"])
+
+	q3_exam = frappe.get_doc(
+		{
+			"doctype": "CS17 Exam",
+			"exam_name": "Quarter 3 Assessment",
+			"cohort": COHORT_NOW,
+			"quarter": quarters["Q3"],
+			"grading_scale": standard_scale,
+			"start_date": add_days(now, -12),
+			"end_date": add_days(now, -9),
+			"subjects": [
+				{
+					"subject": subjects["python"],
+					"max_marks": 100,
+					"subject_pattern": pattern,
+					"grading_scale": standard_scale,
+					"examiner": faculty["Priya"]["profile"],
+				},
+				{
+					"subject": subjects["scratch"],
+					"max_marks": 50,
+					"subject_pattern": pattern,
+					"grading_scale": project_scale,
+					"examiner": faculty["Arjun"]["profile"],
+				},
+				# No pattern: a subject marked as one total, alongside two split ones.
+				{
+					"subject": subjects["maths"],
+					"max_marks": 50,
+					"grading_scale": standard_scale,
+					"examiner": faculty["Priya"]["profile"],
+				},
+			],
+		}
+	).insert(ignore_permissions=True)
+
+	q2_exam = frappe.get_doc(
+		{
+			"doctype": "CS17 Exam",
+			"exam_name": "Quarter 2 Assessment",
+			"cohort": COHORT_NOW,
+			"quarter": quarters["Q2"],
+			"grading_scale": standard_scale,
+			"start_date": add_days(now, -75),
+			"end_date": add_days(now, -73),
+			"subjects": [
+				{"subject": subjects["python"], "max_marks": 50, "grading_scale": standard_scale},
+				{"subject": subjects["maths"], "max_marks": 50, "grading_scale": standard_scale},
+			],
+		}
+	).insert(ignore_permissions=True)
+
+	# Marks are the only figure typed anywhere; every grade, percentage and
+	# total below is derived from these on save.
+	q3_marks = {
+		# student:  Python (Theory /40, Practical /60), Scratch (/20, /30), Maths (/50)
+		"Zoya": [(34, 52), (17, 26), 44],
+		"Meera": [(28, 44), (13, 20), 32],
+		# Rohan fails Python, so a result reads `Fail` even though he passes the rest.
+		"Rohan": [(15, 22), (12, 19), 24],
+		"Kabir": [(30, 45), (15, 24), 38],
+	}
+	for student, (python_marks, scratch_marks, maths_marks) in q3_marks.items():
+		profile = students[student]["profile"]
+		split_marks(q3_exam.name, profile, subjects["python"], python_marks)
+		split_marks(q3_exam.name, profile, subjects["scratch"], scratch_marks)
+		total_marks(q3_exam.name, profile, subjects["maths"], maths_marks)
+
+	for student, (python_marks, maths_marks) in {
+		"Zoya": (41, 45),
+		"Meera": (33, 36),
+		"Rohan": (26, 29),
+	}.items():
+		profile = students[student]["profile"]
+		total_marks(q2_exam.name, profile, subjects["python"], python_marks)
+		total_marks(q2_exam.name, profile, subjects["maths"], maths_marks)
+
+	# Published for three students; Kabir's is entered but held back, so the
+	# permission rule has a result that must stay invisible to its own student.
+	for student in ("Zoya", "Meera", "Rohan"):
+		result(q2_exam.name, students[student]["profile"], published_on=add_days(now, -60))
+	for student in ("Zoya", "Meera", "Rohan"):
+		result(
+			q3_exam.name,
+			students[student]["profile"],
+			published_on=add_to_date(now, hours=-4),
+			remarks="Report card for the third quarter. Speak to your mentor about anything unclear.",
+		)
+	result(q3_exam.name, students["Kabir"]["profile"])
+
 	# `bench execute` has no request to commit for it.
 	frappe.db.commit()  # nosemgrep
 
