@@ -353,3 +353,112 @@ export async function createTestFaculty(
 
 	return { email, password, profileName: profile.name };
 }
+
+export const TEST_EXAM_PREFIX = "E2E Exam";
+
+export interface TestResult {
+	result: string;
+	exam: string;
+	examName: string;
+	subject: string;
+	subjectName: string;
+	marks: string;
+	scale: string;
+}
+
+/**
+ * A published result for one student, with the whole chain an exam needs
+ * behind it: a subject, a grading scale, the exam itself and the marks the
+ * result rolls up. Nothing on a result is typed — every total, grade and
+ * pass/fail below is derived from `marksObtained` when the result saves.
+ */
+export async function createTestResult(
+	request: APIRequestContext,
+	options: {
+		cohort: string;
+		student: string;
+		marksObtained?: number;
+		maxMarks?: number;
+	},
+): Promise<TestResult> {
+	const suffix = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+	const maxMarks = options.maxMarks ?? 100;
+	const marksObtained = options.marksObtained ?? 82;
+
+	const subjectName = `E2E Subject ${suffix}`;
+	const subject = await createDoc<{ name: string }>(request, "CS17 Subject", {
+		subject_code: `E2E-${suffix}`,
+		subject_name: subjectName,
+		is_active: 1,
+	});
+
+	// Not `is_default`: that flag unsets itself on every other scale on the site.
+	const scale = await createDoc<{ name: string }>(request, "CS17 Grading Scale", {
+		scale_name: `E2E Scale ${suffix}`,
+		passing_percentage: 40,
+		bands: [
+			{ grade: "F", min_percent: 0, max_percent: 39.99 },
+			{ grade: "P", min_percent: 40, max_percent: 100 },
+		],
+	});
+
+	const examName = `${TEST_EXAM_PREFIX} ${suffix}`;
+	const exam = await createDoc<{ name: string }>(request, "CS17 Exam", {
+		exam_name: examName,
+		cohort: options.cohort,
+		grading_scale: scale.name,
+		subjects: [
+			{
+				subject: subject.name,
+				max_marks: maxMarks,
+				grading_scale: scale.name,
+			},
+		],
+	});
+
+	// No pattern on the exam row, so the subject is marked as a single total.
+	const marks = await createDoc<{ name: string }>(request, "CS17 Subject Marks", {
+		exam: exam.name,
+		student: options.student,
+		subject: subject.name,
+		components: [{ component: "Total", marks_obtained: marksObtained }],
+	});
+
+	// Publishing is blocked while a subject has no marks, so this comes last.
+	const result = await createDoc<{ name: string }>(request, "CS17 Result", {
+		exam: exam.name,
+		student: options.student,
+		is_published: 1,
+		published_on: "2026-01-01 00:00:00",
+	});
+
+	return {
+		result: result.name,
+		exam: exam.name,
+		examName,
+		subject: subject.name,
+		subjectName,
+		marks: marks.name,
+		scale: scale.name,
+	};
+}
+
+/** Children before parents, or the exam refuses to go while marks point at it. */
+export async function cleanupTestResult(
+	request: APIRequestContext,
+	seeded: TestResult,
+): Promise<void> {
+	for (const [doctype, name] of [
+		["CS17 Result", seeded.result],
+		["CS17 Subject Marks", seeded.marks],
+		["CS17 Exam", seeded.exam],
+		["CS17 Subject", seeded.subject],
+		["CS17 Grading Scale", seeded.scale],
+	] as const) {
+		try {
+			await deleteDoc(request, doctype, name);
+		} catch (error) {
+			console.warn(`Failed to delete ${doctype} ${name}:`, error);
+		}
+	}
+}

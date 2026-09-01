@@ -609,6 +609,118 @@ def get_student_grades() -> dict:
 	return {"grades": grades, "next_publish_on": upcoming[0].published_on if upcoming else None}
 
 
+@frappe.whitelist(methods=["GET"])
+def get_student_results() -> list:
+	"""Every published result for the signed-in student, newest first.
+
+	`get_list`, not `get_all`: the doctype's `get_permission_query_conditions` narrows a
+	student to their own published results, and going through it means the portal and
+	the desk cannot drift apart. The filters repeat that rule rather than rely on it.
+	"""
+	student = require_current_student()
+	results = frappe.get_list(
+		"CS17 Result",
+		filters={"student": student, "is_published": 1},
+		fields=[
+			"name",
+			"exam",
+			"quarter",
+			"total_marks_obtained",
+			"total_max_marks",
+			"percentage",
+			"overall_grade",
+			"result_status",
+			"published_on",
+		],
+		order_by="published_on desc, modified desc",
+		# `get_list` paginates at 20 by default; a student's whole result history
+		# is a handful of rows and the page shows all of it.
+		limit_page_length=0,
+	)
+	_attach_exam_names(results)
+	return results
+
+
+@frappe.whitelist(methods=["GET"])
+def get_student_result(result: str) -> dict:
+	"""One published result with its subject and assignment rows.
+
+	`RES-{exam}-###` is guessable, so the name alone is not proof of ownership —
+	`check_permission` runs the doctype's `has_permission`, which is what holds a
+	student to their own published result.
+	"""
+	require_current_student()
+	doc = frappe.get_doc("CS17 Result", result)
+	doc.check_permission("read")
+	return {
+		"name": doc.name,
+		"exam": doc.exam,
+		"exam_name": _exam_name(doc.exam),
+		"quarter": doc.quarter,
+		"cohort": doc.cohort,
+		"student_name": doc.student_name,
+		"published_on": doc.published_on,
+		"total_marks_obtained": doc.total_marks_obtained,
+		"total_max_marks": doc.total_max_marks,
+		"percentage": doc.percentage,
+		"overall_grade": doc.overall_grade,
+		"result_status": doc.result_status,
+		"remarks": doc.remarks,
+		"scores": [
+			{
+				"subject": row.subject,
+				"subject_name": row.subject_name,
+				"max_marks": row.max_marks,
+				"marks_obtained": row.marks_obtained,
+				"percentage": row.percentage,
+				"grade": row.grade,
+				"is_pass": row.is_pass,
+				"remarks": row.remarks,
+			}
+			for row in doc.scores
+		],
+		"assignments": [
+			{
+				"assignment": row.assignment,
+				"assignment_title": row.assignment_title,
+				"assignment_type": row.assignment_type,
+				"evaluation_type": row.evaluation_type,
+				"max_marks": row.max_marks,
+				"marks_obtained": row.marks_obtained,
+				"grade": row.grade,
+				"is_submitted": row.is_submitted,
+				"due_date": row.due_date,
+			}
+			for row in doc.assignments
+		],
+	}
+
+
+def _attach_exam_names(results: list) -> None:
+	"""Fill `exam_name` on result rows, in one query rather than one per row."""
+	exams = list({row.exam for row in results if row.exam})
+	if not exams:
+		return
+	names = dict(
+		frappe.get_all(
+			"CS17 Exam",
+			filters=[["name", "in", exams]],
+			fields=["name", "exam_name"],
+			as_list=True,
+		)
+	)
+	for row in results:
+		row.exam_name = names.get(row.exam) or row.exam
+
+
+def _exam_name(exam: str | None) -> str | None:
+	"""The exam's title. Students have no read on `CS17 Exam`, but the exam of a
+	result they may already read gives away nothing the result does not."""
+	if not exam:
+		return None
+	return frappe.db.get_value("CS17 Exam", exam, "exam_name") or exam
+
+
 @frappe.whitelist(methods=["POST"])
 def update_assignment(
 	assignment: str,

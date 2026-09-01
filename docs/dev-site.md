@@ -31,9 +31,9 @@ Everyone shares the password `Cs17-Demo-Pass-123`.
 
 | Who | Sign in as | Sees |
 |---|---|---|
-| Student | `zoya@cs17.test` | 5 published assignments, a marked poster, two Scratch projects, 3 announcements |
+| Student | `zoya@cs17.test` | 5 published assignments, a marked poster, two Scratch projects, 3 announcements, two published results |
 | Student | `meera@cs17.test` | an `A` on the worksheet — the other evaluation type |
-| Student | `rohan@cs17.test` | one marked assignment and nothing else, for a quieter dashboard |
+| Student | `rohan@cs17.test` | one marked assignment and nothing else, for a quieter dashboard; his Q3 result reads `Fail` |
 | Faculty | `priya@cs17.test` | 7 assignments across both cohorts (published, scheduled, draft), 13 submissions, 5 announcements |
 | Faculty | `arjun@cs17.test` | two submissions assigned to him, for "assigned to you" |
 
@@ -43,6 +43,14 @@ evaluation types (marks out of 20 or 10, and the A–E scale); a published grade
 unpublished one, and submissions with no grade at all; announcements in all three
 variants, dismissible and not, cohort-scoped and all-cohorts; and a second cohort so the
 faculty cohort filter has two sides.
+
+Two exams as well — a Q3 assessment over three subjects (two split by a pattern, one marked as a
+single total, graded on two different scales) and a simpler Q2 one. Results are published for
+three students and held back for a fourth, so the permission rule has a result that must stay
+invisible to its own student.
+
+Quarters, subjects, patterns and grading scales are not scoped to a cohort, so the seed creates
+them only when they are missing and `wipe` leaves them behind.
 
 Submissions carry real files — a generated PNG and a one-page PDF — so the image and PDF
 previews have something to show.

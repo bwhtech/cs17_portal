@@ -239,9 +239,37 @@ These were not specified and are easy to change:
 - **Publishing is not blocked** by an ungraded assignment, unlike a subject with no marks — not
   submitting is a legitimate outcome, not a data-entry gap.
 
+## The student's view
+
+Two pages in the `dashboard` SPA, behind `Results` in the student sidebar:
+
+| Route | Shows |
+|---|---|
+| `/results` | One row per published result: exam, quarter, marks, percentage, grade, pass/fail |
+| `/results/:resultId` | The report card — totals, the subject-by-subject table, the quarter's assignments, remarks |
+
+They read two endpoints, both of which resolve the student from the session and never take one
+as an argument:
+
+- `cs17_portal.api.get_student_results` — the list. It goes through `frappe.get_list`, so the
+  doctype's `get_permission_query_conditions` is what narrows the rows; the filters on the call
+  repeat that rule rather than replace it.
+- `cs17_portal.api.get_student_result` — one result with its two child tables. `RES-{exam}-###`
+  is guessable, so the name alone proves nothing: `check_permission("read")` runs the doctype's
+  `has_permission`, and another student's result — or an unpublished one — is a 403 the page
+  renders as "not available".
+
+The detail page's **Download** button hands the report card to
+`frappe.utils.print_format.download_pdf` with the `CS17 Result Card` format, so the PDF a student
+saves is the one the desk prints. `CS17 Student` has `print` on the doctype, and the same
+`has_permission` gates it.
+
+The list polls on the standard interval rather than setting a publish timer the way the
+assignment and grade pages do: a result becomes visible when `auto_publish_results` flips
+`is_published`, which is a scheduler tick rather than a timestamp the client can read ahead.
+
 ## Not yet built
 
-- The print format for the report card — pending the design.
-- Faculty and student UI in the `dashboard` SPA. Results are desk-only for now.
+- Faculty UI in the `dashboard` SPA. Entering marks and publishing results is desk-only.
 - Tests. `test_cs17_result.py` should cover grade-band lookup at boundaries (0, exactly on a band
   edge, 100), the duplicate guard, and the frozen-after-publish rule.
