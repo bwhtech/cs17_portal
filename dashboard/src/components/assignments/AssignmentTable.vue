@@ -14,20 +14,12 @@
 		<!-- Two lines per row: the title, then what to hand in and when it is
 		     due — the pair a student scans for. -->
 		<template #cell-title="{ row }">
-			<div class="min-w-0">
-				<RouterLink
-					:to="`/assignments/${row.name}/submission`"
-					class="block truncate text-base font-normal text-ink-gray-8 hover:underline"
-				>
-					{{ row.title }}
-				</RouterLink>
-				<div class="mt-1.5 truncate text-sm font-normal text-ink-gray-5">
-					{{ row.submission_type ?? 'Any' }} ·
-					<span :class="isOverdue(row) && 'text-ink-red-6'">
-						Due {{ formatDateTime(row.due_date) }}
-					</span>
-				</div>
-			</div>
+			<RowTitle :title="row.title" :to="`/assignments/${row.name}/submission`">
+				{{ row.submission_type ?? 'Any' }} ·
+				<span :class="isOverdue(row) && 'text-ink-red-6'">
+					Due {{ formatDateTime(row.due_date) }}
+				</span>
+			</RowTitle>
 		</template>
 
 		<template #cell-status="{ row }">
@@ -103,8 +95,9 @@
 import { ref } from 'vue'
 import { Badge, Button } from 'frappe-ui'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
+import RowTitle from '@/components/common/RowTitle.vue'
+import SubmissionTypeIcon from '@/components/common/SubmissionTypeIcon.vue'
 import SubmissionPreviewDialog from '@/components/assignments/SubmissionPreviewDialog.vue'
-import SubmissionTypeIcon from '@/components/assignments/SubmissionTypeIcon.vue'
 import SubmitAssignmentDialog from '@/components/assignments/SubmitAssignmentDialog.vue'
 import { useScratchAssignment } from '@/components/assignments/scratchEditor'
 import { formatDateTime } from '@/lib/dates'

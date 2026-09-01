@@ -43,10 +43,12 @@ declare module 'vue' {
     PublishFields: typeof import('./src/components/common/PublishFields.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    RowTitle: typeof import('./src/components/common/RowTitle.vue')['default']
     ScratchFrame: typeof import('./src/components/scratch/ScratchFrame.vue')['default']
     SettingsDialog: typeof import('./src/components/settings/SettingsDialog.vue')['default']
     SubmissionPlayer: typeof import('./src/components/grading/SubmissionPlayer.vue')['default']
     SubmissionPreviewDialog: typeof import('./src/components/assignments/SubmissionPreviewDialog.vue')['default']
+    SubmissionTypeIcon: typeof import('./src/components/common/SubmissionTypeIcon.vue')['default']
     SubmitAssignmentDialog: typeof import('./src/components/assignments/SubmitAssignmentDialog.vue')['default']
     SubmitProjectDialog: typeof import('./src/components/projects/SubmitProjectDialog.vue')['default']
   }

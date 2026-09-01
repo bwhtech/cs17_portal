@@ -1,7 +1,13 @@
 <template>
 	<!-- Desktop: one frappe-ui List in column mode. -->
+	<!-- `list-row-px-3` is what keeps the header aligned with the rows: an
+	     interactive row insets its content by 0.75rem on its own, but the
+	     header only picks that up from this public hook. `-mx-3` then lets the
+	     hover surface bleed into the page gutter while the text stays lined up
+	     with everything above it. -->
 	<List
 		v-if="isDesktop"
+		class="-mx-3 list-row-px-3"
 		:columns="trackSizes"
 		:selectable="selectable"
 		:selection="selection"

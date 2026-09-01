@@ -4,7 +4,8 @@
 			<Button
 				variant="solid"
 				theme="gray"
-				icon-left="lucide-plus"
+				:icon-left="isDesktop ? 'lucide-plus' : undefined"
+				:icon="isDesktop ? undefined : 'lucide-plus'"
 				label="New announcement"
 				@click="openNew"
 			/>
@@ -114,6 +115,7 @@
 import { computed, ref } from 'vue'
 import { Badge, Button, toast, useCall, useList } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
+import { useBreakpoint } from '@/composables/useBreakpoint'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import AnnouncementFormDialog from '@/components/faculty/AnnouncementFormDialog.vue'
 import DeleteAnnouncementDialog from '@/components/faculty/DeleteAnnouncementDialog.vue'
@@ -220,4 +222,6 @@ function variantDot(variant: string): string {
 function variantLabel(variant: string): string {
 	return variant ? variant[0].toUpperCase() + variant.slice(1) : 'Info'
 }
+
+const { isDesktop } = useBreakpoint()
 </script>

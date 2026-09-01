@@ -4,7 +4,8 @@
 			<Button
 				variant="solid"
 				theme="gray"
-				icon-left="lucide-plus"
+				:icon-left="isDesktop ? 'lucide-plus' : undefined"
+				:icon="isDesktop ? undefined : 'lucide-plus'"
 				label="New Assignment"
 				@click="openNew"
 			/>
@@ -54,44 +55,34 @@
 				:rows="rows"
 				:row-key="(row: AssignmentRow) => row.name"
 				:loading="assignmentsCall.loading && !assignmentsCall.data"
+				:row-height="60"
 				empty="No assignments yet."
 			>
+				<template #cell-icon="{ row }">
+					<SubmissionTypeIcon :submission-type="row.submission_type" />
+				</template>
+
+				<!-- Same two-line row as the student list: title over the
+				     cohort, what is expected, and when it is due. -->
 				<template #cell-title="{ row }">
-					<button
-						type="button"
-						class="truncate text-left text-ink-gray-8 hover:underline"
-						@click="router.push(`/faculty/assignments/${row.name}`)"
-					>
-						{{ row.title }}
-					</button>
-				</template>
-
-				<template #cell-cohort="{ row }">
-					<span class="text-ink-gray-6">{{ row.cohort }}</span>
-				</template>
-
-				<template #cell-submission_type="{ row }">
-					<Badge :label="row.submission_type" theme="gray" variant="subtle" />
-				</template>
-
-				<template #cell-due_date="{ row }">
-					<span class="text-ink-gray-6">{{ formatDateTime(row.due_date) }}</span>
+					<RowTitle :title="row.title" :to="`/faculty/assignments/${row.name}`">
+						{{ row.cohort }} · {{ row.submission_type ?? 'Any' }} · Due
+						{{ formatDateTime(row.due_date) }}
+					</RowTitle>
 				</template>
 
 				<template #cell-submission_count="{ row }">
-					<Badge
-						:label="String(row.submission_count ?? 0)"
-						theme="gray"
-						variant="outline"
-					/>
+					<span class="text-base text-ink-gray-7">
+						{{ row.submission_count ?? 0 }}
+					</span>
 				</template>
 
 				<template #cell-status="{ row }">
-					<div class="flex flex-col items-start gap-0.5">
+					<div class="min-w-0 leading-tight">
 						<Badge :label="row.statusLabel" :theme="row.statusTheme" variant="subtle" />
-						<span v-if="row.scheduledAt" class="text-xs text-ink-gray-5">
+						<div v-if="row.scheduledAt" class="mt-1.5 truncate text-sm text-ink-gray-5">
 							{{ row.scheduledAt }}
-						</span>
+						</div>
 					</div>
 				</template>
 
@@ -138,13 +129,15 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import { Badge, Button, Select, useCall, useList } from 'frappe-ui'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
+import RowTitle from '@/components/common/RowTitle.vue'
+import SubmissionTypeIcon from '@/components/common/SubmissionTypeIcon.vue'
 import AssignmentFormDialog from '@/components/faculty/AssignmentFormDialog.vue'
 import DeleteAssignmentDialog from '@/components/faculty/DeleteAssignmentDialog.vue'
 import PublishAssignmentDialog from '@/components/faculty/PublishAssignmentDialog.vue'
 import AppHeader from '@/components/shell/AppHeader.vue'
+import { useBreakpoint } from '@/composables/useBreakpoint'
 import { formatDateTime } from '@/lib/dates'
 import type { CS17Assignment } from '@/types'
 
@@ -159,16 +152,12 @@ interface AssignmentRow extends CS17Assignment {
 const ALL_COHORTS = 'all'
 
 const columns: Column[] = [
-	{ header: 'Title', key: 'title', variant: 'primary' },
-	{ header: 'Cohort', key: 'cohort', width: '8rem' },
-	{ header: 'Type', key: 'submission_type', width: '7rem' },
-	{ header: 'Due', key: 'due_date', width: '10rem' },
+	{ header: '', key: 'icon', variant: 'avatar', width: '2.75rem' },
+	{ header: 'Assignment', key: 'title', variant: 'primary' },
 	{ header: 'Submissions', key: 'submission_count', width: '7rem' },
 	{ header: 'Status', key: 'status', width: '9rem' },
 	{ header: '', key: 'actions', variant: 'actions', width: '12rem', align: 'right' },
 ]
-
-const router = useRouter()
 
 const cohortFilter = ref(ALL_COHORTS)
 const draftsOpen = ref(false)
@@ -242,4 +231,6 @@ function openDraft(name: string) {
 watch(formOpen, (open) => {
 	if (!open) editingDraft.value = null
 })
+
+const { isDesktop } = useBreakpoint()
 </script>
