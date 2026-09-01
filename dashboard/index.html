@@ -2,23 +2,27 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/assets/cs17_portal/dashboard/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CS17 Portal</title>
-    <!-- Apply the saved theme before the app bundle runs, so the page doesn't flash light before switching to dark on load. -->
+    <!-- Paint the saved scheme before the bundle runs, so a dark-mode user
+         doesn't get a white flash on every load. Mirrors frappe-ui's
+         `useColorScheme`: same `theme` key, same `data-theme` attribute. -->
     <script>
       try {
-        if (localStorage.getItem("theme") === "dark")
-          document.documentElement.classList.add("dark");
+        var stored = localStorage.getItem("theme");
+        var resolved =
+          stored === "dark" || stored === "light"
+            ? stored
+            : window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+        document.documentElement.setAttribute("data-theme", resolved);
       } catch (e) {}
     </script>
-    <script type="module" src="/src/main.tsx"></script>
   </head>
   <body>
-    <div id="root"></div>
-    <script>
-      window.frappe_boot = {{ boot | tojson }};
-      window.csrf_token = '{{ frappe.session.csrf_token }}';
-    </script>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

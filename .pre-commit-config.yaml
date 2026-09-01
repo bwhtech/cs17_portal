@@ -35,11 +35,14 @@ repos:
     hooks:
       - id: prettier
         types_or: [javascript, vue, scss]
-        # Ignore any files that might contain jinja / bundles
+        # Ignore any files that might contain jinja / bundles, and the
+        # dashboard, which is formatted by its own pinned Prettier 3 through
+        # `yarn lint` — this hook is Prettier 2 and the two disagree.
         exclude: |
             (?x)^(
                 cs17_portal/public/dist/.*|
                 cs17_portal/public/dashboard/.*|
+                dashboard/.*|
                 .*node_modules.*|
                 .*boilerplate.*|
                 cs17_portal/templates/includes/.*|
