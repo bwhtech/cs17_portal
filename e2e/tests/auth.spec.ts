@@ -9,10 +9,16 @@ interface FrappeBoot {
 	current_user?: string;
 }
 
-function readBoot(page: import("@playwright/test").Page) {
-	return page.evaluate(
-		() => (window as unknown as { frappe_boot?: FrappeBoot }).frappe_boot ?? null,
-	);
+/**
+ * `frappe-ui/vite`'s jinjaBootData plugin writes each key of the boot dict
+ * (see `get_boot()` in `cs17_portal/www/dashboard.py`) straight onto `window`,
+ * so there is no `window.frappe_boot` object to read any more.
+ */
+function readBoot(page: import("@playwright/test").Page): Promise<FrappeBoot | null> {
+	return page.evaluate(() => {
+		const { current_user } = window as unknown as FrappeBoot;
+		return current_user === undefined ? null : { current_user };
+	});
 }
 
 test.describe("Dashboard access - authenticated", () => {

@@ -111,7 +111,7 @@ def wipe():
 		("CS17 Assignment Submission", {"student": ["in", profiles or [""]]}),
 		("CS17 Project", {"student": ["in", profiles or [""]]}),
 		("CS17 Assignment", {"cohort": ["in", cohorts]}),
-		("CS17 Announcement", {"cohort": ["in", cohorts + [None]]}),
+		("CS17 Announcement", {"cohort": ["in", [*cohorts, None]]}),
 		("CS17 Profile", {"name": ["in", profiles or [""]]}),
 		("User", {"name": ["in", users or [""]]}),
 		("CS17 Cohort", {"name": ["in", cohorts]}),
@@ -212,7 +212,9 @@ def run():
 	def assignment(key: str, **values):
 		doc = frappe.get_doc({"doctype": "CS17 Assignment", **values})
 		doc.naming_series = (
-			"GRADED-.{cohort}.-.###" if values["assignment_type"] == "Graded" else "NOT-GRADED-.{cohort}.-.###"
+			"GRADED-.{cohort}.-.###"
+			if values["assignment_type"] == "Graded"
+			else "NOT-GRADED-.{cohort}.-.###"
 		)
 		doc.insert()
 		assignments[key] = doc.name
@@ -249,7 +251,7 @@ def run():
 		due_date=add_days(now, 2),
 		is_published=1,
 		description=(
-			"Work through questions 1–8 on sorting and searching.\n\n"
+			"Work through questions 1-8 on sorting and searching.\n\n"
 			"Show your working — an answer with no reasoning gets no marks. "
 			"Scan or export to a single PDF before submitting."
 		),
@@ -300,7 +302,7 @@ def run():
 		assignment_type="Not Graded",
 		due_date=add_days(now, 20),
 		is_published=0,
-		description="Two paragraphs on chapters 1–3. Draft — not published yet.",
+		description="Two paragraphs on chapters 1-3. Draft, not published yet.",
 	)
 	assignment(
 		"legacy",
@@ -336,7 +338,10 @@ def run():
 			}
 		).insert(ignore_permissions=True)
 		if file:
-			doc.db_set("submission_document", attach("CS17 Assignment Submission", doc.name, "submission_document", filename, file))
+			doc.db_set(
+				"submission_document",
+				attach("CS17 Assignment Submission", doc.name, "submission_document", filename, file),
+			)
 		return doc.name
 
 	# The poster is closed and marked: everyone submitted, most are graded.

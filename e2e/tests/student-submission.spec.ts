@@ -21,6 +21,15 @@ interface StudentInfo {
 const SUBMIT_METHOD =
 	"cs17_portal.cs17_portal.doctype.cs17_assignment_submission.cs17_assignment_submission.submit_assignment";
 
+/**
+ * The assignment list is a frappe-ui List: rows are divs with a `list-row`
+ * slot, not `<tr>`. The title only ever appears in its own row, so filtering on
+ * it is enough to scope the row's action buttons.
+ */
+function assignmentRow(page: Page, title: string) {
+	return page.locator('[data-slot="list-row"]').filter({ hasText: title });
+}
+
 async function submitAsStudent(page: Page, assignment: string, fileUrl: string) {
 	await page.goto("/dashboard");
 	await page.waitForFunction(
@@ -223,7 +232,7 @@ test.describe("Student submission types", () => {
 		page,
 	}) => {
 		await page.goto("/dashboard/assignments");
-		const row = page.locator("tr", { hasText: scratch.title });
+		const row = assignmentRow(page, scratch.title);
 		await row.getByRole("button", { name: "Submit" }).click();
 
 		await page.waitForURL(
@@ -232,6 +241,10 @@ test.describe("Student submission types", () => {
 				url.pathname.endsWith("/edit") &&
 				url.searchParams.get("assignment") === scratch.name,
 		);
+
+		// The defaults are written as the editor frame mounts, which waits on the
+		// project doc — so read them once the frame is actually there.
+		await expect(page.getByTitle("Scratch editor")).toBeVisible();
 
 		const editorDefaults = await page.evaluate(() => ({
 			theme: localStorage.getItem("tw:theme"),
@@ -252,7 +265,8 @@ test.describe("Student submission types", () => {
 
 		await dialog.getByRole("button", { name: "Submit", exact: true }).click();
 		await expect(dialog.getByText("Submission successful")).toBeVisible();
-		await dialog.getByRole("button", { name: "Go to Dashboard" }).click();
+		// `route="/"` makes this frappe-ui Button render as a router link.
+		await dialog.getByRole("link", { name: "Go to Dashboard" }).click();
 		await page.waitForURL(
 			(url) => url.pathname === "/dashboard" || url.pathname === "/dashboard/",
 		);
@@ -264,7 +278,7 @@ test.describe("Student submission types", () => {
 		const project = await submitScratchAsStudent(page, scratch.name, scratch.title);
 
 		await page.goto("/dashboard");
-		const row = page.locator("tr", { hasText: scratch.title });
+		const row = assignmentRow(page, scratch.title);
 		await row.getByRole("button", { name: "Preview" }).click();
 
 		await page.waitForURL(
@@ -295,14 +309,15 @@ test.describe("Student submission types", () => {
 		});
 
 		await page.goto("/dashboard/assignments");
-		const row = page.locator("tr", { hasText: scratchGraded.title });
+		const row = assignmentRow(page, scratchGraded.title);
 		await row.getByRole("button", { name: "Preview" }).click();
 		await page.waitForURL(
 			(url) =>
 				url.pathname.endsWith("/edit") &&
 				url.searchParams.get("readonly") === "1",
 		);
-		await expect(page.getByTitle("Scratch editor")).toBeVisible();
+		// A read-only frame titles itself as the player, not the editor.
+		await expect(page.getByTitle("Scratch project player")).toBeVisible();
 
 		await expect(page.getByText("View only")).toBeVisible();
 		await expect(
@@ -339,7 +354,7 @@ test.describe("Student submission types", () => {
 	test("submit dialog adapts to the assignment type", async ({ page }) => {
 		await page.goto("/dashboard/assignments");
 
-		const pdfRow = page.locator("tr", { hasText: uiPdf.title });
+		const pdfRow = assignmentRow(page, uiPdf.title);
 		await pdfRow.getByRole("button", { name: "Submit" }).click();
 		await expect(page.getByText("Upload a PDF only")).toBeVisible();
 		await expect(page.locator('input[type="file"]')).toHaveAttribute(
@@ -348,7 +363,7 @@ test.describe("Student submission types", () => {
 		);
 		await page.keyboard.press("Escape");
 
-		const urlRow = page.locator("tr", { hasText: uiUrl.title });
+		const urlRow = assignmentRow(page, uiUrl.title);
 		await urlRow.getByRole("button", { name: "Submit" }).click();
 		await expect(page.getByText("Paste a URL only")).toBeVisible();
 		await expect(page.locator('input[type="url"]')).toBeVisible();

@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import {
 	CS17Assignment,
 	CS17Cohort,
@@ -18,6 +18,19 @@ import {
 import { deleteDoc, updateDoc, uploadFile } from "../helpers/frappe";
 
 const DRAFT_KEY = "cs17-new-assignment-draft";
+
+/** frappe-ui's list is divs, not a table: a row carries this slot, a cell `list-cell`. */
+const LIST_ROW = '[data-slot="list-row"]';
+
+/**
+ * frappe-ui's DateTimePicker replaces `input[type="datetime-local"]`. It is a
+ * typeable text input labelled by its field, and Enter commits what was typed.
+ */
+async function fillDateTime(page: Page, label: string, value: string) {
+	const input = page.getByRole("textbox", { name: label });
+	await input.fill(value);
+	await input.press("Enter");
+}
 
 let cohort: CS17Cohort;
 let student: CS17Profile;
@@ -59,13 +72,13 @@ test.describe("Faculty assignment portal", () => {
 		await page.getByRole("listbox").waitFor();
 		await page.keyboard.type(cohort.name);
 		await page.keyboard.press("Enter");
-		await page.locator('input[type="datetime-local"]').fill("2030-01-01T09:00");
-		await page.getByRole("combobox").filter({ hasText: "Save as Draft" }).click();
-		await page.getByRole("option", { name: "Publish Now" }).click();
+		await fillDateTime(page, "Due Date", "2030-01-01 09:00:00");
+		await page.getByRole("combobox").filter({ hasText: "Save as draft" }).click();
+		await page.getByRole("option", { name: "Publish now" }).click();
 
 		await page.getByRole("button", { name: "Create Assignment" }).click();
 
-		const row = page.locator("tr", { hasText: title });
+		const row = page.locator(LIST_ROW, { hasText: title });
 		await expect(row).toBeVisible();
 		await expect(row.getByText("Published")).toBeVisible();
 	});
@@ -80,18 +93,19 @@ test.describe("Faculty assignment portal", () => {
 		await page.getByRole("listbox").waitFor();
 		await page.keyboard.type(cohort.name);
 		await page.keyboard.press("Enter");
-		await page.locator('input[type="datetime-local"]').fill("2030-03-03T09:00");
+		await fillDateTime(page, "Due Date", "2030-03-03 09:00:00");
 
 		await page.getByRole("combobox").filter({ hasText: "Any" }).click();
 		await page.getByRole("option", { name: "Scratch", exact: true }).click();
 
-		await page.getByRole("combobox").filter({ hasText: "Save as Draft" }).click();
-		await page.getByRole("option", { name: "Publish Now" }).click();
+		await page.getByRole("combobox").filter({ hasText: "Save as draft" }).click();
+		await page.getByRole("option", { name: "Publish now" }).click();
 		await page.getByRole("button", { name: "Create Assignment" }).click();
 
-		const row = page.locator("tr", { hasText: title });
+		const row = page.locator(LIST_ROW, { hasText: title });
 		await expect(row).toBeVisible();
-		await expect(row.getByText("Scratch", { exact: true })).toBeVisible();
+		// The submission type now rides the row's meta line, not a cell of its own.
+		await expect(row).toContainText("Scratch");
 	});
 
 	test("keeps a closed draft in localStorage and restores it on reopen", async ({ page }) => {
@@ -132,12 +146,12 @@ test.describe("Faculty assignment portal", () => {
 		await page.getByRole("listbox").waitFor();
 		await page.keyboard.type(cohort.name);
 		await page.keyboard.press("Enter");
-		await page.locator('input[type="datetime-local"]').fill("2030-02-02T09:00");
-		await page.getByRole("combobox").filter({ hasText: "Save as Draft" }).click();
-		await page.getByRole("option", { name: "Publish Now" }).click();
+		await fillDateTime(page, "Due Date", "2030-02-02 09:00:00");
+		await page.getByRole("combobox").filter({ hasText: "Save as draft" }).click();
+		await page.getByRole("option", { name: "Publish now" }).click();
 		await page.getByRole("button", { name: "Create Assignment" }).click();
 
-		await expect(page.locator("tr", { hasText: title })).toBeVisible();
+		await expect(page.locator(LIST_ROW, { hasText: title })).toBeVisible();
 		const stored = await page.evaluate(
 			(key) => localStorage.getItem(key),
 			DRAFT_KEY,
@@ -170,13 +184,12 @@ test.describe("Faculty assignment portal", () => {
 		});
 
 		await page.goto(`/dashboard/faculty/assignments/${scratch.name}`);
-		const row = page.locator("tr", { hasText: student.full_name! });
+		const row = page.locator(LIST_ROW, { hasText: student.full_name! });
 		await row.getByRole("button", { name: "Preview", exact: true }).click();
 
-		await expect(
-			page.getByTitle("Scratch submission player"),
-		).toBeVisible();
-		await expect(page.getByRole("button", { name: "Open file" })).toHaveCount(0);
+		await expect(page.getByTitle("Scratch project player")).toBeVisible();
+		// The file fallback is a `link` Button, so it renders as an anchor.
+		await expect(page.getByRole("link", { name: "Open file" })).toHaveCount(0);
 
 		const frame = page
 			.frames()
@@ -220,18 +233,19 @@ test.describe("Faculty assignment portal", () => {
 
 	test("grades a submission and publishes the grade", async ({ page }) => {
 		await page.goto("/dashboard/faculty/assignments");
-		await page.getByRole("button", { name: graded.title, exact: true }).click();
+		// The row title is a router link now, not a button.
+		await page.getByRole("link", { name: graded.title, exact: true }).click();
 
 		await expect(page.getByRole("heading", { name: graded.title })).toBeVisible();
 
-		const row = page.locator("tr", { hasText: student.full_name! });
+		const row = page.locator(LIST_ROW, { hasText: student.full_name! });
 		await row.getByRole("button", { name: "Grade", exact: true }).click();
 
 		await page.getByRole("combobox").filter({ hasText: "Select a grade" }).click();
 		await page.getByRole("option", { name: "A", exact: true }).click();
-		await page.getByRole("combobox").filter({ hasText: "Save as Draft" }).click();
-		await page.getByRole("option", { name: "Publish Now" }).click();
-		await page.getByRole("button", { name: "Save Grade" }).click();
+		await page.getByRole("combobox").filter({ hasText: "Save as draft" }).click();
+		await page.getByRole("option", { name: "Publish now" }).click();
+		await page.getByRole("button", { name: "Save grade" }).click();
 
 		await expect(row.getByText("Published")).toBeVisible();
 		await expect(row.getByText("A", { exact: true })).toBeVisible();
