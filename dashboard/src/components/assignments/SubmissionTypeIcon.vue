@@ -1,28 +1,28 @@
 <template>
-	<div
-		class="grid size-7 shrink-0 place-items-center rounded-4 bg-surface-gray-2 text-ink-gray-6"
-		:title="submissionType ?? 'Any'"
-	>
-		<span :class="icon" class="size-4" aria-hidden="true" />
-	</div>
+	<!-- frappe-ui's own Avatar, in its square shape and themed fallback: the
+	     default slot takes an icon in place of initials. -->
+	<Avatar size="lg" shape="square" :theme="config.theme" :label="submissionType ?? 'Any'">
+		<span :class="config.icon" aria-hidden="true" />
+	</Avatar>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { Avatar } from 'frappe-ui'
+import type { AvatarTheme } from 'frappe-ui'
 import type { SubmissionType } from '@/types'
 
 const props = defineProps<{ submissionType?: SubmissionType | null }>()
 
-// What the student is expected to hand in, at a glance. Gray, not themed:
-// the type is a label, not a state, and the row's colour belongs to its badge.
-const ICONS: Record<SubmissionType, string> = {
-	PDF: 'lucide-file-text',
-	URL: 'lucide-link',
-	Image: 'lucide-image',
-	ZIP: 'lucide-file-archive',
-	Scratch: 'lucide-blocks',
-	Any: 'lucide-file',
+/** What the student has to hand in, at a glance. */
+const TYPES: Record<SubmissionType, { icon: string; theme: AvatarTheme }> = {
+	PDF: { icon: 'lucide-file-text', theme: 'red' },
+	URL: { icon: 'lucide-link', theme: 'blue' },
+	Image: { icon: 'lucide-image', theme: 'violet' },
+	ZIP: { icon: 'lucide-file-archive', theme: 'amber' },
+	Scratch: { icon: 'lucide-blocks', theme: 'green' },
+	Any: { icon: 'lucide-file', theme: 'gray' },
 }
 
-const icon = computed(() => ICONS[props.submissionType ?? 'Any'] ?? ICONS.Any)
+const config = computed(() => TYPES[props.submissionType ?? 'Any'] ?? TYPES.Any)
 </script>

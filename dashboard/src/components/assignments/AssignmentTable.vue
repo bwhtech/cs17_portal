@@ -7,24 +7,25 @@
 		:row-height="60"
 		empty="No assignments yet."
 	>
+		<template #cell-icon="{ row }">
+			<SubmissionTypeIcon :submission-type="row.submission_type" />
+		</template>
+
 		<!-- Two lines per row: the title, then what to hand in and when it is
 		     due — the pair a student scans for. -->
 		<template #cell-title="{ row }">
-			<div class="flex min-w-0 items-center gap-2.5">
-				<SubmissionTypeIcon :submission-type="row.submission_type" />
-				<div class="min-w-0">
-					<RouterLink
-						:to="`/assignments/${row.name}/submission`"
-						class="block truncate text-base font-normal text-ink-gray-8 hover:underline"
-					>
-						{{ row.title }}
-					</RouterLink>
-					<div class="mt-1.5 truncate text-sm font-normal text-ink-gray-5">
-						{{ row.submission_type ?? 'Any' }} ·
-						<span :class="isOverdue(row) && 'text-ink-red-6'">
-							Due {{ formatDateTime(row.due_date) }}
-						</span>
-					</div>
+			<div class="min-w-0">
+				<RouterLink
+					:to="`/assignments/${row.name}/submission`"
+					class="block truncate text-base font-normal text-ink-gray-8 hover:underline"
+				>
+					{{ row.title }}
+				</RouterLink>
+				<div class="mt-1.5 truncate text-sm font-normal text-ink-gray-5">
+					{{ row.submission_type ?? 'Any' }} ·
+					<span :class="isOverdue(row) && 'text-ink-red-6'">
+						Due {{ formatDateTime(row.due_date) }}
+					</span>
 				</div>
 			</div>
 		</template>
@@ -127,6 +128,7 @@ const emit = defineEmits<{
 }>()
 
 const columns: Column[] = [
+	{ header: '', key: 'icon', variant: 'avatar', width: '2.75rem' },
 	{ header: 'Assignment', key: 'title', variant: 'primary' },
 	{ header: 'Status', key: 'status', width: '8rem' },
 	{ header: 'Submitted', key: 'submitted', width: '11rem' },

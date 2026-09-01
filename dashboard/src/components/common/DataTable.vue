@@ -6,7 +6,7 @@
 		:selectable="selectable"
 		:selection="selection"
 		:row-height="rowHeight"
-		divider="full"
+		:divider="divider"
 		@update:selection="emit('update:selection', $event)"
 	>
 		<ListHeader>
@@ -85,6 +85,7 @@
 					@click.stop
 					@update:model-value="toggleRow(rowKey(row))"
 				/>
+				<slot v-if="avatarColumn" :name="`cell-${avatarColumn.key}`" :row="row" />
 				<div class="min-w-0 flex-1 text-base font-medium text-ink-gray-8">
 					<slot v-if="primaryColumn" :name="`cell-${primaryColumn.key}`" :row="row" />
 				</div>
@@ -122,8 +123,10 @@ export interface Column {
 	/**
 	 * How the column folds into a card below `md`: `primary` is the card's
 	 * heading, `field` a label/value row (the default), `actions` the foot.
+	 * `avatar` is a leading image or icon cell — it keeps its own column on
+	 * desktop and sits beside the heading on a card.
 	 */
-	variant?: 'primary' | 'field' | 'actions'
+	variant?: 'avatar' | 'primary' | 'field' | 'actions'
 	/** A grid track size, e.g. `'8rem'`. Defaults to an equal share. */
 	width?: string
 	align?: 'left' | 'right'
@@ -168,7 +171,15 @@ function cellText(row: T, column: Column): string {
 /** `ListRows` wants `(item, index)`; the app-facing prop takes only the row. */
 const listRowKey = (item: T) => props.rowKey(item)
 
+const avatarColumn = computed(() => props.columns.find((c) => c.variant === 'avatar'))
 const primaryColumn = computed(() => props.columns.find((c) => c.variant === 'primary'))
+
+/**
+ * A leading avatar cell wants the divider to start at the text edge, the way
+ * the frappe-ui list recipes draw one; without it the rule runs under the
+ * avatar column too.
+ */
+const divider = computed(() => (avatarColumn.value ? 'inset' : 'full'))
 const fieldColumns = computed(() => props.columns.filter((c) => (c.variant ?? 'field') === 'field'))
 const actionColumns = computed(() => props.columns.filter((c) => c.variant === 'actions'))
 
