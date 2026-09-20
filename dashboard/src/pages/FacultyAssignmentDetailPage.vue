@@ -3,6 +3,15 @@
 		<template #left-mobile>
 			<PageHeaderBackButton to="/faculty/assignments" />
 		</template>
+		<template #actions>
+			<Button
+				v-if="assignment"
+				variant="outline"
+				icon-left="lucide-link"
+				label="Copy submission link"
+				@click="copySubmissionLink"
+			/>
+		</template>
 	</AppHeader>
 
 	<div class="px-3 py-5 pb-10 sm:px-5">
@@ -142,7 +151,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { Badge, Button, PageHeaderBackButton, useCall } from 'frappe-ui'
+import { Badge, Button, PageHeaderBackButton, toast, useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
@@ -234,6 +243,16 @@ function gradeValue(grade: CS17Grade): string {
 function clearSelection() {
 	selection.value = []
 	detail.reload()
+}
+
+async function copySubmissionLink() {
+	const url = `${window.location.origin}/dashboard/assignments/${assignmentId.value}/submission`
+	try {
+		await navigator.clipboard.writeText(url)
+		toast.success('Submission link copied.')
+	} catch {
+		toast.error('Could not copy link.')
+	}
 }
 
 watch(
