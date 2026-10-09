@@ -1,8 +1,8 @@
 # CS17 Portal dashboard rewrite — React → Vue 3 + frappe-ui
 
 Status: DONE, closed 2026-10-09. The React app is gone and `dashboard/` is the Vue 3 app,
-now on `frappe-ui@1.0.0` (#62). Where the result differs from this plan, and what W11 left
-open, is in [Closing notes](#12-closing-notes). The rest of this file is the plan as it was
+now on `frappe-ui@1.0.0` (#62). Where the result differs from this plan is in
+[Closing notes](#12-closing-notes). The rest of this file is the plan as it was
 written and is kept for reference.
 
 Original summary: replaces `dashboard/` (React 19 + shadcn + `frappe-react-sdk`, ~8.3k LOC)
@@ -483,8 +483,7 @@ Differs from the plan
   `SidebarItem` and `MobileNavItem`, `to` to `fallback-route` on `PageHeaderBackButton`, and
   `link` to `href` on `Button`; the old names are ignored without a warning.
 
-Left open from W11
-- The root `package.json` still lists the Tailwind 4 devDependencies (`tailwindcss`,
-  `@tailwindcss/postcss`). Nothing uses them.
-- `README.md` has no development section for the dashboard.
-- `CLAUDE.md` was not written.
+W11 cleanup, finished after the fact
+- The unused Tailwind 4 devDependencies are gone from the root `package.json`.
+- `README.md` has a dashboard section.
+- `CLAUDE.md` is written.
