@@ -68,9 +68,9 @@ test.describe("Faculty assignment portal", () => {
 		await expect(page).toHaveURL(/\/dashboard\/faculty\/assignments$/);
 	});
 
-	test("shows no workspace crumb on the dashboard", async ({ page }) => {
-		await page.goto("/dashboard/faculty");
-		await expect(page.getByRole("heading", { name: /Welcome back/ })).toBeVisible();
+	test("shows no workspace crumb in the header", async ({ page }) => {
+		await page.goto("/dashboard/faculty/assignments");
+		await expect(page.getByRole("button", { name: "New Assignment" })).toBeVisible();
 		await expect(page.getByRole("link", { name: "Workspace", exact: true })).toHaveCount(0);
 	});
 
