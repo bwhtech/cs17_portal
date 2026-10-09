@@ -76,6 +76,7 @@
 					</template>
 					<Button
 						icon="lucide-trash-2"
+						class="hover:!bg-surface-red-3 hover:!text-ink-red-7"
 						:aria-label="`Delete ${row.title}`"
 						tooltip="Delete"
 						@click.stop="deleteTarget = row"
