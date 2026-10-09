@@ -33,9 +33,25 @@ class CS17AssignmentSubmission(Document):
 	# end: auto-generated types
 
 	def validate(self):
+		self.validate_duplicate()
 		self.validate_deadline()
 		self.validate_not_graded()
 		self.validate_scratch_acceptance()
+
+	def validate_duplicate(self):
+		duplicate = frappe.db.exists(
+			"CS17 Assignment Submission",
+			{
+				"assignment": self.assignment,
+				"student": self.student,
+				"name": ("!=", self.name),
+				"docstatus": ("!=", 2),
+			},
+		)
+		if duplicate:
+			frappe.throw(
+				_("Submission {0} already exists for this student and assignment.").format(duplicate)
+			)
 
 	def validate_deadline(self):
 		if not self._edited_by_owner():
