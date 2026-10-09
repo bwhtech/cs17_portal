@@ -31,7 +31,13 @@
 		/>
 
 		<div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-			<ProjectCard v-for="project in projects" :key="project.name" :project="project" />
+			<ProjectCard
+				v-for="project in projects"
+				:key="project.name"
+				:project="project"
+				@rename="promptForRename"
+				@delete="confirmDelete"
+			/>
 		</div>
 	</PageBody>
 </template>
@@ -39,17 +45,19 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Button, Skeleton, dialog, useCall } from 'frappe-ui'
+import { Button, Skeleton, dialog, toast, useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import EmptyState from '@/components/common/EmptyState.vue'
 import ProjectCard from '@/components/projects/ProjectCard.vue'
+import { useProjectsPath } from '@/composables/useProjectsPath'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import type { CS17Project } from '@/types'
 
 const router = useRouter()
 const { isDesktop } = useBreakpoint()
+const projectsPath = useProjectsPath()
 
 const projectList = useCall<CS17Project[]>({
 	url: '/api/v2/method/cs17_portal.api.list_my_projects',
@@ -57,6 +65,18 @@ const projectList = useCall<CS17Project[]>({
 
 const createProject = useCall<{ name: string }, { project_title: string }>({
 	url: '/api/v2/method/cs17_portal.api.create_project',
+	method: 'POST',
+	immediate: false,
+})
+
+const renameProject = useCall<{ name: string }, { project: string; project_title: string }>({
+	url: '/api/v2/method/cs17_portal.api.rename_project',
+	method: 'POST',
+	immediate: false,
+})
+
+const deleteProject = useCall<null, { project: string }>({
+	url: '/api/v2/method/cs17_portal.api.delete_project',
 	method: 'POST',
 	immediate: false,
 })
@@ -98,7 +118,53 @@ function promptForNewProject() {
 
 			// The grid refreshes behind us; we leave for the editor either way.
 			projectList.reload()
-			router.push(`/projects/${created.name}/edit`)
+			router.push(`${projectsPath}/${created.name}/edit`)
+		},
+	})
+}
+
+function promptForRename(project: CS17Project) {
+	dialog.prompt({
+		title: 'Rename project',
+		fields: [
+			{
+				name: 'project_title',
+				label: 'Project name',
+				defaultValue: project.project_title,
+				required: true,
+			},
+		],
+		confirmLabel: 'Rename',
+		onConfirm: async ({ values }) => {
+			const title = String(values.project_title ?? '').trim()
+			if (!title) throw new Error('Give the project a name.')
+
+			await renameProject.submit({ project: project.name, project_title: title })
+			if (renameProject.error) {
+				throw new Error(
+					frappeErrorMessage(renameProject.error, 'Could not rename the project.'),
+				)
+			}
+			toast.success('Project renamed')
+			projectList.reload()
+		},
+	})
+}
+
+function confirmDelete(project: CS17Project) {
+	dialog.danger({
+		title: 'Delete project',
+		message: `Delete "${project.project_title}"? This cannot be undone.`,
+		confirmLabel: 'Delete',
+		onConfirm: async () => {
+			await deleteProject.submit({ project: project.name })
+			if (deleteProject.error) {
+				throw new Error(
+					frappeErrorMessage(deleteProject.error, 'Could not delete the project.'),
+				)
+			}
+			toast.success('Project deleted')
+			projectList.reload()
 		},
 	})
 }

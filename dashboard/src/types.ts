@@ -87,9 +87,13 @@ export interface CS17Announcement {
 export interface CS17Project {
 	name: string
 	project_title: string
+	/** The assignment the project was started from or submitted to. */
+	assignment?: string | null
 	sb3_file: string | null
 	thumbnail?: string | null
 	last_saved_at: string | null
+	/** Only on `list_my_projects` rows. A submitted project cannot be renamed or deleted. */
+	is_submitted?: boolean
 }
 
 /** One row of `CS17 Result.scores` — a subject as it was graded. */

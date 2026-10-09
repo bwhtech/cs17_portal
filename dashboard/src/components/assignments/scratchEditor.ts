@@ -22,7 +22,7 @@ export function useScratchAssignment(): {
 	) => Promise<void>
 } {
 	const router = useRouter()
-	const createProject = useCall<CS17Project, { project_title: string }>({
+	const createProject = useCall<CS17Project, { project_title: string; assignment: string }>({
 		url: '/api/v2/method/cs17_portal.api.create_project',
 		method: 'POST',
 		immediate: false,
@@ -39,6 +39,7 @@ export function useScratchAssignment(): {
 		if (!project) {
 			const created = await createProject.submit({
 				project_title: assignment.title || 'Scratch project',
+				assignment: assignment.name,
 			})
 			if (!created?.name) {
 				toast.error(frappeErrorMessage(createProject.error, 'Could not start a project.'))

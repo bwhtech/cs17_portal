@@ -74,6 +74,7 @@ const faculty: NavConfig = {
 			items: [
 				{ label: 'Dashboard', icon: 'lucide-layout-dashboard', to: '/faculty', exact: true },
 				{ label: 'Assignments', icon: 'lucide-clipboard-list', to: '/faculty/assignments' },
+				{ label: 'Projects', icon: 'lucide-blocks', to: '/faculty/projects' },
 			],
 		},
 		{
@@ -95,6 +96,7 @@ const faculty: NavConfig = {
 	mobile: [
 		{ label: 'Dashboard', icon: 'lucide-layout-dashboard', to: '/faculty', exact: true },
 		{ label: 'Assignments', icon: 'lucide-clipboard-list', to: '/faculty/assignments' },
+		{ label: 'Projects', icon: 'lucide-blocks', to: '/faculty/projects' },
 		{ label: 'Alerts', icon: 'lucide-bell', to: '/faculty/announcements' },
 	],
 }

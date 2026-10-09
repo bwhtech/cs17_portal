@@ -18,7 +18,7 @@
 				icon="lucide-arrow-left"
 				aria-label="Back to projects"
 				tooltip="Projects"
-				route="/projects"
+				:route="projectsPath"
 			/>
 			<h1 class="min-w-0 truncate text-base text-ink-gray-8">{{ title }}</h1>
 			<span v-if="statusLabel" class="hidden shrink-0 text-sm sm:inline" :class="statusClass">
@@ -40,6 +40,7 @@
 						@click="requestSave('manual')"
 					/>
 					<Button
+						v-if="isStudent"
 						variant="solid"
 						theme="gray"
 						icon-left="lucide-send"
@@ -58,7 +59,7 @@
 				description="It may have been removed, or it belongs to someone else."
 			>
 				<template #action>
-					<Button label="Back to projects" route="/projects" />
+					<Button label="Back to projects" :route="projectsPath" />
 				</template>
 			</EmptyState>
 
@@ -82,9 +83,10 @@
 		</div>
 
 		<SubmitProjectDialog
+			v-if="isStudent"
 			v-model:open="submitOpen"
 			:project="id"
-			:preset-assignment="presetAssignment"
+			:preset-assignment="presetAssignment ?? project.doc?.assignment ?? null"
 		/>
 	</div>
 </template>
@@ -97,6 +99,8 @@ import EmptyState from '@/components/common/EmptyState.vue'
 import ScratchFrame from '@/components/scratch/ScratchFrame.vue'
 import SubmitProjectDialog from '@/components/projects/SubmitProjectDialog.vue'
 import { useZenMode, useZenOnMount } from '@/composables/useZenMode'
+import { useProjectsPath } from '@/composables/useProjectsPath'
+import { useSession } from '@/composables/useSession'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { arrayBufferToBase64, dataUrlToBase64 } from '@/lib/scratch'
 import type { CS17Project } from '@/types'
@@ -119,6 +123,8 @@ interface SaveProjectParams {
 const props = defineProps<{ id: string }>()
 
 const route = useRoute()
+const projectsPath = useProjectsPath()
+const { isStudent } = useSession()
 const { isZen, toggle } = useZenMode()
 useZenOnMount()
 

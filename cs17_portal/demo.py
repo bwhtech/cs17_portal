@@ -116,7 +116,7 @@ def wipe():
 		("CS17 Exam", {"name": ["in", exams or [""]]}),
 		("CS17 Assignment Grade", {"assignment": ["in", assignments_in(cohorts) or [""]]}),
 		("CS17 Assignment Submission", {"student": ["in", profiles or [""]]}),
-		("CS17 Project", {"student": ["in", profiles or [""]]}),
+		("CS17 Project", {"profile": ["in", profiles or [""]]}),
 		("CS17 Assignment", {"cohort": ["in", cohorts]}),
 		("CS17 Announcement", {"cohort": ["in", [*cohorts, None]]}),
 		("CS17 Profile", {"name": ["in", profiles or [""]]}),
