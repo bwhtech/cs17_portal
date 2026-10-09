@@ -28,6 +28,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { Breadcrumbs, PageHeader, PageHeaderMobile, usePageMeta } from 'frappe-ui'
 import AnnouncementsBell from '@/components/announcements/AnnouncementsBell.vue'
 import { breadcrumbItems } from '@/composables/useBreadcrumbs'
@@ -54,20 +55,28 @@ defineSlots<{
 
 const { isDesktop } = useBreakpoint()
 const { isFaculty } = useSession()
+const route = useRoute()
 
 /**
- * "Workspace" is always the root and always a link home; what follows is
- * either the trail a detail page pushed or, failing that, this page's title.
+ * "Workspace" is the root and a link home; what follows is either the trail a
+ * detail page pushed or, failing that, this page's title. Home drops the root:
+ * there it would be a link to the page already open.
  */
 const trail = computed(() => {
-	const root = { label: 'Workspace', route: isFaculty.value ? '/faculty' : '/' }
-	if (breadcrumbItems.value.length) return [root, ...breadcrumbItems.value]
-	return props.title ? [root, { label: props.title }] : [root]
+	const home = isFaculty.value ? '/faculty' : '/'
+	const page = breadcrumbItems.value.length
+		? breadcrumbItems.value
+		: props.title
+			? [{ label: props.title }]
+			: []
+	if (route.path === home && page.length) return page
+	return [{ label: 'Workspace', route: home }, ...page]
 })
 
 const currentLabel = computed(() => trail.value[trail.value.length - 1].label)
 
 usePageMeta(() => ({
-	title: trail.value.length > 1 ? `${currentLabel.value} | CS17 Portal` : 'CS17 Portal',
+	title:
+		currentLabel.value === 'Workspace' ? 'CS17 Portal' : `${currentLabel.value} | CS17 Portal`,
 }))
 </script>
