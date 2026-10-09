@@ -12,6 +12,8 @@ export type Bool = 0 | 1
 export interface CS17Profile {
 	name: string
 	full_name: string
+	first_name: string
+	last_name: string
 	profile_type: 'Student' | 'Faculty'
 	cohort: string | null
 	profile_picture: string | null

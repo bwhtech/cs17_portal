@@ -19,9 +19,29 @@ def get_user_profile() -> dict | None:
 	return frappe.db.get_value(
 		"CS17 Profile",
 		{"user": frappe.session.user},
-		["name", "full_name", "profile_type", "cohort", "profile_picture"],
+		["name", "full_name", "first_name", "last_name", "profile_type", "cohort", "profile_picture"],
 		as_dict=True,
 	)
+
+
+@frappe.whitelist(methods=["POST"])
+def update_my_profile(first_name: str, last_name: str, profile_picture: str = "") -> dict:
+	profile = frappe.get_doc("CS17 Profile", validate_membership("Faculty"))
+	profile.update(
+		{
+			"first_name": first_name,
+			"last_name": last_name,
+			"profile_picture": profile_picture or None,
+		}
+	)
+	profile.save(ignore_permissions=True)
+	return {
+		"name": profile.name,
+		"full_name": profile.full_name,
+		"first_name": profile.first_name,
+		"last_name": profile.last_name,
+		"profile_picture": profile.profile_picture,
+	}
 
 
 @frappe.whitelist(methods=["GET"])

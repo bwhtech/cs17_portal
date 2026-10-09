@@ -29,6 +29,7 @@ declare module 'vue' {
     DeleteAnnouncementDialog: typeof import('./src/components/faculty/DeleteAnnouncementDialog.vue')['default']
     DeleteAssignmentDialog: typeof import('./src/components/faculty/DeleteAssignmentDialog.vue')['default']
     EmptyState: typeof import('./src/components/common/EmptyState.vue')['default']
+    FacultyProfileForm: typeof import('./src/components/settings/FacultyProfileForm.vue')['default']
     FacultySelect: typeof import('./src/components/faculty/FacultySelect.vue')['default']
     GradeBadge: typeof import('./src/components/common/GradeBadge.vue')['default']
     GradeDialog: typeof import('./src/components/assignments/GradeDialog.vue')['default']

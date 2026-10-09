@@ -3,7 +3,8 @@
 		<div class="space-y-8">
 			<section class="space-y-3">
 				<h3 class="text-sm font-medium text-ink-gray-5">Profile</h3>
-				<div class="flex items-center gap-3">
+				<FacultyProfileForm v-if="isFaculty" />
+				<div v-else class="flex items-center gap-3">
 					<Avatar
 						size="2xl"
 						:image="profile?.profile_picture ?? undefined"
@@ -47,13 +48,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Avatar, Button, Dialog, Switch, dialog, useColorScheme } from 'frappe-ui'
+import FacultyProfileForm from '@/components/settings/FacultyProfileForm.vue'
 import { useSession } from '@/composables/useSession'
 import { useSettingsDialog } from '@/composables/useSettingsDialog'
 
-// One dialog for both roles: the only thing that differs is the line under
-// the name, so there is nothing to branch on beyond it.
+// One dialog for both roles. Faculty edit their profile; students only see theirs.
 const { profile, isFaculty, cohort, logout } = useSession()
-const roleLine = computed(() => (isFaculty.value ? 'Faculty' : `cohort '${cohort.value ?? '—'}'`))
+const roleLine = computed(() => `cohort '${cohort.value ?? '—'}'`)
 
 const { isOpen } = useSettingsDialog()
 const { resolvedColorScheme, setColorScheme } = useColorScheme()
