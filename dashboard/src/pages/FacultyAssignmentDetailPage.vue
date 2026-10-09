@@ -1,7 +1,7 @@
 <template>
 	<AppHeader title="Assignment">
 		<template #left-mobile>
-			<PageHeaderBackButton to="/faculty/assignments" />
+			<PageHeaderBackButton fallback-route="/faculty/assignments" />
 		</template>
 		<template #actions>
 			<Button

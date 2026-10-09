@@ -40,7 +40,7 @@
 				variant="outline"
 				icon-left="lucide-external-link"
 				label="Open submission"
-				:link="fileUrl"
+				:href="fileUrl"
 			/>
 		</div>
 

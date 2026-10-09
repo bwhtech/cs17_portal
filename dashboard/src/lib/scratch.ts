@@ -1,4 +1,4 @@
-import { resolvedColorScheme } from 'frappe-ui'
+import { useColorScheme } from 'frappe-ui'
 
 export const SCRATCH_EDITOR_URL = '/assets/cs17_portal/scratch/editor.html'
 
@@ -26,7 +26,7 @@ const READONLY_CSS = `
 
 export function applyScratchDefaults(): void {
 	try {
-		localStorage.setItem('tw:theme', resolvedColorScheme())
+		localStorage.setItem('tw:theme', useColorScheme().resolvedColorScheme.value)
 		const addons = parseAddonSettings(localStorage.getItem('tw:addons'))
 		addons.pause = { ...addons.pause, enabled: false }
 		localStorage.setItem('tw:addons', JSON.stringify(addons))

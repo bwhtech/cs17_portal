@@ -19,7 +19,7 @@
 						v-for="item in section.items"
 						:key="item.label"
 						:active="isNavItemActive(item, route.path)"
-						:to="item.to"
+						:route="item.to"
 						@click="item.href && openExternal(item.href)"
 					>
 						<template #prefix>
@@ -39,7 +39,7 @@
 			<nav class="mt-4 space-y-0.5">
 				<SidebarItem
 					:active="isNavItemActive(nav.announcements, route.path)"
-					:to="nav.announcements.to"
+					:route="nav.announcements.to"
 				>
 					<template #prefix>
 						<span :class="nav.announcements.icon" class="size-4" aria-hidden="true" />

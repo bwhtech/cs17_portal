@@ -1,7 +1,7 @@
 <template>
 	<AppHeader :title="assignment?.title ?? 'Assignment'">
 		<template #left-mobile>
-			<PageHeaderBackButton to="/assignments" />
+			<PageHeaderBackButton fallback-route="/assignments" />
 		</template>
 	</AppHeader>
 
