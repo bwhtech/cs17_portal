@@ -15,6 +15,13 @@ const saveButton = (page: Page) => page.getByRole("button", { name: "Save", exac
 const removePhotoButton = (page: Page) => page.getByRole("button", { name: "Remove photo" });
 
 test.describe("Faculty profile settings", () => {
+	test("says which name is missing when saved without one", async ({ page }) => {
+		await openSettings(page);
+		await page.getByLabel("First name").fill("");
+		await saveButton(page).click();
+		await expect(page.getByText("Add your first name.")).toBeVisible();
+	});
+
 	// The first name stays "E2E": cleanup finds test profiles by that prefix.
 	test("keeps a new last name across a reload", async ({ page }) => {
 		await openSettings(page);

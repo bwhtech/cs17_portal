@@ -72,12 +72,12 @@
 					</template>
 				</template>
 
+				<p v-else-if="isOverdue" class="text-sm text-ink-gray-5">Deadline passed</p>
 				<Button
 					v-else
 					class="w-full"
 					variant="outline"
-					:disabled="isOverdue"
-					:label="isOverdue ? 'Deadline Passed' : 'Submit Assignment'"
+					label="Submit Assignment"
 					@click="openSubmit"
 				/>
 			</div>

@@ -105,3 +105,15 @@
 .cs17-delay-in {
 	animation: cs17-delay-in 0s linear 200ms backwards;
 }
+
+@media (prefers-reduced-motion: no-preference) {
+	@keyframes cs17-error-in {
+		from {
+			opacity: 0;
+			transform: translateY(-2px);
+		}
+	}
+	[data-slot='error'] {
+		animation: cs17-error-in 150ms ease-out;
+	}
+}

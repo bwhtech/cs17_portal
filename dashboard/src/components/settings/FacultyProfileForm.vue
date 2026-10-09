@@ -28,13 +28,7 @@
 
 		<ErrorMessage :message="error ?? undefined" />
 
-		<Button
-			variant="solid"
-			label="Save"
-			:disabled="!canSave"
-			:loading="saveCall.loading"
-			@click="save"
-		/>
+		<Button variant="solid" label="Save" :loading="saveCall.loading" @click="save" />
 	</div>
 </template>
 
@@ -76,8 +70,10 @@ const isChanged = computed(
 		lastName.value.trim() !== profile.value?.last_name ||
 		picture.value !== (profile.value?.profile_picture ?? null),
 )
-const canSave = computed(
-	() => isChanged.value && Boolean(firstName.value.trim()) && Boolean(lastName.value.trim()),
+const missingNames = computed(() =>
+	[!firstName.value.trim() && 'first name', !lastName.value.trim() && 'last name'].filter(
+		Boolean,
+	),
 )
 
 const saveCall = useCall<
@@ -111,6 +107,14 @@ function onUploadFailed(uploadError: unknown) {
 
 async function save() {
 	error.value = null
+	if (missingNames.value.length) {
+		error.value = `Add your ${missingNames.value.join(' and ')}.`
+		return
+	}
+	if (!isChanged.value) {
+		toast.info('Nothing to save yet.')
+		return
+	}
 	await saveCall.submit({
 		first_name: firstName.value.trim(),
 		last_name: lastName.value.trim(),
