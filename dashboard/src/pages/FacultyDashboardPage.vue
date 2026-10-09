@@ -7,14 +7,6 @@
 			<p class="mt-1 text-sm text-ink-gray-5">{{ today }}</p>
 		</div>
 
-		<div
-			v-if="publishedCount"
-			class="inline-flex min-w-40 flex-col gap-1 rounded-4 border border-outline-gray-1 bg-surface-base px-5 py-4"
-		>
-			<p class="text-2xl text-ink-gray-9 tabular-nums">{{ publishedCount }}</p>
-			<p class="text-xs text-ink-gray-5">Published assignments</p>
-		</div>
-
 		<section class="space-y-4 rounded-4 border border-outline-gray-1 bg-surface-base p-5">
 			<h2 class="text-lg-semibold text-ink-gray-8">Assigned to you</h2>
 
@@ -72,14 +64,4 @@ const assignedCall = useCall<CS17Submission[], { limit: number }>({
 })
 
 const assigned = computed(() => assignedCall.data ?? [])
-
-// `useList` answers with rows, never a count, so the one count on this screen
-// goes through `frappe.client.get_count`. Its `filters` travel as a JSON
-// string — a plain object would serialise to "[object Object]".
-const countCall = useCall<number, { doctype: string; filters: string }>({
-	url: '/api/v2/method/frappe.client.get_count',
-	params: { doctype: 'CS17 Assignment', filters: JSON.stringify({ is_published: 1 }) },
-})
-
-const publishedCount = computed(() => (typeof countCall.data === 'number' ? countCall.data : null))
 </script>

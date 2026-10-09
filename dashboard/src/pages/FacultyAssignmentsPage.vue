@@ -13,8 +13,6 @@
 	</AppHeader>
 
 	<PageBody class="space-y-5">
-		<p v-if="rows.length" class="text-sm text-ink-gray-5">{{ rows.length }} total</p>
-
 		<!-- Drafts are invisible to students, so they sit above the table as a
 		     collapsed row rather than competing with published work in it. -->
 		<div v-if="drafts.length">
