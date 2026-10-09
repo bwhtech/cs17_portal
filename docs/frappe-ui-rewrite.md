@@ -1,6 +1,11 @@
 # CS17 Portal dashboard rewrite — React → Vue 3 + frappe-ui
 
-Status: PROPOSED. Replaces `dashboard/` (React 19 + shadcn + `frappe-react-sdk`, ~8.3k LOC)
+Status: DONE, closed 2026-10-09. The React app is gone and `dashboard/` is the Vue 3 app,
+now on `frappe-ui@1.0.0` (#62). Where the result differs from this plan, and what W11 left
+open, is in [Closing notes](#12-closing-notes). The rest of this file is the plan as it was
+written and is kept for reference.
+
+Original summary: replaces `dashboard/` (React 19 + shadcn + `frappe-react-sdk`, ~8.3k LOC)
 with a Vue 3 app on `frappe-ui@1.0.0-beta.55`. Same product surface, same URLs, same
 backend. Written to be executed by many agents in parallel.
 
@@ -464,3 +469,22 @@ Day 2–4      W1 W2 W3 W4 W5 W6 W7 W8 in parallel (8 agents, worktrees)
              merge order: W2 → W1, W6 → W8, rest any order
 Day 5        W9 e2e, W10 polish, W11 delete React
 ```
+
+---
+
+## 12. Closing notes
+
+Differs from the plan
+- Settings is a dialog (`components/settings/SettingsDialog.vue`) opened from the account
+  menu, not a `SettingsPage.vue` routed at `/settings` and `/faculty/settings`.
+- `ResultsPage.vue` and `ResultDetailPage.vue` were added after this plan was written.
+- `e2e/helpers/ui.ts` was not added; the specs carry their own locators.
+- frappe-ui is on `1.0.0`, not `1.0.0-beta.55`. That release renamed `to` to `route` on
+  `SidebarItem` and `MobileNavItem`, `to` to `fallback-route` on `PageHeaderBackButton`, and
+  `link` to `href` on `Button`; the old names are ignored without a warning.
+
+Left open from W11
+- The root `package.json` still lists the Tailwind 4 devDependencies (`tailwindcss`,
+  `@tailwindcss/postcss`). Nothing uses them.
+- `README.md` has no development section for the dashboard.
+- `CLAUDE.md` was not written.
