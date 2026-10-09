@@ -46,8 +46,6 @@
 						</div>
 					</template>
 				</FileUploader>
-				<!-- Same swap frappe-ui's own fields make: the error takes the
-				     help line's place, so the two never say the same thing twice. -->
 				<p v-if="error" data-slot="error" role="alert" class="text-p-sm text-ink-red-5">
 					{{ error }}
 				</p>

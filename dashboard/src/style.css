@@ -106,8 +106,6 @@
 	animation: cs17-delay-in 0s linear 200ms backwards;
 }
 
-/* A field's error replaces its help line; a short rise makes the swap read as
-   a change rather than a jump. frappe-ui marks every field error this way. */
 @media (prefers-reduced-motion: no-preference) {
 	@keyframes cs17-error-in {
 		from {
