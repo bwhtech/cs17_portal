@@ -13,6 +13,7 @@
 				required
 				:label="config.label"
 				:description="config.help"
+				:error="error ?? undefined"
 				placeholder="https://example.com/your-work"
 				@update:model-value="error = null"
 			/>
@@ -45,7 +46,12 @@
 						</div>
 					</template>
 				</FileUploader>
-				<p class="text-p-xs text-ink-gray-5">{{ config.help }}</p>
+				<!-- Same swap frappe-ui's own fields make: the error takes the
+				     help line's place, so the two never say the same thing twice. -->
+				<p v-if="error" data-slot="error" role="alert" class="text-p-sm text-ink-red-5">
+					{{ error }}
+				</p>
+				<p v-else class="text-p-xs text-ink-gray-5">{{ config.help }}</p>
 			</div>
 
 			<img
@@ -54,8 +60,6 @@
 				alt="Submission preview"
 				class="max-h-40 rounded-4 border border-outline-gray-1 object-contain"
 			/>
-
-			<ErrorMessage :message="error ?? undefined" />
 		</div>
 	</Dialog>
 </template>
@@ -65,7 +69,6 @@ import { computed, ref, watch } from 'vue'
 import {
 	Button,
 	Dialog,
-	ErrorMessage,
 	FileUploader,
 	FormControl,
 	FormLabel,
