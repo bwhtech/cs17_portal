@@ -32,7 +32,15 @@ def get_boot():
 		profiles = frappe.get_list(
 			"CS17 Profile",
 			filters={"user": current_user},
-			fields=["name", "full_name", "profile_type", "cohort", "profile_picture"],
+			fields=[
+				"name",
+				"full_name",
+				"first_name",
+				"last_name",
+				"profile_type",
+				"cohort",
+				"profile_picture",
+			],
 			limit=1,
 			ignore_permissions=True,
 		)
