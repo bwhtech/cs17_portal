@@ -1,7 +1,7 @@
 <template>
 	<AppHeader :title="result?.exam_name ?? 'Result'">
 		<template #left-mobile>
-			<PageHeaderBackButton to="/results" />
+			<PageHeaderBackButton fallback-route="/results" />
 		</template>
 		<template #actions>
 			<Button

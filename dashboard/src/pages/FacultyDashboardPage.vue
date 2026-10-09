@@ -31,7 +31,7 @@
 					v-for="submission in assigned"
 					:key="submission.name"
 					:to="`/faculty/assignments/${submission.assignment}`"
-					class="-mx-2 flex items-center justify-between gap-4 rounded-4 px-2 py-3 hover:bg-surface-gray-2"
+					class="-mx-2 flex items-center justify-between gap-4 rounded-4 px-2 py-3 hover:bg-surface-gray-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
 				>
 					<div class="min-w-0">
 						<p class="truncate text-base text-ink-gray-8">{{ submission.full_name }}</p>

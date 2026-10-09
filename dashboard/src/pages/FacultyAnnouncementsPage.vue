@@ -58,12 +58,14 @@
 					<Button
 						icon="lucide-eye"
 						:aria-label="`Preview ${row.title}`"
+						tooltip="Preview"
 						@click.stop="previewTarget = row"
 					/>
 					<template v-if="!row.is_published">
 						<Button
 							icon="lucide-pencil"
 							:aria-label="`Edit ${row.title}`"
+							tooltip="Edit"
 							@click.stop="openEdit(row)"
 						/>
 						<Button
@@ -75,6 +77,7 @@
 					<Button
 						icon="lucide-trash-2"
 						:aria-label="`Delete ${row.title}`"
+						tooltip="Delete"
 						@click.stop="deleteTarget = row"
 					/>
 				</div>

@@ -1,7 +1,7 @@
 <template>
 	<router-link
 		:to="`/projects/${project.name}/edit`"
-		class="block overflow-hidden rounded-4 border border-outline-gray-1 bg-surface-base transition-colors hover:border-outline-gray-3"
+		class="block overflow-hidden rounded-4 border border-outline-gray-1 bg-surface-base transition-colors hover:border-outline-gray-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
 	>
 		<div class="flex aspect-[4/3] items-center justify-center bg-surface-gray-2">
 			<img

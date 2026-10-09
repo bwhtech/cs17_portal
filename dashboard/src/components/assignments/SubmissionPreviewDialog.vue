@@ -40,7 +40,7 @@
 				class="w-full"
 				icon-left="lucide-external-link"
 				:label="kind === 'url' ? 'Open link' : 'Open file'"
-				:link="fileUrl"
+				:href="fileUrl"
 			/>
 		</div>
 	</Dialog>

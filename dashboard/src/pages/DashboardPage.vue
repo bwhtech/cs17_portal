@@ -1,7 +1,7 @@
 <template>
 	<AppHeader title="Dashboard" />
 
-	<div class="space-y-6 px-3 py-5 pb-10 sm:px-5">
+	<div class="mx-auto max-w-4xl space-y-6 px-3 py-5 pb-10 sm:px-5">
 		<div>
 			<h1 class="text-3xl text-ink-gray-9">Welcome back, {{ firstName }}.</h1>
 			<p class="mt-1 text-p-sm text-ink-gray-5">{{ today }}</p>
@@ -18,7 +18,7 @@
 				<h2 class="text-base-medium text-ink-gray-8">Upcoming assignments</h2>
 				<RouterLink
 					to="/assignments"
-					class="shrink-0 text-xs text-ink-gray-5 hover:text-ink-gray-8"
+					class="shrink-0 rounded-2 text-xs text-ink-gray-5 hover:text-ink-gray-8 focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
 				>
 					View all →
 				</RouterLink>

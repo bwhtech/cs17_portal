@@ -97,6 +97,7 @@
 							variant="ghost"
 							icon="lucide-trash-2"
 							:aria-label="`Delete ${row.title}`"
+							tooltip="Delete"
 							@click="deleteTarget = row"
 						/>
 					</div>

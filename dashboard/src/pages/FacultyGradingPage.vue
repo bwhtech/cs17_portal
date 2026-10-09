@@ -27,6 +27,7 @@
 				variant="ghost"
 				icon="lucide-arrow-left"
 				aria-label="Back to submissions"
+				tooltip="Submissions"
 				route="/faculty/submissions"
 			/>
 

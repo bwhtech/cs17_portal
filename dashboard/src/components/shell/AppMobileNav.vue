@@ -5,7 +5,7 @@
 			:key="item.label"
 			:label="item.label"
 			:icon="item.icon"
-			:to="item.to"
+			:route="item.to"
 			:active="isNavItemActive(item, route.path)"
 		/>
 		<MobileNavItem label="You" @click="sheetOpen = true">

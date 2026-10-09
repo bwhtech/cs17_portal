@@ -27,7 +27,7 @@ const LIST_ROW = '[data-slot="list-row"]';
  * typeable text input labelled by its field, and Enter commits what was typed.
  */
 async function fillDateTime(page: Page, label: string, value: string) {
-	const input = page.getByRole("textbox", { name: label });
+	const input = page.getByRole("combobox", { name: label });
 	await input.fill(value);
 	await input.press("Enter");
 }
@@ -60,6 +60,12 @@ test.describe("Faculty assignment portal", () => {
 		await cleanupTestAssignments(request);
 		await deleteTestProfile(request, student.name);
 		await deleteDoc(request, "CS17 Cohort", cohort.name);
+	});
+
+	test("opens the assignments list from the sidebar", async ({ page }) => {
+		await page.goto("/dashboard/faculty");
+		await page.getByRole("link", { name: "Assignments", exact: true }).click();
+		await expect(page).toHaveURL(/\/dashboard\/faculty\/assignments$/);
 	});
 
 	test("creates and publishes an assignment from the sheet", async ({ page }) => {

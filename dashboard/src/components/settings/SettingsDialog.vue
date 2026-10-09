@@ -46,15 +46,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import {
-	Avatar,
-	Button,
-	Dialog,
-	Switch,
-	dialog,
-	resolvedColorScheme,
-	useColorScheme,
-} from 'frappe-ui'
+import { Avatar, Button, Dialog, Switch, dialog, useColorScheme } from 'frappe-ui'
 import { useSession } from '@/composables/useSession'
 import { useSettingsDialog } from '@/composables/useSettingsDialog'
 
@@ -64,7 +56,7 @@ const { profile, isFaculty, cohort, logout } = useSession()
 const roleLine = computed(() => (isFaculty.value ? 'Faculty' : `cohort '${cohort.value ?? '—'}'`))
 
 const { isOpen } = useSettingsDialog()
-const { colorScheme, setColorScheme } = useColorScheme()
+const { resolvedColorScheme, setColorScheme } = useColorScheme()
 
 /**
  * The switch is a light/dark toggle, but the stored preference has a third
@@ -73,10 +65,7 @@ const { colorScheme, setColorScheme } = useColorScheme()
  * painted in; flipping it commits to an explicit choice.
  */
 const isDark = computed({
-	get: () =>
-		colorScheme.value === 'system'
-			? resolvedColorScheme() === 'dark'
-			: colorScheme.value === 'dark',
+	get: () => resolvedColorScheme.value === 'dark',
 	set: (next: boolean) => setColorScheme(next ? 'dark' : 'light'),
 })
 
