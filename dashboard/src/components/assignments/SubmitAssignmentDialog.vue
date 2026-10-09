@@ -117,14 +117,11 @@ const editCall = useCall<{ name: string }, { submission: string; file_url: strin
 	immediate: false,
 })
 
-const ready = computed(() => (isUrl.value ? url.value.trim().length > 0 : Boolean(fileUrl.value)))
-
 const actions = computed(() => [
 	{
 		label: isEdit.value ? 'Update Submission' : 'Submit Assignment',
 		variant: 'solid' as const,
 		theme: 'gray' as const,
-		disabled: !ready.value,
 		onClick: save,
 	},
 ])
