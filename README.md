@@ -12,6 +12,29 @@ bench get-app $URL_OF_THIS_REPO --branch develop
 bench install-app cs17_portal
 ```
 
+### Dashboard
+
+The student and faculty dashboard is a Vue 3 app in `dashboard/`, built with [frappe-ui](https://github.com/frappe/frappe-ui). It is served at `/dashboard`.
+
+```bash
+cd apps/cs17_portal/dashboard
+yarn install
+yarn dev        # dev server; API calls are proxied to the bench on port 8000
+yarn build      # writes cs17_portal/public/dashboard and cs17_portal/www/dashboard.html
+yarn typecheck
+yarn lint
+```
+
+`yarn dev` needs `developer_mode` on the site, since the dev server loads its boot data over the API. The build output is not committed.
+
+End to end tests are in `e2e/` and run with Playwright from the app root. Point them at your site:
+
+```bash
+SITE_HOST=cs17.localhost:8000 yarn test:e2e
+```
+
+[docs/dev-site.md](docs/dev-site.md) covers setting up a local site and the demo data.
+
 ### Contributing
 
 This app uses `pre-commit` for code formatting and linting. Please [install pre-commit](https://pre-commit.com/#installation) and enable it for this repository:
