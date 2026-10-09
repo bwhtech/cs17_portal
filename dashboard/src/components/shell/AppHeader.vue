@@ -28,7 +28,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Breadcrumbs, PageHeader, PageHeaderMobile } from 'frappe-ui'
+import { Breadcrumbs, PageHeader, PageHeaderMobile, usePageMeta } from 'frappe-ui'
 import AnnouncementsBell from '@/components/announcements/AnnouncementsBell.vue'
 import { breadcrumbItems } from '@/composables/useBreadcrumbs'
 import { useBreakpoint } from '@/composables/useBreakpoint'
@@ -66,4 +66,8 @@ const trail = computed(() => {
 })
 
 const currentLabel = computed(() => trail.value[trail.value.length - 1].label)
+
+usePageMeta(() => ({
+	title: trail.value.length > 1 ? `${currentLabel.value} | CS17 Portal` : 'CS17 Portal',
+}))
 </script>
