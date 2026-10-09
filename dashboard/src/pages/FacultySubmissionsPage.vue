@@ -1,13 +1,10 @@
 <template>
 	<AppHeader title="Submissions" />
 
-	<div class="px-3 py-5 pb-10 sm:px-5">
-		<div class="mb-5">
-			<h1 class="text-xl font-semibold text-ink-gray-9">Submissions</h1>
-			<p class="mt-1 text-p-base text-ink-gray-5">
-				Open, run, and grade submissions from your cohort.
-			</p>
-		</div>
+	<PageBody>
+		<p class="mb-5 text-sm text-ink-gray-5">
+			Open, run, and grade submissions from your cohort.
+		</p>
 
 		<DataTable
 			:columns="columns"
@@ -54,7 +51,7 @@
 				<Button :label="row.graded ? 'Review' : 'Grade'" @click.stop="openGrading(row)" />
 			</template>
 		</DataTable>
-	</div>
+	</PageBody>
 </template>
 
 <script setup lang="ts">
@@ -62,6 +59,7 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Badge, Button, useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
+import PageBody from '@/components/common/PageBody.vue'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import GradeBadge from '@/components/common/GradeBadge.vue'
 import { formatDateTime } from '@/lib/dates'

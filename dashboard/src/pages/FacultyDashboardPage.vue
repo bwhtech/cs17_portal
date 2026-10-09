@@ -1,24 +1,24 @@
 <template>
 	<AppHeader title="Dashboard" />
 
-	<div class="mx-auto max-w-4xl space-y-6 px-3 py-5 pb-10 sm:px-5">
+	<PageBody width="narrow" class="space-y-6">
 		<div>
-			<h1 class="text-3xl text-ink-gray-9">Welcome back, {{ firstName }}.</h1>
+			<h1 class="text-2xl text-ink-gray-9">Welcome back, {{ firstName }}.</h1>
 			<p class="mt-1 text-sm text-ink-gray-5">{{ today }}</p>
 		</div>
 
 		<div
+			v-if="publishedCount"
 			class="inline-flex min-w-40 flex-col gap-1 rounded-4 border border-outline-gray-1 bg-surface-base px-5 py-4"
 		>
-			<Skeleton v-if="publishedCount === null" class="h-6 w-10 rounded-full" />
-			<p v-else class="text-2xl text-ink-gray-9 tabular-nums">{{ publishedCount }}</p>
+			<p class="text-2xl text-ink-gray-9 tabular-nums">{{ publishedCount }}</p>
 			<p class="text-xs text-ink-gray-5">Published assignments</p>
 		</div>
 
 		<section class="space-y-4 rounded-4 border border-outline-gray-1 bg-surface-base p-5">
 			<h2 class="text-lg-semibold text-ink-gray-8">Assigned to you</h2>
 
-			<div v-if="assignedCall.loading && !assignedCall.data" class="space-y-3">
+			<div v-if="assignedCall.loading && !assignedCall.data" class="cs17-delay-in space-y-3">
 				<Skeleton v-for="n in 3" :key="n" class="h-8 w-full rounded-4" />
 			</div>
 
@@ -48,7 +48,7 @@
 				</RouterLink>
 			</div>
 		</section>
-	</div>
+	</PageBody>
 </template>
 
 <script setup lang="ts">
@@ -56,6 +56,7 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { Skeleton, useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
+import PageBody from '@/components/common/PageBody.vue'
 import { useSession } from '@/composables/useSession'
 import { formatLongDate } from '@/lib/dates'
 import type { CS17Submission } from '@/types'

@@ -12,11 +12,8 @@
 		</template>
 	</AppHeader>
 
-	<div class="space-y-5 px-3 py-5 pb-10 sm:px-5">
-		<div>
-			<h1 class="text-2xl font-semibold text-ink-gray-9">Assignments</h1>
-			<p class="mt-1 text-p-base text-ink-gray-5">{{ rows.length }} total</p>
-		</div>
+	<PageBody class="space-y-5">
+		<p v-if="rows.length" class="text-sm text-ink-gray-5">{{ rows.length }} total</p>
 
 		<!-- Drafts are invisible to students, so they sit above the table as a
 		     collapsed row rather than competing with published work in it. -->
@@ -104,7 +101,7 @@
 				</template>
 			</DataTable>
 		</div>
-	</div>
+	</PageBody>
 
 	<AssignmentFormDialog
 		v-model:open="formOpen"
@@ -138,6 +135,7 @@ import AssignmentFormDialog from '@/components/faculty/AssignmentFormDialog.vue'
 import DeleteAssignmentDialog from '@/components/faculty/DeleteAssignmentDialog.vue'
 import PublishAssignmentDialog from '@/components/faculty/PublishAssignmentDialog.vue'
 import AppHeader from '@/components/shell/AppHeader.vue'
+import PageBody from '@/components/common/PageBody.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { formatDateTime } from '@/lib/dates'
 import type { CS17Assignment } from '@/types'

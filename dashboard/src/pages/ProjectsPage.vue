@@ -1,50 +1,39 @@
 <template>
-	<AppHeader title="Projects" />
+	<AppHeader title="Projects">
+		<template #actions>
+			<Button
+				variant="solid"
+				theme="gray"
+				:icon-left="isDesktop ? 'lucide-plus' : undefined"
+				:icon="isDesktop ? undefined : 'lucide-plus'"
+				label="New project"
+				:loading="createProject.loading"
+				@click="promptForNewProject"
+			/>
+		</template>
+	</AppHeader>
 
-	<div class="px-3 py-5 pb-10 sm:px-5">
-		<div class="mx-auto max-w-[940px] space-y-5">
-			<div class="flex items-start justify-between gap-3">
-				<div class="min-w-0">
-					<h1 class="text-2xl text-ink-gray-9">Projects</h1>
-					<p v-if="!loading" class="mt-1.5 text-sm text-ink-gray-5">{{ countLabel }}</p>
-				</div>
-				<Button
-					variant="solid"
-					theme="gray"
-					icon-left="lucide-plus"
-					label="New project"
-					:loading="createProject.loading"
-					@click="promptForNewProject"
-				/>
-			</div>
+	<PageBody width="wide" class="space-y-5">
+		<p v-if="projects.length" class="text-sm text-ink-gray-5">{{ countLabel }}</p>
 
-			<div v-if="loading" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-				<Skeleton v-for="n in 3" :key="n" class="h-56 rounded-4" />
-			</div>
-
-			<EmptyState
-				v-else-if="!projects.length"
-				icon="lucide-blocks"
-				title="No projects yet"
-				description="Create your first Scratch project to get started."
-			>
-				<template #action>
-					<Button
-						variant="solid"
-						theme="gray"
-						icon-left="lucide-plus"
-						label="New project"
-						:loading="createProject.loading"
-						@click="promptForNewProject"
-					/>
-				</template>
-			</EmptyState>
-
-			<div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-				<ProjectCard v-for="project in projects" :key="project.name" :project="project" />
-			</div>
+		<div
+			v-if="loading"
+			class="cs17-delay-in grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+		>
+			<Skeleton v-for="n in 3" :key="n" class="h-56 rounded-4" />
 		</div>
-	</div>
+
+		<EmptyState
+			v-else-if="!projects.length"
+			icon="lucide-blocks"
+			title="No projects yet"
+			description="Create your first Scratch project to get started."
+		/>
+
+		<div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+			<ProjectCard v-for="project in projects" :key="project.name" :project="project" />
+		</div>
+	</PageBody>
 </template>
 
 <script setup lang="ts">
@@ -52,12 +41,15 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Button, Skeleton, dialog, useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
+import PageBody from '@/components/common/PageBody.vue'
+import { useBreakpoint } from '@/composables/useBreakpoint'
 import EmptyState from '@/components/common/EmptyState.vue'
 import ProjectCard from '@/components/projects/ProjectCard.vue'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import type { CS17Project } from '@/types'
 
 const router = useRouter()
+const { isDesktop } = useBreakpoint()
 
 const projectList = useCall<CS17Project[]>({
 	url: '/api/v2/method/cs17_portal.api.list_my_projects',

@@ -12,8 +12,8 @@
 		</template>
 	</AppHeader>
 
-	<div class="px-3 py-5 pb-10 sm:px-5">
-		<p class="mb-4 text-sm text-ink-gray-5">{{ subtitle }}</p>
+	<PageBody>
+		<p v-if="announcements.length" class="mb-4 text-sm text-ink-gray-5">{{ subtitle }}</p>
 
 		<DataTable
 			:columns="columns"
@@ -83,7 +83,7 @@
 				</div>
 			</template>
 		</DataTable>
-	</div>
+	</PageBody>
 
 	<AnnouncementFormDialog
 		:open="formOpen"
@@ -118,6 +118,7 @@
 import { computed, ref } from 'vue'
 import { Badge, Button, toast, useCall, useList } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
+import PageBody from '@/components/common/PageBody.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import AnnouncementFormDialog from '@/components/faculty/AnnouncementFormDialog.vue'

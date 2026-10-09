@@ -1,7 +1,7 @@
 <template>
 	<AppHeader title="Shared components" />
 
-	<div class="mx-auto max-w-[940px] space-y-11 px-3 py-5 pb-10 sm:px-5">
+	<PageBody width="wide" class="space-y-11">
 		<section class="space-y-3">
 			<h2 class="text-lg font-semibold text-ink-gray-8">DataTable</h2>
 			<p class="text-p-sm text-ink-gray-5">
@@ -114,13 +114,14 @@
 				/>
 			</div>
 		</section>
-	</div>
+	</PageBody>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Badge, Button } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
+import PageBody from '@/components/common/PageBody.vue'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import GradeBadge from '@/components/common/GradeBadge.vue'

@@ -14,7 +14,7 @@
 		</template>
 	</AppHeader>
 
-	<div class="px-3 py-5 pb-10 sm:px-5">
+	<PageBody width="narrow">
 		<PageSkeleton v-if="loading" :blocks="3" />
 
 		<p v-else-if="!result" class="text-p-base text-ink-gray-5">
@@ -144,13 +144,14 @@
 				<p class="text-p-base whitespace-pre-line text-ink-gray-7">{{ result.remarks }}</p>
 			</section>
 		</div>
-	</div>
+	</PageBody>
 </template>
 
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import { Badge, Button, PageHeaderBackButton, useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
+import PageBody from '@/components/common/PageBody.vue'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
