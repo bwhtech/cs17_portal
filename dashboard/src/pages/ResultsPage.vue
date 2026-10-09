@@ -1,11 +1,8 @@
 <template>
 	<AppHeader title="Results" />
 
-	<div class="px-3 py-5 pb-10 sm:px-5">
-		<div class="mb-5">
-			<h1 class="text-2xl text-ink-gray-9">Results</h1>
-			<p class="mt-1 text-sm text-ink-gray-5">{{ countLine }}</p>
-		</div>
+	<PageBody>
+		<p v-if="results.length" class="mb-5 text-sm text-ink-gray-5">{{ countLine }}</p>
 
 		<EmptyState
 			v-if="!loading && !results.length"
@@ -52,7 +49,7 @@
 				/>
 			</template>
 		</DataTable>
-	</div>
+	</PageBody>
 </template>
 
 <script setup lang="ts">
@@ -60,6 +57,7 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Badge, useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
+import PageBody from '@/components/common/PageBody.vue'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import RowTitle from '@/components/common/RowTitle.vue'

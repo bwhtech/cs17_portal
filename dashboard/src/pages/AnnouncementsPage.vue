@@ -1,7 +1,7 @@
 <template>
 	<AppHeader title="Announcements" />
 
-	<div class="px-3 py-5 pb-10 sm:px-5">
+	<PageBody width="narrow">
 		<PageSkeleton v-if="loading" :blocks="2" />
 
 		<EmptyState
@@ -23,7 +23,7 @@
 				@dismiss="dismiss(announcement.name)"
 			/>
 		</div>
-	</div>
+	</PageBody>
 </template>
 
 <script setup lang="ts">
@@ -33,6 +33,7 @@ import AnnouncementCard from '@/components/announcements/AnnouncementCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import AppHeader from '@/components/shell/AppHeader.vue'
+import PageBody from '@/components/common/PageBody.vue'
 import { useAnnouncementDismissals } from '@/composables/useAnnouncementDismissals'
 import { usePolling, usePublishTimer } from '@/composables/usePolling'
 import { useSession } from '@/composables/useSession'

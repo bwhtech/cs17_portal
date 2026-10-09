@@ -1,11 +1,10 @@
 <template>
 	<AppHeader title="Assignments" />
 
-	<div class="px-3 py-5 pb-10 sm:px-5">
-		<div class="mb-5">
-			<h1 class="text-2xl text-ink-gray-9">Assignments</h1>
-			<p class="mt-1 text-sm text-ink-gray-5">{{ assignments.length }} total</p>
-		</div>
+	<PageBody>
+		<p v-if="assignments.length" class="mb-5 text-sm text-ink-gray-5">
+			{{ assignments.length }} total
+		</p>
 
 		<AssignmentTable
 			:assignments="assignments"
@@ -17,13 +16,14 @@
 		/>
 
 		<GradeDialog v-model:open="gradeOpen" :grade="activeGrade" />
-	</div>
+	</PageBody>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useCall, useList } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
+import PageBody from '@/components/common/PageBody.vue'
 import AssignmentTable from '@/components/assignments/AssignmentTable.vue'
 import GradeDialog from '@/components/assignments/GradeDialog.vue'
 import { usePolling, usePublishTimer } from '@/composables/usePolling'

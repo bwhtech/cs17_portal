@@ -91,3 +91,17 @@
 		@apply my-3 border-outline-gray-2;
 	}
 }
+
+/*
+ * A skeleton that shows for one frame reads as a flicker, and most requests
+ * here answer in under 50ms. Hold it back so only a slow load ever shows one.
+ * On a wrapper, not the skeleton: its own pulse owns the `animation` property.
+ */
+@keyframes cs17-delay-in {
+	from {
+		opacity: 0;
+	}
+}
+.cs17-delay-in {
+	animation: cs17-delay-in 0s linear 200ms backwards;
+}

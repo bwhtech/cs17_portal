@@ -5,7 +5,7 @@
 		</template>
 	</AppHeader>
 
-	<div class="px-3 py-5 pb-10 sm:px-5">
+	<PageBody width="narrow">
 		<PageSkeleton v-if="loading" :blocks="2" />
 
 		<p v-else-if="!assignment" class="text-p-base text-ink-gray-5">Assignment not found.</p>
@@ -90,13 +90,14 @@
 			:existing-submission="submission"
 			@success="onSubmitted"
 		/>
-	</div>
+	</PageBody>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { Button, PageHeaderBackButton, useCall, useDoc, useList } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
+import PageBody from '@/components/common/PageBody.vue'
 import MarkdownText from '@/components/common/MarkdownText.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import SubmitAssignmentDialog from '@/components/assignments/SubmitAssignmentDialog.vue'

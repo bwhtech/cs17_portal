@@ -36,6 +36,7 @@ declare module 'vue' {
     GradeForm: typeof import('./src/components/grading/GradeForm.vue')['default']
     GradeSubmissionDialog: typeof import('./src/components/faculty/GradeSubmissionDialog.vue')['default']
     MarkdownText: typeof import('./src/components/common/MarkdownText.vue')['default']
+    PageBody: typeof import('./src/components/common/PageBody.vue')['default']
     PageSkeleton: typeof import('./src/components/common/PageSkeleton.vue')['default']
     PreviewAnnouncementDialog: typeof import('./src/components/faculty/PreviewAnnouncementDialog.vue')['default']
     ProjectCard: typeof import('./src/components/projects/ProjectCard.vue')['default']

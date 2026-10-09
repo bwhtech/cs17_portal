@@ -1,4 +1,7 @@
 <template>
+	<!-- No rows, no table: column headers over nothing say less than one line. -->
+	<EmptyState v-if="!loading && !rows.length" :title="empty" />
+
 	<!-- Desktop: one frappe-ui List in column mode. -->
 	<!-- `list-row-px-3` is what keeps the header aligned with the rows: an
 	     interactive row insets its content by 0.75rem on its own, but the
@@ -6,7 +9,7 @@
 	     hover surface bleed into the page gutter while the text stays lined up
 	     with everything above it. -->
 	<List
-		v-if="isDesktop"
+		v-else-if="isDesktop"
 		class="-mx-3 list-row-px-3"
 		:columns="trackSizes"
 		:selectable="selectable"
@@ -27,7 +30,7 @@
 
 		<template v-if="loading">
 			<ListRow v-for="n in skeletonRows" :key="`skeleton-${n}`" :value="`skeleton-${n}`">
-				<ListCell v-for="column in columns" :key="column.header">
+				<ListCell v-for="column in columns" :key="column.header" class="cs17-delay-in">
 					<Skeleton class="h-3 w-full max-w-24 rounded-full" />
 				</ListCell>
 			</ListRow>
@@ -35,7 +38,7 @@
 
 		<!-- `ListRows`, not a bare `v-for`: it feeds the header's select-all the
 		     full set of row keys. -->
-		<ListRows v-else-if="rows.length" v-slot="{ item }" :items="rows" :row-key="listRowKey">
+		<ListRows v-else v-slot="{ item }" :items="rows" :row-key="listRowKey">
 			<ListRow :value="rowKey(item)" @click="onRowClick?.(item)">
 				<ListCell
 					v-for="column in columns"
@@ -48,14 +51,12 @@
 				</ListCell>
 			</ListRow>
 		</ListRows>
-
-		<p v-else class="py-8 text-center text-base text-ink-gray-5">{{ empty }}</p>
 	</List>
 
 	<!-- Below `md` the same rows become cards: the primary column is the
 	     heading, `field` columns are label/value pairs, actions sit at the
 	     foot. Same contract as the React ResponsiveTable it replaces. -->
-	<div v-else-if="loading" class="space-y-3">
+	<div v-else-if="loading" class="cs17-delay-in space-y-3">
 		<div
 			v-for="n in skeletonRows"
 			:key="`skeleton-${n}`"
@@ -65,8 +66,6 @@
 			<Skeleton class="h-3 w-24 rounded-full" />
 		</div>
 	</div>
-
-	<p v-else-if="!rows.length" class="py-8 text-center text-base text-ink-gray-5">{{ empty }}</p>
 
 	<div v-else class="space-y-3">
 		<label
@@ -118,6 +117,7 @@
 <script setup lang="ts" generic="T">
 import { computed } from 'vue'
 import { Checkbox, Skeleton } from 'frappe-ui'
+import EmptyState from '@/components/common/EmptyState.vue'
 import { List, ListCell, ListHeader, ListHeaderCell, ListRow, ListRows } from 'frappe-ui/list'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 

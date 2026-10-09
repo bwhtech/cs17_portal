@@ -14,7 +14,7 @@
 		</template>
 	</AppHeader>
 
-	<div class="px-3 py-5 pb-10 sm:px-5">
+	<PageBody>
 		<PageSkeleton v-if="detail.loading && !detail.data" />
 
 		<EmptyState
@@ -117,7 +117,7 @@
 				</DataTable>
 			</section>
 		</div>
-	</div>
+	</PageBody>
 
 	<SubmissionPreviewDialog
 		v-if="previewTarget"
@@ -153,6 +153,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { Badge, Button, PageHeaderBackButton, toast, useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
+import PageBody from '@/components/common/PageBody.vue'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import MarkdownText from '@/components/common/MarkdownText.vue'

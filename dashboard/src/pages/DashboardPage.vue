@@ -1,9 +1,9 @@
 <template>
 	<AppHeader title="Dashboard" />
 
-	<div class="mx-auto max-w-4xl space-y-6 px-3 py-5 pb-10 sm:px-5">
+	<PageBody width="narrow" class="space-y-6">
 		<div>
-			<h1 class="text-3xl text-ink-gray-9">Welcome back, {{ firstName }}.</h1>
+			<h1 class="text-2xl text-ink-gray-9">Welcome back, {{ firstName }}.</h1>
 			<p class="mt-1 text-p-sm text-ink-gray-5">{{ today }}</p>
 		</div>
 
@@ -35,7 +35,7 @@
 			/>
 			<p v-else class="text-p-xs text-ink-gray-5">No upcoming assignments.</p>
 		</section>
-	</div>
+	</PageBody>
 
 	<GradeDialog v-model:open="gradeOpen" :grade="activeGrade" />
 </template>
@@ -48,6 +48,7 @@ import AlertBanner from '@/components/announcements/AlertBanner.vue'
 import AssignmentTable from '@/components/assignments/AssignmentTable.vue'
 import GradeDialog from '@/components/assignments/GradeDialog.vue'
 import AppHeader from '@/components/shell/AppHeader.vue'
+import PageBody from '@/components/common/PageBody.vue'
 import { usePolling, usePublishTimer } from '@/composables/usePolling'
 import { useSession } from '@/composables/useSession'
 import { dayjs, formatLongDate } from '@/lib/dates'
