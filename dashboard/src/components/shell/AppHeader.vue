@@ -32,13 +32,11 @@ import { Breadcrumbs, PageHeader, PageHeaderMobile, usePageMeta } from 'frappe-u
 import AnnouncementsBell from '@/components/announcements/AnnouncementsBell.vue'
 import { breadcrumbItems } from '@/composables/useBreadcrumbs'
 import { useBreakpoint } from '@/composables/useBreakpoint'
-import { useSession } from '@/composables/useSession'
 
 const props = defineProps<{
 	/**
-	 * The current page, appended to the "Workspace" root. A detail page that
-	 * builds a deeper trail sets it through `useBreadcrumbs()` instead and
-	 * leaves this unset.
+	 * The current page. A detail page that has a parent to go back to sets a
+	 * trail through `useBreadcrumbs()` instead and leaves this unset.
 	 */
 	title?: string
 }>()
@@ -53,21 +51,21 @@ defineSlots<{
 }>()
 
 const { isDesktop } = useBreakpoint()
-const { isFaculty } = useSession()
 
 /**
- * "Workspace" is always the root and always a link home; what follows is
- * either the trail a detail page pushed or, failing that, this page's title.
+ * A top level page shows only its own name; a detail page shows the trail it
+ * pushed, parent first. There is no root crumb: the sidebar is already the
+ * way home, and a "Workspace" link that opens the Dashboard names a page
+ * that does not exist.
  */
 const trail = computed(() => {
-	const root = { label: 'Workspace', route: isFaculty.value ? '/faculty' : '/' }
-	if (breadcrumbItems.value.length) return [root, ...breadcrumbItems.value]
-	return props.title ? [root, { label: props.title }] : [root]
+	if (breadcrumbItems.value.length) return breadcrumbItems.value
+	return props.title ? [{ label: props.title }] : []
 })
 
-const currentLabel = computed(() => trail.value[trail.value.length - 1].label)
+const currentLabel = computed(() => trail.value.at(-1)?.label ?? '')
 
 usePageMeta(() => ({
-	title: trail.value.length > 1 ? `${currentLabel.value} | CS17 Portal` : 'CS17 Portal',
+	title: currentLabel.value ? `${currentLabel.value} | CS17 Portal` : 'CS17 Portal',
 }))
 </script>
