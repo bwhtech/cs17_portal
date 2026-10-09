@@ -178,6 +178,11 @@ test.describe("Student submission types", () => {
 		}
 	});
 
+	test("offers one New project button on the projects page", async ({ page }) => {
+		await page.goto("/dashboard/projects");
+		await expect(page.getByRole("button", { name: "New project" })).toHaveCount(1);
+	});
+
 	test("rejects a non-PDF and accepts a PDF for a PDF assignment", async ({ page }) => {
 		const bad = await submitAsStudent(page, pdf.name, "/files/report.png");
 		expect(bad.ok).toBeFalsy();
