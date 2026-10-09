@@ -7,6 +7,31 @@ from frappe.tests.utils import FrappeTestCase
 from cs17_portal.cs17_portal.doctype.cs17_assignment_submission.cs17_assignment_submission import (
 	validate_submission_value,
 )
+from cs17_portal.tests.test_api import (
+	make_assignment,
+	make_cohort,
+	make_profile,
+	make_submission,
+	make_user,
+)
+
+
+class TestDuplicateSubmission(FrappeTestCase):
+	def test_second_submission_for_same_student_and_assignment_is_rejected(self):
+		cohort = make_cohort("C29TEST")
+		student = make_profile("Student", cohort, make_user("student29@cs17test.com"), "Student 29")
+		faculty_user = make_user("faculty29@cs17test.com")
+		make_profile("Faculty", cohort, faculty_user, "Faculty 29")
+
+		frappe.set_user(faculty_user)
+		assignment = make_assignment(cohort, "PDF Task 29", "PDF", 20)
+		frappe.set_user("Administrator")
+
+		make_submission(assignment, student, "Student 29", "PDF Task 29")
+
+		self.assertRaises(
+			frappe.ValidationError, make_submission, assignment, student, "Student 29", "PDF Task 29"
+		)
 
 
 class TestSubmissionValueValidation(FrappeTestCase):
