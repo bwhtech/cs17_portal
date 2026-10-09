@@ -17,6 +17,7 @@ import {
 import {
 	callGetMethod,
 	callMethod,
+	createDoc,
 	deleteDoc,
 	docExists,
 	getDoc,
@@ -209,6 +210,28 @@ test.describe("Faculty assignment management", () => {
 		const name = await createAssignment(request, { publish: "draft" });
 		await callMethod(request, DELETE, { assignment: name });
 		expect(await docExists(request, "CS17 Assignment", name)).toBe(false);
+	});
+
+	test("deletes an assignment that a student only started a project for", async ({
+		request,
+	}) => {
+		const assignment = await createAssignment(request, { publish: "now" });
+		const project = await createDoc<{ name: string }>(request, "CS17 Project", {
+			project_title: `${TEST_ASSIGNMENT_PREFIX} Started ${Date.now()}`,
+			profile: student.name,
+			assignment,
+		});
+
+		await callMethod(request, DELETE, { assignment });
+		expect(await docExists(request, "CS17 Assignment", assignment)).toBe(false);
+
+		const kept = await getDoc<{ assignment: string | null }>(
+			request,
+			"CS17 Project",
+			project.name,
+		);
+		expect(kept.assignment).toBeFalsy();
+		await deleteDoc(request, "CS17 Project", project.name);
 	});
 
 	test("refuses to delete an assignment that has submissions", async ({ request }) => {

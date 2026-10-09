@@ -85,6 +85,25 @@ async function saveProjectAsStudent(page: Page, project: string) {
 	);
 }
 
+async function callAsStudent(page: Page, method: string, body: unknown) {
+	return page.evaluate(
+		async ({ method, body }) => {
+			const token =
+				(window as any).csrf_token ?? (window as any).frappe?.csrf_token;
+			const resp = await fetch(`/api/method/${method}`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"X-Frappe-CSRF-Token": token,
+				},
+				body: JSON.stringify(body),
+			});
+			return { ok: resp.ok, body: await resp.json() };
+		},
+		{ method, body },
+	);
+}
+
 async function submitScratchAsStudent(page: Page, assignment: string, title: string) {
 	await page.goto("/dashboard");
 	await page.waitForFunction(
@@ -167,7 +186,6 @@ test.describe("Student submission types", () => {
 	test.afterAll(async ({ request }) => {
 		await cleanupTestGrades(request);
 		await cleanupTestSubmissions(request);
-		await cleanupTestAssignments(request);
 		const projects = await getList<{ name: string }>(request, "CS17 Project", {
 			fields: ["name"],
 			filters: { project_title: ["like", `${TEST_ASSIGNMENT_PREFIX}%`] },
@@ -176,6 +194,8 @@ test.describe("Student submission types", () => {
 		for (const project of projects) {
 			await deleteDoc(request, "CS17 Project", project.name);
 		}
+		// Projects link to their assignment, so they go first.
+		await cleanupTestAssignments(request);
 	});
 
 	test("offers one New project button on the projects page", async ({ page }) => {
@@ -290,6 +310,36 @@ test.describe("Student submission types", () => {
 			(url) => url.pathname === `/dashboard/projects/${project}/edit`,
 		);
 		await expect(page.getByTitle("Scratch editor")).toBeVisible();
+	});
+
+	test("reopening an assignment project submits to it without the picker", async ({
+		page,
+	}) => {
+		await page.goto("/dashboard/projects");
+		const created = await callAsStudent(page, "cs17_portal.api.create_project", {
+			project_title: `${TEST_ASSIGNMENT_PREFIX} Reopen ${Date.now()}`,
+			assignment: scratch.name,
+		});
+
+		await page.goto(`/dashboard/projects/${created.body.message.name}/edit`);
+		await page.getByRole("button", { name: "Submit", exact: true }).click();
+
+		await expect(page.getByRole("dialog").getByText("Submit this project?")).toBeVisible();
+	});
+
+	test("cannot rename or delete a project submitted to an assignment", async ({ page }) => {
+		const project = await submitScratchAsStudent(page, scratch.name, scratch.title);
+
+		const renamed = await callAsStudent(page, "cs17_portal.api.rename_project", {
+			project,
+			project_title: "Sneaky rename",
+		});
+		expect(renamed.ok).toBe(false);
+		expect(renamed.body._server_messages).toContain("cannot be renamed or deleted");
+
+		const deleted = await callAsStudent(page, "cs17_portal.api.delete_project", { project });
+		expect(deleted.ok).toBe(false);
+		expect(deleted.body._server_messages).toContain("cannot be renamed or deleted");
 	});
 
 	test("a graded scratch assignment opens read-only from preview and direct link", async ({
