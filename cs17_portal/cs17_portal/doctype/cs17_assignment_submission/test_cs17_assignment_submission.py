@@ -3,8 +3,11 @@
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
+from frappe.utils import add_days, now_datetime
 
+from cs17_portal.api import is_assignment_closed
 from cs17_portal.cs17_portal.doctype.cs17_assignment_submission.cs17_assignment_submission import (
+	edit_submission,
 	submit_assignment,
 	validate_submission_value,
 )
@@ -113,3 +116,44 @@ class TestSubmissionFileOwnership(FrappeTestCase):
 
 		frappe.set_user(student_user)
 		self.assertRaises(frappe.ValidationError, submit_assignment, assignment, "/private/files/report.pdf")
+
+
+class TestGradePastItsPublishTime(FrappeTestCase):
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		cohort = make_cohort("C95TEST")
+		cls.student_user = make_user("student95@cs17test.com")
+		student = make_profile("Student", cohort, cls.student_user, "Student 95")
+		faculty_user = make_user("faculty95@cs17test.com")
+		make_profile("Faculty", cohort, faculty_user, "Faculty 95")
+
+		frappe.set_user(faculty_user)
+		cls.assignment = make_assignment(cohort, "URL Task 95", "URL", 20)
+		frappe.set_user("Administrator")
+
+		cls.submission = make_submission(cls.assignment, student, "Student 95", "URL Task 95")
+		frappe.get_doc(
+			{
+				"doctype": "CS17 Assignment Grade",
+				"assignment": cls.assignment,
+				"submission": cls.submission,
+				"marks_obtained": 15,
+				"is_published": 0,
+				"published_on": add_days(now_datetime(), -1),
+			}
+		).insert(ignore_permissions=True)
+
+	def setUp(self):
+		frappe.set_user(self.student_user)
+
+	def tearDown(self):
+		frappe.set_user("Administrator")
+
+	def test_student_cannot_resubmit(self):
+		self.assertRaises(
+			frappe.ValidationError, edit_submission, self.submission, "https://github.com/student/work"
+		)
+
+	def test_assignment_is_closed(self):
+		self.assertTrue(is_assignment_closed(self.assignment))
