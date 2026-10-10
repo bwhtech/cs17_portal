@@ -46,7 +46,7 @@ def update_my_profile(first_name: str, last_name: str, profile_picture: str = ""
 
 @frappe.whitelist(methods=["GET"])
 def get_faculty_assignments(cohort: str | None = None) -> list:
-	validate_membership("Faculty")
+	cohort = get_current_faculty().cohort or cohort
 	filters = {"cohort": cohort} if cohort else {}
 	assignments = frappe.get_all(
 		"CS17 Assignment",
