@@ -5,6 +5,7 @@
 		<LoadError
 			v-if="failed"
 			title="Could not load your assignments"
+			:loading="assignmentsCall.loading"
 			@retry="assignmentsCall.reload()"
 		/>
 
@@ -30,6 +31,7 @@ import PageBody from '@/components/common/PageBody.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import AssignmentTable from '@/components/assignments/AssignmentTable.vue'
 import GradeDialog from '@/components/assignments/GradeDialog.vue'
+import { useLoadFailed } from '@/composables/useLoadFailed'
 import { usePolling, usePublishTimer } from '@/composables/usePolling'
 import { useSession } from '@/composables/useSession'
 import { gradesByAssignment, submissionsByAssignment } from '@/lib/status'
@@ -69,7 +71,7 @@ const gradeMap = computed(() =>
 )
 
 const loading = computed(() => assignmentsCall.loading && !assignmentsCall.data)
-const failed = computed(() => Boolean(assignmentsCall.error) && !assignmentsCall.data)
+const failed = useLoadFailed(assignmentsCall)
 
 // Both lists move together: an assignment that publishes on a schedule and the
 // grade that lands on it are equally invisible until something reloads them.

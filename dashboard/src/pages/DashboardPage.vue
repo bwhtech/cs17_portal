@@ -50,6 +50,7 @@ import AssignmentTable from '@/components/assignments/AssignmentTable.vue'
 import GradeDialog from '@/components/assignments/GradeDialog.vue'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
+import { useLoadFailed } from '@/composables/useLoadFailed'
 import { usePolling, usePublishTimer } from '@/composables/usePolling'
 import { useSession } from '@/composables/useSession'
 import { dayjs, formatLongDate, isPast } from '@/lib/dates'
@@ -133,7 +134,7 @@ const loading = computed(
 		(submissionsList.loading && !submissionsList.data),
 )
 
-const failed = computed(() => Boolean(assignmentsCall.error) && !assignmentsCall.data)
+const failed = useLoadFailed(assignmentsCall)
 
 const gradeAssignment = ref<string | null>(null)
 const activeGrade = computed(() =>

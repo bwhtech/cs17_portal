@@ -5,6 +5,7 @@
 		<LoadError
 			v-if="failed"
 			title="Could not load announcements"
+			:loading="announcementsCall.loading"
 			@retry="announcementsCall.reload()"
 		/>
 
@@ -42,6 +43,7 @@ import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import { useAnnouncementDismissals } from '@/composables/useAnnouncementDismissals'
+import { useLoadFailed } from '@/composables/useLoadFailed'
 import { usePolling, usePublishTimer } from '@/composables/usePolling'
 import { useSession } from '@/composables/useSession'
 import type { StudentAnnouncementsResponse } from '@/types'
@@ -60,5 +62,5 @@ usePublishTimer(() => announcementsCall.data?.next_publish_on, announcementsCall
 const announcements = computed(() => announcementsCall.data?.announcements ?? [])
 // A user who is not a student never fires the request, so "loading" would hang.
 const loading = computed(() => announcementsCall.loading && !announcementsCall.data)
-const failed = computed(() => Boolean(announcementsCall.error) && !announcementsCall.data)
+const failed = useLoadFailed(announcementsCall)
 </script>

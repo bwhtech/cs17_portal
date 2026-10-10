@@ -13,7 +13,12 @@
 	</AppHeader>
 
 	<PageBody>
-		<LoadError v-if="failed" title="Could not load announcements" @retry="listCall.reload()" />
+		<LoadError
+			v-if="failed"
+			title="Could not load announcements"
+			:loading="listCall.loading"
+			@retry="listCall.reload()"
+		/>
 
 		<DataTable
 			v-else
@@ -128,6 +133,7 @@ import AnnouncementFormDialog from '@/components/faculty/AnnouncementFormDialog.
 import DeleteAnnouncementDialog from '@/components/faculty/DeleteAnnouncementDialog.vue'
 import PreviewAnnouncementDialog from '@/components/faculty/PreviewAnnouncementDialog.vue'
 import PublishAnnouncementDialog from '@/components/faculty/PublishAnnouncementDialog.vue'
+import { useLoadFailed } from '@/composables/useLoadFailed'
 import { formatDate, formatDateTime } from '@/lib/dates'
 import type { AlertVariant, CS17Announcement } from '@/types'
 
@@ -148,7 +154,7 @@ const listCall = useCall<CS17Announcement[]>({
 })
 
 const announcements = computed(() => listCall.data ?? [])
-const failed = computed(() => Boolean(listCall.error) && !listCall.data)
+const failed = useLoadFailed(listCall)
 
 const cohortsCall = useCall<string[]>({
 	url: '/api/v2/method/cs17_portal.api.get_cohorts',
