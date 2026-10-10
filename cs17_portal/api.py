@@ -341,7 +341,7 @@ def replace_project_file(
 	project_doc.set(field, new_file.file_url)
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def create_project(project_title: str, assignment: str | None = None) -> dict:
 	profile = require_current_profile()
 	project_doc = frappe.new_doc("CS17 Project")
@@ -421,7 +421,7 @@ def _validate_project_title(project_title: str) -> str:
 	return title
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 @rate_limit(key="project", limit=120, seconds=60, methods=["POST"], ip_based=False)
 def save_project(
 	project: str,
@@ -446,7 +446,7 @@ def save_project(
 	}
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 @rate_limit(key="project", limit=30, seconds=60, methods=["POST"], ip_based=False)
 def submit_scratch_project(assignment: str, project: str) -> dict:
 	student = require_current_student()
@@ -595,7 +595,7 @@ def get_submission_grade(submission: str) -> dict | None:
 	)
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def save_grade(
 	submission: str,
 	marks_obtained: float | None = None,
