@@ -661,6 +661,30 @@ def get_student_assignments(cohort: str) -> dict:
 
 
 @frappe.whitelist(methods=["GET"])
+def get_student_assignment(assignment: str) -> dict:
+	cohort = frappe.db.get_value("CS17 Profile", require_current_student(), "cohort")
+	assignments = frappe.get_all(
+		"CS17 Assignment",
+		filters={"name": assignment, "cohort": cohort},
+		or_filters=[["is_published", "=", 1], ["publish_on", "<=", now_datetime()]],
+		fields=[
+			"name",
+			"title",
+			"description",
+			"due_date",
+			"max_marks",
+			"assignment_type",
+			"submission_type",
+			"remarks",
+		],
+		limit=1,
+	)
+	if not assignments:
+		frappe.throw(_("Assignment not found"), frappe.DoesNotExistError)
+	return assignments[0]
+
+
+@frappe.whitelist(methods=["GET"])
 def get_student_grades() -> dict:
 	student = require_current_student()
 	submissions = frappe.get_all(
