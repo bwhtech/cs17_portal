@@ -116,6 +116,8 @@ def validate_submission_value(submission_type: str | None, file_url: str) -> Non
 		if not is_valid_url(file_url):
 			frappe.throw(_("This assignment requires a valid URL (http:// or https://)."))
 		return
+	if submission_type == "Scratch":
+		frappe.throw(_("Scratch assignments are submitted from the project editor."))
 	if not file_url.lower().endswith(SUBMISSION_EXTENSIONS[submission_type]):
 		frappe.throw(_("This assignment only accepts {0} files.").format(submission_type))
 
