@@ -1,9 +1,5 @@
 import { test, expect, Page } from "@playwright/test";
 
-/**
- * Settings is a dialog opened from the sidebar's account dropdown. The header
- * button is the dropdown trigger; the menu renders in a portal.
- */
 async function openSettings(page: Page) {
 	await page.goto("/dashboard");
 	await page.locator('[data-slot="sidebar-header"] button').click();
@@ -22,7 +18,6 @@ test.describe("Faculty profile settings", () => {
 		await expect(page.getByText("Add your first name.")).toBeVisible();
 	});
 
-	// The first name stays "E2E": cleanup finds test profiles by that prefix.
 	test("keeps a new last name across a reload", async ({ page }) => {
 		await openSettings(page);
 		await page.getByLabel("Last name").fill("Renamed");

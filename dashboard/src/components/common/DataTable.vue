@@ -1,5 +1,4 @@
 <template>
-	<!-- No rows, no table: column headers over nothing say less than one line. -->
 	<EmptyState v-if="!loading && !rows.length" :title="empty" />
 
 	<!-- Desktop: one frappe-ui List in column mode. -->

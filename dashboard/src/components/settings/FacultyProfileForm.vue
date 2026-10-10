@@ -2,7 +2,6 @@
 	<div class="space-y-4">
 		<div class="flex flex-wrap items-center gap-3">
 			<Avatar size="2xl" :image="picture ?? undefined" :label="fullName" />
-			<!-- Public on purpose: the picture is shown to other people in the portal. -->
 			<FileUploader
 				:private="false"
 				file-types="image/*"
@@ -91,8 +90,6 @@ const saveCall = useCall<
 	immediate: false,
 })
 
-// Every open starts from the saved profile, so an abandoned edit does not
-// come back the next time Settings is opened.
 watch(isOpen, (open) => open && reset(), { immediate: true })
 
 function reset() {
@@ -130,7 +127,6 @@ async function save() {
 		error.value = frappeErrorMessage(saveCall.error, 'Could not save your profile.')
 		return
 	}
-	// `profile` is the one shared ref, so the sidebar and header follow.
 	profile.value = { ...profile.value, ...saveCall.data }
 	reset()
 	toast.success('Profile saved')

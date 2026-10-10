@@ -33,8 +33,6 @@ async function start() {
 	const app = createApp(App)
 	app.use(router)
 	app.use(FrappeUI)
-	// Until the first navigation resolves the route is `/`, which would paint
-	// the student's Dashboard row as current for a frame on every reload.
 	await router.isReady()
 	app.mount('#app')
 }
