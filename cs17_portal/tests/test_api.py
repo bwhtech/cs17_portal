@@ -363,6 +363,11 @@ class TestStudentListsUseOwnCohort(FrappeTestCase):
 		self.assertIn(self.announcement_for_all, names)
 		self.assertNotIn(self.announcement_40, names)
 
+	def test_student_role_has_no_direct_read(self):
+		frappe.get_doc("User", self.student_user).add_roles("CS17 Student")
+		for doctype in ("CS17 Assignment Grade", "CS17 Assignment", "CS17 Announcement", "CS17 Exam"):
+			self.assertFalse(frappe.has_permission(doctype, "read", user=self.student_user))
+
 	def test_faculty_cannot_list_student_assignments(self):
 		frappe.set_user(self.faculty_user)
 		self.assertRaises(frappe.PermissionError, get_student_assignments)
