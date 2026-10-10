@@ -18,7 +18,13 @@
 					/>
 				</template>
 			</FileUploader>
-			<Button v-if="picture" variant="ghost" label="Remove photo" @click="picture = null" />
+			<Button
+				v-if="picture"
+				icon-left="lucide-trash-2"
+				label="Remove photo"
+				class="hover:!bg-surface-red-3 hover:!text-ink-red-7"
+				@click="picture = null"
+			/>
 		</div>
 
 		<div class="grid gap-3 sm:grid-cols-2">

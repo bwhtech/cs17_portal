@@ -2,8 +2,6 @@
 	<AppHeader title="Results" />
 
 	<PageBody>
-		<p v-if="results.length" class="mb-5 text-sm text-ink-gray-5">{{ countLine }}</p>
-
 		<EmptyState
 			v-if="!loading && !results.length"
 			icon="lucide-award"
@@ -79,8 +77,6 @@ usePolling(resultsCall.reload)
 
 const results = computed(() => resultsCall.data ?? [])
 const loading = computed(() => resultsCall.loading && !resultsCall.data)
-
-const countLine = computed(() => (loading.value ? 'Loading…' : `${results.value.length} published`))
 
 const columns: Column[] = [
 	{ header: 'Exam', key: 'exam', variant: 'primary' },

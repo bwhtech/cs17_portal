@@ -13,8 +13,6 @@
 	</AppHeader>
 
 	<PageBody>
-		<p v-if="announcements.length" class="mb-4 text-sm text-ink-gray-5">{{ subtitle }}</p>
-
 		<DataTable
 			:columns="columns"
 			:rows="announcements"
@@ -56,6 +54,7 @@
 			<template #cell-actions="{ row }">
 				<div class="flex items-center justify-end gap-1">
 					<Button
+						variant="ghost"
 						icon="lucide-eye"
 						:aria-label="`Preview ${row.title}`"
 						tooltip="Preview"
@@ -63,19 +62,18 @@
 					/>
 					<template v-if="!row.is_published">
 						<Button
+							variant="ghost"
 							icon="lucide-pencil"
 							:aria-label="`Edit ${row.title}`"
 							tooltip="Edit"
 							@click.stop="openEdit(row)"
 						/>
-						<Button
-							variant="outline"
-							label="Publish"
-							@click.stop="publishTarget = row"
-						/>
+						<Button label="Publish" @click.stop="publishTarget = row" />
 					</template>
 					<Button
+						variant="ghost"
 						icon="lucide-trash-2"
+						class="hover:!bg-surface-red-3 hover:!text-ink-red-7"
 						:aria-label="`Delete ${row.title}`"
 						tooltip="Delete"
 						@click.stop="deleteTarget = row"
@@ -145,11 +143,6 @@ const listCall = useCall<CS17Announcement[]>({
 })
 
 const announcements = computed(() => listCall.data ?? [])
-
-const subtitle = computed(() => {
-	const count = announcements.value.length
-	return `${count} ${count === 1 ? 'announcement' : 'announcements'}`
-})
 
 const cohortList = useList<{ name: string }>({
 	doctype: 'CS17 Cohort',

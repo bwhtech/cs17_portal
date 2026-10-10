@@ -13,8 +13,6 @@
 	</AppHeader>
 
 	<PageBody class="space-y-5">
-		<p v-if="rows.length" class="text-sm text-ink-gray-5">{{ rows.length }} total</p>
-
 		<!-- Drafts are invisible to students, so they sit above the table as a
 		     collapsed row rather than competing with published work in it. -->
 		<div v-if="drafts.length">
@@ -93,6 +91,7 @@
 						<Button
 							variant="ghost"
 							icon="lucide-trash-2"
+							class="hover:!bg-surface-red-3 hover:!text-ink-red-7"
 							:aria-label="`Delete ${row.title}`"
 							tooltip="Delete"
 							@click="deleteTarget = row"

@@ -100,9 +100,8 @@
 
 					<template #cell-actions="{ row }">
 						<div class="flex flex-wrap items-center gap-2 md:justify-end">
-							<Button variant="ghost" label="Preview" @click="previewTarget = row" />
+							<Button label="Preview" @click="previewTarget = row" />
 							<Button
-								variant="ghost"
 								:label="assigneesOf(row).length ? 'Assigned' : 'Assign'"
 								@click="assignTargetName = row.name"
 							/>
