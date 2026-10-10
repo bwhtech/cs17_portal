@@ -83,6 +83,15 @@ test.describe("Faculty assignment portal", () => {
 		await expect(page.getByText("No assignments yet.")).toHaveCount(0);
 	});
 
+	test("says an assignment could not load when the request fails", async ({ page }) => {
+		await page.route("**/cs17_portal.api.get_assignment_submissions*", (route) =>
+			route.fulfill({ status: 500 }),
+		);
+		await page.goto(`/dashboard/faculty/assignments/${graded.name}`);
+		await expect(page.getByText("Could not load this assignment")).toBeVisible();
+		await expect(page.getByText("Assignment not found")).toHaveCount(0);
+	});
+
 	test("creates and publishes an assignment from the sheet", async ({ page }) => {
 		const title = `${TEST_ASSIGNMENT_PREFIX} UI ${Date.now()}`;
 		await page.goto("/dashboard/faculty/assignments");

@@ -14,7 +14,9 @@
 	</AppHeader>
 
 	<PageBody>
-		<PageSkeleton v-if="detail.loading && !detail.data" />
+		<LoadError v-if="failed" title="Could not load this assignment" @retry="detail.reload()" />
+
+		<PageSkeleton v-else-if="detail.loading && !detail.data" />
 
 		<EmptyState
 			v-else-if="!assignment"
@@ -153,6 +155,7 @@ import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import LoadError from '@/components/common/LoadError.vue'
 import MarkdownText from '@/components/common/MarkdownText.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import SubmissionPreviewDialog from '@/components/assignments/SubmissionPreviewDialog.vue'
@@ -163,6 +166,7 @@ import BulkAssignBar from '@/components/faculty/BulkAssignBar.vue'
 import GradeSubmissionDialog from '@/components/faculty/GradeSubmissionDialog.vue'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
 import { formatDateTime } from '@/lib/dates'
+import { isRefusal } from '@/lib/frappeError'
 import type { CS17Assignment, CS17Grade, CS17Submission } from '@/types'
 
 const route = useRoute()
@@ -180,6 +184,7 @@ const detail = useCall<
 })
 
 const assignment = computed(() => detail.data?.assignment ?? null)
+const failed = computed(() => Boolean(detail.error) && !detail.data && !isRefusal(detail.error))
 const submissions = computed(() => detail.data?.submissions ?? [])
 
 const selection = ref<string[]>([])

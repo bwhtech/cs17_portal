@@ -6,7 +6,13 @@
 	</AppHeader>
 
 	<PageBody width="narrow">
-		<PageSkeleton v-if="loading" :blocks="2" />
+		<LoadError
+			v-if="failed"
+			title="Could not load this assignment"
+			@retry="assignmentDoc.reload()"
+		/>
+
+		<PageSkeleton v-else-if="loading" :blocks="2" />
 
 		<p v-else-if="!assignment" class="text-p-base text-ink-gray-5">Assignment not found.</p>
 
@@ -91,6 +97,7 @@ import { computed, ref, watch } from 'vue'
 import { Button, PageHeaderBackButton, useCall, useDoc, useList } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
+import LoadError from '@/components/common/LoadError.vue'
 import MarkdownText from '@/components/common/MarkdownText.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import SubmitAssignmentDialog from '@/components/assignments/SubmitAssignmentDialog.vue'
@@ -98,6 +105,7 @@ import { useScratchAssignment } from '@/components/assignments/scratchEditor'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
 import { useSession } from '@/composables/useSession'
 import { formatDateTime, isPast } from '@/lib/dates'
+import { isRefusal } from '@/lib/frappeError'
 import type { CS17Assignment, CS17Submission, StudentGradesResponse } from '@/types'
 
 const props = defineProps<{ assignmentId: string }>()
@@ -125,6 +133,9 @@ const gradesCall = useCall<StudentGradesResponse>({
 
 const assignment = computed(() => assignmentDoc.doc)
 const loading = computed(() => assignmentDoc.loading && !assignmentDoc.doc)
+const failed = computed(
+	() => Boolean(assignmentDoc.error) && !assignmentDoc.doc && !isRefusal(assignmentDoc.error),
+)
 const submission = computed(() => submissions.data?.[0] ?? null)
 
 /**
