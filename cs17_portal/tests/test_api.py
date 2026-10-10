@@ -383,6 +383,10 @@ class TestStudentListsUseOwnCohort(FrappeTestCase):
 		for doctype in ("CS17 Assignment Grade", "CS17 Assignment", "CS17 Announcement", "CS17 Exam"):
 			self.assertFalse(frappe.has_permission(doctype, "read", user=self.student_user))
 
+	def test_student_role_cannot_share_a_submission(self):
+		frappe.get_doc("User", self.student_user).add_roles("CS17 Student")
+		self.assertFalse(frappe.has_permission("CS17 Assignment Submission", "share", user=self.student_user))
+
 	def test_faculty_cannot_list_student_assignments(self):
 		frappe.set_user(self.faculty_user)
 		self.assertRaises(frappe.PermissionError, get_student_assignments)
