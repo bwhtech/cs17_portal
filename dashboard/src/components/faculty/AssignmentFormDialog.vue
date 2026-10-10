@@ -228,9 +228,10 @@ const cohortOptions = computed(() =>
 	props.cohorts.map((cohort) => ({ label: cohort, value: cohort })),
 )
 
-const quarterOptions = computed(() =>
-	props.quarters.map((quarter) => ({ label: quarter, value: quarter })),
-)
+const quarterOptions = computed(() => [
+	{ label: 'No quarter', value: '' },
+	...props.quarters.map((quarter) => ({ label: quarter, value: quarter })),
+])
 
 const deletableName = computed(() => savedName.value ?? props.draftName ?? null)
 
