@@ -35,6 +35,7 @@ import { Button, Dialog, ErrorMessage, useCall } from 'frappe-ui'
 import PublishFields from '@/components/common/PublishFields.vue'
 import { toFrappeDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
+import { trySubmit } from '@/lib/trySubmit'
 import type { CS17Announcement, PublishMode } from '@/types'
 
 const props = defineProps<{
@@ -83,7 +84,7 @@ async function publish() {
 	}
 	error.value = ''
 
-	await publishCall.submit({
+	await trySubmit(publishCall, {
 		announcement: props.announcement.name,
 		publish: mode.value,
 		publish_on: toFrappeDatetime(publishOn.value),

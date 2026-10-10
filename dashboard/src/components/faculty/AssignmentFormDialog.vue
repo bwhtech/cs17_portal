@@ -162,6 +162,7 @@ import { useBreakpoint } from '@/composables/useBreakpoint'
 import { toFrappeDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { STORAGE_KEYS, readJSON, removeKey, writeJSON } from '@/lib/storage'
+import { trySubmit } from '@/lib/trySubmit'
 import {
 	SUBMISSION_TYPES,
 	type CS17Assignment,
@@ -313,7 +314,7 @@ function initialize() {
 }
 
 async function loadExisting(name: string) {
-	const existing = await existingCall.submit({ assignment: name })
+	const existing = await trySubmit(existingCall, { assignment: name })
 	if (!existing) return
 	Object.assign(draft, {
 		title: existing.title ?? '',
@@ -396,7 +397,7 @@ async function handleSubmit() {
 	}
 
 	const call = savedName.value ? updateCall : createCall
-	await call.submit(savedName.value ? { assignment: savedName.value, ...payload } : payload)
+	await trySubmit(call, savedName.value ? { assignment: savedName.value, ...payload } : payload)
 	if (call.error) {
 		errors.form = frappeErrorMessage(call.error, 'Could not save the assignment.')
 		return

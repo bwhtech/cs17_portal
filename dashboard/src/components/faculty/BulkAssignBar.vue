@@ -32,6 +32,7 @@ import { ref, watch } from 'vue'
 import { Button, toast, useCall } from 'frappe-ui'
 import FacultySelect from '@/components/faculty/FacultySelect.vue'
 import { frappeErrorMessage } from '@/lib/frappeError'
+import { trySubmit } from '@/lib/trySubmit'
 
 const props = defineProps<{
 	/** The selected submission names. */
@@ -60,7 +61,7 @@ async function handleAssign() {
 		return
 	}
 
-	await assign.submit({ submissions: props.submissions, assign_to: assignTo.value })
+	await trySubmit(assign, { submissions: props.submissions, assign_to: assignTo.value })
 	if (assign.error) {
 		toast.error(frappeErrorMessage(assign.error, 'Could not assign the submissions.'))
 		return

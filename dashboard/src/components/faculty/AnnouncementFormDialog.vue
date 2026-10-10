@@ -101,6 +101,7 @@ import PublishFields from '@/components/common/PublishFields.vue'
 import { useSession } from '@/composables/useSession'
 import { toFrappeDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
+import { trySubmit } from '@/lib/trySubmit'
 import { ALERT_VARIANTS, type AlertVariant, type CS17Announcement, type PublishMode } from '@/types'
 
 const props = defineProps<{
@@ -163,9 +164,6 @@ const cohortOptions = computed(() =>
 
 const hasPreview = computed(() => Boolean(form.title.trim() || form.content.trim()))
 
-// `submit()` resolves whether or not the request failed — the error lands on
-// the handle — so the failure path is wired through `onError`, and the caller
-// only has to ask whether an error was set.
 function onError(error: Error) {
 	formError.value = frappeErrorMessage(error, 'Could not save the announcement.')
 }
@@ -226,7 +224,8 @@ async function save() {
 	}
 
 	const call = props.announcement ? updateCall : createCall
-	await call.submit(
+	await trySubmit(
+		call,
 		props.announcement ? { announcement: props.announcement.name, ...payload } : payload,
 	)
 	if (call.error) return

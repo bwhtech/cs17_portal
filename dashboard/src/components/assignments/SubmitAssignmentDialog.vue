@@ -75,6 +75,7 @@ import {
 } from 'frappe-ui'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { getSubmissionConfig, isSubmissionValid, isValidUrl } from '@/lib/submissionTypes'
+import { trySubmit } from '@/lib/trySubmit'
 import type { CS17Assignment, CS17Submission } from '@/types'
 
 const props = defineProps<{
@@ -175,9 +176,9 @@ async function save() {
 
 	const call = isEdit.value ? editCall : submitCall
 	if (isEdit.value) {
-		await editCall.submit({ submission: props.existingSubmission!.name, file_url: value })
+		await trySubmit(editCall, { submission: props.existingSubmission!.name, file_url: value })
 	} else {
-		await submitCall.submit({ assignment: props.assignment.name, file_url: value })
+		await trySubmit(submitCall, { assignment: props.assignment.name, file_url: value })
 	}
 
 	// The error stays under the field rather than becoming a toast: the student

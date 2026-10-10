@@ -60,6 +60,7 @@ import ProjectCard from '@/components/projects/ProjectCard.vue'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { useProjectsPath } from '@/composables/useProjectsPath'
 import { frappeErrorMessage } from '@/lib/frappeError'
+import { trySubmit } from '@/lib/trySubmit'
 import type { CS17Project } from '@/types'
 
 const router = useRouter()
@@ -112,9 +113,7 @@ function promptForNewProject() {
 			const title = String(values.project_title ?? '').trim()
 			if (!title) throw new Error('Give the project a name.')
 
-			// `submit()` resolves rather than throwing, so the error ref is what
-			// says whether this call landed.
-			const created = await createProject.submit({ project_title: title })
+			const created = await trySubmit(createProject, { project_title: title })
 			if (createProject.error || !created) {
 				throw new Error(
 					frappeErrorMessage(createProject.error, 'Could not create the project.'),
@@ -144,7 +143,7 @@ function promptForRename(project: CS17Project) {
 			const title = String(values.project_title ?? '').trim()
 			if (!title) throw new Error('Give the project a name.')
 
-			await renameProject.submit({ project: project.name, project_title: title })
+			await trySubmit(renameProject, { project: project.name, project_title: title })
 			if (renameProject.error) {
 				throw new Error(
 					frappeErrorMessage(renameProject.error, 'Could not rename the project.'),
@@ -162,7 +161,7 @@ function confirmDelete(project: CS17Project) {
 		message: `Delete "${project.project_title}"? This cannot be undone.`,
 		confirmLabel: 'Delete',
 		onConfirm: async () => {
-			await deleteProject.submit({ project: project.name })
+			await trySubmit(deleteProject, { project: project.name })
 			if (deleteProject.error) {
 				throw new Error(
 					frappeErrorMessage(deleteProject.error, 'Could not delete the project.'),

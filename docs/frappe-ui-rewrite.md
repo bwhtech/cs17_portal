@@ -143,7 +143,9 @@ Rules for every stream
 - Every table goes through `DataTable.vue`. Every scroll region uses `ScrollArea`.
 - Every input carries `label` / `error` / `required` through component props. No
   placeholder-as-label.
-- Writes: `immediate: false` + `submit()`. Loading bound to `<Button :loading>`.
+- Writes: `immediate: false` + `trySubmit(call, params)` from `lib/trySubmit.ts`, then read
+  `call.error`; a bare `submit()` rejects when the server refuses. Loading bound to
+  `<Button :loading>`.
 - Page gutters `px-3 py-5 pb-10 sm:px-5`, matching the header.
 - Mobile is checked for every screen, not just desktop.
 

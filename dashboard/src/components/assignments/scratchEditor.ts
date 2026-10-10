@@ -1,6 +1,7 @@
 import { useRouter } from 'vue-router'
 import { useCall, toast } from 'frappe-ui'
 import { frappeErrorMessage } from '@/lib/frappeError'
+import { trySubmit } from '@/lib/trySubmit'
 import type { CS17Assignment, CS17Project, CS17Submission } from '@/types'
 
 /**
@@ -37,7 +38,7 @@ export function useScratchAssignment(): {
 		// will work in is created here and the editor opens straight into it.
 		let project = submission?.project ?? null
 		if (!project) {
-			const created = await createProject.submit({
+			const created = await trySubmit(createProject, {
 				project_title: assignment.title || 'Scratch project',
 				assignment: assignment.name,
 			})

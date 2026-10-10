@@ -1,7 +1,12 @@
 export function frappeErrorMessage(error: unknown, fallback: string): string {
-	const err = error as { message?: string; _server_messages?: string }
+	const err = error as { message?: string; type?: string; _server_messages?: string }
 	const fromServer = parseServerMessage(err?._server_messages)
 	if (fromServer) return fromServer
+	if (err?.type) {
+		const prefix = `${err.type}: `
+		const message = err.message?.startsWith(prefix) ? err.message.slice(prefix.length) : ''
+		return message.replace(/<[^>]*>/g, '') || fallback
+	}
 	if (err?.message && err.message !== 'There was an error.') return err.message
 	return fallback
 }

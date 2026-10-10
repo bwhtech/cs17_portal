@@ -10,6 +10,7 @@
 import { watch } from 'vue'
 import { dialog, toast, useCall } from 'frappe-ui'
 import { frappeErrorMessage } from '@/lib/frappeError'
+import { trySubmit } from '@/lib/trySubmit'
 import type { CS17Announcement } from '@/types'
 
 const props = defineProps<{
@@ -46,7 +47,7 @@ function confirmDelete() {
 		// A rejected `onConfirm` keeps the dialog open with the message inline,
 		// which is exactly the React behaviour: a failed delete stays visible.
 		onConfirm: async () => {
-			await deleteCall.submit({ announcement: announcement.name })
+			await trySubmit(deleteCall, { announcement: announcement.name })
 			if (deleteCall.error) {
 				throw new Error(
 					frappeErrorMessage(deleteCall.error, 'Could not delete the announcement.'),

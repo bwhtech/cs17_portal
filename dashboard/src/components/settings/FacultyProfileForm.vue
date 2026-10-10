@@ -52,6 +52,7 @@ import {
 import { useSession } from '@/composables/useSession'
 import { useSettingsDialog } from '@/composables/useSettingsDialog'
 import { frappeErrorMessage } from '@/lib/frappeError'
+import { trySubmit } from '@/lib/trySubmit'
 import type { CS17Profile } from '@/types'
 
 type SavedProfile = Pick<
@@ -118,7 +119,7 @@ async function save() {
 		toast.info('Nothing to save yet.')
 		return
 	}
-	await saveCall.submit({
+	await trySubmit(saveCall, {
 		first_name: firstName.value.trim(),
 		last_name: lastName.value.trim(),
 		profile_picture: picture.value ?? '',

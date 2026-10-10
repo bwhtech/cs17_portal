@@ -45,7 +45,9 @@ server.
   `border-outline-*`. No palette classes such as `text-gray-500`, no raw hex.
 - Radii come from the frappe-ui scale: `rounded-1` to `rounded-9` and `rounded-full`.
 - Data: `useCall` for whitelisted methods, `useList` for doc lists, `useDoc` for one doc.
-  Writes use `immediate: false` and `submit()`, with loading bound to the button.
+  Writes use `immediate: false` with loading bound to the button, and are sent with
+  `trySubmit(call, params)` from `dashboard/src/lib/trySubmit.ts`; the handler then reads
+  `call.error`. Not `submit()` directly: it rejects when the server refuses.
 - Every table goes through `components/common/DataTable.vue`.
 - Each page renders its own `<AppHeader>`; a detail page sets its trail with
   `useBreadcrumbs()`.
