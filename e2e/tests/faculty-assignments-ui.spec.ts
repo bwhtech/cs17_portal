@@ -15,7 +15,7 @@ import {
 	deleteTestProfile,
 	ensureSessionFaculty,
 } from "../helpers/cs17";
-import { deleteDoc, updateDoc, uploadFile } from "../helpers/frappe";
+import { createDoc, deleteDoc, getDoc, updateDoc, uploadFile } from "../helpers/frappe";
 
 const DRAFT_KEY = "cs17-new-assignment-draft";
 
@@ -194,6 +194,34 @@ test.describe("Faculty assignment portal", () => {
 			DRAFT_KEY,
 		);
 		expect(stored).toBeNull();
+	});
+
+	test("saves a draft with a quarter back to no quarter", async ({ page, request }) => {
+		const quarter = await createDoc<{ name: string }>(request, "CS17 Quarter", {
+			quarter_name: `E2E Quarter ${Date.now()}`,
+		});
+		const draft = await createTestAssignment(request, {
+			cohort: cohort.name,
+			isPublished: false,
+		});
+		await updateDoc(request, "CS17 Assignment", draft.name, { quarter: quarter.name });
+
+		await page.goto("/dashboard/faculty/assignments");
+		await page.getByRole("button", { name: /^Drafts/ }).click();
+		await page.getByRole("button", { name: draft.title, exact: true }).click();
+		await page.getByRole("combobox").filter({ hasText: quarter.name }).click();
+		await page.getByRole("option", { name: "No quarter" }).click();
+		await page.getByRole("button", { name: "Save Assignment" }).click();
+		await expect(page.getByText("Assignment saved")).toBeVisible();
+
+		const saved = await getDoc<{ quarter: string | null }>(
+			request,
+			"CS17 Assignment",
+			draft.name,
+		);
+		expect(saved.quarter).toBeFalsy();
+
+		await deleteDoc(request, "CS17 Quarter", quarter.name);
 	});
 
 	test("previews a Scratch submission in the read-only editor", async ({
