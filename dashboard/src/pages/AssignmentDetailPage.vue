@@ -9,6 +9,7 @@
 		<LoadError
 			v-if="failed"
 			title="Could not load this assignment"
+			:loading="assignmentCall.loading"
 			@retry="assignmentCall.reload()"
 		/>
 
@@ -106,6 +107,7 @@ import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import SubmitAssignmentDialog from '@/components/assignments/SubmitAssignmentDialog.vue'
 import { useScratchAssignment } from '@/components/assignments/scratchEditor'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
+import { useLoadFailed } from '@/composables/useLoadFailed'
 import { useSession } from '@/composables/useSession'
 import { formatDateTime, isPast } from '@/lib/dates'
 import { isRefusal } from '@/lib/frappeError'
@@ -136,9 +138,7 @@ const gradesCall = useCall<StudentGradesResponse>({
 
 const assignment = computed(() => assignmentCall.data ?? null)
 const loading = computed(() => assignmentCall.loading && !assignmentCall.data)
-const failed = computed(
-	() => Boolean(assignmentCall.error) && !assignmentCall.data && !isRefusal(assignmentCall.error),
-)
+const failed = useLoadFailed(assignmentCall, { except: isRefusal })
 const submission = computed(() => submissions.data?.[0] ?? null)
 
 /**
