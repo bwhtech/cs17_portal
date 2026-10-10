@@ -289,10 +289,10 @@ def require_faculty_for_assignment(assignment: str) -> None:
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 
-def get_cohort_submissions(cohort: str, limit: int | None = None) -> list:
+def get_cohort_submissions(cohort: str | None, limit: int | None = None) -> list:
 	return frappe.get_all(
 		"CS17 Assignment Submission",
-		filters=[["assignment.cohort", "=", cohort]],
+		filters=[["assignment.cohort", "=", cohort]] if cohort else [],
 		fields=["name", "student", "full_name", "assignment", "assignment_title", "submitted_at"],
 		order_by="submitted_at desc",
 		limit=limit,
@@ -507,10 +507,7 @@ def is_assignment_closed(assignment: str, student: str | None = None) -> bool:
 
 @frappe.whitelist()
 def get_recent_submissions(limit: int = 5) -> list:
-	faculty = get_current_faculty()
-	if not faculty.cohort:
-		return []
-	return get_cohort_submissions(faculty.cohort, limit=limit)
+	return get_cohort_submissions(get_current_faculty().cohort, limit=limit)
 
 
 @frappe.whitelist()
@@ -541,11 +538,7 @@ def get_submission_project(submission: str) -> dict:
 
 @frappe.whitelist()
 def list_cohort_submissions() -> list:
-	faculty = get_current_faculty()
-	if not faculty.cohort:
-		return []
-
-	submissions = get_cohort_submissions(faculty.cohort)
+	submissions = get_cohort_submissions(get_current_faculty().cohort)
 	if not submissions:
 		return []
 
