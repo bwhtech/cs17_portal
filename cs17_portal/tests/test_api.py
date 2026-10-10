@@ -254,6 +254,15 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 			frappe.PermissionError, api.assign_submission, self.submission_27, self.faculty_28_user
 		)
 
+	def test_assign_submission_blocks_student_assignee(self):
+		frappe.set_user(self.faculty_27_user)
+		self.assertRaises(
+			frappe.ValidationError, api.assign_submission, self.submission_27, self.student_user
+		)
+		self.assertFalse(
+			frappe.db.exists("DocShare", {"share_name": self.submission_27, "user": self.student_user})
+		)
+
 	def test_faculty_without_role_assigns_submission(self):
 		frappe.set_user(self.faculty_27_user)
 		api.assign_submission(self.submission_27, self.faculty_27_user)
