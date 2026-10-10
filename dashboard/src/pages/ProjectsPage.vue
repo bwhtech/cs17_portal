@@ -14,8 +14,6 @@
 	</AppHeader>
 
 	<PageBody width="wide" class="space-y-5">
-		<p v-if="projects.length" class="text-sm text-ink-gray-5">{{ countLabel }}</p>
-
 		<div
 			v-if="loading"
 			class="cs17-delay-in grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
@@ -63,9 +61,6 @@ const createProject = useCall<{ name: string }, { project_title: string }>({
 
 const projects = computed(() => projectList.data ?? [])
 const loading = computed(() => projectList.loading && !projectList.data)
-const countLabel = computed(
-	() => `${projects.value.length} project${projects.value.length === 1 ? '' : 's'}`,
-)
 
 /**
  * The name is asked for up front because a Scratch project is only ever

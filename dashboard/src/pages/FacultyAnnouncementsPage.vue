@@ -13,8 +13,6 @@
 	</AppHeader>
 
 	<PageBody>
-		<p v-if="announcements.length" class="mb-4 text-sm text-ink-gray-5">{{ subtitle }}</p>
-
 		<DataTable
 			:columns="columns"
 			:rows="announcements"
@@ -145,11 +143,6 @@ const listCall = useCall<CS17Announcement[]>({
 })
 
 const announcements = computed(() => listCall.data ?? [])
-
-const subtitle = computed(() => {
-	const count = announcements.value.length
-	return `${count} ${count === 1 ? 'announcement' : 'announcements'}`
-})
 
 const cohortList = useList<{ name: string }>({
 	doctype: 'CS17 Cohort',

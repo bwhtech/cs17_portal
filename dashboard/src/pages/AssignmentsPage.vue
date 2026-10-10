@@ -2,10 +2,6 @@
 	<AppHeader title="Assignments" />
 
 	<PageBody>
-		<p v-if="assignments.length" class="mb-5 text-sm text-ink-gray-5">
-			{{ assignments.length }} total
-		</p>
-
 		<AssignmentTable
 			:assignments="assignments"
 			:submission-map="submissionMap"
