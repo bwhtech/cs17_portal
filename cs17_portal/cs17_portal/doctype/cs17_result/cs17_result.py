@@ -186,7 +186,9 @@ class CS17Result(Document):
 
 	def validate_publishable(self):
 		"""A subject with no marks entered would silently publish as a zero."""
-		if (self.is_published or self.published_on) and self.flags.missing_marks:
+		publishing = self.is_published and self.has_value_changed("is_published")
+		scheduling = self.published_on and self.has_value_changed("published_on")
+		if (publishing or scheduling) and self.flags.missing_marks:
 			frappe.throw(
 				_("Marks have not been entered for: {0}").format(", ".join(self.flags.missing_marks))
 			)

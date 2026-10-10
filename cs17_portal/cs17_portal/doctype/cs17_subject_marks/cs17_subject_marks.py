@@ -135,6 +135,17 @@ class CS17SubjectMarks(Document):
 		self.refresh_result()
 
 	def on_trash(self):
+		published_result = frappe.db.exists(
+			"CS17 Result", {"exam": self.exam, "student": self.student, "is_published": 1}
+		)
+		if published_result:
+			frappe.throw(
+				_("Result {0} is published. Unpublish it before deleting these marks.").format(
+					published_result
+				)
+			)
+
+	def after_delete(self):
 		self.refresh_result()
 
 	def refresh_result(self):
