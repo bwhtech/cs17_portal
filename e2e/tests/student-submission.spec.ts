@@ -56,6 +56,39 @@ async function submitAsStudent(page: Page, assignment: string, fileUrl: string) 
 	);
 }
 
+const BLANK_PDF =
+	"JVBERi0xLjQKMSAwIG9iago8PC9UeXBlL0NhdGFsb2cvUGFnZXMgMiAwIFI+PgplbmRvYmoKMiAwIG9iago8PC9UeXBlL1BhZ2VzL0tpZHNbMyAwIFJdL0NvdW50IDE+PgplbmRvYmoKMyAwIG9iago8PC9UeXBlL1BhZ2UvUGFyZW50IDIgMCBSL01lZGlhQm94WzAgMCAzIDNdPj4KZW5kb2JqCnhyZWYKMCA0CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAwOSAwMDAwMCBuIAowMDAwMDAwMDU0IDAwMDAwIG4gCjAwMDAwMDAxMDUgMDAwMDAgbiAKdHJhaWxlcgo8PC9TaXplIDQvUm9vdCAxIDAgUj4+CnN0YXJ0eHJlZgoxNjYKJSVFT0YK";
+
+async function uploadAsStudent(
+	page: Page,
+	fileName: string,
+	base64Content = Buffer.from(`e2e ${fileName}`).toString("base64"),
+): Promise<string> {
+	await page.goto("/dashboard");
+	await page.waitForFunction(
+		() =>
+			(window as any).csrf_token !== undefined ||
+			(window as any).frappe?.csrf_token !== undefined,
+		{ timeout: 15000 },
+	);
+	return page.evaluate(
+		async ({ fileName, base64Content }) => {
+			const token = (window as any).csrf_token ?? (window as any).frappe?.csrf_token;
+			const bytes = Uint8Array.from(atob(base64Content), (char) => char.charCodeAt(0));
+			const form = new FormData();
+			form.append("file", new File([bytes], fileName));
+			form.append("is_private", "1");
+			const resp = await fetch("/api/method/upload_file", {
+				method: "POST",
+				headers: { "X-Frappe-CSRF-Token": token },
+				body: form,
+			});
+			return (await resp.json()).message.file_url as string;
+		},
+		{ fileName, base64Content },
+	);
+}
+
 async function saveProjectAsStudent(page: Page, project: string) {
 	await page.waitForFunction(
 		() =>
@@ -203,11 +236,16 @@ test.describe("Student submission types", () => {
 	});
 
 	test("rejects a non-PDF and accepts a PDF for a PDF assignment", async ({ page }) => {
-		const bad = await submitAsStudent(page, pdf.name, "/files/report.png");
+		const bad = await submitAsStudent(page, pdf.name, await uploadAsStudent(page, "report.txt"));
 		expect(bad.ok).toBeFalsy();
 
-		const good = await submitAsStudent(page, pdf.name, "/files/report.pdf");
+		const good = await submitAsStudent(page, pdf.name, await uploadAsStudent(page, "report.pdf", BLANK_PDF));
 		expect(good.ok).toBeTruthy();
+	});
+
+	test("rejects a file the student did not upload", async ({ page }) => {
+		const result = await submitAsStudent(page, anyType.name, "/private/files/not-mine.pdf");
+		expect(result.ok).toBeFalsy();
 	});
 
 	test("stores a URL submission in submission_url, not submission_document", async ({
@@ -237,7 +275,8 @@ test.describe("Student submission types", () => {
 	});
 
 	test("accepts any file for an Any assignment", async ({ page, request }) => {
-		const result = await submitAsStudent(page, anyType.name, "/files/notes.txt");
+		const fileUrl = await uploadAsStudent(page, "notes.txt");
+		const result = await submitAsStudent(page, anyType.name, fileUrl);
 		expect(result.ok).toBeTruthy();
 
 		const subs = await getList<{ name: string; submission_document?: string }>(
@@ -249,7 +288,7 @@ test.describe("Student submission types", () => {
 				limit: 1,
 			},
 		);
-		expect(subs[0].submission_document).toBe("/files/notes.txt");
+		expect(subs[0].submission_document).toBe(fileUrl);
 	});
 
 	test("scratch submit: auto-project, confirm + success dialogs, then dashboard", async ({
