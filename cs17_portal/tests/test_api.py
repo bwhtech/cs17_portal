@@ -254,6 +254,31 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 			frappe.PermissionError, api.assign_submission, self.submission_27, self.faculty_28_user
 		)
 
+	def test_assign_submission_blocks_other_cohort_assignee(self):
+		frappe.set_user(self.faculty_27_user)
+		self.assertRaises(
+			frappe.ValidationError, api.assign_submission, self.submission_27, self.faculty_28_user
+		)
+		self.assertRaises(
+			frappe.ValidationError, api.assign_submissions, [self.submission_27], self.faculty_28_user
+		)
+
+	def test_assign_submission_allows_faculty_without_cohort(self):
+		make_profile("Faculty", None, make_user("faculty51@cs17test.com"), "Faculty 51")
+		frappe.set_user(self.faculty_27_user)
+		api.assign_submission(self.submission_27, "faculty51@cs17test.com")
+
+		frappe.set_user("faculty51@cs17test.com")
+		self.assertEqual([row.name for row in api.get_assigned_submissions()], [self.submission_27])
+
+	def test_get_faculty_members_leaves_out_other_cohort_faculty(self):
+		make_profile("Faculty", None, make_user("faculty52@cs17test.com"), "Faculty 52")
+		frappe.set_user(self.faculty_27_user)
+		users = {member.user for member in api.get_faculty_members(self.cohort_27)}
+
+		self.assertLessEqual({self.faculty_27_user, "faculty52@cs17test.com"}, users)
+		self.assertNotIn(self.faculty_28_user, users)
+
 	def test_assign_submission_blocks_student_assignee(self):
 		frappe.set_user(self.faculty_27_user)
 		self.assertRaises(
