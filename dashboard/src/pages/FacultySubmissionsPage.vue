@@ -42,6 +42,7 @@
 			<template #cell-grade="{ row }">
 				<GradeBadge
 					:graded="row.graded"
+					:evaluation-type="row.evaluation_type"
 					:marks-obtained="row.marks_obtained"
 					:grade="row.grade"
 					:max-marks="row.max_marks"

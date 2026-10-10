@@ -63,6 +63,10 @@
 					/>
 
 					<template v-if="grade">
+						<div v-if="!isLetterGrade && grade.grade">
+							<p class="text-xs text-ink-gray-5">Grade</p>
+							<p class="text-lg text-ink-gray-9">{{ grade.grade }}</p>
+						</div>
 						<div>
 							<p class="text-xs text-ink-gray-5">
 								{{ isLetterGrade ? 'Grade' : 'Marks Obtained' }}

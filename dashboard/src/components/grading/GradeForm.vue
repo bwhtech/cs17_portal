@@ -19,6 +19,7 @@
 			type="number"
 			label="Marks obtained"
 			:placeholder="`0 – ${maxMarks}`"
+			:description="marksGrade"
 			:error="marksError"
 			min="0"
 			:max="maxMarks"
@@ -57,7 +58,8 @@
 import { computed, ref, watch } from 'vue'
 import { Button, FormControl, Skeleton, toast, useCall } from 'frappe-ui'
 import { frappeErrorMessage } from '@/lib/frappeError'
-import { GRADE_SCALE, type EvaluationType } from '@/types'
+import { gradeForMarks } from '@/lib/grades'
+import { GRADE_SCALE, type EvaluationType, type GradeBand } from '@/types'
 
 interface SubmissionGrade {
 	name: string
@@ -122,6 +124,25 @@ watch(
 	},
 	{ immediate: true },
 )
+
+const bands = useCall<GradeBand[]>({
+	url: '/api/v2/method/cs17_portal.api.get_grade_bands',
+	method: 'GET',
+	immediate: false,
+})
+
+watch(
+	() => props.evaluationType,
+	(evaluationType) => {
+		if (evaluationType === 'Marks') bands.fetch()
+	},
+	{ immediate: true },
+)
+
+const marksGrade = computed(() => {
+	const letter = gradeForMarks(bands.data ?? [], marks.value, props.maxMarks)
+	return letter ? `Grade ${letter}` : ''
+})
 
 const saveCall = useCall<
 	SubmissionGrade,

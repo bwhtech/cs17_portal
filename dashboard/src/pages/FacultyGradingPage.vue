@@ -47,6 +47,7 @@
 				/>
 				<GradeBadge
 					:graded="submission.graded"
+					:evaluation-type="submission.evaluation_type"
 					:marks-obtained="submission.marks_obtained"
 					:grade="submission.grade"
 					:max-marks="submission.max_marks"

@@ -17,6 +17,7 @@
 				:label="marksLabel"
 				:min="0"
 				:max="maxMarks"
+				:description="marksGrade"
 				:error="fieldError"
 				required
 			/>
@@ -58,7 +59,14 @@ import { Button, Dialog, ErrorMessage, FormControl, Select, useCall } from 'frap
 import PublishFields from '@/components/common/PublishFields.vue'
 import { toFrappeDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
-import { GRADE_SCALE, type CS17Submission, type EvaluationType, type PublishMode } from '@/types'
+import { gradeForMarks } from '@/lib/grades'
+import {
+	GRADE_SCALE,
+	type CS17Submission,
+	type EvaluationType,
+	type GradeBand,
+	type PublishMode,
+} from '@/types'
 
 const props = defineProps<{
 	open: boolean
@@ -90,6 +98,17 @@ const title = computed(() => `Grade: ${props.submission?.full_name ?? 'Submissio
 const marksLabel = computed(() =>
 	props.maxMarks == null ? 'Marks' : `Marks (out of ${props.maxMarks})`,
 )
+
+const bands = useCall<GradeBand[]>({
+	url: '/api/v2/method/cs17_portal.api.get_grade_bands',
+	method: 'GET',
+	immediate: !isGradeScale.value,
+})
+
+const marksGrade = computed(() => {
+	const letter = gradeForMarks(bands.data ?? [], marks.value, props.maxMarks)
+	return letter ? `Grade ${letter}` : ''
+})
 
 const save = useCall<
 	{ name: string },
