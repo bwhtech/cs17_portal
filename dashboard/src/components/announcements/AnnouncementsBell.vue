@@ -59,13 +59,13 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Badge, BottomSheet, Button, Divider, Popover, ScrollArea, useList } from 'frappe-ui'
+import { Badge, BottomSheet, Button, Divider, Popover, ScrollArea, useCall } from 'frappe-ui'
 import AlertBanner from '@/components/announcements/AlertBanner.vue'
 import { useAnnouncementDismissals } from '@/composables/useAnnouncementDismissals'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { usePolling } from '@/composables/usePolling'
 import { useSession } from '@/composables/useSession'
-import type { CS17Announcement } from '@/types'
+import type { CS17Announcement, StudentAnnouncementsResponse } from '@/types'
 
 const { isDesktop } = useBreakpoint()
 const { cohort, isFaculty } = useSession()
@@ -73,27 +73,24 @@ const { dismissed } = useAnnouncementDismissals()
 
 const open = ref(false)
 
-/**
- * Faculty see every published announcement; a student sees their cohort's.
- * One component, the filter comes from the session — the React app kept two
- * near-identical top bars to say the same thing.
- */
-const list = useList<CS17Announcement>({
-	doctype: 'CS17 Announcement',
-	fields: ['name', 'title', 'content', 'alert_variant', 'is_dismissible'],
-	filters: () =>
-		isFaculty.value ? { is_published: 1 } : { is_published: 1, cohort: cohort.value ?? '' },
-	orderBy: 'creation desc',
-	limit: 50,
-	immediate: isFaculty.value || Boolean(cohort.value),
+const facultyCall = useCall<CS17Announcement[]>({
+	url: '/api/v2/method/cs17_portal.api.get_faculty_announcements',
+	immediate: isFaculty.value,
 })
 
-// A scheduled publish should reach the bell without a reload, as it did under
-// SWR's refreshInterval. There is no `next_publish_on` on a doc list, so the
-// interval is all there is here.
-usePolling(list.reload)
+const studentCall = useCall<StudentAnnouncementsResponse, { cohort: string }>({
+	url: '/api/v2/method/cs17_portal.api.get_student_announcements',
+	params: () => ({ cohort: cohort.value ?? '' }),
+	immediate: !isFaculty.value && Boolean(cohort.value),
+})
 
-const announcements = computed(() => list.data ?? [])
+usePolling(() => (isFaculty.value ? facultyCall.reload() : studentCall.reload()))
+
+const announcements = computed(() =>
+	isFaculty.value
+		? (facultyCall.data ?? []).filter((announcement) => announcement.is_published)
+		: (studentCall.data?.announcements ?? []),
+)
 const unreadCount = computed(
 	() => announcements.value.filter((a) => !dismissed.value.has(a.name)).length,
 )

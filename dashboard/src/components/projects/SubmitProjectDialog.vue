@@ -67,10 +67,10 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Button, Dialog, ErrorMessage, Skeleton, useCall, useList } from 'frappe-ui'
+import { Button, Dialog, ErrorMessage, Skeleton, useCall } from 'frappe-ui'
 import { useSession } from '@/composables/useSession'
 import { frappeErrorMessage } from '@/lib/frappeError'
-import type { CS17Assignment } from '@/types'
+import type { CS17Assignment, StudentAssignmentsResponse } from '@/types'
 
 const props = defineProps<{
 	open: boolean
@@ -86,16 +86,9 @@ const { cohort } = useSession()
 
 // Only the student's own cohort has assignments they can submit to, so the
 // list waits for the dialog rather than loading with every editor page.
-const assignments = useList<CS17Assignment>({
-	doctype: 'CS17 Assignment',
-	fields: ['name', 'title'],
-	filters: () => ({
-		cohort: cohort.value ?? '',
-		submission_type: 'Scratch',
-		is_published: 1,
-	}),
-	orderBy: 'due_date asc',
-	limit: 100,
+const assignments = useCall<StudentAssignmentsResponse, { cohort: string }>({
+	url: '/api/v2/method/cs17_portal.api.get_student_assignments',
+	params: () => ({ cohort: cohort.value ?? '' }),
 	immediate: false,
 })
 
@@ -110,7 +103,11 @@ const succeeded = ref(false)
 const error = ref('')
 const submitting = computed(() => submitProject.loading)
 
-const options = computed(() => assignments.data ?? [])
+const options = computed(() =>
+	(assignments.data?.assignments ?? [])
+		.filter((assignment) => assignment.submission_type === 'Scratch')
+		.reverse(),
+)
 
 const preset = computed(
 	() => options.value.find((assignment) => assignment.name === props.presetAssignment) ?? null,

@@ -4,7 +4,12 @@
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from cs17_portal.api import get_recent_submissions, get_submission_grade, list_cohort_submissions
+from cs17_portal.api import (
+	get_recent_submissions,
+	get_student_assignment,
+	get_submission_grade,
+	list_cohort_submissions,
+)
 
 
 def make_user(email: str) -> str:
@@ -182,3 +187,11 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 	def test_get_submission_grade_blocks_other_cohort_faculty(self):
 		frappe.set_user(self.faculty_28_user)
 		self.assertRaises(frappe.PermissionError, get_submission_grade, self.submission_27)
+
+	def test_student_reads_own_cohort_assignment(self):
+		frappe.set_user(self.student_user)
+		self.assertEqual(get_student_assignment(self.assignment_27).title, "Scratch Task 27")
+
+	def test_student_cannot_read_other_cohort_assignment(self):
+		frappe.set_user(self.student_user)
+		self.assertRaises(frappe.DoesNotExistError, get_student_assignment, self.assignment_28)

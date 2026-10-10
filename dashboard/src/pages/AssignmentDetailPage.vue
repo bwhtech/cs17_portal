@@ -9,7 +9,7 @@
 		<LoadError
 			v-if="failed"
 			title="Could not load this assignment"
-			@retry="assignmentDoc.reload()"
+			@retry="assignmentCall.reload()"
 		/>
 
 		<PageSkeleton v-else-if="loading" :blocks="2" />
@@ -93,7 +93,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Button, PageHeaderBackButton, useCall, useDoc, useList } from 'frappe-ui'
+import { Button, PageHeaderBackButton, useCall, useList } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import LoadError from '@/components/common/LoadError.vue'
@@ -113,9 +113,9 @@ const { profile } = useSession()
 const breadcrumbs = useBreadcrumbs()
 const scratch = useScratchAssignment()
 
-const assignmentDoc = useDoc<CS17Assignment>({
-	doctype: 'CS17 Assignment',
-	name: () => props.assignmentId,
+const assignmentCall = useCall<CS17Assignment, { assignment: string }>({
+	url: '/api/v2/method/cs17_portal.api.get_student_assignment',
+	params: () => ({ assignment: props.assignmentId }),
 })
 
 const submissions = useList<CS17Submission>({
@@ -130,10 +130,10 @@ const gradesCall = useCall<StudentGradesResponse>({
 	url: '/api/v2/method/cs17_portal.api.get_student_grades',
 })
 
-const assignment = computed(() => assignmentDoc.doc)
-const loading = computed(() => assignmentDoc.loading && !assignmentDoc.doc)
+const assignment = computed(() => assignmentCall.data ?? null)
+const loading = computed(() => assignmentCall.loading && !assignmentCall.data)
 const failed = computed(
-	() => Boolean(assignmentDoc.error) && !assignmentDoc.doc && !isRefusal(assignmentDoc.error),
+	() => Boolean(assignmentCall.error) && !assignmentCall.data && !isRefusal(assignmentCall.error),
 )
 const submission = computed(() => submissions.data?.[0] ?? null)
 
