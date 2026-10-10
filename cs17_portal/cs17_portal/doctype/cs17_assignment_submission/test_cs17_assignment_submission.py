@@ -73,6 +73,10 @@ class TestSubmissionFileOwnership(FrappeTestCase):
 		cohort = make_cohort("C32TEST")
 		student_user = make_user("student32@cs17test.com")
 		make_profile("Student", cohort, student_user, "Student 32")
+		faculty_user = make_user("faculty32@cs17test.com")
+		make_profile("Faculty", cohort, faculty_user, "Faculty 32")
+
+		frappe.set_user(faculty_user)
 		assignment = make_assignment(cohort, "PDF Task 32", "PDF", 20)
 
 		frappe.set_user(student_user)
