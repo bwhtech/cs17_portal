@@ -23,15 +23,12 @@
 				@click="draftsOpen = !draftsOpen"
 			/>
 			<div v-if="draftsOpen" class="mt-3 flex flex-wrap gap-2">
-				<button
+				<Button
 					v-for="draft in drafts"
 					:key="draft.name"
-					type="button"
-					class="rounded-4 border border-outline-gray-2 px-3 py-1.5 text-base text-ink-gray-7 hover:bg-surface-gray-2"
+					:label="draft.title || 'Untitled'"
 					@click="openDraft(draft.name)"
-				>
-					{{ draft.title || 'Untitled' }}
-				</button>
+				/>
 			</div>
 		</div>
 
