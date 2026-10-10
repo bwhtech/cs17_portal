@@ -19,11 +19,16 @@ class IntegrationTestCS17Announcement(IntegrationTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		cls.faculty_user = make_user("faculty61@cs17test.com")
-		make_profile("Faculty", make_cohort("C61TEST"), cls.faculty_user, "Faculty 61")
+		cls.cohort = make_cohort("C61TEST")
+		make_profile("Faculty", cls.cohort, cls.faculty_user, "Faculty 61")
 
 		frappe.set_user(cls.faculty_user)
 		cls.announcement = create_announcement(
-			"Lab moved to Friday", "Room 204", publish="schedule", publish_on="2000-01-01 00:00:00"
+			"Lab moved to Friday",
+			"Room 204",
+			cohort=cls.cohort,
+			publish="schedule",
+			publish_on="2000-01-01 00:00:00",
 		)
 		frappe.set_user("Administrator")
 
@@ -35,7 +40,12 @@ class IntegrationTestCS17Announcement(IntegrationTestCase):
 
 	def test_announcement_past_its_publish_time_cannot_be_edited(self):
 		self.assertRaises(
-			frappe.ValidationError, update_announcement, self.announcement, "Lab moved to Monday", "Room 204"
+			frappe.ValidationError,
+			update_announcement,
+			self.announcement,
+			"Lab moved to Monday",
+			"Room 204",
+			cohort=self.cohort,
 		)
 
 	def test_announcement_past_its_publish_time_is_listed_as_published(self):

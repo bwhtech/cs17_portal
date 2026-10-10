@@ -81,6 +81,7 @@ export interface CS17Announcement {
 	is_published?: Bool
 	published_date?: string | null
 	publish_on?: string | null
+	can_edit?: boolean
 }
 
 /** `CS17 Project` — a saved Scratch project. */

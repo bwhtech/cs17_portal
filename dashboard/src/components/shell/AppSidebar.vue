@@ -40,6 +40,7 @@
 				<SidebarItem
 					:active="isNavItemActive(nav.announcements, route.path)"
 					:route="nav.announcements.to"
+					:suffix="unreadCount"
 				>
 					<template #prefix>
 						<span :class="nav.announcements.icon" class="size-4" aria-hidden="true" />
@@ -57,12 +58,15 @@ import { useRoute } from 'vue-router'
 import { ScrollArea, Sidebar, SidebarHeader, SidebarItem, SidebarLabel, dialog } from 'frappe-ui'
 import logoUrl from '@/assets/CS17.svg'
 import { isNavItemActive, navConfig } from '@/components/shell/nav'
+import { useAnnouncements } from '@/composables/useAnnouncements'
 import { useSession } from '@/composables/useSession'
 import { useSettingsDialog } from '@/composables/useSettingsDialog'
 
 const route = useRoute()
 const { isFaculty, cohort, logout } = useSession()
 const settings = useSettingsDialog()
+const { unread } = useAnnouncements()
+const unreadCount = computed(() => (unread.value.length ? String(unread.value.length) : undefined))
 
 const nav = computed(() => navConfig(isFaculty.value))
 // Students are identified by their cohort, faculty simply by the role. The
