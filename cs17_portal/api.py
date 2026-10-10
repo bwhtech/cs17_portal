@@ -338,11 +338,11 @@ def replace_project_file(
 		},
 		pluck="name",
 	)
+	new_file = attach_private_file("CS17 Project", project_doc.name, field, filename, content, decode=True)
+	project_doc.db_set(field, new_file.file_url)
+
 	for file_name in previous_files:
 		frappe.delete_doc("File", file_name, ignore_permissions=True)
-
-	new_file = attach_private_file("CS17 Project", project_doc.name, field, filename, content, decode=True)
-	project_doc.set(field, new_file.file_url)
 
 
 @frappe.whitelist(methods=["POST"])
