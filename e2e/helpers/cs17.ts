@@ -332,6 +332,7 @@ export interface TestFaculty {
 
 export async function createTestFaculty(
 	request: APIRequestContext,
+	roles: string[] = ["System Manager"],
 ): Promise<TestFaculty> {
 	const suffix = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
 	const email = `e2e-faculty-${suffix}${TEST_USER_DOMAIN}`;
@@ -343,7 +344,7 @@ export async function createTestFaculty(
 		new_password: password,
 		send_welcome_email: 0,
 		enabled: 1,
-		roles: [{ role: "System Manager" }],
+		roles: roles.map((role) => ({ role })),
 	});
 
 	const profile = await createTestProfile(request, {
