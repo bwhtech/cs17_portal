@@ -353,3 +353,8 @@ class TestFacultyAnnouncementsUseOwnCohort(FrappeTestCase):
 		self.assertIn(self.announcement_100, names)
 		self.assertIn(self.announcement_for_all, names)
 		self.assertNotIn(self.announcement_101, names)
+
+	def test_faculty_can_edit_only_own_cohort_announcements(self):
+		can_edit = {row.name: row.can_edit for row in api.get_faculty_announcements()}
+		self.assertTrue(can_edit[self.announcement_100])
+		self.assertFalse(can_edit[self.announcement_for_all])
