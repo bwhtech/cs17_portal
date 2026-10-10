@@ -36,6 +36,7 @@ import type { AssignmentType, EvaluationType, SubmissionType } from '@/types'
 export interface AssignmentDraft {
 	title: string
 	cohort: string
+	quarter: string
 	submission_type: SubmissionType
 	assignment_type: AssignmentType
 	max_marks: string

@@ -44,6 +44,14 @@
 						:error="errors.cohort"
 					/>
 
+					<FormControl
+						v-model="draft.quarter"
+						type="select"
+						label="Quarter"
+						placeholder="Select a quarter"
+						:options="quarterOptions"
+					/>
+
 					<div class="grid gap-3 sm:grid-cols-2">
 						<FormControl
 							v-model="draft.submission_type"
@@ -165,6 +173,7 @@ const props = defineProps<{
 	open: boolean
 	/** Cohort names for the picker; the page already lists them for its filter. */
 	cohorts: string[]
+	quarters: string[]
 	/** An existing draft to continue. Unset for a brand-new assignment. */
 	draftName?: string | null
 }>()
@@ -187,6 +196,7 @@ function emptyDraft(): AssignmentDraft {
 	return {
 		title: '',
 		cohort: '',
+		quarter: '',
 		submission_type: 'Any',
 		assignment_type: 'Not Graded',
 		max_marks: '',
@@ -216,6 +226,10 @@ const errors = reactive<Record<'title' | 'cohort' | 'due_date' | 'publishOn' | '
 
 const cohortOptions = computed(() =>
 	props.cohorts.map((cohort) => ({ label: cohort, value: cohort })),
+)
+
+const quarterOptions = computed(() =>
+	props.quarters.map((quarter) => ({ label: quarter, value: quarter })),
 )
 
 const deletableName = computed(() => savedName.value ?? props.draftName ?? null)
@@ -303,6 +317,7 @@ async function loadExisting(name: string) {
 	Object.assign(draft, {
 		title: existing.title ?? '',
 		cohort: existing.cohort ?? '',
+		quarter: existing.quarter ?? '',
 		submission_type: existing.submission_type ?? 'Any',
 		assignment_type: existing.assignment_type ?? 'Not Graded',
 		max_marks: existing.max_marks ? String(existing.max_marks) : '',
@@ -320,6 +335,7 @@ function isDirty(): boolean {
 		draft.title.trim() ||
 			draft.description.trim() ||
 			draft.cohort ||
+			draft.quarter ||
 			draft.due_date ||
 			publishMode.value !== 'draft' ||
 			publishOn.value,
@@ -367,6 +383,7 @@ async function handleSubmit() {
 	const payload = {
 		title: draft.title,
 		cohort: draft.cohort,
+		quarter: draft.quarter,
 		due_date: toFrappeDatetime(draft.due_date),
 		submission_type: draft.submission_type,
 		description: draft.description,
