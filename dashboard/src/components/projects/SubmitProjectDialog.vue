@@ -70,6 +70,7 @@ import { computed, ref, watch } from 'vue'
 import { Button, Dialog, ErrorMessage, Skeleton, useCall } from 'frappe-ui'
 import { useSession } from '@/composables/useSession'
 import { frappeErrorMessage } from '@/lib/frappeError'
+import { trySubmit } from '@/lib/trySubmit'
 import type { CS17Assignment, StudentAssignmentsResponse } from '@/types'
 
 const props = defineProps<{
@@ -143,12 +144,10 @@ function cancelConfirm() {
 async function confirmSubmit() {
 	if (!target.value) return
 	error.value = ''
-	const submitted = await submitProject.submit({
+	const submitted = await trySubmit(submitProject, {
 		assignment: target.value.name,
 		project: props.project,
 	})
-	// `submit()` resolves rather than throwing, and keeps the last good
-	// response in `data` — so the error is what says whether this call landed.
 	if (submitProject.error || !submitted) {
 		error.value = frappeErrorMessage(submitProject.error, 'Could not submit the project.')
 		return

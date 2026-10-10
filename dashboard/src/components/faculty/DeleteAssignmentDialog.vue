@@ -11,6 +11,7 @@
 import { watch } from 'vue'
 import { dialog, toast, useCall } from 'frappe-ui'
 import { frappeErrorMessage } from '@/lib/frappeError'
+import { trySubmit } from '@/lib/trySubmit'
 
 const props = defineProps<{
 	open: boolean
@@ -35,10 +36,7 @@ watch(
 			title: `Delete "${target.title}"?`,
 			message: 'This permanently removes the assignment. This cannot be undone.',
 			onConfirm: async () => {
-				await deleteCall.submit({ assignment: target.name })
-				// `submit()` resolves on an API error too — the backend refuses
-				// to delete an assignment that already has submissions, and a
-				// throw here keeps the confirm open with that message.
+				await trySubmit(deleteCall, { assignment: target.name })
 				if (deleteCall.error) {
 					throw new Error(
 						frappeErrorMessage(deleteCall.error, 'Could not delete the assignment.'),

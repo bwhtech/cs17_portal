@@ -42,6 +42,7 @@ import { computed, ref, watch } from 'vue'
 import { Button, Dialog, ErrorMessage, useCall } from 'frappe-ui'
 import FacultySelect from '@/components/faculty/FacultySelect.vue'
 import { frappeErrorMessage } from '@/lib/frappeError'
+import { trySubmit } from '@/lib/trySubmit'
 import type { FacultyMember } from '@/types'
 
 /** What the page hands over: the row, plus its `_assign` already parsed. */
@@ -111,7 +112,7 @@ async function handleAssign() {
 		return
 	}
 
-	await assign.submit({ submission: props.submission.name, assign_to: assignTo.value })
+	await trySubmit(assign, { submission: props.submission.name, assign_to: assignTo.value })
 	if (assign.error) {
 		actionError.value = frappeErrorMessage(assign.error, 'Could not assign the submission.')
 		return
@@ -125,7 +126,7 @@ async function handleUnassign(user: string) {
 	if (!props.submission) return
 	actionError.value = ''
 	unassigning.value = user
-	await unassign.submit({ submission: props.submission.name, assign_to: user })
+	await trySubmit(unassign, { submission: props.submission.name, assign_to: user })
 	unassigning.value = ''
 	if (unassign.error) {
 		actionError.value = frappeErrorMessage(unassign.error, 'Could not remove the assignment.')

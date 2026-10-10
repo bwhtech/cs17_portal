@@ -103,6 +103,7 @@ import { useProjectsPath } from '@/composables/useProjectsPath'
 import { useSession } from '@/composables/useSession'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { arrayBufferToBase64, dataUrlToBase64 } from '@/lib/scratch'
+import { trySubmit } from '@/lib/trySubmit'
 import type { CS17Project } from '@/types'
 
 /** How long the editor has to go quiet before an autosave fires. */
@@ -240,9 +241,7 @@ async function onSb3(payload: { sb3: ArrayBuffer; thumbnail?: string }) {
 		params.thumbnail_content = dataUrlToBase64(payload.thumbnail)
 	}
 
-	const saved = await saveProject.submit(params)
-	// `submit()` resolves rather than throwing, and keeps the last good
-	// response in `data` — so the error is what says whether this call landed.
+	const saved = await trySubmit(saveProject, params)
 	if (saveProject.error || !saved) {
 		status.value = 'error'
 		if (kind === 'manual') {

@@ -60,6 +60,7 @@ import PublishFields from '@/components/common/PublishFields.vue'
 import { toFrappeDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { gradeForMarks } from '@/lib/grades'
+import { trySubmit } from '@/lib/trySubmit'
 import {
 	GRADE_SCALE,
 	type CS17Submission,
@@ -182,7 +183,7 @@ async function handleSave() {
 	}
 	fieldError.value = ''
 
-	await save.submit({
+	await trySubmit(save, {
 		submission: props.submission.name,
 		grade: isGradeScale.value ? grade.value : undefined,
 		marks_obtained: isGradeScale.value ? undefined : Number(marks.value),
@@ -191,7 +192,6 @@ async function handleSave() {
 		publish_on: toFrappeDatetime(publishOn.value),
 	})
 
-	// `submit()` resolves either way — the handle carries the failure.
 	if (save.error) {
 		saveError.value = frappeErrorMessage(save.error, 'Could not save the grade.')
 		return

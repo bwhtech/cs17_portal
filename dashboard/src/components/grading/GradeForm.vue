@@ -59,6 +59,7 @@ import { computed, ref, watch } from 'vue'
 import { Button, FormControl, Skeleton, toast, useCall } from 'frappe-ui'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { gradeForMarks } from '@/lib/grades'
+import { trySubmit } from '@/lib/trySubmit'
 import { GRADE_SCALE, type EvaluationType, type GradeBand } from '@/types'
 
 interface SubmissionGrade {
@@ -179,15 +180,13 @@ async function save() {
 	}
 	marksError.value = ''
 
-	await saveCall.submit({
+	await trySubmit(saveCall, {
 		submission: props.submission,
 		marks_obtained: parsed.value,
 		grade: showGrade.value && gradeLetter.value ? gradeLetter.value : null,
 		remarks: remarks.value || null,
 	})
 
-	// `submit()` resolves on an API error too, so the error is what tells the
-	// two apart.
 	if (saveCall.error) {
 		toast.error(frappeErrorMessage(saveCall.error, 'Could not save the grade.'))
 		return
