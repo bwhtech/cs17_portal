@@ -91,4 +91,36 @@ test.describe("Student results", () => {
 		await expect(page.getByText("This result is not available")).toBeVisible();
 		await expect(page.getByText(other.subjectName)).toHaveCount(0);
 	});
+
+	test("keeps the load error on screen while a retry runs", async ({ page }) => {
+		const results = "**/cs17_portal.api.get_student_results*";
+		const loadError = page.getByText("Could not load your results");
+		const retry = page.getByRole("button", { name: "Try again" });
+
+		await page.route(results, (route) => route.fulfill({ status: 500 }));
+		await page.goto("/dashboard/results");
+		await expect(loadError).toBeVisible();
+
+		await page.route(results, function leaveUnanswered() {});
+		await retry.click();
+		await expect(loadError).toBeVisible();
+		await expect(retry).toBeDisabled();
+	});
+
+	test("leaves the load error alone when the page reloads itself", async ({ page }) => {
+		const results = "**/cs17_portal.api.get_student_results*";
+		const loadError = page.getByText("Could not load your results");
+
+		await page.clock.install();
+		await page.route(results, (route) => route.fulfill({ status: 500 }));
+		await page.goto("/dashboard/results");
+		await expect(loadError).toBeVisible();
+
+		await page.route(results, function leaveUnanswered() {});
+		const reload = page.waitForRequest(results);
+		await page.clock.fastForward(45_000);
+		await reload;
+		await expect(loadError).toBeVisible();
+		await expect(page.getByRole("button", { name: "Try again" })).toBeEnabled();
+	});
 });
