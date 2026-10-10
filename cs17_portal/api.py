@@ -132,7 +132,7 @@ def _apply_publish_state(
 
 @frappe.whitelist(methods=["GET"])
 def get_assignment_submissions(assignment: str) -> dict:
-	validate_membership("Faculty")
+	require_faculty_for_assignment(assignment)
 	assignment_doc = frappe.db.get_value(
 		"CS17 Assignment",
 		assignment,
@@ -202,8 +202,8 @@ def grade_submission(
 	publish: str = "draft",
 	publish_on: str | None = None,
 ) -> dict:
-	validate_membership("Faculty")
 	sub_doc = frappe.get_doc("CS17 Assignment Submission", submission)
+	require_faculty_for_assignment(sub_doc.assignment)
 	evaluation_type = frappe.db.get_value("CS17 Assignment", sub_doc.assignment, "remarks")
 	if evaluation_type not in ("Grade", "Marks"):
 		frappe.throw(_("This assignment is not gradable"))
@@ -289,10 +289,10 @@ def require_faculty_for_assignment(assignment: str) -> None:
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 
-def get_cohort_submissions(cohort: str, limit: int | None = None) -> list:
+def get_cohort_submissions(cohort: str | None, limit: int | None = None) -> list:
 	return frappe.get_all(
 		"CS17 Assignment Submission",
-		filters=[["assignment.cohort", "=", cohort]],
+		filters=[["assignment.cohort", "=", cohort]] if cohort else [],
 		fields=["name", "student", "full_name", "assignment", "assignment_title", "submitted_at"],
 		order_by="submitted_at desc",
 		limit=limit,
@@ -507,10 +507,7 @@ def is_assignment_closed(assignment: str, student: str | None = None) -> bool:
 
 @frappe.whitelist()
 def get_recent_submissions(limit: int = 5) -> list:
-	faculty = get_current_faculty()
-	if not faculty.cohort:
-		return []
-	return get_cohort_submissions(faculty.cohort, limit=limit)
+	return get_cohort_submissions(get_current_faculty().cohort, limit=limit)
 
 
 @frappe.whitelist()
@@ -541,11 +538,7 @@ def get_submission_project(submission: str) -> dict:
 
 @frappe.whitelist()
 def list_cohort_submissions() -> list:
-	faculty = get_current_faculty()
-	if not faculty.cohort:
-		return []
-
-	submissions = get_cohort_submissions(faculty.cohort)
+	submissions = get_cohort_submissions(get_current_faculty().cohort)
 	if not submissions:
 		return []
 
@@ -850,7 +843,7 @@ def update_assignment(
 	publish: str = "draft",
 	publish_on: str | None = None,
 ) -> str:
-	validate_membership("Faculty")
+	require_faculty_for_assignment(assignment)
 	doc = frappe.get_doc("CS17 Assignment", assignment)
 	_set_assignment_fields(
 		doc, title, cohort, due_date, submission_type, description, assignment_type, max_marks, remarks
@@ -888,7 +881,7 @@ def _set_assignment_fields(
 
 @frappe.whitelist(methods=["GET"])
 def get_assignment(assignment: str) -> dict | None:
-	validate_membership("Faculty")
+	require_faculty_for_assignment(assignment)
 	return frappe.db.get_value(
 		"CS17 Assignment",
 		assignment,
@@ -911,7 +904,7 @@ def get_assignment(assignment: str) -> dict | None:
 
 @frappe.whitelist(methods=["POST"])
 def delete_assignment(assignment: str) -> None:
-	validate_membership("Faculty")
+	require_faculty_for_assignment(assignment)
 	if frappe.db.exists("CS17 Assignment Submission", {"assignment": assignment}):
 		frappe.throw(_("Cannot delete an assignment that already has submissions"))
 	frappe.db.set_value("CS17 Project", {"assignment": assignment}, "assignment", None, update_modified=False)
@@ -920,7 +913,7 @@ def delete_assignment(assignment: str) -> None:
 
 @frappe.whitelist(methods=["POST"])
 def publish_assignment(assignment: str, publish: str = "now", publish_on: str | None = None) -> None:
-	validate_membership("Faculty")
+	require_faculty_for_assignment(assignment)
 	doc = frappe.get_doc("CS17 Assignment", assignment)
 	_apply_publish_state(doc, publish, publish_on)
 	doc.save(ignore_permissions=True)

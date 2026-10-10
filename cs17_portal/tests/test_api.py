@@ -4,6 +4,7 @@
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
+from cs17_portal import api
 from cs17_portal.api import (
 	get_recent_submissions,
 	get_student_assignment,
@@ -187,6 +188,48 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 	def test_get_submission_grade_blocks_other_cohort_faculty(self):
 		frappe.set_user(self.faculty_28_user)
 		self.assertRaises(frappe.PermissionError, get_submission_grade, self.submission_27)
+
+	def test_faculty_reads_own_cohort_assignment(self):
+		frappe.set_user(self.faculty_27_user)
+		self.assertEqual(api.get_assignment(self.assignment_27).title, "Scratch Task 27")
+
+	def test_get_assignment_blocks_other_cohort_faculty(self):
+		frappe.set_user(self.faculty_28_user)
+		self.assertRaises(frappe.PermissionError, api.get_assignment, self.assignment_27)
+
+	def test_get_assignment_submissions_blocks_other_cohort_faculty(self):
+		frappe.set_user(self.faculty_28_user)
+		self.assertRaises(frappe.PermissionError, api.get_assignment_submissions, self.assignment_27)
+
+	def test_grade_submission_blocks_other_cohort_faculty(self):
+		frappe.set_user(self.faculty_28_user)
+		self.assertRaises(frappe.PermissionError, api.grade_submission, self.submission_27, grade="A")
+
+	def test_update_assignment_blocks_other_cohort_faculty(self):
+		frappe.set_user(self.faculty_28_user)
+		self.assertRaises(
+			frappe.PermissionError,
+			api.update_assignment,
+			self.assignment_27,
+			"Scratch Task 27",
+			self.cohort_27,
+			"2030-01-01 00:00:00",
+		)
+
+	def test_delete_assignment_blocks_other_cohort_faculty(self):
+		frappe.set_user(self.faculty_28_user)
+		self.assertRaises(frappe.PermissionError, api.delete_assignment, self.assignment_27)
+
+	def test_publish_assignment_blocks_other_cohort_faculty(self):
+		frappe.set_user(self.faculty_28_user)
+		self.assertRaises(frappe.PermissionError, api.publish_assignment, self.assignment_27)
+
+	def test_faculty_without_cohort_lists_every_cohort(self):
+		make_profile("Faculty", None, make_user("faculty50@cs17test.com"), "Faculty 50")
+		frappe.set_user("faculty50@cs17test.com")
+
+		names = {row.name for row in list_cohort_submissions()}
+		self.assertLessEqual({self.submission_27, self.submission_28}, names)
 
 	def test_student_reads_own_cohort_assignment(self):
 		frappe.set_user(self.student_user)
