@@ -4,6 +4,7 @@
 import frappe
 from frappe.tests import IntegrationTestCase
 
+from cs17_portal import api
 from cs17_portal.tests.test_api import (
 	make_assignment,
 	make_cohort,
@@ -27,6 +28,8 @@ class IntegrationTestCS17AssignmentGrade(IntegrationTestCase):
 		cohort = make_cohort("C85TEST")
 		cls.faculty_user = make_user("faculty85@cs17test.com")
 		make_profile("Faculty", cohort, cls.faculty_user, "Faculty 85")
+		cls.second_faculty_user = make_user("faculty86@cs17test.com")
+		make_profile("Faculty", cohort, cls.second_faculty_user, "Faculty 86")
 		student = make_profile("Student", cohort, make_user("student85@cs17test.com"), "Student 85")
 
 		frappe.set_user(cls.faculty_user)
@@ -48,6 +51,22 @@ class IntegrationTestCS17AssignmentGrade(IntegrationTestCase):
 			}
 		).insert(ignore_permissions=True)
 		frappe.set_user("Administrator")
+
+	def test_grade_submission_without_grading_change_keeps_graded_by(self):
+		with self.set_user(self.faculty_user):
+			api.grade_submission(self.submission, grade="B")
+		with self.set_user(self.second_faculty_user):
+			grade = api.grade_submission(self.submission, grade="B", publish="now")["name"]
+
+		self.assertEqual(frappe.db.get_value("CS17 Assignment Grade", grade, "graded_by"), self.faculty_user)
+
+	def test_save_grade_without_grading_change_keeps_graded_by(self):
+		with self.set_user(self.faculty_user):
+			api.save_grade(self.submission, grade="B")
+		with self.set_user(self.second_faculty_user):
+			grade = api.save_grade(self.submission, grade="B")
+
+		self.assertEqual(grade["graded_by"], self.faculty_user)
 
 	def test_save_without_grading_change_keeps_graded_by(self):
 		self.grade.is_published = 1
