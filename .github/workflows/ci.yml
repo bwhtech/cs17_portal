@@ -11,7 +11,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  plan:
+    runs-on: ubuntu-latest
+    name: Plan Tests
+    permissions:
+      pull-requests: read
+    outputs:
+      server: ${{ steps.changed.outputs.server }}
+
+    steps:
+      - name: Check changed files
+        id: changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          server=true
+          if [ -n "$PR_NUMBER" ]; then
+            if files=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" --jq '.[].filename'); then
+              echo "$files"
+              if ! grep -qvE '^(dashboard/|e2e/|playwright\.config\.ts$)' <<< "$files"; then
+                server=false
+              fi
+            fi
+          fi
+          echo "server=$server" >> "$GITHUB_OUTPUT"
+
   tests:
+    needs: plan
+    if: needs.plan.outputs.server == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
