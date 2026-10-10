@@ -229,9 +229,8 @@ def grade_submission(
 	doc.update(
 		{
 			"evaluation_type": evaluation_type,
-			"graded_by": frappe.session.user,
 			"grade": grade if evaluation_type == "Grade" else None,
-			"marks_obtained": marks_obtained if evaluation_type == "Marks" else None,
+			"marks_obtained": flt(marks_obtained) if evaluation_type == "Marks" else 0,
 			"remarks": remarks,
 		}
 	)
@@ -658,7 +657,7 @@ def save_grade(
 	require_faculty_for_assignment(assignment)
 
 	grade_doc = _get_or_new_grade(submission, assignment)
-	grade_doc.marks_obtained = flt(marks_obtained) if marks_obtained is not None else None
+	grade_doc.marks_obtained = flt(marks_obtained)
 	grade_doc.grade = grade
 	grade_doc.remarks = remarks
 	if grade_doc.is_new():
