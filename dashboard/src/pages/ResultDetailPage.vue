@@ -9,7 +9,12 @@
 	</AppHeader>
 
 	<PageBody width="narrow">
-		<LoadError v-if="failed" title="Could not load this result" @retry="resultCall.reload()" />
+		<LoadError
+			v-if="failed"
+			title="Could not load this result"
+			:loading="resultCall.loading"
+			@retry="resultCall.reload()"
+		/>
 
 		<PageSkeleton v-else-if="loading" :blocks="3" />
 
@@ -152,6 +157,7 @@ import LoadError from '@/components/common/LoadError.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
+import { useLoadFailed } from '@/composables/useLoadFailed'
 import { formatDate } from '@/lib/dates'
 import { isRefusal } from '@/lib/frappeError'
 import { assignmentScoreLabel, formatMarks, formatPercent, passTheme } from '@/lib/results'
@@ -168,9 +174,7 @@ const resultCall = useCall<CS17Result, { result: string }>({
 
 const result = computed(() => resultCall.data ?? null)
 const loading = computed(() => resultCall.loading && !resultCall.data)
-const failed = computed(
-	() => Boolean(resultCall.error) && !resultCall.data && !isRefusal(resultCall.error),
-)
+const failed = useLoadFailed(resultCall, { except: isRefusal })
 
 /** Cohort and quarter, the two labels that place an exam, on one line. */
 const metaLine = computed(() => {

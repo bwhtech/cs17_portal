@@ -14,7 +14,12 @@
 	</AppHeader>
 
 	<PageBody>
-		<LoadError v-if="failed" title="Could not load this assignment" @retry="detail.reload()" />
+		<LoadError
+			v-if="failed"
+			title="Could not load this assignment"
+			:loading="detail.loading"
+			@retry="detail.reload()"
+		/>
 
 		<PageSkeleton v-else-if="detail.loading && !detail.data" />
 
@@ -164,6 +169,7 @@ import AssignSubmissionDialog, {
 import BulkAssignBar from '@/components/faculty/BulkAssignBar.vue'
 import GradeSubmissionDialog from '@/components/faculty/GradeSubmissionDialog.vue'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
+import { useLoadFailed } from '@/composables/useLoadFailed'
 import { formatDateTime } from '@/lib/dates'
 import { isRefusal } from '@/lib/frappeError'
 import { formatGrade } from '@/lib/grades'
@@ -184,7 +190,7 @@ const detail = useCall<
 })
 
 const assignment = computed(() => detail.data?.assignment ?? null)
-const failed = computed(() => Boolean(detail.error) && !detail.data && !isRefusal(detail.error))
+const failed = useLoadFailed(detail, { except: isRefusal })
 const submissions = computed(() => detail.data?.submissions ?? [])
 
 const selection = ref<string[]>([])

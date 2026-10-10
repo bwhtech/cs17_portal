@@ -123,4 +123,19 @@ test.describe("Student results", () => {
 		await expect(loadError).toBeVisible();
 		await expect(page.getByRole("button", { name: "Try again" })).toBeEnabled();
 	});
+
+	test("keeps the load error on a result while a retry runs", async ({ page }) => {
+		const result = "**/cs17_portal.api.get_student_result?*";
+		const loadError = page.getByText("Could not load this result");
+		const retry = page.getByRole("button", { name: "Try again" });
+
+		await page.route(result, (route) => route.fulfill({ status: 500 }));
+		await page.goto(`/dashboard/results/${own.result}`);
+		await expect(loadError).toBeVisible();
+
+		await page.route(result, function leaveUnanswered() {});
+		await retry.click();
+		await expect(loadError).toBeVisible();
+		await expect(retry).toBeDisabled();
+	});
 });
