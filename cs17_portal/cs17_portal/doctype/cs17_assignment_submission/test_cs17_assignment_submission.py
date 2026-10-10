@@ -41,11 +41,14 @@ class TestSubmissionOpenToStudent(FrappeTestCase):
 		super().setUpClass()
 		cls.student_user = make_user("student30@cs17test.com")
 		make_profile("Student", make_cohort("C30TEST"), cls.student_user, "Student 30")
+		cls.faculty_user = make_user("faculty30@cs17test.com")
+		make_profile("Faculty", "C30TEST", cls.faculty_user, "Faculty 30")
 
 	def tearDown(self):
 		frappe.set_user("Administrator")
 
 	def test_student_cannot_submit_to_another_cohorts_assignment(self):
+		frappe.set_user(self.faculty_user)
 		assignment = make_assignment(make_cohort("C31TEST"), "URL Task 31", "URL", 20)
 
 		frappe.set_user(self.student_user)
@@ -54,6 +57,7 @@ class TestSubmissionOpenToStudent(FrappeTestCase):
 		)
 
 	def test_student_cannot_submit_to_an_unpublished_assignment(self):
+		frappe.set_user(self.faculty_user)
 		assignment = make_assignment("C30TEST", "URL Task 30", "URL", 20)
 		frappe.db.set_value("CS17 Assignment", assignment, "is_published", 0)
 
