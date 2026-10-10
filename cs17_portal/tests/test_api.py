@@ -226,6 +226,37 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 		frappe.set_user(self.faculty_28_user)
 		self.assertRaises(frappe.PermissionError, api.publish_assignment, self.assignment_27)
 
+	def test_create_assignment_blocks_other_cohort_faculty(self):
+		frappe.set_user(self.faculty_28_user)
+		self.assertRaises(
+			frappe.PermissionError,
+			api.create_assignment,
+			"Scratch Task 90",
+			self.cohort_27,
+			"2030-01-01 00:00:00",
+		)
+
+	def test_update_assignment_blocks_move_to_other_cohort(self):
+		frappe.set_user(self.faculty_27_user)
+		self.assertRaises(
+			frappe.PermissionError,
+			api.update_assignment,
+			self.assignment_27,
+			"Scratch Task 27",
+			self.cohort_28,
+			"2030-01-01 00:00:00",
+		)
+
+	def test_assign_submission_blocks_other_cohort_faculty(self):
+		frappe.set_user(self.faculty_28_user)
+		self.assertRaises(
+			frappe.PermissionError, api.assign_submission, self.submission_27, self.faculty_28_user
+		)
+
+	def test_save_grade_hides_missing_submission_from_student(self):
+		frappe.set_user(self.student_user)
+		self.assertRaises(frappe.PermissionError, api.save_grade, "missing-submission")
+
 	def test_faculty_without_cohort_lists_every_cohort(self):
 		make_profile("Faculty", None, make_user("faculty50@cs17test.com"), "Faculty 50")
 		frappe.set_user("faculty50@cs17test.com")
