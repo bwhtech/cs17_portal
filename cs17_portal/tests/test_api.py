@@ -258,6 +258,11 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 		frappe.set_user(self.student_user)
 		self.assertRaises(frappe.PermissionError, api.save_grade, "missing-submission")
 
+	def test_faculty_lists_only_own_cohort_assignments(self):
+		frappe.set_user(self.faculty_27_user)
+		names = [row.name for row in api.get_faculty_assignments()]
+		self.assertNotIn(self.assignment_28, names)
+
 	def test_faculty_without_cohort_lists_every_cohort(self):
 		make_profile("Faculty", None, make_user("faculty50@cs17test.com"), "Faculty 50")
 		frappe.set_user("faculty50@cs17test.com")
