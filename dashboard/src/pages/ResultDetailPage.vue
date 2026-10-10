@@ -23,8 +23,7 @@
 			<section class="rounded-4 border border-outline-gray-1 p-5">
 				<div class="flex flex-wrap items-start justify-between gap-4">
 					<div class="min-w-0">
-						<h1 class="text-2xl text-ink-gray-9">{{ result.exam_name }}</h1>
-						<p class="mt-1 text-sm text-ink-gray-5">{{ metaLine }}</p>
+						<p class="text-sm text-ink-gray-5">{{ metaLine }}</p>
 					</div>
 					<Badge
 						v-if="result.result_status"
