@@ -21,7 +21,24 @@ def auto_publish_grades():
 
 
 def auto_publish_results():
-	_publish_due("CS17 Result", "published_on")
+	names = frappe.get_all(
+		"CS17 Result",
+		filters=[
+			["is_published", "=", 0],
+			["published_on", "is", "set"],
+			["published_on", "<=", now_datetime()],
+		],
+		pluck="name",
+	)
+	for name in names:
+		try:
+			frappe.get_lazy_doc("CS17 Result", name).publish()
+		except Exception:
+			title = "Scheduled result not published"
+			if not frappe.db.exists(
+				"Error Log", {"method": title, "reference_doctype": "CS17 Result", "reference_name": name}
+			):
+				frappe.log_error(title=title, reference_doctype="CS17 Result", reference_name=name)
 
 
 def auto_publish_announcements():

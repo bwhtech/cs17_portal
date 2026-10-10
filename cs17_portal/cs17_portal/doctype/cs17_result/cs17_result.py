@@ -191,6 +191,14 @@ class CS17Result(Document):
 				_("Marks have not been entered for: {0}").format(", ".join(self.flags.missing_marks))
 			)
 
+	def publish(self):
+		exam_subjects = get_subject_rows(self.exam)
+		totals = get_subject_totals(self.exam, self.student)
+		missing_marks = sorted(row.subject for row in exam_subjects if row.subject not in totals)
+		if missing_marks:
+			frappe.throw(_("Marks have not been entered for: {0}").format(", ".join(missing_marks)))
+		frappe.db.set_value(self.doctype, self.name, "is_published", 1)
+
 	@frappe.whitelist()
 	def load_exam_subjects(self):
 		self.set_exam_context()
