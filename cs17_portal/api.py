@@ -1021,6 +1021,7 @@ def get_faculty_announcements() -> list:
 	)
 	for announcement in announcements:
 		announcement.is_published = int(is_published_now(announcement))
+		announcement.can_edit = not faculty.cohort or announcement.cohort == faculty.cohort
 	return announcements
 
 

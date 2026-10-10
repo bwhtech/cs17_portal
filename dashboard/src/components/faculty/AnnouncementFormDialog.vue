@@ -98,6 +98,7 @@ import {
 } from 'frappe-ui'
 import AnnouncementPreview from '@/components/faculty/AnnouncementPreview.vue'
 import PublishFields from '@/components/common/PublishFields.vue'
+import { useSession } from '@/composables/useSession'
 import { toFrappeDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { ALERT_VARIANTS, type AlertVariant, type CS17Announcement, type PublishMode } from '@/types'
@@ -149,10 +150,16 @@ const variantOptions = ALERT_VARIANTS.map((variant) => ({
 	value: variant,
 }))
 
-const cohortOptions = computed(() => [
-	{ label: 'All cohorts', value: ALL_COHORTS },
-	...props.cohorts.map((cohort) => ({ label: cohort, value: cohort })),
-])
+const { cohort: facultyCohort } = useSession()
+
+const cohortOptions = computed(() =>
+	facultyCohort.value
+		? [{ label: facultyCohort.value, value: facultyCohort.value }]
+		: [
+				{ label: 'All cohorts', value: ALL_COHORTS },
+				...props.cohorts.map((cohort) => ({ label: cohort, value: cohort })),
+			],
+)
 
 const hasPreview = computed(() => Boolean(form.title.trim() || form.content.trim()))
 
@@ -193,7 +200,7 @@ function reset() {
 	form.title = row?.title ?? ''
 	form.content = row?.content ?? ''
 	form.alert_variant = (row?.alert_variant ?? 'info') as AlertVariant
-	form.cohort = row?.cohort || ALL_COHORTS
+	form.cohort = row?.cohort || facultyCohort.value || ALL_COHORTS
 	form.is_dismissible = row ? Boolean(row.is_dismissible) : true
 	mode.value = row?.publish_on ? 'schedule' : 'draft'
 	// `DateTimePicker` speaks the same "YYYY-MM-DD HH:mm:ss" the API stores, so
