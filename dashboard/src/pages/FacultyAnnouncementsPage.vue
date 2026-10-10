@@ -63,7 +63,7 @@
 						tooltip="Preview"
 						@click.stop="previewTarget = row"
 					/>
-					<template v-if="!row.is_published">
+					<template v-if="row.can_edit && !row.is_published">
 						<Button
 							variant="ghost"
 							icon="lucide-pencil"
@@ -74,6 +74,7 @@
 						<Button label="Publish" @click.stop="publishTarget = row" />
 					</template>
 					<Button
+						v-if="row.can_edit"
 						variant="ghost"
 						icon="lucide-trash-2"
 						class="hover:!bg-surface-red-3 hover:!text-ink-red-7"

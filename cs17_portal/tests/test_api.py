@@ -340,3 +340,52 @@ class TestStudentListsUseOwnCohort(FrappeTestCase):
 	def test_faculty_cannot_list_student_announcements(self):
 		frappe.set_user(self.faculty_user)
 		self.assertRaises(frappe.PermissionError, get_student_announcements)
+
+
+class TestFacultyAnnouncementsUseOwnCohort(FrappeTestCase):
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+
+		cls.cohort_100 = make_cohort("C100TEST")
+		cls.cohort_101 = make_cohort("C101TEST")
+
+		cls.faculty_user = make_user("faculty100@cs17test.com")
+		make_profile("Faculty", cls.cohort_100, cls.faculty_user, "Faculty 100")
+
+		cls.announcement_100 = make_announcement("Announcement 100", cls.cohort_100)
+		cls.announcement_101 = make_announcement("Announcement 101", cls.cohort_101)
+		cls.announcement_for_all = make_announcement("Announcement for all cohorts", None)
+
+	def setUp(self):
+		frappe.set_user(self.faculty_user)
+
+	def tearDown(self):
+		frappe.set_user("Administrator")
+
+	def test_delete_announcement_blocks_other_cohort_faculty(self):
+		self.assertRaises(frappe.PermissionError, api.delete_announcement, self.announcement_101)
+
+	def test_delete_announcement_blocks_cohort_faculty_on_all_cohorts(self):
+		self.assertRaises(frappe.PermissionError, api.delete_announcement, self.announcement_for_all)
+
+	def test_update_announcement_blocks_moving_to_other_cohort(self):
+		self.assertRaises(
+			frappe.PermissionError,
+			api.update_announcement,
+			self.announcement_100,
+			"Announcement 100",
+			"",
+			cohort=self.cohort_101,
+		)
+
+	def test_faculty_lists_own_cohort_and_all_cohort_announcements(self):
+		names = [row.name for row in api.get_faculty_announcements()]
+		self.assertIn(self.announcement_100, names)
+		self.assertIn(self.announcement_for_all, names)
+		self.assertNotIn(self.announcement_101, names)
+
+	def test_faculty_can_edit_only_own_cohort_announcements(self):
+		can_edit = {row.name: row.can_edit for row in api.get_faculty_announcements()}
+		self.assertTrue(can_edit[self.announcement_100])
+		self.assertFalse(can_edit[self.announcement_for_all])
