@@ -9,7 +9,7 @@
 			</div>
 			<div v-if="grade.remarks">
 				<p class="text-xs text-ink-gray-5">Remarks</p>
-				<p class="mt-0.5 text-p-base text-ink-gray-8">{{ grade.remarks }}</p>
+				<MarkdownText class="mt-0.5" :content="grade.remarks" />
 			</div>
 		</div>
 		<p v-else class="text-p-base text-ink-gray-5">No grade posted yet.</p>
@@ -19,6 +19,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Dialog } from 'frappe-ui'
+import MarkdownText from '@/components/common/MarkdownText.vue'
 import type { CS17Grade } from '@/types'
 
 const props = defineProps<{
