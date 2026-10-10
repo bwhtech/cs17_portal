@@ -54,7 +54,8 @@ def get_quarter_assignments(quarter: str, cohort: str) -> list[dict]:
 	"""Published assignments of one quarter for one cohort, in the order they fell due."""
 	return frappe.get_all(
 		"CS17 Assignment",
-		filters={"quarter": quarter, "cohort": cohort, "is_published": 1},
+		filters={"quarter": quarter, "cohort": cohort},
+		or_filters=[["is_published", "=", 1], ["publish_on", "<=", frappe.utils.now_datetime()]],
 		fields=[
 			"name",
 			"title",

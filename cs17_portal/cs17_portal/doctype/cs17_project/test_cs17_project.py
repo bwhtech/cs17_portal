@@ -293,6 +293,14 @@ class TestCS17Project(FrappeTestCase):
 		project = self.make_saved_project()
 		self.assertRaises(frappe.ValidationError, api.submit_scratch_project, unpublished, project)
 
+	def test_submit_to_assignment_past_its_publish_time_accepted(self):
+		scheduled = self.make_assignment(self.cohort_in, is_published=0)
+		frappe.db.set_value(
+			"CS17 Assignment", scheduled, "publish_on", frappe.utils.add_days(frappe.utils.now_datetime(), -1)
+		)
+		project = self.make_saved_project()
+		self.assertTrue(api.submit_scratch_project(scheduled, project)["name"])
+
 	def test_grade_on_not_graded_assignment_rejected(self):
 		not_graded = self.make_assignment(self.cohort_in, assignment_type="Not Graded")
 		project = self.make_saved_project()
