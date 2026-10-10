@@ -68,7 +68,7 @@
 				open anything, and mounting it later also spares the iframe a boot
 				it would throw away when zen mode swaps the shell out.
 			-->
-			<div v-else-if="!project.doc" class="flex h-full items-center justify-center">
+			<div v-else-if="!project.data" class="flex h-full items-center justify-center">
 				<LoadingIndicator class="size-6 text-ink-gray-5" />
 			</div>
 
@@ -86,7 +86,7 @@
 			v-if="isStudent"
 			v-model:open="submitOpen"
 			:project="id"
-			:preset-assignment="presetAssignment ?? project.doc?.assignment ?? null"
+			:preset-assignment="presetAssignment ?? project.data?.assignment ?? null"
 		/>
 	</div>
 </template>
@@ -94,7 +94,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { Button, LoadingIndicator, toast, useCall, useDoc } from 'frappe-ui'
+import { Button, LoadingIndicator, toast, useCall } from 'frappe-ui'
 import EmptyState from '@/components/common/EmptyState.vue'
 import ScratchFrame from '@/components/scratch/ScratchFrame.vue'
 import SubmitProjectDialog from '@/components/projects/SubmitProjectDialog.vue'
@@ -132,9 +132,13 @@ const frame = useTemplateRef<InstanceType<typeof ScratchFrame>>('frame')
 
 const presetAssignment = computed(() => (route.query.assignment as string) || null)
 
-const project = useDoc<CS17Project>({ doctype: 'CS17 Project', name: () => props.id })
-const failed = computed(() => Boolean(project.error) && !project.doc)
-const title = computed(() => project.doc?.project_title ?? 'Project')
+const project = useCall<CS17Project, { project: string }>({
+	url: '/api/v2/method/cs17_portal.api.get_project',
+	params: () => ({ project: props.id }),
+	refetch: true,
+})
+const failed = computed(() => Boolean(project.error) && !project.data)
+const title = computed(() => project.data?.project_title ?? 'Project')
 
 // Whether the assignment this project was opened for still accepts revisions.
 // Only asked when there is an assignment to ask about.
@@ -186,7 +190,7 @@ async function openSavedProject(url: string) {
 // page just wrote, and pushing that back into the editor would throw away
 // whatever the student has done since.
 watch(
-	() => project.doc,
+	() => project.data,
 	(doc) => {
 		if (!doc || opened) return
 		opened = true

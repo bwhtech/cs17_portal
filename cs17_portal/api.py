@@ -348,8 +348,21 @@ def create_project(project_title: str, assignment: str | None = None) -> dict:
 	project_doc.project_title = _validate_project_title(project_title)
 	project_doc.profile = profile
 	project_doc.assignment = assignment
-	project_doc.insert()
+	project_doc.insert(ignore_permissions=True)
 	return {"name": project_doc.name, "project_title": project_doc.project_title}
+
+
+@frappe.whitelist()
+def get_project(project: str) -> dict:
+	project_doc = require_owned_project(project)
+	return {
+		"name": project_doc.name,
+		"project_title": project_doc.project_title,
+		"assignment": project_doc.assignment,
+		"sb3_file": project_doc.sb3_file,
+		"thumbnail": project_doc.thumbnail,
+		"last_saved_at": project_doc.last_saved_at,
+	}
 
 
 @frappe.whitelist()
@@ -385,7 +398,7 @@ def rename_project(project: str, project_title: str) -> dict:
 	project_doc = require_owned_project(project)
 	_require_unsubmitted_project(project)
 	project_doc.project_title = _validate_project_title(project_title)
-	project_doc.save()
+	project_doc.save(ignore_permissions=True)
 	return {"name": project_doc.name, "project_title": project_doc.project_title}
 
 
@@ -424,7 +437,7 @@ def save_project(
 		replace_project_file(project_doc, "thumbnail", thumbnail_filename, thumbnail_content)
 
 	project_doc.last_saved_at = frappe.utils.now_datetime()
-	project_doc.save()
+	project_doc.save(ignore_permissions=True)
 	return {
 		"name": project_doc.name,
 		"sb3_file": project_doc.sb3_file,

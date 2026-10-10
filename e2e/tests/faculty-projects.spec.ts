@@ -6,6 +6,7 @@ import {
 	cleanupTestAssignments,
 	createTestAssignment,
 	createTestCohort,
+	createTestFaculty,
 	createTestProfile,
 	deleteTestProfile,
 	ensureSessionFaculty,
@@ -168,6 +169,27 @@ test.describe("Faculty Scratch projects", () => {
 		await page.goto(`/dashboard/faculty/projects/${project}/edit`);
 		await expect(page.getByRole("button", { name: "Save" })).toBeVisible();
 		await expect(page.getByRole("button", { name: "Submit", exact: true })).toHaveCount(0);
+	});
+
+	test("a faculty member without System Manager creates and opens a project", async ({
+		browser,
+		request,
+	}) => {
+		const faculty = await createTestFaculty(request, []);
+		const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+		await context.request.post("/api/method/login", {
+			form: { usr: faculty.email, pwd: faculty.password },
+		});
+		const page = await context.newPage();
+		const title = `${PROJECT_TITLE_PREFIX} No Role ${Date.now()}`;
+
+		await page.goto("/dashboard/faculty/projects");
+		const project = await createProjectAsFaculty(page, title);
+		await page.goto(`/dashboard/faculty/projects/${project}/edit`);
+
+		await expect(page.getByRole("heading", { name: title })).toBeVisible();
+		await expect(page.getByRole("button", { name: "Save" })).toBeVisible();
+		await context.close();
 	});
 
 	test("rejects a faculty submitting a project to an assignment", async ({ page }) => {
