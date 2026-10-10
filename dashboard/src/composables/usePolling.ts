@@ -1,7 +1,10 @@
 import { onMounted, onUnmounted, watch } from 'vue'
+import { parseDatetime } from '@/lib/dates'
 
 /** The interval the React app polled at, kept so behaviour doesn't shift. */
 export const DEFAULT_POLL_MS = 45_000
+
+const MAX_TIMEOUT_MS = 2 ** 31 - 1
 
 /**
  * Reload a `useCall` / `useList` handle on an interval, so a scheduled publish
@@ -54,19 +57,22 @@ export function usePublishTimer(
 ): void {
 	let timer: ReturnType<typeof setTimeout> | null = null
 
+	function schedule(at: string) {
+		const delay = Math.max(parseDatetime(at).valueOf() - Date.now(), 0) + 500
+		if (Number.isNaN(delay)) return
+		timer = setTimeout(
+			delay > MAX_TIMEOUT_MS ? () => schedule(at) : reload,
+			Math.min(delay, MAX_TIMEOUT_MS),
+		)
+	}
+
 	// Watched, not read once: the timestamp arrives with the first response and
 	// moves on every reload, so scheduling on mount would always find it empty.
 	watch(
 		nextPublishOn,
 		(at) => {
 			if (timer) clearTimeout(timer)
-			if (!at) return
-			// Frappe datetimes are site-local without a zone; the `T` form is
-			// what `Date` parses as local time, the closest match available.
-			const delay = new Date(at.replace(' ', 'T')).getTime() - Date.now()
-			if (Number.isNaN(delay)) return
-			// A small margin, so the reload lands after the publish, not with it.
-			timer = setTimeout(reload, Math.max(delay, 0) + 500)
+			if (at) schedule(at)
 		},
 		{ immediate: true },
 	)

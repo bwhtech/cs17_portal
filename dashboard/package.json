@@ -12,7 +12,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@fontsource-variable/geist": "^5.2.9",
     "dayjs": "^1.11.21",
     "dompurify": "^3.4.8",
     "frappe-ui": "1.0.0",

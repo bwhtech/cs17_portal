@@ -71,7 +71,7 @@
 						</div>
 						<div v-if="grade.remarks">
 							<p class="text-xs text-ink-gray-5">Remarks</p>
-							<p class="mt-0.5 text-p-base text-ink-gray-8">{{ grade.remarks }}</p>
+							<MarkdownText class="mt-0.5" :content="grade.remarks" />
 						</div>
 					</template>
 				</template>

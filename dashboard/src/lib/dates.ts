@@ -1,20 +1,25 @@
 import dayjs from 'dayjs'
 import timezone from 'dayjs/plugin/timezone'
 import utc from 'dayjs/plugin/utc'
+import { dayjsLocal } from 'frappe-ui'
 
 dayjs.extend(utc)
 dayjs.extend(timezone)
 
 export { dayjs }
 
+export function parseDatetime(value: string) {
+	return value.length > 10 ? dayjsLocal(value) : dayjs(value)
+}
+
 /** "Mar 4" — for dense rows where the year is implied. */
 export function formatDate(value?: string | null): string {
-	return value ? dayjs(value).format('MMM D') : ''
+	return value ? parseDatetime(value).format('MMM D') : ''
 }
 
 /** "Mar 4, 5:30 PM" — anywhere a time matters (due dates, submitted-at). */
 export function formatDateTime(value?: string | null): string {
-	return value ? dayjs(value).format('MMM D, h:mm A') : ''
+	return value ? parseDatetime(value).format('MMM D, h:mm A') : ''
 }
 
 /** "Tuesday, 4 March" — the dashboard greeting line. */
@@ -24,7 +29,7 @@ export function formatLongDate(value?: string | null): string {
 
 /** True when the datetime is in the past. Used for the overdue treatment. */
 export function isPast(value?: string | null): boolean {
-	return Boolean(value) && dayjs(value).isBefore(dayjs())
+	return !!value && parseDatetime(value).valueOf() < Date.now()
 }
 
 /**

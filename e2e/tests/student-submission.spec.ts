@@ -468,3 +468,31 @@ test.describe("Student submission types", () => {
 		await expect(page.locator('input[type="url"]')).toBeVisible();
 	});
 });
+
+test.describe("Student in another timezone", () => {
+	test.use({ timezoneId: "Pacific/Kiritimati" });
+
+	test.afterAll(async ({ request }) => {
+		await cleanupTestAssignments(request);
+	});
+
+	test("an assignment due in an hour of site time is still open", async ({ page, request }) => {
+		const studentInfo: StudentInfo = JSON.parse(
+			fs.readFileSync("e2e/.auth/student-info.json", "utf-8"),
+		);
+		await ensureSessionFaculty(request);
+		await page.goto("/dashboard/assignments");
+		const siteTimezone = await page.evaluate(() => (window as any).system_timezone);
+		const assignment = await createTestAssignment(request, {
+			cohort: studentInfo.cohort,
+			dueDate: new Date(Date.now() + 3600e3).toLocaleString("sv-SE", {
+				timeZone: siteTimezone,
+			}),
+		});
+
+		await page.reload();
+		await expect(
+			assignmentRow(page, assignment.title).getByRole("button", { name: "Submit" }),
+		).toBeVisible();
+	});
+});
