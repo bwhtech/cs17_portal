@@ -134,7 +134,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Badge, Button, Select, useCall, useList } from 'frappe-ui'
+import { Badge, Button, Select, useCall } from 'frappe-ui'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
@@ -173,18 +173,14 @@ const editingDraft = ref<string | null>(null)
 const publishTarget = ref<AssignmentRow | null>(null)
 const deleteTarget = ref<AssignmentRow | null>(null)
 
-const cohortList = useList<{ name: string }>({
-	doctype: 'CS17 Cohort',
-	fields: ['name'],
-	orderBy: 'name asc',
-	limit: 500,
+const cohortsCall = useCall<string[]>({
+	url: '/api/v2/method/cs17_portal.api.get_cohorts',
+	method: 'GET',
 })
 
-const quarterList = useList<{ name: string }>({
-	doctype: 'CS17 Quarter',
-	fields: ['name'],
-	orderBy: 'name asc',
-	limit: 500,
+const quartersCall = useCall<string[]>({
+	url: '/api/v2/method/cs17_portal.api.get_quarters',
+	method: 'GET',
 })
 
 const assignmentsCall = useCall<CS17Assignment[], { cohort?: string }>({
@@ -196,9 +192,9 @@ const assignmentsCall = useCall<CS17Assignment[], { cohort?: string }>({
 
 const failed = computed(() => Boolean(assignmentsCall.error) && !assignmentsCall.data)
 
-const cohorts = computed(() => (cohortList.data ?? []).map((cohort) => cohort.name))
+const cohorts = computed(() => cohortsCall.data ?? [])
 
-const quarters = computed(() => (quarterList.data ?? []).map((quarter) => quarter.name))
+const quarters = computed(() => quartersCall.data ?? [])
 
 const cohortFilterOptions = computed(() => [
 	{ label: 'All cohorts', value: ALL_COHORTS },

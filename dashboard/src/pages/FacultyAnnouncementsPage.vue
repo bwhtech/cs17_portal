@@ -118,7 +118,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Badge, Button, toast, useCall, useList } from 'frappe-ui'
+import { Badge, Button, toast, useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
@@ -150,14 +150,12 @@ const listCall = useCall<CS17Announcement[]>({
 const announcements = computed(() => listCall.data ?? [])
 const failed = computed(() => Boolean(listCall.error) && !listCall.data)
 
-const cohortList = useList<{ name: string }>({
-	doctype: 'CS17 Cohort',
-	fields: ['name'],
-	orderBy: 'name asc',
-	limit: 100,
+const cohortsCall = useCall<string[]>({
+	url: '/api/v2/method/cs17_portal.api.get_cohorts',
+	method: 'GET',
 })
 
-const cohorts = computed(() => (cohortList.data ?? []).map((cohort) => cohort.name))
+const cohorts = computed(() => cohortsCall.data ?? [])
 
 const formOpen = ref(false)
 const editTarget = ref<CS17Announcement | null>(null)
