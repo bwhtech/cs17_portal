@@ -389,7 +389,7 @@ def create_project(project_title: str, assignment: str | None = None) -> dict:
 	return {"name": project_doc.name, "project_title": project_doc.project_title}
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["GET"])
 def get_project(project: str) -> dict:
 	project_doc = require_owned_project(project)
 	return {
@@ -402,7 +402,7 @@ def get_project(project: str) -> dict:
 	}
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["GET"])
 def list_my_projects() -> list:
 	profile = require_current_profile()
 	projects = frappe.get_all(
@@ -558,12 +558,12 @@ def is_assignment_closed(assignment: str, student: str | None = None) -> bool:
 	return any(is_published_now(grade, "published_on") for grade in grades)
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["GET"])
 def get_recent_submissions(limit: int = 5) -> list:
 	return get_cohort_submissions(get_current_faculty().cohort, limit=limit)
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["GET"])
 def get_submission_project(submission: str) -> dict:
 	get_current_faculty()
 	submission_doc = frappe.db.get_value(
@@ -590,7 +590,7 @@ def get_submission_project(submission: str) -> dict:
 	}
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["GET"])
 def list_cohort_submissions() -> list:
 	submissions = get_cohort_submissions(get_current_faculty().cohort)
 	if not submissions:
@@ -627,7 +627,7 @@ def list_cohort_submissions() -> list:
 	return submissions
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["GET"])
 def get_submission_grade(submission: str) -> dict | None:
 	get_current_faculty()
 	assignment = frappe.db.get_value("CS17 Assignment Submission", submission, "assignment")
