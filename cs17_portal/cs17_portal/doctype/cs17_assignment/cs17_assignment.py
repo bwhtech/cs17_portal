@@ -4,6 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import cint, get_datetime
 
 
 class CS17Assignment(Document):
@@ -40,6 +41,7 @@ class CS17Assignment(Document):
 			self.max_marks = 0
 			self.remarks = ""
 		self._validate_publishable()
+		self._validate_stays_published()
 
 	def _validate_publishable(self):
 		if not (self.is_published or self.publish_on):
@@ -48,6 +50,16 @@ class CS17Assignment(Document):
 			frappe.throw(_("A cohort is required to publish an assignment"))
 		if not self.due_date:
 			frappe.throw(_("A due date is required to publish an assignment"))
+
+	def _validate_stays_published(self):
+		from cs17_portal.api import is_published_now
+
+		self.is_published = cint(self.is_published)
+		if self.publish_on:
+			self.publish_on = get_datetime(self.publish_on)
+		previous = self.get_doc_before_save()
+		if previous and is_published_now(previous) and not is_published_now(self):
+			frappe.throw(_("A published assignment cannot be unpublished"))
 
 
 def get_quarter_assignments(quarter: str, cohort: str) -> list[dict]:
