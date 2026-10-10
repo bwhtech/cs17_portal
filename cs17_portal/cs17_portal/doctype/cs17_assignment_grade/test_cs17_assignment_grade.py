@@ -1,8 +1,16 @@
 # Copyright (c) 2026, developers@bwh.tech and Contributors
 # See license.txt
 
-# import frappe
+import frappe
 from frappe.tests import IntegrationTestCase
+
+from cs17_portal.tests.test_api import (
+	make_assignment,
+	make_cohort,
+	make_profile,
+	make_submission,
+	make_user,
+)
 
 # On IntegrationTestCase, the doctype test records and all
 # link-field test record dependencies are recursively loaded
@@ -12,9 +20,43 @@ IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 
 
 class IntegrationTestCS17AssignmentGrade(IntegrationTestCase):
-	"""
-	Integration tests for CS17AssignmentGrade.
-	Use this class for testing interactions between multiple components.
-	"""
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
 
-	pass
+		cohort = make_cohort("C85TEST")
+		cls.faculty_user = make_user("faculty85@cs17test.com")
+		make_profile("Faculty", cohort, cls.faculty_user, "Faculty 85")
+		student = make_profile("Student", cohort, make_user("student85@cs17test.com"), "Student 85")
+
+		frappe.set_user(cls.faculty_user)
+		cls.assignment = make_assignment(cohort, "PDF Task 85", "PDF", 20)
+		frappe.set_user("Administrator")
+
+		cls.submission = make_submission(cls.assignment, student, "Student 85", "PDF Task 85")
+
+	def setUp(self):
+		super().setUp()
+		frappe.set_user(self.faculty_user)
+		self.grade = frappe.get_doc(
+			{
+				"doctype": "CS17 Assignment Grade",
+				"assignment": self.assignment,
+				"submission": self.submission,
+				"marks_obtained": 15,
+				"remarks": "Solid work",
+			}
+		).insert(ignore_permissions=True)
+		frappe.set_user("Administrator")
+
+	def test_save_without_grading_change_keeps_graded_by(self):
+		self.grade.is_published = 1
+		self.grade.save()
+
+		self.assertEqual(self.grade.graded_by, self.faculty_user)
+
+	def test_changing_marks_updates_graded_by(self):
+		self.grade.marks_obtained = 18
+		self.grade.save()
+
+		self.assertEqual(self.grade.graded_by, "Administrator")
