@@ -45,6 +45,7 @@
 			<LoadError
 				v-if="failed"
 				title="Could not load assignments"
+				:loading="assignmentsCall.loading"
 				@retry="assignmentsCall.reload()"
 			/>
 
@@ -142,6 +143,7 @@ import PublishAssignmentDialog from '@/components/faculty/PublishAssignmentDialo
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
+import { useLoadFailed } from '@/composables/useLoadFailed'
 import { formatDateTime } from '@/lib/dates'
 import type { CS17Assignment } from '@/types'
 
@@ -187,7 +189,7 @@ const assignmentsCall = useCall<CS17Assignment[], { cohort?: string }>({
 	refetch: true,
 })
 
-const failed = computed(() => Boolean(assignmentsCall.error) && !assignmentsCall.data)
+const failed = useLoadFailed(assignmentsCall)
 
 const cohorts = computed(() => cohortsCall.data ?? [])
 

@@ -2,7 +2,12 @@
 	<!-- Zen skips the shell, so the shell header only exists on the way back. -->
 	<AppHeader v-if="!isZen" />
 
-	<LoadError v-if="failed" title="Could not load this submission" @retry="submissions.reload()" />
+	<LoadError
+		v-if="failed"
+		title="Could not load this submission"
+		:loading="submissions.loading"
+		@retry="submissions.reload()"
+	/>
 
 	<PageSkeleton v-else-if="loading" class="px-3 py-5 sm:px-5" />
 
@@ -86,6 +91,7 @@ import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import GradeForm from '@/components/grading/GradeForm.vue'
 import SubmissionPlayer from '@/components/grading/SubmissionPlayer.vue'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
+import { useLoadFailed } from '@/composables/useLoadFailed'
 import { useZenMode, useZenOnMount } from '@/composables/useZenMode'
 import type { CS17Assignment, CS17Submission, CohortSubmission } from '@/types'
 
@@ -110,7 +116,7 @@ const submission = computed(
 )
 
 const loading = computed(() => !submissions.isFinished && !submissions.data)
-const failed = computed(() => Boolean(submissions.error) && !submissions.data)
+const failed = useLoadFailed(submissions)
 
 /**
  * `list_cohort_submissions` carries no file field, so the submitted document

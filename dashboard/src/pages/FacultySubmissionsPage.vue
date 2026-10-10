@@ -6,7 +6,12 @@
 			Open, run, and grade submissions from your cohort.
 		</p>
 
-		<LoadError v-if="failed" title="Could not load submissions" @retry="submissions.reload()" />
+		<LoadError
+			v-if="failed"
+			title="Could not load submissions"
+			:loading="submissions.loading"
+			@retry="submissions.reload()"
+		/>
 
 		<DataTable
 			v-else
@@ -66,6 +71,7 @@ import PageBody from '@/components/common/PageBody.vue'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import GradeBadge from '@/components/common/GradeBadge.vue'
 import LoadError from '@/components/common/LoadError.vue'
+import { useLoadFailed } from '@/composables/useLoadFailed'
 import { formatDateTime } from '@/lib/dates'
 import type { CohortSubmission } from '@/types'
 
@@ -87,7 +93,7 @@ const submissions = useCall<CohortSubmission[]>({
 })
 
 const rows = computed(() => submissions.data ?? [])
-const failed = computed(() => Boolean(submissions.error) && !submissions.data)
+const failed = useLoadFailed(submissions)
 
 const rowKey = (row: CohortSubmission) => row.name
 

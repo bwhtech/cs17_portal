@@ -5,6 +5,7 @@
 		<LoadError
 			v-if="failed"
 			title="Could not load your results"
+			:loading="resultsCall.loading"
 			@retry="resultsCall.reload()"
 		/>
 
@@ -66,6 +67,7 @@ import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
+import { useLoadFailed } from '@/composables/useLoadFailed'
 import { usePolling } from '@/composables/usePolling'
 import { formatDate } from '@/lib/dates'
 import { formatMarks, formatPercent, passTheme } from '@/lib/results'
@@ -84,7 +86,7 @@ usePolling(resultsCall.reload)
 
 const results = computed(() => resultsCall.data ?? [])
 const loading = computed(() => resultsCall.loading && !resultsCall.data)
-const failed = computed(() => Boolean(resultsCall.error) && !resultsCall.data)
+const failed = useLoadFailed(resultsCall)
 
 const columns: Column[] = [
 	{ header: 'Exam', key: 'exam', variant: 'primary' },

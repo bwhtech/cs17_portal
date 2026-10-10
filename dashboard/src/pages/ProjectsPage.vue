@@ -17,6 +17,7 @@
 		<LoadError
 			v-if="failed"
 			title="Could not load your projects"
+			:loading="projectList.loading"
 			@retry="projectList.reload()"
 		/>
 
@@ -56,6 +57,7 @@ import { useBreakpoint } from '@/composables/useBreakpoint'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import ProjectCard from '@/components/projects/ProjectCard.vue'
+import { useLoadFailed } from '@/composables/useLoadFailed'
 import { useProjectsPath } from '@/composables/useProjectsPath'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import type { CS17Project } from '@/types'
@@ -88,7 +90,7 @@ const deleteProject = useCall<null, { project: string }>({
 
 const projects = computed(() => projectList.data ?? [])
 const loading = computed(() => projectList.loading && !projectList.data)
-const failed = computed(() => Boolean(projectList.error) && !projectList.data)
+const failed = useLoadFailed(projectList)
 
 /**
  * The name is asked for up front because a Scratch project is only ever
