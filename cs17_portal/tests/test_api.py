@@ -322,6 +322,30 @@ class TestStudentListsUseOwnCohort(FrappeTestCase):
 		names = [row.name for row in get_student_assignments()["assignments"]]
 		self.assertEqual(names, [self.assignment_40])
 
+	def test_student_does_not_list_draft_assignments(self):
+		frappe.set_user(self.faculty_user)
+		draft = make_assignment(self.cohort_40, "PDF Draft 40", "PDF", 20)
+		frappe.db.set_value("CS17 Assignment", draft, "is_published", 0)
+
+		frappe.set_user(self.student_user)
+		names = [row.name for row in get_student_assignments()["assignments"]]
+		self.assertNotIn(draft, names)
+
+	def test_student_does_not_list_draft_grades(self):
+		student = frappe.db.get_value("CS17 Profile", {"user": self.student_user})
+		submission = make_submission(self.assignment_40, student, "Student 40", "Scratch Task 40")
+		frappe.get_doc(
+			{
+				"doctype": "CS17 Assignment Grade",
+				"assignment": self.assignment_40,
+				"submission": submission,
+				"is_published": 0,
+			}
+		).insert(ignore_permissions=True)
+
+		frappe.set_user(self.student_user)
+		self.assertEqual(api.get_student_grades()["grades"], [])
+
 	def test_student_lists_only_own_cohort_announcements(self):
 		frappe.set_user(self.student_user)
 		names = [row.name for row in get_student_announcements()["announcements"]]
