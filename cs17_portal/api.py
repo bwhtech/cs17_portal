@@ -132,7 +132,7 @@ def _apply_publish_state(
 
 @frappe.whitelist(methods=["GET"])
 def get_assignment_submissions(assignment: str) -> dict:
-	validate_membership("Faculty")
+	require_faculty_for_assignment(assignment)
 	assignment_doc = frappe.db.get_value(
 		"CS17 Assignment",
 		assignment,
@@ -202,8 +202,8 @@ def grade_submission(
 	publish: str = "draft",
 	publish_on: str | None = None,
 ) -> dict:
-	validate_membership("Faculty")
 	sub_doc = frappe.get_doc("CS17 Assignment Submission", submission)
+	require_faculty_for_assignment(sub_doc.assignment)
 	evaluation_type = frappe.db.get_value("CS17 Assignment", sub_doc.assignment, "remarks")
 	if evaluation_type not in ("Grade", "Marks"):
 		frappe.throw(_("This assignment is not gradable"))
@@ -850,7 +850,7 @@ def update_assignment(
 	publish: str = "draft",
 	publish_on: str | None = None,
 ) -> str:
-	validate_membership("Faculty")
+	require_faculty_for_assignment(assignment)
 	doc = frappe.get_doc("CS17 Assignment", assignment)
 	_set_assignment_fields(
 		doc, title, cohort, due_date, submission_type, description, assignment_type, max_marks, remarks
@@ -888,7 +888,7 @@ def _set_assignment_fields(
 
 @frappe.whitelist(methods=["GET"])
 def get_assignment(assignment: str) -> dict | None:
-	validate_membership("Faculty")
+	require_faculty_for_assignment(assignment)
 	return frappe.db.get_value(
 		"CS17 Assignment",
 		assignment,
@@ -911,7 +911,7 @@ def get_assignment(assignment: str) -> dict | None:
 
 @frappe.whitelist(methods=["POST"])
 def delete_assignment(assignment: str) -> None:
-	validate_membership("Faculty")
+	require_faculty_for_assignment(assignment)
 	if frappe.db.exists("CS17 Assignment Submission", {"assignment": assignment}):
 		frappe.throw(_("Cannot delete an assignment that already has submissions"))
 	frappe.db.set_value("CS17 Project", {"assignment": assignment}, "assignment", None, update_modified=False)
@@ -920,7 +920,7 @@ def delete_assignment(assignment: str) -> None:
 
 @frappe.whitelist(methods=["POST"])
 def publish_assignment(assignment: str, publish: str = "now", publish_on: str | None = None) -> None:
-	validate_membership("Faculty")
+	require_faculty_for_assignment(assignment)
 	doc = frappe.get_doc("CS17 Assignment", assignment)
 	_apply_publish_state(doc, publish, publish_on)
 	doc.save(ignore_permissions=True)
