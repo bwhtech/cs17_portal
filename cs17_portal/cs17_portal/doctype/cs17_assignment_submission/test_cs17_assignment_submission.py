@@ -46,17 +46,21 @@ class TestSubmissionOpenToStudent(FrappeTestCase):
 		frappe.set_user("Administrator")
 
 	def test_student_cannot_submit_to_another_cohorts_assignment(self):
-		assignment = make_assignment(make_cohort("C31TEST"), "PDF Task 31", "PDF", 20)
+		assignment = make_assignment(make_cohort("C31TEST"), "URL Task 31", "URL", 20)
 
 		frappe.set_user(self.student_user)
-		self.assertRaises(frappe.ValidationError, submit_assignment, assignment, "/files/report.pdf")
+		self.assertRaises(
+			frappe.ValidationError, submit_assignment, assignment, "https://github.com/student/work"
+		)
 
 	def test_student_cannot_submit_to_an_unpublished_assignment(self):
-		assignment = make_assignment("C30TEST", "PDF Task 30", "PDF", 20)
+		assignment = make_assignment("C30TEST", "URL Task 30", "URL", 20)
 		frappe.db.set_value("CS17 Assignment", assignment, "is_published", 0)
 
 		frappe.set_user(self.student_user)
-		self.assertRaises(frappe.ValidationError, submit_assignment, assignment, "/files/report.pdf")
+		self.assertRaises(
+			frappe.ValidationError, submit_assignment, assignment, "https://github.com/student/work"
+		)
 
 
 class TestSubmissionValueValidation(FrappeTestCase):
