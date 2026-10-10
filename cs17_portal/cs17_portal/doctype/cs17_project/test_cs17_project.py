@@ -308,6 +308,18 @@ class TestCS17Project(FrappeTestCase):
 		frappe.set_user(FACULTY_IN_USER)
 		self.assertRaises(frappe.ValidationError, api.save_grade, submission, 50)
 
+	def test_second_save_replaces_the_project_file(self):
+		project = self.make_saved_project()
+		api.save_project(project, "project.sb3", b64(b"PK\x03\x04v2"))
+
+		self.assertEqual(
+			frappe.db.count(
+				"File",
+				{"attached_to_doctype": "CS17 Project", "attached_to_name": project},
+			),
+			1,
+		)
+
 	def test_resubmit_revises_the_same_submission(self):
 		frappe.set_user(STUDENT1_USER)
 		project = api.create_project("Revise Project")["name"]
