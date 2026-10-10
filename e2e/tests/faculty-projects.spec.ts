@@ -218,7 +218,10 @@ test.describe("Faculty Scratch projects", () => {
 		});
 
 		await page.goto("/dashboard/faculty/projects");
-		const listed = await callAsFaculty(page, "cs17_portal.api.list_my_projects", {});
+		const listed = await page.evaluate(async () => {
+			const resp = await fetch("/api/method/cs17_portal.api.list_my_projects");
+			return { ok: resp.ok, status: resp.status, body: await resp.json() };
+		});
 		const names = listed.body.message.map((p: { name: string }) => p.name);
 		expect(names).not.toContain(foreign.name);
 
