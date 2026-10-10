@@ -130,6 +130,10 @@ def _apply_publish_state(
 		doc.is_published = 0
 
 
+def is_published_now(doc: "Document") -> bool:
+	return bool(doc.is_published or (doc.publish_on and doc.publish_on <= now_datetime()))
+
+
 @frappe.whitelist(methods=["GET"])
 def get_assignment_submissions(assignment: str) -> dict:
 	validate_membership("Faculty")
@@ -999,7 +1003,7 @@ def get_faculty_members() -> list:
 @frappe.whitelist(methods=["GET"])
 def get_faculty_announcements() -> list:
 	validate_membership("Faculty")
-	return frappe.get_all(
+	announcements = frappe.get_all(
 		"CS17 Announcement",
 		fields=[
 			"name",
@@ -1014,6 +1018,9 @@ def get_faculty_announcements() -> list:
 		],
 		order_by="creation desc",
 	)
+	for announcement in announcements:
+		announcement.is_published = int(is_published_now(announcement))
+	return announcements
 
 
 @frappe.whitelist(methods=["GET"])
@@ -1076,7 +1083,7 @@ def update_announcement(
 ) -> str:
 	validate_membership("Faculty")
 	doc = frappe.get_doc("CS17 Announcement", announcement)
-	if doc.is_published:
+	if is_published_now(doc):
 		frappe.throw(_("A published announcement can no longer be edited"))
 	_set_announcement_fields(doc, title, content, alert_variant, cohort, is_dismissible)
 	_apply_announcement_publish(doc, publish, publish_on)

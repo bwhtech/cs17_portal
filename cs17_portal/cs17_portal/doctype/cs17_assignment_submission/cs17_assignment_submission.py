@@ -7,7 +7,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
-from cs17_portal.api import require_current_student
+from cs17_portal.api import is_published_now, require_current_student
 from cs17_portal.cs17_portal.doctype.cs17_project.cs17_project import get_owner_profile
 
 
@@ -61,11 +61,7 @@ class CS17AssignmentSubmission(Document):
 		assignment = frappe.db.get_value(
 			"CS17 Assignment", self.assignment, ["cohort", "is_published", "publish_on"], as_dict=True
 		)
-		is_visible = assignment and (
-			assignment.is_published
-			or (assignment.publish_on and assignment.publish_on <= frappe.utils.now_datetime())
-		)
-		if not is_visible or assignment.cohort != student.cohort:
+		if not (assignment and is_published_now(assignment)) or assignment.cohort != student.cohort:
 			frappe.throw(_("This assignment is not open for submission."))
 
 	def validate_deadline(self):
@@ -89,11 +85,14 @@ class CS17AssignmentSubmission(Document):
 		if not self.project:
 			return
 		assignment = frappe.db.get_value(
-			"CS17 Assignment", self.assignment, ["submission_type", "is_published"], as_dict=True
+			"CS17 Assignment",
+			self.assignment,
+			["submission_type", "is_published", "publish_on"],
+			as_dict=True,
 		)
 		if not assignment or assignment.submission_type != "Scratch":
 			frappe.throw(_("This assignment does not accept Scratch projects."))
-		if not assignment.is_published:
+		if not is_published_now(assignment):
 			frappe.throw(_("This assignment is not open for submission."))
 
 
