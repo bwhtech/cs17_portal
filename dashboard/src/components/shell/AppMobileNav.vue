@@ -7,7 +7,30 @@
 			:icon="item.icon"
 			:route="item.to"
 			:active="isNavItemActive(item, route.path)"
-		/>
+		>
+			<template
+				v-if="item.to === nav.announcements.to && unread.length"
+				#default="{ active }"
+			>
+				<span class="relative">
+					<span
+						:class="[
+							item.icon,
+							'size-6',
+							active ? 'text-ink-gray-8' : 'text-ink-gray-5',
+						]"
+						aria-hidden="true"
+					/>
+					<Badge
+						class="absolute -right-2 -top-1"
+						theme="red"
+						variant="solid"
+						size="sm"
+						:label="unread.length"
+					/>
+				</span>
+			</template>
+		</MobileNavItem>
 		<MobileNavItem label="You" @click="sheetOpen = true">
 			<Avatar
 				size="sm"
@@ -53,14 +76,17 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Avatar, BottomSheet, MobileNav, MobileNavItem } from 'frappe-ui'
+import { Avatar, Badge, BottomSheet, MobileNav, MobileNavItem } from 'frappe-ui'
 import { isNavItemActive, navConfig, type NavItem } from '@/components/shell/nav'
+import { useAnnouncements } from '@/composables/useAnnouncements'
 import { useSession } from '@/composables/useSession'
 import { useSettingsDialog } from '@/composables/useSettingsDialog'
 
 const route = useRoute()
 const router = useRouter()
 const { profile, isFaculty } = useSession()
+
+const { unread } = useAnnouncements()
 
 const sheetOpen = ref(false)
 const nav = computed(() => navConfig(isFaculty.value))
