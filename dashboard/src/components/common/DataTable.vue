@@ -43,6 +43,7 @@
 					v-for="column in columns"
 					:key="column.header"
 					:class="column.align === 'right' ? 'justify-end' : undefined"
+					@click="column.variant === 'actions' && $event.stopPropagation()"
 				>
 					<slot :name="`cell-${column.key}`" :row="item">{{
 						cellText(item, column)
