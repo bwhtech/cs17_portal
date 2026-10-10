@@ -151,7 +151,7 @@ def resolve_submission(assignment: str, file_url: str) -> dict:
 	return {"submission_document": file_url, "submission_url": None}
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def submit_assignment(assignment: str, file_url: str) -> dict:
 	student = require_current_student()
 	doc = frappe.get_doc(
@@ -167,7 +167,7 @@ def submit_assignment(assignment: str, file_url: str) -> dict:
 	return {"name": doc.name}
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def edit_submission(submission: str, file_url: str) -> dict:
 	student = require_current_student()
 	sub_doc = frappe.get_doc("CS17 Assignment Submission", submission)

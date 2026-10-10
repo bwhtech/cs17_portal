@@ -68,7 +68,7 @@ import { useSession } from '@/composables/useSession'
 import type { CS17Announcement, StudentAnnouncementsResponse } from '@/types'
 
 const { isDesktop } = useBreakpoint()
-const { cohort, isFaculty } = useSession()
+const { isFaculty, isStudent } = useSession()
 const { dismissed } = useAnnouncementDismissals()
 
 const open = ref(false)
@@ -78,10 +78,9 @@ const facultyCall = useCall<CS17Announcement[]>({
 	immediate: isFaculty.value,
 })
 
-const studentCall = useCall<StudentAnnouncementsResponse, { cohort: string }>({
+const studentCall = useCall<StudentAnnouncementsResponse>({
 	url: '/api/v2/method/cs17_portal.api.get_student_announcements',
-	params: () => ({ cohort: cohort.value ?? '' }),
-	immediate: !isFaculty.value && Boolean(cohort.value),
+	immediate: isStudent.value,
 })
 
 usePolling(() => (isFaculty.value ? facultyCall.reload() : studentCall.reload()))

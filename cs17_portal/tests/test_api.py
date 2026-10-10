@@ -4,9 +4,12 @@
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
+from cs17_portal import api
 from cs17_portal.api import (
 	get_recent_submissions,
+	get_student_announcements,
 	get_student_assignment,
+	get_student_assignments,
 	get_submission_grade,
 	list_cohort_submissions,
 )
@@ -188,6 +191,48 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 		frappe.set_user(self.faculty_28_user)
 		self.assertRaises(frappe.PermissionError, get_submission_grade, self.submission_27)
 
+	def test_faculty_reads_own_cohort_assignment(self):
+		frappe.set_user(self.faculty_27_user)
+		self.assertEqual(api.get_assignment(self.assignment_27).title, "Scratch Task 27")
+
+	def test_get_assignment_blocks_other_cohort_faculty(self):
+		frappe.set_user(self.faculty_28_user)
+		self.assertRaises(frappe.PermissionError, api.get_assignment, self.assignment_27)
+
+	def test_get_assignment_submissions_blocks_other_cohort_faculty(self):
+		frappe.set_user(self.faculty_28_user)
+		self.assertRaises(frappe.PermissionError, api.get_assignment_submissions, self.assignment_27)
+
+	def test_grade_submission_blocks_other_cohort_faculty(self):
+		frappe.set_user(self.faculty_28_user)
+		self.assertRaises(frappe.PermissionError, api.grade_submission, self.submission_27, grade="A")
+
+	def test_update_assignment_blocks_other_cohort_faculty(self):
+		frappe.set_user(self.faculty_28_user)
+		self.assertRaises(
+			frappe.PermissionError,
+			api.update_assignment,
+			self.assignment_27,
+			"Scratch Task 27",
+			self.cohort_27,
+			"2030-01-01 00:00:00",
+		)
+
+	def test_delete_assignment_blocks_other_cohort_faculty(self):
+		frappe.set_user(self.faculty_28_user)
+		self.assertRaises(frappe.PermissionError, api.delete_assignment, self.assignment_27)
+
+	def test_publish_assignment_blocks_other_cohort_faculty(self):
+		frappe.set_user(self.faculty_28_user)
+		self.assertRaises(frappe.PermissionError, api.publish_assignment, self.assignment_27)
+
+	def test_faculty_without_cohort_lists_every_cohort(self):
+		make_profile("Faculty", None, make_user("faculty50@cs17test.com"), "Faculty 50")
+		frappe.set_user("faculty50@cs17test.com")
+
+		names = {row.name for row in list_cohort_submissions()}
+		self.assertLessEqual({self.submission_27, self.submission_28}, names)
+
 	def test_student_reads_own_cohort_assignment(self):
 		frappe.set_user(self.student_user)
 		self.assertEqual(get_student_assignment(self.assignment_27).title, "Scratch Task 27")
@@ -195,3 +240,72 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 	def test_student_cannot_read_other_cohort_assignment(self):
 		frappe.set_user(self.student_user)
 		self.assertRaises(frappe.DoesNotExistError, get_student_assignment, self.assignment_28)
+
+
+def make_announcement(title: str, cohort: str | None) -> str:
+	return (
+		frappe.get_doc(
+			{
+				"doctype": "CS17 Announcement",
+				"title": title,
+				"cohort": cohort,
+				"is_published": 1,
+			}
+		)
+		.insert(ignore_permissions=True)
+		.name
+	)
+
+
+class TestStudentListsUseOwnCohort(FrappeTestCase):
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+
+		cls.cohort_40 = make_cohort("C40TEST")
+		cls.cohort_41 = make_cohort("C41TEST")
+
+		cls.faculty_user = make_user("faculty40@cs17test.com")
+		cls.student_user = make_user("student40@cs17test.com")
+		cls.student_without_cohort_user = make_user("student42@cs17test.com")
+
+		make_profile("Faculty", cls.cohort_40, cls.faculty_user, "Faculty 40")
+		make_profile("Student", cls.cohort_40, cls.student_user, "Student 40")
+		make_profile("Student", None, cls.student_without_cohort_user, "Student 42")
+
+		frappe.set_user(cls.faculty_user)
+		cls.assignment_40 = make_assignment(cls.cohort_40, "Scratch Task 40", "Scratch", 20)
+		make_assignment(cls.cohort_41, "Scratch Task 41", "PDF", 50)
+		frappe.set_user("Administrator")
+
+		cls.announcement_40 = make_announcement("Announcement 40", cls.cohort_40)
+		cls.announcement_41 = make_announcement("Announcement 41", cls.cohort_41)
+		cls.announcement_for_all = make_announcement("Announcement for all cohorts", None)
+
+	def tearDown(self):
+		frappe.set_user("Administrator")
+
+	def test_student_lists_only_own_cohort_assignments(self):
+		frappe.set_user(self.student_user)
+		names = [row.name for row in get_student_assignments()["assignments"]]
+		self.assertEqual(names, [self.assignment_40])
+
+	def test_student_lists_only_own_cohort_announcements(self):
+		frappe.set_user(self.student_user)
+		names = [row.name for row in get_student_announcements()["announcements"]]
+		self.assertIn(self.announcement_40, names)
+		self.assertNotIn(self.announcement_41, names)
+
+	def test_student_without_cohort_lists_all_cohort_announcements(self):
+		frappe.set_user(self.student_without_cohort_user)
+		names = [row.name for row in get_student_announcements()["announcements"]]
+		self.assertIn(self.announcement_for_all, names)
+		self.assertNotIn(self.announcement_40, names)
+
+	def test_faculty_cannot_list_student_assignments(self):
+		frappe.set_user(self.faculty_user)
+		self.assertRaises(frappe.PermissionError, get_student_assignments)
+
+	def test_faculty_cannot_list_student_announcements(self):
+		frappe.set_user(self.faculty_user)
+		self.assertRaises(frappe.PermissionError, get_student_announcements)

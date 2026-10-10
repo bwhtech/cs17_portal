@@ -32,7 +32,8 @@ class CS17Assignment(Document):
 	def before_insert(self):
 		from cs17_portal.api import validate_membership
 
-		validate_membership("Faculty")
+		if "System Manager" not in frappe.get_roles(frappe.session.user):
+			validate_membership("Faculty")
 
 	def validate(self):
 		if self.assignment_type == "Not Graded":

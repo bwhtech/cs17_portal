@@ -49,6 +49,24 @@ class IntegrationTestCS17Assignment(IntegrationTestCase):
 		self.assertNotIn("{cohort}", submission.name)
 		self.assertEqual(submission.name, f"SUB-{assignment.name}-001")
 
+	def test_system_manager_without_faculty_profile_creates_assignment(self):
+		user = make_user("manager70@cs17test.com")
+		frappe.get_doc("User", user).add_roles("System Manager")
+
+		frappe.set_user(user)
+		assignment = make_assignment(make_cohort("C70TEST"), "Desk Task 70", "PDF", 20)
+		frappe.set_user("Administrator")
+
+		self.assertTrue(frappe.db.exists("CS17 Assignment", assignment))
+
+	def test_user_without_faculty_profile_cannot_create_assignment(self):
+		cohort = make_cohort("C70TEST")
+
+		frappe.set_user(make_user("visitor71@cs17test.com"))
+		self.addCleanup(frappe.set_user, "Administrator")
+
+		self.assertRaises(frappe.PermissionError, make_assignment, cohort, "Desk Task 71", "PDF", 20)
+
 
 class TestQuarterAssignments(IntegrationTestCase):
 	def tearDown(self):
