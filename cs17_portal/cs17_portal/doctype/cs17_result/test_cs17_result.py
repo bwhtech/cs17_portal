@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import frappe
 from frappe.tests import IntegrationTestCase
 
@@ -33,6 +35,7 @@ class IntegrationTestCS17Result(IntegrationTestCase):
 
 	def setUp(self):
 		super().setUp()
+		self.log_error = self.enterContext(patch.object(frappe, "log_error"))
 		exam = (
 			frappe.get_doc(
 				{
@@ -78,6 +81,16 @@ class IntegrationTestCS17Result(IntegrationTestCase):
 		auto_publish_results()
 
 		self.assertEqual(frappe.db.get_value("CS17 Result", self.result, "is_published"), 0)
+
+	def test_due_result_with_marks_missing_is_logged_once(self):
+		frappe.delete_doc("CS17 Subject Marks", self.marks)
+
+		auto_publish_results()
+		with patch.object(frappe.db, "exists", return_value=True):
+			auto_publish_results()
+
+		logged = [call.kwargs["reference_name"] for call in self.log_error.call_args_list]
+		self.assertEqual(logged.count(self.result), 1)
 
 	def test_due_result_with_all_marks_is_published(self):
 		auto_publish_results()
