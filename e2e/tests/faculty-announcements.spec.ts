@@ -4,11 +4,23 @@ import {
 	CS17Announcement,
 	CS17Cohort,
 	TEST_ANNOUNCEMENT_PREFIX,
+	TestStudent,
 	cleanupTestAnnouncements,
 	createTestCohort,
+	createTestStudent,
+	deleteTestProfile,
+	deleteTestUser,
 	ensureSessionFaculty,
 } from "../helpers/cs17";
-import { callGetMethod, callMethod, deleteDoc, docExists, getDoc } from "../helpers/frappe";
+import {
+	API_BASE,
+	SITE_HOST,
+	callGetMethod,
+	callMethod,
+	deleteDoc,
+	docExists,
+	getDoc,
+} from "../helpers/frappe";
 
 const CREATE = "cs17_portal.api.create_announcement";
 const UPDATE = "cs17_portal.api.update_announcement";
@@ -23,6 +35,8 @@ interface StudentAnnouncements {
 }
 
 let cohort: CS17Cohort;
+let student: TestStudent;
+let studentRequest: APIRequestContext;
 let counter = 0;
 
 function announcementTitle(): string {
@@ -40,14 +54,31 @@ function createAnnouncement(
 	});
 }
 
+async function listAsStudent(): Promise<StudentAnnouncements> {
+	const response = await studentRequest.get(`${API_BASE}/api/method/${STUDENT_LIST}`);
+	expect(response.ok()).toBeTruthy();
+	return (await response.json()).message;
+}
+
 test.describe("Faculty announcement management", () => {
-	test.beforeAll(async ({ request }) => {
+	test.beforeAll(async ({ request, playwright }) => {
 		await ensureSessionFaculty(request);
 		cohort = await createTestCohort(request);
+		student = await createTestStudent(request, cohort.name);
+		studentRequest = await playwright.request.newContext({
+			extraHTTPHeaders: { Host: SITE_HOST },
+		});
+		const login = await studentRequest.post(`${API_BASE}/api/method/login`, {
+			form: { usr: student.email, pwd: student.password },
+		});
+		expect(login.ok()).toBeTruthy();
 	});
 
 	test.afterAll(async ({ request }) => {
+		await studentRequest.dispose();
 		await cleanupTestAnnouncements(request);
+		await deleteTestProfile(request, student.profileName);
+		await deleteTestUser(request, student.email);
 		await deleteDoc(request, "CS17 Cohort", cohort.name);
 	});
 
@@ -155,9 +186,7 @@ test.describe("Faculty announcement management", () => {
 
 	test("student sees a cohort-less (all cohorts) announcement", async ({ request }) => {
 		const allCohorts = await createAnnouncement(request, { publish: "now" });
-		const result = await callGetMethod<StudentAnnouncements>(request, STUDENT_LIST, {
-			cohort: cohort.name,
-		});
+		const result = await listAsStudent();
 		const names = result.announcements.map((a) => a.name);
 		expect(names).toContain(allCohorts);
 	});
@@ -178,9 +207,7 @@ test.describe("Faculty announcement management", () => {
 			cohort: cohort.name,
 		});
 
-		const result = await callGetMethod<StudentAnnouncements>(request, STUDENT_LIST, {
-			cohort: cohort.name,
-		});
+		const result = await listAsStudent();
 		const names = result.announcements.map((a) => a.name);
 		expect(names).toContain(published);
 		expect(names).toContain(pastScheduled);

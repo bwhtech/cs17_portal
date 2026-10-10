@@ -619,7 +619,7 @@ def save_grade(
 
 
 @frappe.whitelist(methods=["GET"])
-def get_student_assignments(cohort: str) -> dict:
+def get_student_assignments() -> dict:
 	"""Assignments a student can see now, plus the next scheduled publish time.
 
 	Visibility is gated on server time, not the scheduler flag: an assignment shows the
@@ -627,6 +627,7 @@ def get_student_assignments(cohort: str) -> dict:
 	when the background job flips `is_published`. `next_publish_on` lets the client reveal the
 	next one at the precise moment without polling.
 	"""
+	cohort = frappe.db.get_value("CS17 Profile", require_current_student(), "cohort")
 	now = now_datetime()
 	assignments = frappe.get_all(
 		"CS17 Assignment",
@@ -1010,7 +1011,8 @@ def get_faculty_announcements() -> list:
 
 
 @frappe.whitelist(methods=["GET"])
-def get_student_announcements(cohort: str) -> dict:
+def get_student_announcements() -> dict:
+	cohort = frappe.db.get_value("CS17 Profile", require_current_student(), "cohort")
 	now = now_datetime()
 	table = frappe.qb.DocType("CS17 Announcement")
 	in_scope = (table.cohort == cohort) | table.cohort.isnull() | (table.cohort == "")

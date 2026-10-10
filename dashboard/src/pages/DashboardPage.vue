@@ -64,20 +64,18 @@ import type {
 /** The dashboard shows the next few pieces of work, not the whole list. */
 const UPCOMING_LIMIT = 3
 
-const { profile, cohort } = useSession()
+const { profile, cohort, isStudent } = useSession()
 
 const firstName = computed(() => profile.value?.full_name?.split(' ')[0] ?? 'Student')
 const today = formatLongDate()
 
-const announcementsCall = useCall<StudentAnnouncementsResponse, { cohort: string }>({
+const announcementsCall = useCall<StudentAnnouncementsResponse>({
 	url: '/api/v2/method/cs17_portal.api.get_student_announcements',
-	params: () => ({ cohort: cohort.value ?? '' }),
-	immediate: Boolean(cohort.value),
+	immediate: isStudent.value,
 })
 
-const assignmentsCall = useCall<StudentAssignmentsResponse, { cohort: string }>({
+const assignmentsCall = useCall<StudentAssignmentsResponse>({
 	url: '/api/v2/method/cs17_portal.api.get_student_assignments',
-	params: () => ({ cohort: cohort.value ?? '' }),
 	immediate: Boolean(cohort.value),
 })
 
