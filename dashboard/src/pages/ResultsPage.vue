@@ -2,8 +2,14 @@
 	<AppHeader title="Results" />
 
 	<PageBody>
+		<LoadError
+			v-if="failed"
+			title="Could not load your results"
+			@retry="resultsCall.reload()"
+		/>
+
 		<EmptyState
-			v-if="!loading && !results.length"
+			v-else-if="!loading && !results.length"
 			icon="lucide-award"
 			title="No results yet"
 			description="Your report card appears here once an exam result is published."
@@ -58,6 +64,7 @@ import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import LoadError from '@/components/common/LoadError.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
 import { usePolling } from '@/composables/usePolling'
 import { formatDate } from '@/lib/dates'
@@ -77,6 +84,7 @@ usePolling(resultsCall.reload)
 
 const results = computed(() => resultsCall.data ?? [])
 const loading = computed(() => resultsCall.loading && !resultsCall.data)
+const failed = computed(() => Boolean(resultsCall.error) && !resultsCall.data)
 
 const columns: Column[] = [
 	{ header: 'Exam', key: 'exam', variant: 'primary' },
