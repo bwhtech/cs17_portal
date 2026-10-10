@@ -38,6 +38,7 @@ class CS17Exam(Document):
 		self.validate_removed_subjects()
 		self.validate_locked_after_publish()
 		self.validate_locked_after_marks()
+		self.validate_grading_scale_locked()
 		self.total_max_marks = sum(flt(row.max_marks) for row in self.subjects)
 
 	def validate_dates(self):
@@ -85,7 +86,7 @@ class CS17Exam(Document):
 
 	def validate_locked_after_marks(self):
 		"""Component max marks come from the pattern and the subject total, so neither can move
-		once marks have actually been recorded against them."""
+		once marks have been recorded against them."""
 		if self.is_new():
 			return
 
@@ -94,17 +95,27 @@ class CS17Exam(Document):
 			old = previous.get(row.subject)
 			if not old:
 				continue
-			if (old.subject_pattern, flt(old.max_marks)) == (row.subject_pattern, flt(row.max_marks)):
-				continue
-			if frappe.db.exists(
-				"CS17 Subject Marks",
-				{"exam": self.name, "subject": row.subject, "total_marks_obtained": (">", 0)},
+			if (old.subject_pattern, flt(old.max_marks), old.grading_scale) == (
+				row.subject_pattern,
+				flt(row.max_marks),
+				row.grading_scale,
 			):
+				continue
+			if frappe.db.exists("CS17 Subject Marks", {"exam": self.name, "subject": row.subject}):
 				frappe.throw(
-					_("Marks are already recorded for {0}; its pattern and max marks cannot change.").format(
-						row.subject
-					)
+					_(
+						"Marks are already recorded for {0}; its pattern, max marks and grading scale cannot change."
+					).format(row.subject)
 				)
+
+	def validate_grading_scale_locked(self):
+		previous = self.get_doc_before_save()
+		if not previous or previous.grading_scale == self.grading_scale:
+			return
+		if frappe.db.exists("CS17 Subject Marks", {"exam": self.name}) or frappe.db.exists(
+			"CS17 Result", {"exam": self.name}
+		):
+			frappe.throw(_("This exam already has marks or results; its grading scale cannot change."))
 
 	@staticmethod
 	def subject_signature(rows) -> set:
