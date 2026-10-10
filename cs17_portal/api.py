@@ -320,6 +320,11 @@ def require_faculty_for_submissions(submissions: list) -> None:
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 
+def require_faculty_assignee(assign_to: str) -> None:
+	if not frappe.db.exists("CS17 Profile", {"user": assign_to, "profile_type": "Faculty"}):
+		frappe.throw(_("Submissions can only be assigned to faculty."))
+
+
 def require_faculty_for_announcement_cohort(cohort: str | None) -> None:
 	faculty = get_current_faculty()
 	if faculty.cohort and faculty.cohort != cohort:
@@ -1032,6 +1037,7 @@ def _order_by_names(rows: list, ordered_names: list) -> list:
 @frappe.whitelist(methods=["POST"])
 def assign_submission(submission: str, assign_to: str) -> None:
 	require_faculty_for_submissions([submission])
+	require_faculty_assignee(assign_to)
 	_assign_submission_to(submission, assign_to)
 
 
@@ -1039,6 +1045,7 @@ def assign_submission(submission: str, assign_to: str) -> None:
 def assign_submissions(submissions: list | str, assign_to: str) -> None:
 	submissions = frappe.parse_json(submissions)
 	require_faculty_for_submissions(submissions)
+	require_faculty_assignee(assign_to)
 	for submission in submissions:
 		_assign_submission_to(submission, assign_to)
 
