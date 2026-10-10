@@ -1,13 +1,14 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "PROJ-.{student}.-.####",
- "creation": "2026-07-07 00:00:00.000000",
+ "autoname": "PROJ-.{profile}.-.####",
+ "creation": "2026-07-07 00:00:00",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "project_title",
-  "student",
+  "profile",
+  "assignment",
   "column_break_main",
   "last_saved_at",
   "section_break_files",
@@ -20,15 +21,6 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Project Title",
-   "reqd": 1
-  },
-  {
-   "fieldname": "student",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Student",
-   "options": "CS17 Profile",
-   "read_only": 1,
    "reqd": 1
   },
   {
@@ -55,16 +47,32 @@
    "fieldname": "thumbnail",
    "fieldtype": "Attach Image",
    "label": "Thumbnail"
+  },
+  {
+   "description": "Set when the project is started from a Scratch assignment. Empty for standalone projects.",
+   "fieldname": "assignment",
+   "fieldtype": "Link",
+   "label": "Assignment",
+   "options": "CS17 Assignment",
+   "read_only": 1
+  },
+  {
+   "fieldname": "profile",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Profile",
+   "options": "CS17 Profile",
+   "read_only": 1,
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
- "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-07 00:00:00.000000",
+ "modified": "2026-10-10 02:36:28.491410",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Project",
- "naming_rule": "Expression (old style)",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
