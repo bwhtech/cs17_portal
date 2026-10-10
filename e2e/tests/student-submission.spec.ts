@@ -194,7 +194,6 @@ test.describe("Student submission types", () => {
 		for (const project of projects) {
 			await deleteDoc(request, "CS17 Project", project.name);
 		}
-		// Projects link to their assignment, so they go first.
 		await cleanupTestAssignments(request);
 	});
 

@@ -34,10 +34,6 @@ import { breadcrumbItems } from '@/composables/useBreadcrumbs'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 
 const props = defineProps<{
-	/**
-	 * The current page. A detail page that has a parent to go back to sets a
-	 * trail through `useBreadcrumbs()` instead and leaves this unset.
-	 */
 	title?: string
 }>()
 
@@ -52,12 +48,6 @@ defineSlots<{
 
 const { isDesktop } = useBreakpoint()
 
-/**
- * A top level page shows only its own name; a detail page shows the trail it
- * pushed, parent first. There is no root crumb: the sidebar is already the
- * way home, and a "Workspace" link that opens the Dashboard names a page
- * that does not exist.
- */
 const trail = computed(() => {
 	if (breadcrumbItems.value.length) return breadcrumbItems.value
 	return props.title ? [{ label: props.title }] : []

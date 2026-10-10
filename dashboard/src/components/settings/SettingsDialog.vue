@@ -52,7 +52,6 @@ import FacultyProfileForm from '@/components/settings/FacultyProfileForm.vue'
 import { useSession } from '@/composables/useSession'
 import { useSettingsDialog } from '@/composables/useSettingsDialog'
 
-// One dialog for both roles. Faculty edit their profile; students only see theirs.
 const { profile, isFaculty, cohort, logout } = useSession()
 const roleLine = computed(() => `cohort '${cohort.value ?? '—'}'`)
 

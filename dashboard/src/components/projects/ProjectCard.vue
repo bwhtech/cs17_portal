@@ -1,6 +1,4 @@
 <template>
-	<!-- The menu sits beside the link, not inside it: a button in an anchor
-	     would open the editor on every click. -->
 	<div class="relative">
 		<router-link
 			:to="`${projectsPath}/${project.name}/edit`"
