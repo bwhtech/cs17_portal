@@ -24,7 +24,7 @@ class CS17AssignmentGrade(Document):
 		graded_by: DF.Link | None
 		is_published: DF.Check
 		marks_obtained: DF.Float
-		naming_series: DF.Literal["GRADE.-{assignment}-.###"]
+		naming_series: DF.Literal["GRADE-.{assignment}.-.###"]
 		published_on: DF.Datetime | None
 		remarks: DF.MarkdownEditor | None
 		submission: DF.Link | None

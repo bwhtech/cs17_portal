@@ -83,10 +83,9 @@
   }
  ],
  "grid_page_length": 50,
- "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-10 14:48:22.277649",
- "modified_by": "ishadewangan055@gmail.com",
+ "modified": "2026-10-11 01:14:45.908285",
+ "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Announcement",
  "naming_rule": "Expression",
@@ -103,15 +102,6 @@
    "role": "System Manager",
    "share": 1,
    "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "CS17 Student",
-   "share": 1
   }
  ],
  "row_format": "Dynamic",
