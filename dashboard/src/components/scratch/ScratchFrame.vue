@@ -1,15 +1,20 @@
 <template>
-	<iframe
-		ref="frame"
-		:src="SCRATCH_EDITOR_URL"
-		:title="readOnly ? 'Scratch project player' : 'Scratch editor'"
-		class="h-full w-full border-0"
-		@load="onLoad"
-	/>
+	<div class="relative h-full w-full">
+		<iframe
+			ref="frame"
+			:src="SCRATCH_EDITOR_URL"
+			:title="readOnly ? 'Scratch project player' : 'Scratch editor'"
+			class="h-full w-full border-0"
+			:class="{ invisible: readOnly && !frameLoaded }"
+			@load="onLoad"
+		/>
+		<Skeleton v-if="readOnly && !frameLoaded" class="absolute inset-0" />
+	</div>
 </template>
 
 <script setup lang="ts">
-import { onBeforeMount, onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue'
+import { onBeforeMount, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { Skeleton } from 'frappe-ui'
 import {
 	SCRATCH_EDITOR_URL,
 	SCRATCH_MESSAGE,
@@ -38,6 +43,7 @@ const emit = defineEmits<{
 }>()
 
 const frame = useTemplateRef<HTMLIFrameElement>('frame')
+const frameLoaded = ref(false)
 
 let editorReady = false
 let loaded = false
@@ -66,6 +72,10 @@ function onLoad() {
 	// Read-only styling is injected into the iframe document, so it has to be
 	// re-applied on every load, not only when the editor announces itself.
 	if (props.readOnly) applyScratchReadOnly(frame.value)
+	frameLoaded.value = true
+	frame.value?.contentDocument?.defaultView?.addEventListener('pagehide', () => {
+		frameLoaded.value = false
+	})
 }
 
 function onMessage(event: MessageEvent) {
@@ -86,6 +96,13 @@ function onMessage(event: MessageEvent) {
 
 // A project fetched after the frame booted still gets loaded.
 watch(() => props.sb3, loadProject)
+
+watch(
+	() => props.readOnly,
+	(readOnly) => {
+		if (readOnly && frameLoaded.value) applyScratchReadOnly(frame.value)
+	},
+)
 
 onMounted(() => window.addEventListener('message', onMessage))
 onBeforeUnmount(() => window.removeEventListener('message', onMessage))
