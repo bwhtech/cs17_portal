@@ -1069,6 +1069,20 @@ def get_faculty_members() -> list:
 
 
 @frappe.whitelist(methods=["GET"])
+def get_cohorts() -> list:
+	cohort = get_current_faculty().cohort
+	if cohort:
+		return [cohort]
+	return frappe.get_all("CS17 Cohort", pluck="name", order_by="name asc")
+
+
+@frappe.whitelist(methods=["GET"])
+def get_quarters() -> list:
+	get_current_faculty()
+	return frappe.get_all("CS17 Quarter", pluck="name", order_by="name asc")
+
+
+@frappe.whitelist(methods=["GET"])
 def get_faculty_announcements() -> list:
 	faculty = get_current_faculty()
 	announcements = frappe.get_all(

@@ -362,6 +362,14 @@ class TestStudentListsUseOwnCohort(FrappeTestCase):
 		frappe.set_user(self.faculty_user)
 		self.assertRaises(frappe.PermissionError, get_student_assignments)
 
+	def test_cohort_faculty_lists_only_own_cohort(self):
+		frappe.set_user(self.faculty_user)
+		self.assertEqual(api.get_cohorts(), [self.cohort_40])
+
+	def test_student_cannot_list_quarters(self):
+		frappe.set_user(self.student_user)
+		self.assertRaises(frappe.PermissionError, api.get_quarters)
+
 	def test_faculty_cannot_list_student_announcements(self):
 		frappe.set_user(self.faculty_user)
 		self.assertRaises(frappe.PermissionError, get_student_announcements)
