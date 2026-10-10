@@ -120,7 +120,6 @@
   }
  ],
  "grid_page_length": 50,
- "index_web_pages_for_search": 1,
  "links": [
   {
    "link_doctype": "CS17 Assignment Submission",
@@ -131,7 +130,7 @@
    "link_fieldname": "assignment"
   }
  ],
- "modified": "2026-07-13 14:44:23.408933",
+ "modified": "2026-10-11 01:14:31.161931",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",
@@ -149,15 +148,6 @@
    "role": "System Manager",
    "share": 1,
    "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "CS17 Student",
-   "share": 1
   }
  ],
  "row_format": "Dynamic",
