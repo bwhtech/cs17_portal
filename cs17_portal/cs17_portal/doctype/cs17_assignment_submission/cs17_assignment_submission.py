@@ -74,7 +74,12 @@ class CS17AssignmentSubmission(Document):
 	def validate_not_graded(self):
 		if self.is_new() or not self._edited_by_owner():
 			return
-		if frappe.db.exists("CS17 Assignment Grade", {"submission": self.name, "is_published": 1}):
+		if frappe.get_all(
+			"CS17 Assignment Grade",
+			filters={"submission": self.name},
+			or_filters=[["is_published", "=", 1], ["published_on", "<=", frappe.utils.now_datetime()]],
+			limit=1,
+		):
 			frappe.throw(_("Closed assignments cannot be resubmitted."))
 
 	def _edited_by_owner(self) -> bool:
