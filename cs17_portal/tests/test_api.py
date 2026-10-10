@@ -13,6 +13,7 @@ from cs17_portal.api import (
 	get_submission_grade,
 	list_cohort_submissions,
 )
+from cs17_portal.cs17_portal.doctype.cs17_assignment.cs17_assignment import get_quarter_assignments
 
 
 def make_user(email: str) -> str:
@@ -389,3 +390,25 @@ class TestFacultyAnnouncementsUseOwnCohort(FrappeTestCase):
 		can_edit = {row.name: row.can_edit for row in api.get_faculty_announcements()}
 		self.assertTrue(can_edit[self.announcement_100])
 		self.assertFalse(can_edit[self.announcement_for_all])
+
+
+class TestAssignmentQuarter(FrappeTestCase):
+	def tearDown(self):
+		frappe.set_user("Administrator")
+
+	def test_assignment_created_with_quarter_is_listed_for_that_quarter(self):
+		cohort = make_cohort("C105TEST")
+		faculty_user = make_user("faculty105@cs17test.com")
+		make_profile("Faculty", cohort, faculty_user, "Faculty 105")
+		quarter = (
+			frappe.get_doc({"doctype": "CS17 Quarter", "quarter_name": "Quarter 105"})
+			.insert(ignore_permissions=True)
+			.name
+		)
+
+		frappe.set_user(faculty_user)
+		assignment = api.create_assignment(
+			"PDF Task 105", cohort, "2030-01-01 00:00:00", publish="now", quarter=quarter
+		)
+
+		self.assertEqual([row.name for row in get_quarter_assignments(quarter, cohort)], [assignment])

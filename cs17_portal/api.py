@@ -98,13 +98,23 @@ def create_assignment(
 	remarks: str = "Grade",
 	publish: str = "draft",
 	publish_on: str | None = None,
+	quarter: str | None = None,
 ) -> str:
 	faculty = get_current_faculty()
 	if faculty.cohort and faculty.cohort != cohort:
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	assignment = frappe.new_doc("CS17 Assignment")
 	_set_assignment_fields(
-		assignment, title, cohort, due_date, submission_type, description, assignment_type, max_marks, remarks
+		assignment,
+		title,
+		cohort,
+		due_date,
+		submission_type,
+		description,
+		assignment_type,
+		max_marks,
+		remarks,
+		quarter,
 	)
 	assignment.naming_series = _naming_series(assignment_type)
 	_apply_publish_state(assignment, publish, publish_on)
@@ -889,6 +899,7 @@ def update_assignment(
 	remarks: str = "Grade",
 	publish: str = "draft",
 	publish_on: str | None = None,
+	quarter: str | None = None,
 ) -> str:
 	require_faculty_for_assignment(assignment)
 	faculty = get_current_faculty()
@@ -896,7 +907,16 @@ def update_assignment(
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	doc = frappe.get_doc("CS17 Assignment", assignment)
 	_set_assignment_fields(
-		doc, title, cohort, due_date, submission_type, description, assignment_type, max_marks, remarks
+		doc,
+		title,
+		cohort,
+		due_date,
+		submission_type,
+		description,
+		assignment_type,
+		max_marks,
+		remarks,
+		quarter,
 	)
 	_apply_publish_state(doc, publish, publish_on)
 	doc.save(ignore_permissions=True)
@@ -913,6 +933,7 @@ def _set_assignment_fields(
 	assignment_type: str,
 	max_marks: float,
 	remarks: str,
+	quarter: str | None = None,
 ) -> None:
 	doc.update(
 		{
@@ -924,6 +945,8 @@ def _set_assignment_fields(
 			"assignment_type": assignment_type,
 		}
 	)
+	if quarter is not None:
+		doc.quarter = quarter
 	if assignment_type == "Graded":
 		doc.max_marks = max_marks
 		doc.remarks = remarks
@@ -941,6 +964,7 @@ def get_assignment(assignment: str) -> dict | None:
 			"description",
 			"due_date",
 			"cohort",
+			"quarter",
 			"submission_type",
 			"assignment_type",
 			"max_marks",
