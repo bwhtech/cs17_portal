@@ -337,6 +337,22 @@ class TestCS17Project(FrappeTestCase):
 			1,
 		)
 
+	def test_resubmit_replaces_the_snapshot_file(self):
+		frappe.set_user(STUDENT1_USER)
+		project = api.create_project("Revise Project")["name"]
+		api.save_project(project, "project.sb3", b64(b"PK\x03\x04v1"))
+		api.submit_scratch_project(self.assignment, project)
+		api.save_project(project, "project.sb3", b64(b"PK\x03\x04v2"))
+		submission = api.submit_scratch_project(self.assignment, project)["name"]
+
+		self.assertEqual(
+			frappe.db.count(
+				"File",
+				{"attached_to_doctype": "CS17 Assignment Submission", "attached_to_name": submission},
+			),
+			1,
+		)
+
 	def test_cannot_resubmit_after_grade_published(self):
 		frappe.set_user(STUDENT1_USER)
 		project = api.create_project("Graded Project")["name"]
