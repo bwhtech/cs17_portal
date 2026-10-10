@@ -505,7 +505,12 @@ def is_assignment_closed(assignment: str, student: str | None = None) -> bool:
 	)
 	return bool(
 		submission
-		and frappe.db.exists("CS17 Assignment Grade", {"submission": submission, "is_published": 1})
+		and frappe.get_all(
+			"CS17 Assignment Grade",
+			filters={"submission": submission},
+			or_filters=[["is_published", "=", 1], ["published_on", "<=", now_datetime()]],
+			limit=1,
+		)
 	)
 
 
