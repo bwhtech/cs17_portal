@@ -14,8 +14,14 @@
 	</AppHeader>
 
 	<PageBody width="wide" class="space-y-5">
+		<LoadError
+			v-if="failed"
+			title="Could not load your projects"
+			@retry="projectList.reload()"
+		/>
+
 		<div
-			v-if="loading"
+			v-else-if="loading"
 			class="cs17-delay-in grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
 		>
 			<Skeleton v-for="n in 3" :key="n" class="h-56 rounded-4" />
@@ -48,6 +54,7 @@ import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import EmptyState from '@/components/common/EmptyState.vue'
+import LoadError from '@/components/common/LoadError.vue'
 import ProjectCard from '@/components/projects/ProjectCard.vue'
 import { useProjectsPath } from '@/composables/useProjectsPath'
 import { frappeErrorMessage } from '@/lib/frappeError'
@@ -81,6 +88,7 @@ const deleteProject = useCall<null, { project: string }>({
 
 const projects = computed(() => projectList.data ?? [])
 const loading = computed(() => projectList.loading && !projectList.data)
+const failed = computed(() => Boolean(projectList.error) && !projectList.data)
 
 /**
  * The name is asked for up front because a Scratch project is only ever

@@ -2,7 +2,14 @@
 	<AppHeader title="Assignments" />
 
 	<PageBody>
+		<LoadError
+			v-if="failed"
+			title="Could not load your assignments"
+			@retry="assignmentsCall.reload()"
+		/>
+
 		<AssignmentTable
+			v-else
 			:assignments="assignments"
 			:submission-map="submissionMap"
 			:grade-map="gradeMap"
@@ -20,6 +27,7 @@ import { computed, ref, watch } from 'vue'
 import { useCall, useList } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
+import LoadError from '@/components/common/LoadError.vue'
 import AssignmentTable from '@/components/assignments/AssignmentTable.vue'
 import GradeDialog from '@/components/assignments/GradeDialog.vue'
 import { usePolling, usePublishTimer } from '@/composables/usePolling'
@@ -62,6 +70,7 @@ const gradeMap = computed(() =>
 )
 
 const loading = computed(() => assignmentsCall.loading && !assignmentsCall.data)
+const failed = computed(() => Boolean(assignmentsCall.error) && !assignmentsCall.data)
 
 // Both lists move together: an assignment that publishes on a schedule and the
 // grade that lands on it are equally invisible until something reloads them.

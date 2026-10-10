@@ -45,7 +45,14 @@
 		</div>
 
 		<div class="md:rounded-4 md:border md:border-outline-gray-1 md:bg-surface-base md:p-5">
+			<LoadError
+				v-if="failed"
+				title="Could not load assignments"
+				@retry="assignmentsCall.reload()"
+			/>
+
 			<DataTable
+				v-else
 				:columns="columns"
 				:rows="rows"
 				:row-key="(row: AssignmentRow) => row.name"
@@ -128,6 +135,7 @@
 import { computed, ref, watch } from 'vue'
 import { Badge, Button, Select, useCall, useList } from 'frappe-ui'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
+import LoadError from '@/components/common/LoadError.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
 import SubmissionTypeIcon from '@/components/common/SubmissionTypeIcon.vue'
 import AssignmentFormDialog from '@/components/faculty/AssignmentFormDialog.vue'
@@ -177,6 +185,8 @@ const assignmentsCall = useCall<CS17Assignment[], { cohort?: string }>({
 	params: () => (cohortFilter.value === ALL_COHORTS ? {} : { cohort: cohortFilter.value }),
 	refetch: true,
 })
+
+const failed = computed(() => Boolean(assignmentsCall.error) && !assignmentsCall.data)
 
 const cohorts = computed(() => (cohortList.data ?? []).map((cohort) => cohort.name))
 

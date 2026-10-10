@@ -74,6 +74,15 @@ test.describe("Faculty assignment portal", () => {
 		await expect(page.getByRole("link", { name: "Workspace", exact: true })).toHaveCount(0);
 	});
 
+	test("says the list could not load when the request fails", async ({ page }) => {
+		await page.route("**/cs17_portal.api.get_faculty_assignments*", (route) =>
+			route.fulfill({ status: 500 }),
+		);
+		await page.goto("/dashboard/faculty/assignments");
+		await expect(page.getByText("Could not load assignments")).toBeVisible();
+		await expect(page.getByText("No assignments yet.")).toHaveCount(0);
+	});
+
 	test("creates and publishes an assignment from the sheet", async ({ page }) => {
 		const title = `${TEST_ASSIGNMENT_PREFIX} UI ${Date.now()}`;
 		await page.goto("/dashboard/faculty/assignments");

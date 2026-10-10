@@ -24,8 +24,9 @@
 				</RouterLink>
 			</div>
 
+			<ErrorMessage v-if="failed" message="Could not load upcoming assignments." />
 			<AssignmentTable
-				v-if="loading || upcoming.length"
+				v-else-if="loading || upcoming.length"
 				:assignments="upcoming"
 				:submission-map="submissionMap"
 				:grade-map="gradeMap"
@@ -43,7 +44,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { useCall, useList } from 'frappe-ui'
+import { ErrorMessage, useCall, useList } from 'frappe-ui'
 import AlertBanner from '@/components/announcements/AlertBanner.vue'
 import AssignmentTable from '@/components/assignments/AssignmentTable.vue'
 import GradeDialog from '@/components/assignments/GradeDialog.vue'
@@ -133,6 +134,8 @@ const loading = computed(
 		(assignmentsCall.loading && !assignmentsCall.data) ||
 		(submissionsList.loading && !submissionsList.data),
 )
+
+const failed = computed(() => Boolean(assignmentsCall.error) && !assignmentsCall.data)
 
 const gradeAssignment = ref<string | null>(null)
 const activeGrade = computed(() =>

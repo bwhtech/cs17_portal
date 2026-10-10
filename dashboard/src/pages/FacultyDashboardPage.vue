@@ -10,7 +10,12 @@
 		<section class="space-y-4 rounded-4 border border-outline-gray-1 bg-surface-base p-5">
 			<h2 class="text-lg-semibold text-ink-gray-8">Assigned to you</h2>
 
-			<div v-if="assignedCall.loading && !assignedCall.data" class="cs17-delay-in space-y-3">
+			<ErrorMessage v-if="failed" message="Could not load your assigned submissions." />
+
+			<div
+				v-else-if="assignedCall.loading && !assignedCall.data"
+				class="cs17-delay-in space-y-3"
+			>
 				<Skeleton v-for="n in 3" :key="n" class="h-8 w-full rounded-4" />
 			</div>
 
@@ -46,7 +51,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { Skeleton, useCall } from 'frappe-ui'
+import { ErrorMessage, Skeleton, useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import { useSession } from '@/composables/useSession'
@@ -64,4 +69,5 @@ const assignedCall = useCall<CS17Submission[], { limit: number }>({
 })
 
 const assigned = computed(() => assignedCall.data ?? [])
+const failed = computed(() => Boolean(assignedCall.error) && !assignedCall.data)
 </script>

@@ -2,7 +2,13 @@
 	<AppHeader title="Announcements" />
 
 	<PageBody width="narrow">
-		<PageSkeleton v-if="loading" :blocks="2" />
+		<LoadError
+			v-if="failed"
+			title="Could not load announcements"
+			@retry="announcementsCall.reload()"
+		/>
+
+		<PageSkeleton v-else-if="loading" :blocks="2" />
 
 		<EmptyState
 			v-else-if="!announcements.length"
@@ -31,6 +37,7 @@ import { computed } from 'vue'
 import { useCall } from 'frappe-ui'
 import AnnouncementCard from '@/components/announcements/AnnouncementCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import LoadError from '@/components/common/LoadError.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
@@ -54,4 +61,5 @@ usePublishTimer(() => announcementsCall.data?.next_publish_on, announcementsCall
 const announcements = computed(() => announcementsCall.data?.announcements ?? [])
 // A student with no cohort never fires the request, so "loading" would hang.
 const loading = computed(() => announcementsCall.loading && !announcementsCall.data)
+const failed = computed(() => Boolean(announcementsCall.error) && !announcementsCall.data)
 </script>

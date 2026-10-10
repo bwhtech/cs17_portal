@@ -13,7 +13,10 @@
 	</AppHeader>
 
 	<PageBody>
+		<LoadError v-if="failed" title="Could not load announcements" @retry="listCall.reload()" />
+
 		<DataTable
+			v-else
 			:columns="columns"
 			:rows="announcements"
 			:row-key="(row: CS17Announcement) => row.name"
@@ -119,6 +122,7 @@ import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
+import LoadError from '@/components/common/LoadError.vue'
 import AnnouncementFormDialog from '@/components/faculty/AnnouncementFormDialog.vue'
 import DeleteAnnouncementDialog from '@/components/faculty/DeleteAnnouncementDialog.vue'
 import PreviewAnnouncementDialog from '@/components/faculty/PreviewAnnouncementDialog.vue'
@@ -143,6 +147,7 @@ const listCall = useCall<CS17Announcement[]>({
 })
 
 const announcements = computed(() => listCall.data ?? [])
+const failed = computed(() => Boolean(listCall.error) && !listCall.data)
 
 const cohortList = useList<{ name: string }>({
 	doctype: 'CS17 Cohort',
