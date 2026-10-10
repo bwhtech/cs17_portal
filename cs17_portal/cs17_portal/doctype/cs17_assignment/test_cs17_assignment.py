@@ -4,6 +4,10 @@
 import frappe
 from frappe.model.naming import set_new_name
 from frappe.tests import IntegrationTestCase
+from frappe.utils import add_days, now_datetime
+
+from cs17_portal.cs17_portal.doctype.cs17_assignment.cs17_assignment import get_quarter_assignments
+from cs17_portal.tests.test_api import make_assignment, make_cohort, make_profile, make_user
 
 EXTRA_TEST_RECORD_DEPENDENCIES = []
 IGNORE_TEST_RECORD_DEPENDENCIES = []
@@ -44,3 +48,28 @@ class IntegrationTestCS17Assignment(IntegrationTestCase):
 
 		self.assertNotIn("{cohort}", submission.name)
 		self.assertEqual(submission.name, f"SUB-{assignment.name}-001")
+
+
+class TestQuarterAssignments(IntegrationTestCase):
+	def tearDown(self):
+		frappe.set_user("Administrator")
+
+	def test_assignment_past_its_publish_time_is_listed(self):
+		cohort = make_cohort("C60TEST")
+		faculty_user = make_user("faculty60@cs17test.com")
+		make_profile("Faculty", cohort, faculty_user, "Faculty 60")
+		quarter = (
+			frappe.get_doc({"doctype": "CS17 Quarter", "quarter_name": "Quarter 60"})
+			.insert(ignore_permissions=True)
+			.name
+		)
+
+		frappe.set_user(faculty_user)
+		assignment = make_assignment(cohort, "PDF Task 60", "PDF", 20)
+		frappe.db.set_value(
+			"CS17 Assignment",
+			assignment,
+			{"quarter": quarter, "is_published": 0, "publish_on": add_days(now_datetime(), -1)},
+		)
+
+		self.assertEqual([row.name for row in get_quarter_assignments(quarter, cohort)], [assignment])
