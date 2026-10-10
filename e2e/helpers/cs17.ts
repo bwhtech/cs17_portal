@@ -1,5 +1,5 @@
 import { APIRequestContext } from "@playwright/test";
-import { callGetMethod, createDoc, deleteDoc, getList } from "./frappe";
+import { callGetMethod, createDoc, deleteDoc, getList, updateDoc } from "./frappe";
 
 export interface CS17Profile {
 	name: string;
@@ -461,5 +461,57 @@ export async function cleanupTestResult(
 		} catch (error) {
 			console.warn(`Failed to delete ${doctype} ${name}:`, error);
 		}
+	}
+}
+
+export interface TestDefaultScale {
+	scale: string;
+	previousDefault: string | null;
+}
+
+export async function createTestDefaultScale(
+	request: APIRequestContext,
+): Promise<TestDefaultScale> {
+	const [previousDefault] = await getList<{ name: string }>(
+		request,
+		"CS17 Grading Scale",
+		{ fields: ["name"], filters: { is_default: 1 }, limit: 1 },
+	);
+	const scale = await createDoc<{ name: string }>(request, "CS17 Grading Scale", {
+		scale_name: `E2E Scale ${Date.now()}`,
+		passing_percentage: 40,
+		is_default: 1,
+		bands: [
+			{ grade: "E", min_percent: 0, max_percent: 39.99 },
+			{ grade: "D", min_percent: 40, max_percent: 54.99 },
+			{ grade: "C", min_percent: 55, max_percent: 69.99 },
+			{ grade: "B", min_percent: 70, max_percent: 84.99 },
+			{ grade: "A", min_percent: 85, max_percent: 100 },
+		],
+	});
+	return { scale: scale.name, previousDefault: previousDefault?.name ?? null };
+}
+
+export async function cleanupTestDefaultScale(
+	request: APIRequestContext,
+	seeded: TestDefaultScale,
+): Promise<void> {
+	try {
+		if (seeded.previousDefault) {
+			await updateDoc(request, "CS17 Grading Scale", seeded.previousDefault, {
+				is_default: 1,
+			});
+		} else {
+			await updateDoc(request, "CS17 Grading Scale", seeded.scale, {
+				is_default: 0,
+			});
+		}
+	} catch (error) {
+		console.warn("Failed to put the default grading scale back:", error);
+	}
+	try {
+		await deleteDoc(request, "CS17 Grading Scale", seeded.scale);
+	} catch (error) {
+		console.warn(`Failed to delete grading scale ${seeded.scale}:`, error);
 	}
 }
