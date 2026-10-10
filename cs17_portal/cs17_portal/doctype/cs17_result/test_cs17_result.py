@@ -121,3 +121,13 @@ class IntegrationTestCS17Result(IntegrationTestCase):
 		result.published_on = "2000-01-02 00:00:00"
 
 		self.assertRaises(frappe.ValidationError, result.save)
+
+	def test_deleted_marks_drop_out_of_the_result(self):
+		frappe.delete_doc("CS17 Subject Marks", self.marks)
+
+		self.assertEqual(frappe.db.get_value("CS17 Result", self.result, "total_marks_obtained"), 0)
+
+	def test_marks_of_a_published_result_cannot_be_deleted(self):
+		frappe.get_doc("CS17 Result", self.result).publish()
+
+		self.assertRaises(frappe.ValidationError, frappe.delete_doc, "CS17 Subject Marks", self.marks)
