@@ -36,6 +36,7 @@ class CS17SubjectPattern(Document):
 			frappe.throw(
 				_("Weightages add up to {0}%, they must add up to 100%.").format(self.total_weightage)
 			)
+		self.validate_locked_after_marks()
 
 	def validate_components(self):
 		if not self.components:
@@ -52,6 +53,23 @@ class CS17SubjectPattern(Document):
 				frappe.throw(_("Component {0}: weightage must be greater than zero.").format(name))
 			row.component = name
 			seen.add(name)
+
+	def validate_locked_after_marks(self):
+		previous = self.get_doc_before_save()
+		if not previous:
+			return
+		if self.component_signature(previous.components) == self.component_signature(self.components):
+			return
+		if frappe.db.exists("CS17 Subject Marks", {"subject_pattern": self.name}):
+			frappe.throw(
+				_(
+					"Marks are already recorded with this pattern; its components and weightages cannot change."
+				)
+			)
+
+	@staticmethod
+	def component_signature(rows) -> set:
+		return {(row.component, flt(row.weightage)) for row in rows}
 
 
 def get_component_rows(pattern: str) -> list[dict]:
