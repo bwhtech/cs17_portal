@@ -37,9 +37,8 @@ import type { CS17Submission, StudentAssignmentsResponse, StudentGradesResponse 
 
 const { profile, cohort } = useSession()
 
-const assignmentsCall = useCall<StudentAssignmentsResponse, { cohort: string }>({
+const assignmentsCall = useCall<StudentAssignmentsResponse>({
 	url: '/api/v2/method/cs17_portal.api.get_student_assignments',
-	params: () => ({ cohort: cohort.value ?? '' }),
 	immediate: Boolean(cohort.value),
 })
 

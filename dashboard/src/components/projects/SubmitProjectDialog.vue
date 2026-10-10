@@ -86,9 +86,8 @@ const { cohort } = useSession()
 
 // Only the student's own cohort has assignments they can submit to, so the
 // list waits for the dialog rather than loading with every editor page.
-const assignments = useCall<StudentAssignmentsResponse, { cohort: string }>({
+const assignments = useCall<StudentAssignmentsResponse>({
 	url: '/api/v2/method/cs17_portal.api.get_student_assignments',
-	params: () => ({ cohort: cohort.value ?? '' }),
 	immediate: false,
 })
 

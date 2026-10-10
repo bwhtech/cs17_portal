@@ -46,20 +46,19 @@ import { usePolling, usePublishTimer } from '@/composables/usePolling'
 import { useSession } from '@/composables/useSession'
 import type { StudentAnnouncementsResponse } from '@/types'
 
-const { cohort } = useSession()
+const { isStudent } = useSession()
 const { dismiss, isDismissed } = useAnnouncementDismissals()
 
-const announcementsCall = useCall<StudentAnnouncementsResponse, { cohort: string }>({
+const announcementsCall = useCall<StudentAnnouncementsResponse>({
 	url: '/api/v2/method/cs17_portal.api.get_student_announcements',
-	params: () => ({ cohort: cohort.value ?? '' }),
-	immediate: Boolean(cohort.value),
+	immediate: isStudent.value,
 })
 
 usePolling(announcementsCall.reload)
 usePublishTimer(() => announcementsCall.data?.next_publish_on, announcementsCall.reload)
 
 const announcements = computed(() => announcementsCall.data?.announcements ?? [])
-// A student with no cohort never fires the request, so "loading" would hang.
+// A user who is not a student never fires the request, so "loading" would hang.
 const loading = computed(() => announcementsCall.loading && !announcementsCall.data)
 const failed = computed(() => Boolean(announcementsCall.error) && !announcementsCall.data)
 </script>
