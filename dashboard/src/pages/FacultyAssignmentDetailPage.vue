@@ -6,7 +6,6 @@
 		<template #actions>
 			<Button
 				v-if="assignment"
-				variant="outline"
 				icon-left="lucide-link"
 				label="Copy submission link"
 				@click="copySubmissionLink"
@@ -107,7 +106,6 @@
 							/>
 							<Button
 								v-if="isGraded"
-								variant="outline"
 								:label="row.grade ? 'Edit grade' : 'Grade'"
 								@click="gradeTarget = row"
 							/>

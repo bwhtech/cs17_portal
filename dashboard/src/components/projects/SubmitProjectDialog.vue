@@ -29,7 +29,6 @@
 						v-for="assignment in options"
 						:key="assignment.name"
 						class="w-full !justify-start"
-						variant="outline"
 						@click="chosen = assignment"
 					>
 						<span class="truncate">{{ assignment.title }}</span>

@@ -36,12 +36,7 @@
 			class="flex h-full flex-col items-center justify-center gap-3 p-6 text-center"
 		>
 			<p class="max-w-md break-all text-p-sm text-ink-gray-5">{{ fileUrl }}</p>
-			<Button
-				variant="outline"
-				icon-left="lucide-external-link"
-				label="Open submission"
-				:href="fileUrl"
-			/>
+			<Button icon-left="lucide-external-link" label="Open submission" :href="fileUrl" />
 		</div>
 
 		<div v-else class="flex h-full items-center justify-center p-6 text-center">

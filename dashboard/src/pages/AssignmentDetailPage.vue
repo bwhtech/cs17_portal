@@ -53,7 +53,6 @@
 					<Button
 						v-if="!isOverdue && !grade"
 						class="w-full"
-						variant="outline"
 						label="Edit Submission"
 						@click="openSubmit"
 					/>
@@ -73,13 +72,7 @@
 				</template>
 
 				<p v-else-if="isOverdue" class="text-sm text-ink-gray-5">Deadline passed</p>
-				<Button
-					v-else
-					class="w-full"
-					variant="outline"
-					label="Submit Assignment"
-					@click="openSubmit"
-				/>
+				<Button v-else class="w-full" label="Submit Assignment" @click="openSubmit" />
 			</div>
 		</div>
 

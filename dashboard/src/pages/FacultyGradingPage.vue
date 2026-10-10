@@ -5,12 +5,7 @@
 	<PageSkeleton v-if="loading" class="px-3 py-5 sm:px-5" />
 
 	<div v-else-if="!submission" class="px-3 py-5 pb-10 sm:px-5">
-		<Button
-			variant="ghost"
-			icon-left="lucide-arrow-left"
-			label="Submissions"
-			route="/faculty/submissions"
-		/>
+		<Button icon-left="lucide-arrow-left" label="Submissions" route="/faculty/submissions" />
 		<p class="mt-3 text-p-base text-ink-gray-5">
 			This submission is not available in your cohort.
 		</p>
