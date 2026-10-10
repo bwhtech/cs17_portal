@@ -467,8 +467,18 @@ def submit_scratch_project(assignment: str, project: str) -> dict:
 	submission.flags.ignore_permissions = True
 	submission.project = project
 	submission.submitted_at = frappe.utils.now_datetime()
-	submission.save()
+	if submission.is_new():
+		submission.insert()
 
+	previous_snapshots = frappe.get_all(
+		"File",
+		filters={
+			"attached_to_doctype": "CS17 Assignment Submission",
+			"attached_to_name": submission.name,
+			"attached_to_field": "submission_document",
+		},
+		pluck="name",
+	)
 	snapshot = attach_private_file(
 		"CS17 Assignment Submission",
 		submission.name,
@@ -478,6 +488,8 @@ def submit_scratch_project(assignment: str, project: str) -> dict:
 	)
 	submission.submission_document = snapshot.file_url
 	submission.save()
+	for file_name in previous_snapshots:
+		frappe.delete_doc("File", file_name, ignore_permissions=True)
 	return {"name": submission.name, "submission_document": submission.submission_document}
 
 
