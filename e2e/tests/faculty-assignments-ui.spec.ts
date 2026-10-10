@@ -259,17 +259,9 @@ test.describe("Faculty assignment portal", () => {
 		// The file fallback is a `link` Button, so it renders as an anchor.
 		await expect(page.getByRole("link", { name: "Open file" })).toHaveCount(0);
 
-		const frame = page
-			.frames()
-			.find((f) => f.url().includes("scratch/editor.html"))!;
-		await expect
-			.poll(() =>
-				frame.evaluate(
-					() => !!document.getElementById("cs17-readonly-style"),
-				),
-			)
-			.toBe(true);
-		const state = await frame.evaluate(() => {
+		const frame = page.getByTitle("Scratch project player").contentFrame();
+		await expect(frame.locator("#cs17-readonly-style")).toBeAttached();
+		const state = await frame.locator("html").evaluate(() => {
 			const hidden = (sel: string) => {
 				const el = document.querySelector(sel) as HTMLElement | null;
 				return !el || getComputedStyle(el).display === "none";
