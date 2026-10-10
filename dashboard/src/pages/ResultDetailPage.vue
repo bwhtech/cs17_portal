@@ -9,7 +9,9 @@
 	</AppHeader>
 
 	<PageBody width="narrow">
-		<PageSkeleton v-if="loading" :blocks="3" />
+		<LoadError v-if="failed" title="Could not load this result" @retry="resultCall.reload()" />
+
+		<PageSkeleton v-else-if="loading" :blocks="3" />
 
 		<p v-else-if="!result" class="text-p-base text-ink-gray-5">
 			This result is not available. It may not be published yet.
@@ -147,10 +149,12 @@ import { Badge, Button, PageHeaderBackButton, useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
+import LoadError from '@/components/common/LoadError.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
 import { formatDate } from '@/lib/dates'
+import { isRefusal } from '@/lib/frappeError'
 import { assignmentScoreLabel, formatMarks, formatPercent, passTheme } from '@/lib/results'
 import type { CS17Result, CS17ResultAssignmentScore, CS17ResultSubjectScore } from '@/types'
 
@@ -165,6 +169,9 @@ const resultCall = useCall<CS17Result, { result: string }>({
 
 const result = computed(() => resultCall.data ?? null)
 const loading = computed(() => resultCall.loading && !resultCall.data)
+const failed = computed(
+	() => Boolean(resultCall.error) && !resultCall.data && !isRefusal(resultCall.error),
+)
 
 /** Cohort and quarter, the two labels that place an exam, on one line. */
 const metaLine = computed(() => {

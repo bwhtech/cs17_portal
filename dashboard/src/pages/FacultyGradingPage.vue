@@ -2,7 +2,9 @@
 	<!-- Zen skips the shell, so the shell header only exists on the way back. -->
 	<AppHeader v-if="!isZen" />
 
-	<PageSkeleton v-if="loading" class="px-3 py-5 sm:px-5" />
+	<LoadError v-if="failed" title="Could not load this submission" @retry="submissions.reload()" />
+
+	<PageSkeleton v-else-if="loading" class="px-3 py-5 sm:px-5" />
 
 	<div v-else-if="!submission" class="px-3 py-5 pb-10 sm:px-5">
 		<Button icon-left="lucide-arrow-left" label="Submissions" route="/faculty/submissions" />
@@ -79,6 +81,7 @@ import { computed, watch } from 'vue'
 import { Button, useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import GradeBadge from '@/components/common/GradeBadge.vue'
+import LoadError from '@/components/common/LoadError.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import GradeForm from '@/components/grading/GradeForm.vue'
 import SubmissionPlayer from '@/components/grading/SubmissionPlayer.vue'
@@ -107,6 +110,7 @@ const submission = computed(
 )
 
 const loading = computed(() => !submissions.isFinished && !submissions.data)
+const failed = computed(() => Boolean(submissions.error) && !submissions.data)
 
 /**
  * `list_cohort_submissions` carries no file field, so the submitted document
