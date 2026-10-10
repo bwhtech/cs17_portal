@@ -157,7 +157,7 @@ function gradeLine(assignment: CS17Assignment): string {
 	if (!showsGrade(assignment)) return ''
 	const grade = props.gradeMap?.[assignment.name]
 	if (!grade) return ''
-	if (grade.grade) return `Grade ${grade.grade}`
+	if (grade.evaluation_type === 'Grade') return grade.grade ? `Grade ${grade.grade}` : ''
 	if (grade.marks_obtained === null || grade.marks_obtained === undefined) return ''
 	return `${grade.marks_obtained} / ${assignment.max_marks ?? 0} marks`
 }
