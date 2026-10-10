@@ -4,13 +4,7 @@
 			<PageHeaderBackButton fallback-route="/results" />
 		</template>
 		<template #actions>
-			<Button
-				v-if="result"
-				variant="outline"
-				icon-left="download"
-				label="Download"
-				@click="downloadPdf"
-			/>
+			<Button v-if="result" icon-left="download" label="Download" @click="downloadPdf" />
 		</template>
 	</AppHeader>
 

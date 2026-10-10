@@ -58,7 +58,6 @@
 				/>
 				<Button
 					v-else-if="statusOf(row) === 'Submitted' && !isScratch(row)"
-					variant="outline"
 					label="Edit"
 					@click="openSubmit(row, submissionMap[row.name])"
 				/>

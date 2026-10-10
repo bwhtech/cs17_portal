@@ -15,7 +15,7 @@
 					<p class="text-xs text-ink-gray-5">{{ row.label }}</p>
 					<p class="text-base font-medium text-ink-gray-8">{{ row.value }}</p>
 				</div>
-				<Button class="w-full" label="Submit Assignment" variant="outline" disabled />
+				<Button class="w-full" label="Submit Assignment" disabled />
 			</div>
 		</div>
 	</div>

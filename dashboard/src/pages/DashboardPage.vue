@@ -4,7 +4,7 @@
 	<PageBody width="narrow" class="space-y-6">
 		<div>
 			<h1 class="text-2xl text-ink-gray-9">Welcome back, {{ firstName }}.</h1>
-			<p class="mt-1 text-p-sm text-ink-gray-5">{{ today }}</p>
+			<p class="mt-1 text-sm text-ink-gray-5">{{ today }}</p>
 		</div>
 
 		<AlertBanner :announcements="announcements" />
