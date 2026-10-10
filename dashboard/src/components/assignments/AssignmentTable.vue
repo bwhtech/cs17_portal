@@ -99,7 +99,7 @@ import SubmissionTypeIcon from '@/components/common/SubmissionTypeIcon.vue'
 import SubmissionPreviewDialog from '@/components/assignments/SubmissionPreviewDialog.vue'
 import SubmitAssignmentDialog from '@/components/assignments/SubmitAssignmentDialog.vue'
 import { useScratchAssignment } from '@/components/assignments/scratchEditor'
-import { formatDateTime } from '@/lib/dates'
+import { formatDateTime, isPast } from '@/lib/dates'
 import { assignmentStatus, assignmentStatusTheme } from '@/lib/status'
 import type { CS17Assignment, CS17Grade, CS17Submission } from '@/types'
 
@@ -149,7 +149,7 @@ function statusOf(assignment: CS17Assignment) {
 }
 
 function isOverdue(assignment: CS17Assignment): boolean {
-	return statusOf(assignment) !== 'Submitted' && new Date(assignment.due_date) < new Date()
+	return statusOf(assignment) !== 'Submitted' && isPast(assignment.due_date)
 }
 
 /** The second line of the Submitted cell, once a grade is theirs to see. */

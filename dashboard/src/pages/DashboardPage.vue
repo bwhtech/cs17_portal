@@ -52,7 +52,7 @@ import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import { usePolling, usePublishTimer } from '@/composables/usePolling'
 import { useSession } from '@/composables/useSession'
-import { dayjs, formatLongDate } from '@/lib/dates'
+import { dayjs, formatLongDate, isPast } from '@/lib/dates'
 import { gradesByAssignment, submissionsByAssignment } from '@/lib/status'
 import type {
 	CS17Submission,
@@ -122,7 +122,7 @@ const gradeMap = computed(() =>
 /** Still open, most recently touched first — the same three the React app showed. */
 const upcoming = computed(() =>
 	assignments.value
-		.filter((a) => !dayjs(a.due_date).isBefore(dayjs()))
+		.filter((a) => !isPast(a.due_date))
 		.sort((a, b) => dayjs(b.modified).valueOf() - dayjs(a.modified).valueOf())
 		.slice(0, UPCOMING_LIMIT),
 )
