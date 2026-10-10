@@ -34,6 +34,7 @@ class CS17AssignmentSubmission(Document):
 
 	def validate(self):
 		self.validate_duplicate()
+		self.validate_open_to_student()
 		self.validate_deadline()
 		self.validate_not_graded()
 		self.validate_scratch_acceptance()
@@ -52,6 +53,20 @@ class CS17AssignmentSubmission(Document):
 			frappe.throw(
 				_("Submission {0} already exists for this student and assignment.").format(duplicate)
 			)
+
+	def validate_open_to_student(self):
+		student = frappe.db.get_value("CS17 Profile", self.student, ["user", "cohort"], as_dict=True)
+		if not student or frappe.session.user != student.user:
+			return
+		assignment = frappe.db.get_value(
+			"CS17 Assignment", self.assignment, ["cohort", "is_published", "publish_on"], as_dict=True
+		)
+		is_visible = assignment and (
+			assignment.is_published
+			or (assignment.publish_on and assignment.publish_on <= frappe.utils.now_datetime())
+		)
+		if not is_visible or assignment.cohort != student.cohort:
+			frappe.throw(_("This assignment is not open for submission."))
 
 	def validate_deadline(self):
 		if not self._edited_by_owner():
