@@ -3,6 +3,7 @@
 
 import frappe
 from frappe.tests import IntegrationTestCase
+from frappe.utils import add_days, now
 
 from cs17_portal import api
 from cs17_portal.tests.test_api import (
@@ -79,6 +80,29 @@ class IntegrationTestCS17AssignmentGrade(IntegrationTestCase):
 		self.grade.save()
 
 		self.assertEqual(self.grade.graded_by, "Administrator")
+
+	def test_scheduled_grade_saved_as_draft_loses_its_schedule(self):
+		with self.set_user(self.faculty_user):
+			api.grade_submission(
+				self.submission, grade="B", publish="schedule", publish_on=add_days(now(), 1)
+			)
+			grade = api.grade_submission(self.submission, grade="B", publish="draft")["name"]
+
+		self.assertIsNone(frappe.db.get_value("CS17 Assignment Grade", grade, "published_on"))
+
+	def test_scheduled_assignment_saved_as_draft_loses_its_schedule(self):
+		cohort = make_cohort("C85TEST")
+		with self.set_user(self.faculty_user):
+			assignment = api.create_assignment(
+				"PDF Task 86",
+				cohort,
+				"2030-01-01 00:00:00",
+				publish="schedule",
+				publish_on=add_days(now(), 1),
+			)
+			api.update_assignment(assignment, "PDF Task 86", cohort, "2030-01-01 00:00:00", publish="draft")
+
+		self.assertIsNone(frappe.db.get_value("CS17 Assignment", assignment, "publish_on"))
 
 
 class TestGradeFromMarks(IntegrationTestCase):

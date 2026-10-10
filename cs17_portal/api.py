@@ -140,6 +140,7 @@ def _apply_publish_state(
 		doc.set(publish_on_field, publish_on)
 	else:
 		doc.is_published = 0
+		doc.set(publish_on_field, None)
 
 
 def is_published_now(doc: "Document", publish_on_field: str = "publish_on") -> bool:
