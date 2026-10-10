@@ -190,6 +190,21 @@ future `published_on` and leaving `is_published` unchecked lets `cs17_portal.tas
 flip the flag when the time passes, so a whole cohort's results go live at once instead of trickling
 out as each is entered.
 
+A result can be published or scheduled only when every subject of its exam has marks. The check
+runs at that moment and on no other save: when a result is created published or scheduled, when
+`is_published` is ticked, and when `published_on` is set or changed. It refuses the save and names
+the subjects without marks.
+
+Entering or changing a `CS17 Subject Marks` is never refused by that check, whatever state the
+result is in, and the result recalculates. Deleting one re-saves the result after the row is gone,
+so the subject reads as 0 and counts as missing again. Marks that a published result shows cannot
+be deleted. The result has to be unpublished first, so a report card a student can see never loses
+a subject.
+
+`auto_publish_results` checks the marks again at the scheduled time. A due result with marks
+missing stays unpublished and is logged once in the Error Log as `Scheduled result not published`.
+It stays scheduled, and is published on the first run after its marks are complete.
+
 Students only ever see published results — `get_permission_query_conditions` filters to
 `student = <their profile> and is_published = 1`, and `has_permission` applies the same rule to
 direct document access.
@@ -271,5 +286,6 @@ assignment and grade pages do: a result becomes visible when `auto_publish_resul
 ## Not yet built
 
 - Faculty UI in the `dashboard` SPA. Entering marks and publishing results is desk-only.
-- Tests. `test_cs17_result.py` should cover grade-band lookup at boundaries (0, exactly on a band
-  edge, 100), the duplicate guard, and the frozen-after-publish rule.
+- Tests for grade-band lookup at boundaries (0, exactly on a band edge, 100), the duplicate guard,
+  and the frozen-after-publish rule. `test_cs17_result.py` covers publishing only: the scheduler,
+  the marks check, and entering and deleting marks.
