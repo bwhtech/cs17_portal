@@ -320,9 +320,21 @@ def require_faculty_for_submissions(submissions: list) -> None:
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 
-def require_faculty_assignee(assign_to: str) -> None:
-	if not frappe.db.exists("CS17 Profile", {"user": assign_to, "profile_type": "Faculty"}):
+def require_faculty_assignee(assign_to: str, submissions: list | tuple = ()) -> None:
+	assignee = frappe.db.get_value(
+		"CS17 Profile", {"user": assign_to, "profile_type": "Faculty"}, "cohort", as_dict=True
+	)
+	if not assignee:
 		frappe.throw(_("Submissions can only be assigned to faculty."))
+	if not assignee.cohort:
+		return
+	same_cohort = frappe.get_all(
+		ASSIGNMENT_SUBMISSION,
+		filters=[["name", "in", submissions], ["assignment.cohort", "=", assignee.cohort]],
+		pluck="name",
+	)
+	if set(submissions) - set(same_cohort):
+		frappe.throw(_("Submissions can only be assigned to faculty of their cohort."))
 
 
 def require_faculty_for_announcement_cohort(cohort: str | None) -> None:
@@ -1040,7 +1052,7 @@ def _order_by_names(rows: list, ordered_names: list) -> list:
 @frappe.whitelist(methods=["POST"])
 def assign_submission(submission: str, assign_to: str) -> None:
 	require_faculty_for_submissions([submission])
-	require_faculty_assignee(assign_to)
+	require_faculty_assignee(assign_to, [submission])
 	_assign_submission_to(submission, assign_to)
 
 
@@ -1048,7 +1060,7 @@ def assign_submission(submission: str, assign_to: str) -> None:
 def assign_submissions(submissions: list | str, assign_to: str) -> None:
 	submissions = frappe.parse_json(submissions)
 	require_faculty_for_submissions(submissions)
-	require_faculty_assignee(assign_to)
+	require_faculty_assignee(assign_to, submissions)
 	for submission in submissions:
 		_assign_submission_to(submission, assign_to)
 
@@ -1073,11 +1085,12 @@ def unassign_submission(submission: str, assign_to: str) -> None:
 
 
 @frappe.whitelist(methods=["GET"])
-def get_faculty_members() -> list:
+def get_faculty_members(cohort: str | None = None) -> list:
 	validate_membership("Faculty")
 	return frappe.get_all(
 		"CS17 Profile",
 		filters={"profile_type": "Faculty", "user": ["is", "set"]},
+		or_filters=[["cohort", "=", cohort], ["cohort", "is", "not set"]] if cohort else [],
 		fields=["user", "full_name"],
 		order_by="full_name asc",
 	)

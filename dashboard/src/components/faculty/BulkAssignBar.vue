@@ -12,6 +12,7 @@
 				label="Assign selected to"
 				placeholder="Pick a faculty member"
 				:error="fieldError"
+				:cohort="cohort"
 			/>
 		</div>
 
@@ -35,6 +36,7 @@ import { frappeErrorMessage } from '@/lib/frappeError'
 const props = defineProps<{
 	/** The selected submission names. */
 	submissions: string[]
+	cohort?: string
 }>()
 
 const emit = defineEmits<{ done: [] }>()

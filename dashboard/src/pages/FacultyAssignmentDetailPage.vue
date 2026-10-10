@@ -62,6 +62,7 @@
 				<BulkAssignBar
 					v-if="selection.length"
 					:submissions="selection"
+					:cohort="assignment.cohort"
 					@done="clearSelection"
 				/>
 
@@ -136,6 +137,7 @@
 		v-if="assignTarget"
 		:open="Boolean(assignTarget)"
 		:submission="assignTarget"
+		:cohort="assignment?.cohort"
 		@update:open="assignTargetName = null"
 		@success="detail.reload()"
 	/>

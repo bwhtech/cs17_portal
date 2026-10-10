@@ -15,22 +15,24 @@ import { computed } from 'vue'
 import { Select, useCall } from 'frappe-ui'
 import type { FacultyMember } from '@/types'
 
-defineProps<{
+const props = defineProps<{
 	/** The selected faculty member's `user` id. `''` when none. */
 	modelValue: string
 	placeholder?: string
 	/** Optional labelling, so a form field never leans on the placeholder. */
 	label?: string
 	error?: string
+	cohort?: string
 }>()
 
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 
 // Mounted in three places on the assignment detail page (row action, bulk bar,
 // dialog); the cache key hands each new mount the last roster while it refetches.
-const members = useCall<FacultyMember[]>({
+const members = useCall<FacultyMember[], { cohort?: string }>({
 	url: '/api/v2/method/cs17_portal.api.get_faculty_members',
-	cacheKey: 'faculty-members',
+	params: () => ({ cohort: props.cohort }),
+	cacheKey: ['faculty-members', props.cohort ?? ''],
 })
 
 const options = computed(() =>
