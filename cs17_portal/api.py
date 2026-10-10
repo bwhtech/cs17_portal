@@ -319,6 +319,11 @@ def require_faculty_for_submissions(submissions: list) -> None:
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 
+def require_faculty_assignee(assign_to: str) -> None:
+	if not frappe.db.exists("CS17 Profile", {"user": assign_to, "profile_type": "Faculty"}):
+		frappe.throw(_("Submissions can only be assigned to faculty."))
+
+
 def require_faculty_for_announcement_cohort(cohort: str | None) -> None:
 	faculty = get_current_faculty()
 	if faculty.cohort and faculty.cohort != cohort:
@@ -1031,6 +1036,7 @@ def _order_by_names(rows: list, ordered_names: list) -> list:
 @frappe.whitelist(methods=["POST"])
 def assign_submission(submission: str, assign_to: str) -> None:
 	require_faculty_for_submissions([submission])
+	require_faculty_assignee(assign_to)
 	_assign_submission_to(submission, assign_to)
 
 
@@ -1038,22 +1044,28 @@ def assign_submission(submission: str, assign_to: str) -> None:
 def assign_submissions(submissions: list | str, assign_to: str) -> None:
 	submissions = frappe.parse_json(submissions)
 	require_faculty_for_submissions(submissions)
+	require_faculty_assignee(assign_to)
 	for submission in submissions:
 		_assign_submission_to(submission, assign_to)
 
 
 def _assign_submission_to(submission: str, assign_to: str) -> None:
-	from frappe.desk.form.assign_to import add
+	from frappe.desk.form.assign_to import _add
+	from frappe.share import add_docshare
 
-	add({"doctype": ASSIGNMENT_SUBMISSION, "name": submission, "assign_to": [assign_to]})
+	add_docshare(ASSIGNMENT_SUBMISSION, submission, assign_to, flags={"ignore_share_permission": True})
+	_add(
+		{"doctype": ASSIGNMENT_SUBMISSION, "name": submission, "assign_to": [assign_to]},
+		ignore_permissions=True,
+	)
 
 
 @frappe.whitelist(methods=["POST"])
 def unassign_submission(submission: str, assign_to: str) -> None:
 	require_faculty_for_submissions([submission])
-	from frappe.desk.form.assign_to import remove
+	from frappe.desk.form.assign_to import _remove
 
-	remove(ASSIGNMENT_SUBMISSION, submission, assign_to)
+	_remove(ASSIGNMENT_SUBMISSION, submission, assign_to, ignore_permissions=True)
 
 
 @frappe.whitelist(methods=["GET"])
