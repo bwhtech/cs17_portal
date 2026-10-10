@@ -79,3 +79,59 @@ class IntegrationTestCS17AssignmentGrade(IntegrationTestCase):
 		self.grade.save()
 
 		self.assertEqual(self.grade.graded_by, "Administrator")
+
+
+class TestGradeFromMarks(IntegrationTestCase):
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+
+		cls.assignment = make_assignment(make_cohort("C87TEST"), "PDF Task 87", "PDF", 20)
+		frappe.db.set_value("CS17 Assignment", cls.assignment, "remarks", "Marks")
+		cls.scale = (
+			frappe.get_doc(
+				{
+					"doctype": "CS17 Grading Scale",
+					"scale_name": "Grading Scale 87",
+					"is_default": 1,
+					"bands": [
+						{"grade": "E", "min_percent": 0, "max_percent": 39.99},
+						{"grade": "D", "min_percent": 40, "max_percent": 54.99},
+						{"grade": "C", "min_percent": 55, "max_percent": 69.99},
+						{"grade": "B", "min_percent": 70, "max_percent": 84.99},
+						{"grade": "A", "min_percent": 85, "max_percent": 100},
+					],
+				}
+			)
+			.insert()
+			.name
+		)
+
+	def test_marks_grade_takes_letter_from_default_scale(self):
+		grade = frappe.get_doc(
+			{"doctype": "CS17 Assignment Grade", "assignment": self.assignment, "marks_obtained": 15}
+		).insert()
+
+		self.assertEqual(grade.grade, "B")
+
+	def test_marks_grade_is_empty_without_default_scale(self):
+		frappe.db.set_value("CS17 Grading Scale", self.scale, "is_default", 0)
+		self.addCleanup(frappe.db.set_value, "CS17 Grading Scale", self.scale, "is_default", 1)
+
+		grade = frappe.get_doc(
+			{"doctype": "CS17 Assignment Grade", "assignment": self.assignment, "marks_obtained": 15}
+		).insert()
+
+		self.assertIsNone(grade.grade)
+
+	def test_patch_rewrites_wrong_letter(self):
+		from cs17_portal.patches.v1_0.set_grade_for_marks_assignments import execute
+
+		grade = frappe.get_doc(
+			{"doctype": "CS17 Assignment Grade", "assignment": self.assignment, "marks_obtained": 15}
+		).insert()
+		frappe.db.set_value("CS17 Assignment Grade", grade.name, "grade", "A")
+
+		execute()
+
+		self.assertEqual(frappe.db.get_value("CS17 Assignment Grade", grade.name, "grade"), "B")

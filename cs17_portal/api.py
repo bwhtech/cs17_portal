@@ -605,7 +605,7 @@ def list_cohort_submissions() -> list:
 		for row in frappe.get_all(
 			"CS17 Assignment",
 			filters={"name": ["in", list({row.assignment for row in submissions if row.assignment})]},
-			fields=["name", "submission_type", "max_marks"],
+			fields=["name", "submission_type", "max_marks", "remarks"],
 			ignore_permissions=True,
 		)
 	}
@@ -623,6 +623,7 @@ def list_cohort_submissions() -> list:
 		meta = assignment_meta.get(row.assignment)
 		row.submission_type = meta.submission_type if meta else None
 		row.max_marks = meta.max_marks if meta else 0
+		row.evaluation_type = meta.remarks if meta else None
 		grade = grade_by_submission.get(row.name)
 		row.marks_obtained = grade.marks_obtained if grade else None
 		row.grade = grade.grade if grade else None
@@ -1093,6 +1094,20 @@ def get_cohorts() -> list:
 def get_quarters() -> list:
 	get_current_faculty()
 	return frappe.get_all("CS17 Quarter", pluck="name", order_by="name asc")
+
+
+@frappe.whitelist(methods=["GET"])
+def get_grade_bands() -> list:
+	from cs17_portal.cs17_portal.doctype.cs17_grading_scale.cs17_grading_scale import get_default_scale
+
+	get_current_faculty()
+	scale = get_default_scale()
+	if not scale:
+		return []
+	return [
+		{"grade": band.grade, "min_percent": band.min_percent}
+		for band in frappe.get_cached_doc("CS17 Grading Scale", scale).bands
+	]
 
 
 @frappe.whitelist(methods=["GET"])

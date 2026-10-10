@@ -157,6 +157,7 @@ export interface CohortSubmission {
 	submission_type: SubmissionType | null
 	submission_document?: string | null
 	max_marks: number
+	evaluation_type: EvaluationType | null
 	submitted_at: string
 	marks_obtained: number | null
 	grade: string | null
@@ -167,6 +168,11 @@ export interface CohortSubmission {
 export interface FacultyMember {
 	user: string
 	full_name: string
+}
+
+export interface GradeBand {
+	grade: string
+	min_percent: number
 }
 
 /**

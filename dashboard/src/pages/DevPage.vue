@@ -60,8 +60,14 @@
 			<div class="flex flex-wrap items-center gap-2">
 				<GradeBadge :graded="false" />
 				<GradeBadge graded grade="A" />
-				<GradeBadge graded :marks-obtained="17" :max-marks="20" />
-				<GradeBadge graded :marks-obtained="17" />
+				<GradeBadge
+					graded
+					evaluation-type="Marks"
+					grade="B"
+					:marks-obtained="17"
+					:max-marks="20"
+				/>
+				<GradeBadge graded evaluation-type="Marks" :marks-obtained="17" :max-marks="20" />
 			</div>
 		</section>
 

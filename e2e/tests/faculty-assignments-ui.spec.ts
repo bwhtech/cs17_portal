@@ -5,11 +5,14 @@ import {
 	CS17Cohort,
 	CS17Profile,
 	TEST_ASSIGNMENT_PREFIX,
+	TestDefaultScale,
 	cleanupTestAssignments,
+	cleanupTestDefaultScale,
 	cleanupTestGrades,
 	cleanupTestSubmissions,
 	createTestAssignment,
 	createTestCohort,
+	createTestDefaultScale,
 	createTestProfile,
 	createTestSubmission,
 	deleteTestProfile,
@@ -314,5 +317,42 @@ test.describe("Faculty assignment portal", () => {
 
 		await expect(row.getByText("Published")).toBeVisible();
 		await expect(row.getByText("A", { exact: true })).toBeVisible();
+	});
+
+	test.describe("a marks assignment", () => {
+		let defaultScale: TestDefaultScale;
+		let marked: CS17Assignment;
+
+		test.beforeAll(async ({ request }) => {
+			defaultScale = await createTestDefaultScale(request);
+			marked = await createTestAssignment(request, {
+				cohort: cohort.name,
+				assignmentType: "Graded",
+			});
+			await updateDoc(request, "CS17 Assignment", marked.name, {
+				remarks: "Marks",
+				max_marks: 20,
+			});
+			await createTestSubmission(request, {
+				assignment: marked.name,
+				student: student.name,
+			});
+		});
+
+		test.afterAll(async ({ request }) => {
+			await cleanupTestDefaultScale(request, defaultScale);
+		});
+
+		test("shows the letter the marks get and saves it with the grade", async ({ page }) => {
+			await page.goto(`/dashboard/faculty/assignments/${marked.name}`);
+			const row = page.locator(LIST_ROW, { hasText: student.full_name! });
+			await row.getByRole("button", { name: "Grade", exact: true }).click();
+
+			await page.getByLabel("Marks (out of 20)").fill("15");
+			await expect(page.getByText("Grade B", { exact: true })).toBeVisible();
+			await page.getByRole("button", { name: "Save grade" }).click();
+
+			await expect(row.getByText("B · 15 / 20", { exact: true })).toBeVisible();
+		});
 	});
 });

@@ -1,6 +1,10 @@
 <template>
 	<Dialog :open="open" title="Grade & Feedback" @update:open="emit('update:open', $event)">
 		<div v-if="grade" class="space-y-3">
+			<div v-if="!isLetterGrade && grade.grade">
+				<p class="text-xs text-ink-gray-5">Grade</p>
+				<p class="text-2xl text-ink-gray-9">{{ grade.grade }}</p>
+			</div>
 			<div>
 				<p class="text-xs text-ink-gray-5">
 					{{ isLetterGrade ? 'Grade' : 'Marks Obtained' }}

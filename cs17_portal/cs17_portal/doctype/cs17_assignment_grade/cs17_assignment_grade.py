@@ -6,6 +6,8 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt
 
+from cs17_portal.cs17_portal.doctype.cs17_grading_scale.cs17_grading_scale import get_default_scale
+
 
 class CS17AssignmentGrade(Document):
 	# begin: auto-generated types
@@ -36,7 +38,7 @@ class CS17AssignmentGrade(Document):
 
 	def validate(self):
 		assignment = frappe.db.get_value(
-			"CS17 Assignment", self.assignment, ["assignment_type", "max_marks"], as_dict=True
+			"CS17 Assignment", self.assignment, ["assignment_type", "max_marks", "remarks"], as_dict=True
 		)
 		if not assignment:
 			return
@@ -46,6 +48,16 @@ class CS17AssignmentGrade(Document):
 		max_marks = flt(assignment.max_marks)
 		if flt(self.marks_obtained) < 0 or flt(self.marks_obtained) > max_marks:
 			frappe.throw(_("Marks must be between 0 and {0}.").format(max_marks))
+
+		if assignment.remarks == "Marks":
+			self.grade = get_grade_for_marks(flt(self.marks_obtained), max_marks, get_default_scale())
+
+
+def get_grade_for_marks(marks_obtained: float, max_marks: float, scale: str | None) -> str | None:
+	if not scale:
+		return None
+	percentage = flt(marks_obtained * 100 / max_marks, 2) if max_marks else 0
+	return frappe.get_cached_doc("CS17 Grading Scale", scale).get_grade(percentage)
 
 
 def get_student_grades(student: str, assignments: list[str]) -> dict[str, dict]:

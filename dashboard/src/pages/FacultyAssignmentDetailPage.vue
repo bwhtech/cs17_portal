@@ -166,6 +166,7 @@ import GradeSubmissionDialog from '@/components/faculty/GradeSubmissionDialog.vu
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
 import { formatDateTime } from '@/lib/dates'
 import { isRefusal } from '@/lib/frappeError'
+import { formatGrade } from '@/lib/grades'
 import type { CS17Assignment, CS17Grade, CS17Submission } from '@/types'
 
 const route = useRoute()
@@ -196,7 +197,6 @@ const gradeTarget = ref<CS17Submission | null>(null)
 const assignTargetName = ref<string | null>(null)
 
 const isGraded = computed(() => assignment.value?.assignment_type === 'Graded')
-const isGradeScale = computed(() => isGraded.value && assignment.value?.remarks === 'Grade')
 
 const metaRows = computed(() => {
 	const rows = [
@@ -238,8 +238,12 @@ const assignTarget = computed<AssignTarget | null>(() => {
 })
 
 function gradeValue(grade: CS17Grade): string {
-	const value = isGradeScale.value ? grade.grade : grade.marks_obtained
-	return value === null || value === undefined ? '—' : String(value)
+	return formatGrade({
+		evaluationType: assignment.value?.remarks,
+		grade: grade.grade,
+		marksObtained: grade.marks_obtained,
+		maxMarks: assignment.value?.max_marks,
+	})
 }
 
 function clearSelection() {
