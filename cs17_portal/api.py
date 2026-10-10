@@ -914,6 +914,8 @@ def update_assignment(
 	if faculty.cohort and faculty.cohort != cohort:
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	doc = frappe.get_doc("CS17 Assignment", assignment)
+	if is_published_now(doc):
+		frappe.throw(_("A published assignment can no longer be edited"))
 	_set_assignment_fields(
 		doc,
 		title,
