@@ -68,6 +68,13 @@ test.describe("Faculty assignment portal", () => {
 		await expect(page).toHaveURL(/\/dashboard\/faculty\/assignments$/);
 	});
 
+	test("keeps the sidebar collapsed across a reload", async ({ page }) => {
+		await page.goto("/dashboard/faculty");
+		await page.getByRole("button", { name: "Collapse" }).click();
+		await page.reload();
+		await expect(page.getByRole("button", { name: "Expand" })).toBeVisible();
+	});
+
 	test("shows no workspace crumb in the header", async ({ page }) => {
 		await page.goto("/dashboard/faculty/assignments");
 		await expect(page.getByRole("button", { name: "New Assignment" })).toBeVisible();

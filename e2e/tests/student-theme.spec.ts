@@ -10,7 +10,7 @@ function darkModeSwitch(page: Page) {
  * button is the dropdown trigger; the menu renders in a portal.
  */
 async function openSettings(page: Page) {
-	await page.locator('[data-slot="sidebar-header"] button').click();
+	await page.locator('[data-slot="sidebar"] button').last().click();
 	await page.getByRole("menuitem", { name: "Settings" }).click();
 	await expect(darkModeSwitch(page)).toBeVisible();
 }
