@@ -15,13 +15,13 @@ FACULTY_IN_USER = "cs17-project-faculty-in@example.com"
 FACULTY_OUT_USER = "cs17-project-faculty-out@example.com"
 
 
-def ensure_user(email: str) -> str:
+def ensure_user(email: str, roles: tuple[str, ...] = ()) -> str:
 	# User creation commits (welcome-email flow) and so escapes test rollback — create it idempotently.
 	if not frappe.db.exists("User", email):
 		frappe.get_doc(
 			{"doctype": "User", "email": email, "first_name": email.split("@")[0], "send_welcome_email": 0}
 		).insert(ignore_permissions=True)
-	frappe.get_doc("User", email).add_roles("CS17 Student")
+	frappe.get_doc("User", email).add_roles(*roles)
 	return email
 
 
@@ -32,7 +32,9 @@ def b64(payload: bytes) -> str:
 class TestCS17Project(FrappeTestCase):
 	def setUp(self):
 		frappe.set_user("Administrator")
-		for user in (STUDENT1_USER, STUDENT2_USER, FACULTY_IN_USER, FACULTY_OUT_USER):
+		for user in (STUDENT1_USER, STUDENT2_USER):
+			ensure_user(user, roles=("CS17 Student",))
+		for user in (FACULTY_IN_USER, FACULTY_OUT_USER):
 			ensure_user(user)
 
 		# Users, and anything created before a User insert's commit, escape test rollback — so clean up
