@@ -266,7 +266,7 @@ test.describe("Faculty assignment portal", () => {
 		// The row title is a router link now, not a button.
 		await page.getByRole("link", { name: graded.title, exact: true }).click();
 
-		await expect(page.getByRole("heading", { name: graded.title })).toBeVisible();
+		await expect(page.getByText(graded.title, { exact: true })).toBeVisible();
 
 		const row = page.locator(LIST_ROW, { hasText: student.full_name! });
 		await row.getByRole("button", { name: "Grade", exact: true }).click();

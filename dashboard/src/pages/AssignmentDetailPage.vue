@@ -18,7 +18,6 @@
 
 		<div v-else class="flex flex-col gap-6 md:flex-row">
 			<div class="min-w-0 flex-1">
-				<h1 class="mb-4 text-2xl text-ink-gray-9">{{ assignment.title }}</h1>
 				<MarkdownText :content="assignment.description" />
 			</div>
 
