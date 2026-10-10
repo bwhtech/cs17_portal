@@ -142,8 +142,9 @@ def _apply_publish_state(
 		doc.is_published = 0
 
 
-def is_published_now(doc: "Document") -> bool:
-	return bool(doc.is_published or (doc.publish_on and doc.publish_on <= now_datetime()))
+def is_published_now(doc: "Document", publish_on_field: str = "publish_on") -> bool:
+	publish_on = doc.get(publish_on_field)
+	return bool(doc.is_published or (publish_on and publish_on <= now_datetime()))
 
 
 @frappe.whitelist(methods=["GET"])
@@ -547,15 +548,14 @@ def is_assignment_closed(assignment: str, student: str | None = None) -> bool:
 	submission = frappe.db.get_value(
 		ASSIGNMENT_SUBMISSION, {"assignment": assignment, "student": student}, "name"
 	)
-	return bool(
-		submission
-		and frappe.get_all(
-			"CS17 Assignment Grade",
-			filters={"submission": submission},
-			or_filters=[["is_published", "=", 1], ["published_on", "<=", now_datetime()]],
-			limit=1,
-		)
+	if not submission:
+		return False
+	grades = frappe.get_all(
+		"CS17 Assignment Grade",
+		filters={"submission": submission},
+		fields=["is_published", "published_on"],
 	)
+	return any(is_published_now(grade, "published_on") for grade in grades)
 
 
 @frappe.whitelist()
@@ -688,7 +688,6 @@ def get_student_assignments() -> dict:
 	assignments = frappe.get_all(
 		"CS17 Assignment",
 		filters={"cohort": cohort},
-		or_filters=[["is_published", "=", 1], ["publish_on", "<=", now]],
 		fields=[
 			"name",
 			"title",
@@ -697,9 +696,12 @@ def get_student_assignments() -> dict:
 			"assignment_type",
 			"submission_type",
 			"modified",
+			"is_published",
+			"publish_on",
 		],
 		order_by="due_date desc",
 	)
+	assignments = [assignment for assignment in assignments if is_published_now(assignment)]
 	upcoming = frappe.get_all(
 		"CS17 Assignment",
 		filters=[["cohort", "=", cohort], ["is_published", "=", 0], ["publish_on", ">", now]],
@@ -716,7 +718,6 @@ def get_student_assignment(assignment: str) -> dict:
 	assignments = frappe.get_all(
 		"CS17 Assignment",
 		filters={"name": assignment, "cohort": cohort},
-		or_filters=[["is_published", "=", 1], ["publish_on", "<=", now_datetime()]],
 		fields=[
 			"name",
 			"title",
@@ -726,10 +727,12 @@ def get_student_assignment(assignment: str) -> dict:
 			"assignment_type",
 			"submission_type",
 			"remarks",
+			"is_published",
+			"publish_on",
 		],
 		limit=1,
 	)
-	if not assignments:
+	if not (assignments and is_published_now(assignments[0])):
 		frappe.throw(_("Assignment not found"), frappe.DoesNotExistError)
 	return assignments[0]
 
@@ -748,7 +751,6 @@ def get_student_grades() -> dict:
 	grades = frappe.get_all(
 		"CS17 Assignment Grade",
 		filters=[["submission", "in", submissions]],
-		or_filters=[["is_published", "=", 1], ["published_on", "<=", now]],
 		fields=[
 			"name",
 			"assignment",
@@ -758,8 +760,10 @@ def get_student_grades() -> dict:
 			"evaluation_type",
 			"remarks",
 			"is_published",
+			"published_on",
 		],
 	)
+	grades = [grade for grade in grades if is_published_now(grade, "published_on")]
 	upcoming = frappe.get_all(
 		"CS17 Assignment Grade",
 		filters=[
