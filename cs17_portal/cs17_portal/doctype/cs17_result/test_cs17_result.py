@@ -96,3 +96,28 @@ class IntegrationTestCS17Result(IntegrationTestCase):
 		auto_publish_results()
 
 		self.assertEqual(frappe.db.get_value("CS17 Result", self.result, "is_published"), 1)
+
+	def test_marks_are_accepted_on_a_scheduled_result_with_marks_missing(self):
+		science = (
+			frappe.get_doc(
+				{"doctype": "CS17 Subject", "subject_code": "SCIENCE120", "subject_name": "Science 120"}
+			)
+			.insert(ignore_permissions=True)
+			.name
+		)
+		marks = frappe.get_doc("CS17 Subject Marks", self.marks)
+		exam = frappe.get_doc("CS17 Exam", marks.exam)
+		exam.append("subjects", {"subject": science})
+		exam.save()
+
+		marks.components[0].marks_obtained = 90
+		marks.save()
+
+		self.assertEqual(frappe.db.get_value("CS17 Result", self.result, "total_marks_obtained"), 90)
+
+	def test_scheduling_a_result_with_marks_missing_is_refused(self):
+		frappe.delete_doc("CS17 Subject Marks", self.marks)
+		result = frappe.get_doc("CS17 Result", self.result)
+		result.published_on = "2000-01-02 00:00:00"
+
+		self.assertRaises(frappe.ValidationError, result.save)
