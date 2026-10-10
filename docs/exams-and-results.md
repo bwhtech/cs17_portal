@@ -99,6 +99,10 @@ One exam sitting for one cohort. Named `EXAM-{cohort}-###`. Holds the subject li
 
 `cohort` is `set_only_once` — an exam cannot be moved to a different cohort after creation.
 
+A subject cannot be removed from the exam once marks are recorded for it, or once a result lists
+it. The result keeps that row, and a row for a subject the exam no longer has stops the result from
+saving.
+
 Once any result for the exam is published, the subject list, max marks and grading scales are
 frozen. Changing them would invalidate report cards already handed out.
 
