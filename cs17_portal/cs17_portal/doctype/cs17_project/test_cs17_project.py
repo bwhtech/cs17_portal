@@ -249,6 +249,14 @@ class TestCS17Project(FrappeTestCase):
 			FACULTY_IN_USER,
 		)
 
+	def test_save_grade_keeps_a_draft_grade_unpublished(self):
+		submission = self.make_submission()
+		frappe.set_user(FACULTY_IN_USER)
+		grade = api.save_grade(submission, marks_obtained=60)
+		frappe.db.set_value("CS17 Assignment Grade", grade["name"], "is_published", 0)
+
+		self.assertEqual(api.save_grade(submission, marks_obtained=90)["is_published"], 0)
+
 	def test_faculty_out_of_cohort_cannot_save_grade(self):
 		submission = self.make_submission()
 		frappe.set_user(FACULTY_OUT_USER)

@@ -612,7 +612,8 @@ def save_grade(
 	grade_doc.marks_obtained = flt(marks_obtained) if marks_obtained is not None else None
 	grade_doc.grade = grade
 	grade_doc.remarks = remarks
-	grade_doc.is_published = 1
+	if grade_doc.is_new():
+		grade_doc.is_published = 1
 	grade_doc.save(ignore_permissions=True)
 	return {
 		"name": grade_doc.name,
