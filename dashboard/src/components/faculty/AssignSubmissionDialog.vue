@@ -19,7 +19,12 @@
 				</div>
 			</div>
 
-			<FacultySelect v-model="assignTo" label="Assign to faculty" :error="fieldError" />
+			<FacultySelect
+				v-model="assignTo"
+				label="Assign to faculty"
+				:error="fieldError"
+				:cohort="cohort"
+			/>
 
 			<ErrorMessage v-if="actionError" :message="actionError" />
 		</div>
@@ -54,6 +59,7 @@ export interface AssignTarget {
 const props = defineProps<{
 	open: boolean
 	submission: AssignTarget | null
+	cohort?: string
 }>()
 
 const emit = defineEmits<{ 'update:open': [value: boolean]; success: [] }>()
