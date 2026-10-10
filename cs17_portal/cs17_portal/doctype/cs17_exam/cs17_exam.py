@@ -35,6 +35,7 @@ class CS17Exam(Document):
 		self.grading_scale = self.grading_scale or get_default_scale()
 		self.validate_dates()
 		self.validate_subjects()
+		self.validate_removed_subjects()
 		self.validate_locked_after_publish()
 		self.validate_locked_after_marks()
 		self.total_max_marks = sum(flt(row.max_marks) for row in self.subjects)
@@ -55,6 +56,25 @@ class CS17Exam(Document):
 				frappe.throw(_("Subject {0}: max marks must be greater than zero.").format(row.subject))
 			row.grading_scale = row.grading_scale or self.grading_scale
 			seen.add(row.subject)
+
+	def validate_removed_subjects(self):
+		previous = self.get_doc_before_save()
+		if not previous:
+			return
+		removed = sorted({row.subject for row in previous.subjects} - {row.subject for row in self.subjects})
+		if not removed:
+			return
+
+		listed = frappe.db.get_value(
+			"CS17 Result", {"exam": self.name, "scores.subject": ("in", removed)}, "scores.subject"
+		)
+		if listed:
+			frappe.throw(_("A result already lists {0}; it cannot be removed.").format(listed))
+		marked = frappe.db.get_value(
+			"CS17 Subject Marks", {"exam": self.name, "subject": ("in", removed)}, "subject"
+		)
+		if marked:
+			frappe.throw(_("Marks are already recorded for {0}; it cannot be removed.").format(marked))
 
 	def validate_locked_after_publish(self):
 		"""Published results carry a copy of these marks, so the paper set must stop moving."""
