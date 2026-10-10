@@ -5,6 +5,7 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from cs17_portal.cs17_portal.doctype.cs17_assignment_submission.cs17_assignment_submission import (
+	submit_assignment,
 	validate_submission_value,
 )
 from cs17_portal.tests.test_api import (
@@ -31,6 +32,38 @@ class TestDuplicateSubmission(FrappeTestCase):
 
 		self.assertRaises(
 			frappe.ValidationError, make_submission, assignment, student, "Student 29", "PDF Task 29"
+		)
+
+
+class TestSubmissionOpenToStudent(FrappeTestCase):
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		cls.student_user = make_user("student30@cs17test.com")
+		make_profile("Student", make_cohort("C30TEST"), cls.student_user, "Student 30")
+		cls.faculty_user = make_user("faculty30@cs17test.com")
+		make_profile("Faculty", "C30TEST", cls.faculty_user, "Faculty 30")
+
+	def tearDown(self):
+		frappe.set_user("Administrator")
+
+	def test_student_cannot_submit_to_another_cohorts_assignment(self):
+		frappe.set_user(self.faculty_user)
+		assignment = make_assignment(make_cohort("C31TEST"), "URL Task 31", "URL", 20)
+
+		frappe.set_user(self.student_user)
+		self.assertRaises(
+			frappe.ValidationError, submit_assignment, assignment, "https://github.com/student/work"
+		)
+
+	def test_student_cannot_submit_to_an_unpublished_assignment(self):
+		frappe.set_user(self.faculty_user)
+		assignment = make_assignment("C30TEST", "URL Task 30", "URL", 20)
+		frappe.db.set_value("CS17 Assignment", assignment, "is_published", 0)
+
+		frappe.set_user(self.student_user)
+		self.assertRaises(
+			frappe.ValidationError, submit_assignment, assignment, "https://github.com/student/work"
 		)
 
 
