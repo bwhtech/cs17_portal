@@ -2,7 +2,7 @@ import { test, expect, Page } from "@playwright/test";
 
 async function openSettings(page: Page) {
 	await page.goto("/dashboard");
-	await page.locator('[data-slot="sidebar-header"] button').click();
+	await page.locator('[data-slot="sidebar"] button').last().click();
 	await page.getByRole("menuitem", { name: "Settings" }).click();
 	await expect(page.getByLabel("First name")).toBeVisible();
 }

@@ -20,13 +20,9 @@
 			@click="open = true"
 		/>
 
-		<Badge
+		<span
 			v-if="unread.length"
-			class="pointer-events-none absolute -right-1 -top-1"
-			theme="red"
-			variant="solid"
-			size="sm"
-			:label="unread.length"
+			class="pointer-events-none absolute right-1 top-1 size-2 rounded-full border border-[var(--surface-base)] bg-surface-red-6"
 			aria-hidden="true"
 		/>
 
@@ -40,7 +36,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Badge, BottomSheet, Button, Popover, ScrollArea } from 'frappe-ui'
+import { BottomSheet, Button, Popover, ScrollArea } from 'frappe-ui'
 import UnreadAnnouncements from '@/components/announcements/UnreadAnnouncements.vue'
 import { useAnnouncements } from '@/composables/useAnnouncements'
 import { useBreakpoint } from '@/composables/useBreakpoint'

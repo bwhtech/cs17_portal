@@ -11,6 +11,7 @@ export const STORAGE_KEYS = {
 	dismissedAlerts: 'dismissed-alerts',
 	/** The in-progress new-assignment form, so a reload doesn't lose it. */
 	newAssignmentDraft: 'cs17-new-assignment-draft',
+	sidebarCollapsed: 'cs17-sidebar-collapsed',
 } as const
 
 export function readJSON<T>(key: string, fallback: T): T {

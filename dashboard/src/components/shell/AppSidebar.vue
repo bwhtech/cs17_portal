@@ -1,18 +1,13 @@
 <template>
-	<Sidebar width="14rem" class="border-r border-outline-gray-1">
-		<SidebarHeader
-			title="CS17"
-			:subtitle="roleLine"
-			:logo="logoUrl"
-			:menu-items="accountOptions"
-		/>
+	<Sidebar v-model:collapsed="collapsed" width="14rem" class="border-r border-outline-gray-1">
+		<SidebarHeader title="CS17" :subtitle="roleLine" :logo="logoUrl" />
 
 		<!-- The app owns the scroll region; padding the viewport gives the active
 		     row's shadow room so `overflow-hidden` doesn't clip it. -->
 		<ScrollArea class="min-h-0 flex-1" viewport-class="px-2 pt-0.5 pb-10">
 			<template v-for="(section, index) in nav.sections" :key="section.label">
 				<div class="flex h-7 items-center" :class="index > 0 && 'mt-4'">
-					<SidebarLabel>{{ section.label }}</SidebarLabel>
+					<SidebarLabel class="flex-1" divider>{{ section.label }}</SidebarLabel>
 				</div>
 				<nav class="mt-0.5 space-y-0.5">
 					<SidebarItem
@@ -40,33 +35,70 @@
 				<SidebarItem
 					:active="isNavItemActive(nav.announcements, route.path)"
 					:route="nav.announcements.to"
-					:suffix="unreadCount"
 				>
 					<template #prefix>
 						<span :class="nav.announcements.icon" class="size-4" aria-hidden="true" />
 					</template>
 					<span class="flex-1 truncate text-sm">{{ nav.announcements.label }}</span>
+					<template v-if="unread.length" #suffix>
+						<Badge
+							class="mr-1.5"
+							theme="gray"
+							variant="subtle"
+							size="sm"
+							:label="unread.length"
+						/>
+					</template>
 				</SidebarItem>
 			</nav>
 		</ScrollArea>
+
+		<div class="shrink-0 space-y-0.5 p-2">
+			<SidebarCollapseToggle />
+			<Dropdown :options="accountOptions" side="top" align="start">
+				<SidebarItem :label="profile?.full_name ?? 'Account'">
+					<template #prefix>
+						<Avatar
+							size="xs"
+							:image="profile?.profile_picture ?? undefined"
+							:label="profile?.full_name ?? ''"
+						/>
+					</template>
+				</SidebarItem>
+			</Dropdown>
+		</div>
 	</Sidebar>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { ScrollArea, Sidebar, SidebarHeader, SidebarItem, SidebarLabel, dialog } from 'frappe-ui'
+import {
+	Avatar,
+	Badge,
+	Dropdown,
+	ScrollArea,
+	Sidebar,
+	SidebarCollapseToggle,
+	SidebarHeader,
+	SidebarItem,
+	SidebarLabel,
+	dialog,
+} from 'frappe-ui'
 import logoUrl from '@/assets/CS17.svg'
 import { isNavItemActive, navConfig } from '@/components/shell/nav'
 import { useAnnouncements } from '@/composables/useAnnouncements'
 import { useSession } from '@/composables/useSession'
 import { useSettingsDialog } from '@/composables/useSettingsDialog'
+import { STORAGE_KEYS, readJSON, writeJSON } from '@/lib/storage'
 
 const route = useRoute()
-const { isFaculty, cohort, logout } = useSession()
+const { profile, isFaculty, cohort, logout } = useSession()
 const settings = useSettingsDialog()
 const { unread } = useAnnouncements()
-const unreadCount = computed(() => (unread.value.length ? String(unread.value.length) : undefined))
+
+const collapsed = ref(readJSON(STORAGE_KEYS.sidebarCollapsed, false))
+watch(collapsed, (value) => writeJSON(STORAGE_KEYS.sidebarCollapsed, value))
 
 const nav = computed(() => navConfig(isFaculty.value))
 // Students are identified by their cohort, faculty simply by the role. The
