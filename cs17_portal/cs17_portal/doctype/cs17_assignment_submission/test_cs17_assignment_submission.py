@@ -54,6 +54,9 @@ class TestSubmissionValueValidation(FrappeTestCase):
 		validate_submission_value("ZIP", "/files/code.tar.gz")
 		self._assert_rejected("ZIP", "/files/code.pdf")
 
+	def test_scratch_is_rejected(self):
+		self._assert_rejected("Scratch", "/files/game.sb3")
+
 	def test_url_requires_valid_http_url(self):
 		validate_submission_value("URL", "https://github.com/student/work")
 		self._assert_rejected("URL", "https://")  # no host
