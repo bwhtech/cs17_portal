@@ -1,5 +1,4 @@
 @import 'frappe-ui/style.css';
-@import '@fontsource-variable/geist';
 
 @tailwind base;
 @tailwind components;
@@ -12,10 +11,6 @@
 	body,
 	#app {
 		height: 100%;
-	}
-
-	html {
-		font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
 	}
 
 	body {
