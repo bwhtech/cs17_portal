@@ -125,8 +125,11 @@ exam can mix split and unsplit subjects.
 
 One document per (exam, student, subject), enforced by a validate check and a unique index.
 
-Once a subject has recorded marks, its `max_marks` and `subject_pattern` are frozen on the exam -
-component max marks are derived from them, so moving them would silently invalidate entered marks.
+Once a subject has a marks document, even one with every mark at 0, its `max_marks`,
+`subject_pattern` and `grading_scale` are frozen on the exam. Component max marks and grades are
+derived from them, so moving them would silently invalidate entered marks. The exam's own
+`grading_scale` is frozen once the exam has any marks or any result, and a pattern's components,
+their names and weightages, are frozen once a marks document uses the pattern.
 
 ### CS17 Result (+ CS17 Result Subject Score)
 One student's rolled-up result for one exam. Named `RES-{exam}-###`.
