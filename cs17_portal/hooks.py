@@ -87,6 +87,8 @@ app_license = "mit"
 
 # before_install = "cs17_portal.install.before_install"
 # after_install = "cs17_portal.install.after_install"
+after_install = "cs17_portal.install.allow_scratch_files"
+after_migrate = "cs17_portal.install.allow_scratch_files"
 
 # Uninstallation
 # ------------
