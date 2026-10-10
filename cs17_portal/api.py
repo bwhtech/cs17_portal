@@ -293,6 +293,12 @@ def require_faculty_for_assignment(assignment: str) -> None:
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 
+def require_faculty_for_announcement_cohort(cohort: str | None) -> None:
+	faculty = get_current_faculty()
+	if faculty.cohort and faculty.cohort != cohort:
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+
 def get_cohort_submissions(cohort: str | None, limit: int | None = None) -> list:
 	return frappe.get_all(
 		"CS17 Assignment Submission",
@@ -996,9 +1002,10 @@ def get_faculty_members() -> list:
 
 @frappe.whitelist(methods=["GET"])
 def get_faculty_announcements() -> list:
-	validate_membership("Faculty")
+	faculty = get_current_faculty()
 	announcements = frappe.get_all(
 		"CS17 Announcement",
+		or_filters=[["cohort", "=", faculty.cohort], ["cohort", "is", "not set"]] if faculty.cohort else [],
 		fields=[
 			"name",
 			"title",
@@ -1057,7 +1064,7 @@ def create_announcement(
 	publish: str = "draft",
 	publish_on: str | None = None,
 ) -> str:
-	validate_membership("Faculty")
+	require_faculty_for_announcement_cohort(cohort)
 	announcement = frappe.new_doc("CS17 Announcement")
 	_set_announcement_fields(announcement, title, content, alert_variant, cohort, is_dismissible)
 	_apply_announcement_publish(announcement, publish, publish_on)
@@ -1076,8 +1083,9 @@ def update_announcement(
 	publish: str = "draft",
 	publish_on: str | None = None,
 ) -> str:
-	validate_membership("Faculty")
+	require_faculty_for_announcement_cohort(cohort)
 	doc = frappe.get_doc("CS17 Announcement", announcement)
+	require_faculty_for_announcement_cohort(doc.cohort)
 	if is_published_now(doc):
 		frappe.throw(_("A published announcement can no longer be edited"))
 	_set_announcement_fields(doc, title, content, alert_variant, cohort, is_dismissible)
@@ -1122,8 +1130,8 @@ def _apply_announcement_publish(doc: "Document", publish: str, publish_on: str |
 
 @frappe.whitelist(methods=["GET"])
 def get_announcement(announcement: str) -> dict | None:
-	validate_membership("Faculty")
-	return frappe.db.get_value(
+	faculty = get_current_faculty()
+	doc = frappe.db.get_value(
 		"CS17 Announcement",
 		announcement,
 		[
@@ -1138,11 +1146,14 @@ def get_announcement(announcement: str) -> dict | None:
 		],
 		as_dict=True,
 	)
+	if faculty.cohort and doc and doc.cohort and doc.cohort != faculty.cohort:
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	return doc
 
 
 @frappe.whitelist(methods=["POST"])
 def publish_announcement(announcement: str, publish: str = "now", publish_on: str | None = None) -> None:
-	validate_membership("Faculty")
+	require_faculty_for_announcement_cohort(frappe.db.get_value("CS17 Announcement", announcement, "cohort"))
 	doc = frappe.get_doc("CS17 Announcement", announcement)
 	_apply_announcement_publish(doc, publish, publish_on)
 	doc.save(ignore_permissions=True)
@@ -1150,5 +1161,5 @@ def publish_announcement(announcement: str, publish: str = "now", publish_on: st
 
 @frappe.whitelist(methods=["POST"])
 def delete_announcement(announcement: str) -> None:
-	validate_membership("Faculty")
+	require_faculty_for_announcement_cohort(frappe.db.get_value("CS17 Announcement", announcement, "cohort"))
 	frappe.delete_doc("CS17 Announcement", announcement, ignore_permissions=True)
