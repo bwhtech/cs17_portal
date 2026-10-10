@@ -52,10 +52,11 @@ class CS17Assignment(Document):
 
 def get_quarter_assignments(quarter: str, cohort: str) -> list[dict]:
 	"""Published assignments of one quarter for one cohort, in the order they fell due."""
-	return frappe.get_all(
+	from cs17_portal.api import is_published_now
+
+	assignments = frappe.get_all(
 		"CS17 Assignment",
 		filters={"quarter": quarter, "cohort": cohort},
-		or_filters=[["is_published", "=", 1], ["publish_on", "<=", frappe.utils.now_datetime()]],
 		fields=[
 			"name",
 			"title",
@@ -63,6 +64,9 @@ def get_quarter_assignments(quarter: str, cohort: str) -> list[dict]:
 			"remarks as evaluation_type",
 			"max_marks",
 			"due_date",
+			"is_published",
+			"publish_on",
 		],
 		order_by="due_date asc, creation asc",
 	)
+	return [assignment for assignment in assignments if is_published_now(assignment)]
