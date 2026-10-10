@@ -254,6 +254,12 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 			frappe.PermissionError, api.assign_submission, self.submission_27, self.faculty_28_user
 		)
 
+	def test_faculty_without_role_assigns_submission(self):
+		frappe.set_user(self.faculty_27_user)
+		api.assign_submission(self.submission_27, self.faculty_27_user)
+
+		self.assertEqual([row.name for row in api.get_assigned_submissions()], [self.submission_27])
+
 	def test_save_grade_hides_missing_submission_from_student(self):
 		frappe.set_user(self.student_user)
 		self.assertRaises(frappe.PermissionError, api.save_grade, "missing-submission")
