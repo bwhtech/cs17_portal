@@ -95,3 +95,21 @@ class TestSubmissionValueValidation(FrappeTestCase):
 		self._assert_rejected("URL", "https://")  # no host
 		self._assert_rejected("URL", "ftp://example.com/work")
 		self._assert_rejected("URL", "/files/work.pdf")
+
+
+class TestSubmissionFileOwnership(FrappeTestCase):
+	def tearDown(self):
+		frappe.set_user("Administrator")
+
+	def test_student_cannot_submit_a_file_they_did_not_upload(self):
+		cohort = make_cohort("C32TEST")
+		student_user = make_user("student32@cs17test.com")
+		make_profile("Student", cohort, student_user, "Student 32")
+		faculty_user = make_user("faculty32@cs17test.com")
+		make_profile("Faculty", cohort, faculty_user, "Faculty 32")
+
+		frappe.set_user(faculty_user)
+		assignment = make_assignment(cohort, "PDF Task 32", "PDF", 20)
+
+		frappe.set_user(student_user)
+		self.assertRaises(frappe.ValidationError, submit_assignment, assignment, "/private/files/report.pdf")

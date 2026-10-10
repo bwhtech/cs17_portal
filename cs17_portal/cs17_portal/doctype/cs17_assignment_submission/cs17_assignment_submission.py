@@ -147,6 +147,8 @@ def resolve_submission(assignment: str, file_url: str) -> dict:
 	validate_submission_value(submission_type, file_url)
 	if submission_type == "URL":
 		return {"submission_url": file_url, "submission_document": None}
+	if not frappe.db.exists("File", {"file_url": file_url, "owner": frappe.session.user}):
+		frappe.throw(_("Upload your file before submitting it."))
 	return {"submission_document": file_url, "submission_url": None}
 
 
