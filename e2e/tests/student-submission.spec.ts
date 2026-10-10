@@ -380,6 +380,12 @@ test.describe("Student submission types", () => {
 		expect(deleted.body._server_messages).toContain("cannot be renamed or deleted");
 	});
 
+	test("refuses a GET to save a project", async ({ page }) => {
+		const response = await page.request.get("/api/method/cs17_portal.api.save_project");
+
+		expect(response.status()).toBe(403);
+	});
+
 	test("a graded scratch assignment opens read-only from preview and direct link", async ({
 		page,
 		request,
