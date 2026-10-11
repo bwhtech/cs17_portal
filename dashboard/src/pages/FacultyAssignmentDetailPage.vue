@@ -6,7 +6,10 @@
 		<template #actions>
 			<Button
 				v-if="assignment"
-				icon-left="lucide-link"
+				:variant="isDesktop ? 'subtle' : 'ghost'"
+				:icon-left="isDesktop ? 'lucide-link' : undefined"
+				:icon="isDesktop ? undefined : 'lucide-link'"
+				:tooltip="isDesktop ? undefined : 'Copy submission link'"
 				label="Copy submission link"
 				@click="copySubmissionLink"
 			/>
@@ -171,6 +174,7 @@ import AssignSubmissionDialog, {
 import BulkAssignBar from '@/components/faculty/BulkAssignBar.vue'
 import GradeSubmissionDialog from '@/components/faculty/GradeSubmissionDialog.vue'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
+import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { formatDateTime } from '@/lib/dates'
 import { isRefusal } from '@/lib/frappeError'
@@ -179,6 +183,7 @@ import type { CS17Assignment, CS17Grade, CS17Submission } from '@/types'
 
 const route = useRoute()
 const breadcrumbs = useBreadcrumbs()
+const { isDesktop } = useBreakpoint()
 
 const assignmentId = computed(() => String(route.params.assignmentId ?? ''))
 
