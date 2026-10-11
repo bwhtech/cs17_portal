@@ -1,6 +1,6 @@
 <template>
 	<Dialog :open="open" :title="title" size="3xl" @update:open="emit('update:open', $event)">
-		<div class="space-y-4">
+		<div ref="body" class="space-y-4">
 			<p v-if="answerCounts(shown)" class="text-base text-ink-gray-8">
 				{{ answerCounts(shown) }}
 			</p>
@@ -16,6 +16,7 @@
 			</dl>
 
 			<AnswerList
+				:key="opened"
 				:answers="shown"
 				:editable="editable"
 				@status="setStatus"
@@ -53,6 +54,18 @@ const emit = defineEmits<{
 }>()
 
 const picked = ref<Record<number, AnswerStatus>>({})
+
+// frappe-ui's TabButtons measures its selected pill when it mounts. Here that is
+// while the dialog is still scaling in, so the pill lands a few pixels off and
+// stays there. Mounting the list again once the dialog has settled fixes it.
+const body = ref<HTMLElement | null>(null)
+const opened = ref(0)
+
+watch(body, (element) => {
+	element
+		?.closest('.dialog-content')
+		?.addEventListener('animationend', () => opened.value++, { once: true })
+})
 
 const shown = computed(() =>
 	props.answers.map((answer, index) => ({
