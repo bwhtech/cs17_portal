@@ -23,6 +23,8 @@ export interface CS17Profile {
 export interface CS17Assignment {
 	name: string
 	title: string
+	/** Student lists only: an answer sheet is shown and has this student's answers. */
+	has_answers?: boolean
 	description?: string | null
 	due_date: string
 	cohort?: string
@@ -54,6 +56,38 @@ export interface CS17Submission {
 	_assign?: string | null
 	grade?: CS17Grade | null
 }
+
+export type AnswerStatus = 'Correct' | 'Half' | 'Incorrect' | ''
+
+export interface AnswerTask {
+	number: string
+	task: string
+	expected: string
+	scored: boolean
+}
+
+export interface AnswerResult {
+	remark: string
+	status: AnswerStatus
+}
+
+export interface AnswerSummary {
+	label: string
+	value: string
+}
+
+export interface AnswerSheet {
+	tasks: AnswerTask[]
+	students: {
+		column: string
+		student: string | null
+		results: AnswerResult[]
+		summary: AnswerSummary[]
+	}[]
+	note: string
+}
+
+export type StudentAnswer = AnswerTask & AnswerResult
 
 export interface CS17Student {
 	student: string
