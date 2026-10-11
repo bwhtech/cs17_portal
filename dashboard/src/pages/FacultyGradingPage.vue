@@ -37,7 +37,10 @@
 					{{ submission.assignment_title }}
 				</h1>
 				<p class="truncate text-p-sm text-ink-gray-5">
-					{{ submission.full_name }} · out of {{ submission.max_marks }} marks
+					{{ submission.full_name }}
+					<template v-if="submission.evaluation_type === 'Marks'">
+						· out of {{ submission.max_marks }} marks
+					</template>
 				</p>
 			</div>
 
