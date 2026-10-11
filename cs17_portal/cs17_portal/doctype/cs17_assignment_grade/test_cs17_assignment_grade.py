@@ -151,6 +151,25 @@ class TestGradeFromMarks(IntegrationTestCase):
 
 		self.assertEqual(grade.grade, "B")
 
+	def test_marks_grade_takes_whatever_letters_the_scale_uses(self):
+		scale = frappe.get_doc("CS17 Grading Scale", self.scale)
+		scale.bands[-1].grade = "A1"
+		scale.save()
+		self.addCleanup(frappe.db.set_value, "CS17 Grade Band", scale.bands[-1].name, "grade", "A")
+		self.addCleanup(frappe.clear_document_cache, "CS17 Grading Scale", self.scale)
+
+		grade = frappe.get_doc(
+			{"doctype": "CS17 Assignment Grade", "assignment": self.assignment, "marks_obtained": 20}
+		).insert()
+
+		self.assertEqual(grade.grade, "A1")
+
+	def test_letter_grade_outside_a_to_e_is_refused(self):
+		assignment = make_assignment(make_cohort("C87TEST"), "PDF Task 88", "PDF", 20)
+		grade = frappe.get_doc({"doctype": "CS17 Assignment Grade", "assignment": assignment, "grade": "A1"})
+
+		self.assertRaises(frappe.ValidationError, grade.insert)
+
 	def test_marks_grade_is_empty_without_default_scale(self):
 		frappe.db.set_value("CS17 Grading Scale", self.scale, "is_default", 0)
 		self.addCleanup(frappe.db.set_value, "CS17 Grading Scale", self.scale, "is_default", 1)

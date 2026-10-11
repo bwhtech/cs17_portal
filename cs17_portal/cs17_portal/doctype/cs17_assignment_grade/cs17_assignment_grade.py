@@ -8,6 +8,8 @@ from frappe.utils import flt
 
 from cs17_portal.cs17_portal.doctype.cs17_grading_scale.cs17_grading_scale import get_default_scale
 
+LETTER_GRADES = ("A", "B", "C", "D", "E")
+
 
 class CS17AssignmentGrade(Document):
 	# begin: auto-generated types
@@ -22,7 +24,7 @@ class CS17AssignmentGrade(Document):
 		assignment_title: DF.Data | None
 		evaluation_type: DF.Data | None
 		full_name: DF.Data | None
-		grade: DF.Literal["A", "B", "C", "D", "E"]
+		grade: DF.Data | None
 		graded_by: DF.Link | None
 		is_published: DF.Check
 		marks_obtained: DF.Float
@@ -52,6 +54,8 @@ class CS17AssignmentGrade(Document):
 
 		if assignment.remarks == "Marks":
 			self.grade = get_grade_for_marks(flt(self.marks_obtained), max_marks, get_default_scale())
+		elif self.grade and self.grade not in LETTER_GRADES:
+			frappe.throw(_("Grade must be one of {0}.").format(", ".join(LETTER_GRADES)))
 
 	def validate_duplicate(self):
 		if not self.submission:
