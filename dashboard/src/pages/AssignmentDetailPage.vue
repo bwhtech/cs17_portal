@@ -87,7 +87,10 @@
 				<div v-if="myAnswers.data" class="space-y-2 border-t border-outline-gray-1 pt-3">
 					<div>
 						<p class="text-xs text-ink-gray-5">Answers</p>
-						<p class="text-base text-ink-gray-8">
+						<p
+							v-if="answerCounts(myAnswers.data.answers)"
+							class="text-base text-ink-gray-8"
+						>
 							{{ answerCounts(myAnswers.data.answers) }}
 						</p>
 					</div>

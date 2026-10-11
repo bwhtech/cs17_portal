@@ -27,14 +27,40 @@ def upload_answer_sheet(assignment: str, file_url: str) -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-def set_answer_status(assignment: str, column: str, task: int, status: str) -> None:
+def set_answer_status(
+	assignment: str, column: str, task: int, status: str, student: str | None = None
+) -> None:
 	require_faculty_for_assignment(assignment)
 	if status not in STATUSES:
 		frappe.throw(_("Mark the answer as Correct, Half or Incorrect."))
 	sheet = read_answer_sheet(assignment)["sheet"]
-	student = next(student for student in sheet["students"] if student["column"] == column)
-	student["results"][cint(task)]["status"] = status
+	get_student_answers(sheet, column, student)["results"][cint(task)]["status"] = status
 	frappe.db.set_value(ASSIGNMENT, assignment, "answer_sheet", frappe.as_json(sheet))
+
+
+@frappe.whitelist(methods=["POST"])
+def set_answer_remark(
+	assignment: str, column: str, task: int, remark: str, student: str | None = None
+) -> None:
+	require_faculty_for_assignment(assignment)
+	sheet = read_answer_sheet(assignment)["sheet"]
+	get_student_answers(sheet, column, student)["results"][cint(task)]["remark"] = remark.strip()
+	frappe.db.set_value(ASSIGNMENT, assignment, "answer_sheet", frappe.as_json(sheet))
+
+
+def get_student_answers(sheet: dict, column: str, student: str | None) -> dict:
+	answers = next(
+		(
+			row
+			for row in sheet["students"]
+			if (row["student"] == student if student else row["column"] == column)
+		),
+		None,
+	)
+	if not answers:
+		answers = {"column": column, "student": student, "results": unmarked_results(sheet), "summary": []}
+		sheet["students"].append(answers)
+	return answers
 
 
 @frappe.whitelist(methods=["POST"])
@@ -61,13 +87,16 @@ def get_answers_for(assignment: str, student: str) -> dict | None:
 		return None
 	sheet = current["sheet"]
 	mine = next((row for row in sheet["students"] if row["student"] == student), None)
-	if not mine:
-		return None
+	results = mine["results"] if mine else unmarked_results(sheet)
 	return {
-		"answers": [{**task, **result} for task, result in zip(sheet["tasks"], mine["results"], strict=True)],
-		"summary": mine["summary"],
+		"answers": [{**task, **result} for task, result in zip(sheet["tasks"], results, strict=True)],
+		"summary": mine["summary"] if mine else [],
 		"note": sheet["note"],
 	}
+
+
+def unmarked_results(sheet: dict) -> list:
+	return [{"remark": "", "status": ""} for _task in sheet["tasks"]]
 
 
 def read_answer_sheet(assignment: str) -> dict:
@@ -85,15 +114,15 @@ def read_rows(file) -> list:
 
 
 def parse_answer_sheet(rows: list, cohort: str | None) -> dict:
-	"""The first row is `#, Task, Expected answer, Scored`, then one column per student.
+	"""The first row is `#, Task, Expected answer, Scored`, then an optional column per student.
 
 	A row with a number is a task. A row without one that has student cells is a
 	summary line (score, grade, notes), named by its Task cell. Anything else is a note.
 	"""
 	rows = [[cstr(cell).strip() for cell in row] for row in rows if any(row)]
-	if not rows or len(rows[0]) < 5 or rows[0][1].lower() != "task":
+	if not rows or len(rows[0]) < 4 or rows[0][1].lower() != "task":
 		frappe.throw(
-			_("The first row must be: #, Task, Expected answer, Scored, then one column per student.")
+			_("The first row must be: #, Task, Expected answer, Scored. A column per student can follow.")
 		)
 	header, *body = rows
 	matched = match_students(header[4:], cohort)

@@ -1,7 +1,9 @@
 <template>
 	<Dialog :open="open" :title="title" size="3xl" @update:open="emit('update:open', $event)">
 		<div class="space-y-4">
-			<p class="text-base text-ink-gray-8">{{ answerCounts(shown) }}</p>
+			<p v-if="answerCounts(shown)" class="text-base text-ink-gray-8">
+				{{ answerCounts(shown) }}
+			</p>
 
 			<dl
 				v-if="summary.length"
@@ -13,7 +15,12 @@
 				</div>
 			</dl>
 
-			<AnswerList :answers="shown" :editable="editable" @status="setStatus" />
+			<AnswerList
+				:answers="shown"
+				:editable="editable"
+				@status="setStatus"
+				@remark="(index, remark) => emit('remark', index, remark)"
+			/>
 
 			<p v-if="note" class="text-p-sm text-ink-gray-5">{{ note }}</p>
 		</div>
@@ -42,6 +49,7 @@ const props = withDefaults(
 const emit = defineEmits<{
 	'update:open': [value: boolean]
 	status: [index: number, status: AnswerStatus]
+	remark: [index: number, remark: string]
 }>()
 
 const picked = ref<Record<number, AnswerStatus>>({})

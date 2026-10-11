@@ -11,8 +11,17 @@
 				<p class="text-p-sm text-ink-gray-6">
 					<span class="text-ink-gray-5">Expected: </span>{{ answer.expected }}
 				</p>
-				<p v-if="answer.remark" class="text-p-sm text-ink-gray-8">
-					<span class="text-ink-gray-5">Result: </span>{{ answer.remark }}
+				<FormControl
+					v-if="editable"
+					type="text"
+					size="sm"
+					placeholder="Add a note for the student"
+					:aria-label="`Note on task ${answer.number}`"
+					:model-value="answer.remark"
+					@change="emit('remark', index, ($event.target as HTMLInputElement).value)"
+				/>
+				<p v-else-if="answer.remark" class="text-p-sm text-ink-gray-8">
+					<span class="text-ink-gray-5">Note: </span>{{ answer.remark }}
 				</p>
 			</div>
 			<TabButtons
@@ -23,7 +32,7 @@
 				@update:model-value="emit('status', index, $event as AnswerStatus)"
 			/>
 			<Badge
-				v-else
+				v-else-if="answer.status || !answer.scored"
 				class="shrink-0 self-start"
 				v-bind="answerBadge(answer.status)"
 				variant="subtle"
@@ -33,11 +42,14 @@
 </template>
 
 <script setup lang="ts">
-import { Badge, TabButtons } from 'frappe-ui'
+import { Badge, FormControl, TabButtons } from 'frappe-ui'
 import { ANSWER_STATUSES, answerBadge } from '@/lib/answers'
 import type { AnswerStatus, StudentAnswer } from '@/types'
 
 defineProps<{ answers: StudentAnswer[]; editable?: boolean }>()
 
-const emit = defineEmits<{ status: [index: number, status: AnswerStatus] }>()
+const emit = defineEmits<{
+	status: [index: number, status: AnswerStatus]
+	remark: [index: number, remark: string]
+}>()
 </script>
