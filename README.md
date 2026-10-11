@@ -35,6 +35,8 @@ SITE_HOST=cs17.localhost:8000 yarn test:e2e
 
 [docs/dev-site.md](docs/dev-site.md) covers setting up a local site and the demo data.
 
+[docs/answer-sheets.md](docs/answer-sheets.md) explains answer sheets: the file a faculty uploads, and what students see.
+
 ### Contributing
 
 This app uses `pre-commit` for code formatting and linting. Please [install pre-commit](https://pre-commit.com/#installation) and enable it for this repository:
