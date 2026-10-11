@@ -500,6 +500,18 @@ test.describe("Student submission types", () => {
 		await expect(page.getByText("Paste a URL only")).toBeVisible();
 		await expect(page.locator('input[type="url"]')).toBeVisible();
 	});
+
+	test("a file of the wrong type says which type is wanted", async ({ page }) => {
+		await page.goto("/dashboard/assignments");
+
+		await assignmentRow(page, uiPdf.title).getByRole("button", { name: "Submit" }).click();
+		await page.locator('input[type="file"]').setInputFiles({
+			name: "report.txt",
+			mimeType: "text/plain",
+			buffer: Buffer.from("report"),
+		});
+		await expect(page.getByText("Please upload a PDF file only.")).toBeVisible();
+	});
 });
 
 test.describe("Student in another timezone", () => {
