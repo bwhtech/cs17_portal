@@ -80,9 +80,8 @@
   {
    "depends_on": "eval:doc.evaluation_type==\"Grade\"",
    "fieldname": "grade",
-   "fieldtype": "Select",
-   "label": "Grade",
-   "options": "A\nB\nC\nD\nE"
+   "fieldtype": "Data",
+   "label": "Grade"
   },
   {
    "fetch_from": "assignment.remarks",
@@ -121,7 +120,7 @@
  ],
  "grid_page_length": 50,
  "links": [],
- "modified": "2026-10-11 01:14:20.180783",
+ "modified": "2026-10-11 21:36:08.810608",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Grade",
