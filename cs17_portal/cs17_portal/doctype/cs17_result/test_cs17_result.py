@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 import frappe
 from frappe.tests import IntegrationTestCase
+from frappe.utils import get_datetime
 
 from cs17_portal.tasks import auto_publish_results
 from cs17_portal.tests.test_api import make_cohort, make_profile, make_user
@@ -131,3 +132,26 @@ class IntegrationTestCS17Result(IntegrationTestCase):
 		frappe.get_doc("CS17 Result", self.result).publish()
 
 		self.assertRaises(frappe.ValidationError, frappe.delete_doc, "CS17 Subject Marks", self.marks)
+
+	def test_unpublished_result_is_not_published_again(self):
+		auto_publish_results()
+		result = frappe.get_doc("CS17 Result", self.result)
+		result.is_published = 0
+		result.save()
+
+		auto_publish_results()
+
+		self.assertIsNone(result.published_on)
+		self.assertEqual(frappe.db.get_value("CS17 Result", self.result, "is_published"), 0)
+
+	def test_unpublishing_with_a_new_time_keeps_the_new_time(self):
+		auto_publish_results()
+		result = frappe.get_doc("CS17 Result", self.result)
+		result.is_published = 0
+		result.published_on = "2100-01-01 00:00:00"
+		result.save()
+
+		self.assertEqual(
+			frappe.db.get_value("CS17 Result", self.result, "published_on"),
+			get_datetime("2100-01-01 00:00:00"),
+		)
