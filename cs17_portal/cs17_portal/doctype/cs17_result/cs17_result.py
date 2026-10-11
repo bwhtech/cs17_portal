@@ -55,6 +55,7 @@ class CS17Result(Document):
 		self.sync_scores_with_exam()
 		self.sync_assignments_with_quarter()
 		self.calculate()
+		self.clear_schedule_when_unpublished()
 		self.validate_publishable()
 
 	def set_exam_context(self):
@@ -183,6 +184,11 @@ class CS17Result(Document):
 			self.percentage
 		)
 		self.result_status = "Pass" if all(row.is_pass for row in self.scores) else "Fail"
+
+	def clear_schedule_when_unpublished(self):
+		unpublishing = not self.is_published and self.has_value_changed("is_published")
+		if unpublishing and not self.has_value_changed("published_on"):
+			self.published_on = None
 
 	def validate_publishable(self):
 		"""A subject with no marks entered would silently publish as a zero."""
