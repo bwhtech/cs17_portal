@@ -131,7 +131,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { Badge, Button, Select, useCall } from 'frappe-ui'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import LoadError from '@/components/common/LoadError.vue'
@@ -238,12 +238,6 @@ function openDraft(name: string) {
 	editingDraft.value = name
 	formOpen.value = true
 }
-
-// Reopening "New Assignment" after editing a draft must not carry the draft
-// name over, and only the close path can clear it.
-watch(formOpen, (open) => {
-	if (!open) editingDraft.value = null
-})
 
 const { isDesktop } = useBreakpoint()
 </script>

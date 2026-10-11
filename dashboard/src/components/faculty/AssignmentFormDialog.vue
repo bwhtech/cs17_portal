@@ -312,7 +312,10 @@ watch([draft, publishMode, publishOn], () => {
 })
 
 function initialize() {
-	if (!props.open) return
+	if (!props.open) {
+		existingCall.abort()
+		return
+	}
 	activeTab.value = 'edit'
 	clearErrors()
 	loadFailed.value = false
@@ -332,7 +335,7 @@ function initialize() {
 
 async function loadExisting(name: string) {
 	const existing = await trySubmit(existingCall, { assignment: name })
-	if (existingCall.loading) return
+	if (existingCall.loading || !props.open) return
 	loadFailed.value = !existing
 	if (!existing) return
 	Object.assign(draft, {
