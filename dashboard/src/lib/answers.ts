@@ -14,6 +14,7 @@ export function answerBadge(status: AnswerStatus) {
 }
 
 export function answerCounts(results: Pick<AnswerResult, 'status'>[]): string {
+	if (!results.some((row) => row.status)) return ''
 	const count = (status: AnswerStatus) => results.filter((row) => row.status === status).length
 	return `${count('Correct')} correct · ${count('Half')} half · ${count('Incorrect')} incorrect`
 }

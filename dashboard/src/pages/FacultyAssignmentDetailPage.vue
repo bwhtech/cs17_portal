@@ -138,11 +138,7 @@
 								label="Preview"
 								@click="previewTarget = row"
 							/>
-							<Button
-								v-if="answersOf(row)"
-								label="Answers"
-								@click="answersTarget = row"
-							/>
+							<Button v-if="sheet" label="Answers" @click="answersTarget = row" />
 							<Button
 								v-if="isSubmitted(row) && isGraded"
 								:label="row.grade ? 'Edit grade' : 'Grade'"
@@ -174,7 +170,7 @@
 	/>
 
 	<AnswersDialog
-		v-if="answersTarget && answersOf(answersTarget)"
+		v-if="answersTarget && sheet"
 		:open="Boolean(answersTarget)"
 		:title="`Answers: ${answersTarget.full_name ?? answersTarget.student}`"
 		:answers="answerRows"
@@ -182,7 +178,8 @@
 		:note="sheet?.note"
 		editable
 		@update:open="answersTarget = null"
-		@status="setAnswerStatus"
+		@status="(task, status) => saveAnswer(answerStatus, task, { status })"
+		@remark="(task, remark) => saveAnswer(answerRemark, task, { remark })"
 	/>
 
 	<GradeSubmissionDialog
@@ -279,11 +276,21 @@ const answerSheet = useCall<
 	refetch: true,
 })
 
-const answerStatus = useCall<
-	null,
-	{ assignment: string; column: string; task: number; status: AnswerStatus }
->({
+interface AnswerTarget {
+	assignment: string
+	column: string
+	task: number
+	student: string
+}
+
+const answerStatus = useCall<null, AnswerTarget & { status: AnswerStatus }>({
 	url: '/api/v2/method/cs17_portal.answer_sheet.set_answer_status',
+	method: 'POST',
+	immediate: false,
+})
+
+const answerRemark = useCall<null, AnswerTarget & { remark: string }>({
+	url: '/api/v2/method/cs17_portal.answer_sheet.set_answer_remark',
 	method: 'POST',
 	immediate: false,
 })
@@ -295,18 +302,30 @@ function answersOf(row: CS17Submission) {
 }
 
 const answerRows = computed(() => {
-	const mine = answersTarget.value && answersOf(answersTarget.value)
-	if (!mine || !sheet.value) return []
-	return sheet.value.tasks.map((task, index) => ({ ...task, ...mine.results[index] }))
+	if (!answersTarget.value || !sheet.value) return []
+	const mine = answersOf(answersTarget.value)
+	return sheet.value.tasks.map((task, index) => ({
+		...task,
+		remark: mine?.results[index].remark ?? '',
+		status: mine?.results[index].status ?? ('' as AnswerStatus),
+	}))
 })
 
-async function setAnswerStatus(task: number, status: AnswerStatus) {
-	const column = answersTarget.value && answersOf(answersTarget.value)?.column
-	if (!column) return
-	await trySubmit(answerStatus, { assignment: assignmentId.value, column, task, status })
-	if (answerStatus.error) {
-		toast.error(frappeErrorMessage(answerStatus.error, 'Could not save that mark.'))
-	}
+async function saveAnswer<Change extends object>(
+	call: { error: unknown; submit: (params?: AnswerTarget & Change) => Promise<unknown> },
+	task: number,
+	change: Change,
+) {
+	const row = answersTarget.value
+	if (!row) return
+	await trySubmit(call, {
+		assignment: assignmentId.value,
+		column: answersOf(row)?.column ?? row.full_name ?? row.student,
+		task,
+		student: row.student,
+		...change,
+	})
+	if (call.error) toast.error(frappeErrorMessage(call.error, 'Could not save that.'))
 	answerSheet.reload()
 }
 

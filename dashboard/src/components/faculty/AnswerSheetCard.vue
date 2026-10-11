@@ -5,11 +5,14 @@
 		<div class="min-w-0 space-y-1">
 			<h2 class="text-base font-medium text-ink-gray-8">Answer sheet</h2>
 			<p v-if="!sheet" class="text-p-sm text-ink-gray-5">
-				A CSV or XLSX file. First row: #, Task, Expected answer, Scored, then one column per
-				student.
+				A CSV or XLSX file. First row: #, Task, Expected answer, Scored. A column per
+				student is optional.
 			</p>
 			<p v-else class="text-p-sm text-ink-gray-6">
-				{{ sheet.tasks.length }} tasks · {{ sheet.students.length }} students
+				{{ sheet.tasks.length }} tasks<template v-if="sheet.students.length">
+					· {{ sheet.students.length }}
+					{{ sheet.students.length === 1 ? 'student' : 'students' }}</template
+				>
 			</p>
 			<p v-if="unmatched.length" class="text-p-sm text-ink-amber-7">
 				No student found for: {{ unmatched.join(', ') }}
