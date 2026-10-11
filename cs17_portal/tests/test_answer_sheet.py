@@ -60,6 +60,42 @@ class TestAnswerSheet(FrappeTestCase):
 
 		self.assertEqual([answer["remark"] for answer in answers], ["OK", "Seen in history"])
 
+	def test_sheet_without_student_columns_shows_every_student_the_expected_answers(self):
+		sheet = answer_sheet.parse_answer_sheet([row[:4] for row in ROWS[:3]], self.cohort)
+		frappe.db.set_value("CS17 Assignment", self.assignment, "answer_sheet", frappe.as_json(sheet))
+		frappe.set_user(self.faculty_user)
+		answer_sheet.show_answers(self.assignment, True)
+		frappe.set_user(self.student_user)
+
+		answers = answer_sheet.get_my_answers(self.assignment)["answers"]
+
+		self.assertEqual(answers[0]["expected"], "gallery/ at the assignment root")
+		self.assertEqual(answers[0]["status"], "")
+
+	def test_faculty_marks_a_student_the_sheet_has_no_column_for(self):
+		sheet = answer_sheet.parse_answer_sheet([row[:4] for row in ROWS[:3]], self.cohort)
+		frappe.db.set_value("CS17 Assignment", self.assignment, "answer_sheet", frappe.as_json(sheet))
+		frappe.set_user(self.faculty_user)
+
+		answer_sheet.set_answer_status(self.assignment, "Student 31", 0, "Correct", student=self.student)
+
+		answers = answer_sheet.get_answers_for(self.assignment, self.student)
+		self.assertIsNone(answers)
+		answer_sheet.show_answers(self.assignment, True)
+		self.assertEqual(
+			answer_sheet.get_answers_for(self.assignment, self.student)["answers"][0]["status"], "Correct"
+		)
+
+	def test_student_reads_the_note_a_faculty_wrote_on_an_answer(self):
+		frappe.set_user(self.faculty_user)
+		answer_sheet.show_answers(self.assignment, True)
+
+		answer_sheet.set_answer_remark(self.assignment, "Student 31", 0, "Named gallary", self.student)
+
+		frappe.set_user(self.student_user)
+		answers = answer_sheet.get_my_answers(self.assignment)["answers"]
+		self.assertEqual(answers[0]["remark"], "Named gallary")
+
 	def test_assignment_list_says_which_assignments_have_answers(self):
 		frappe.set_user(self.faculty_user)
 		answer_sheet.show_answers(self.assignment, True)

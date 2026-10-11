@@ -139,7 +139,34 @@ test.describe("Faculty assignment portal", () => {
 
 		const row = page.locator(LIST_ROW, { hasText: student.last_name });
 		await row.getByRole("button", { name: "Answers" }).click();
-		await expect(page.getByRole("dialog").getByText("Named gallary")).toBeVisible();
+		await expect(
+			page.getByRole("dialog").getByRole("textbox", { name: "Note on task 1" }),
+		).toHaveValue("Named gallary");
+	});
+
+	test("writes a note on a student's answer from a sheet with no student columns", async ({
+		page,
+	}, testInfo) => {
+		const sheet = testInfo.outputPath("answers-only.csv");
+		fs.writeFileSync(
+			sheet,
+			"#,Task,Expected answer,Scored\n1,Create gallery folder,gallery/ at the assignment root,Yes\n",
+		);
+		await page.goto(`/dashboard/faculty/assignments/${graded.name}`);
+		await page
+			.locator("section", { hasText: "Answer sheet" })
+			.locator('input[type="file"]')
+			.setInputFiles(sheet);
+
+		const row = page.locator(LIST_ROW, { hasText: student.last_name });
+		await row.getByRole("button", { name: "Answers" }).click();
+		const note = page.getByRole("dialog").getByRole("textbox", { name: "Note on task 1" });
+		await note.fill("Named gallary");
+		await note.press("Tab");
+
+		await page.reload();
+		await row.getByRole("button", { name: "Answers" }).click();
+		await expect(note).toHaveValue("Named gallary");
 	});
 
 	test("creates and publishes an assignment from the sheet", async ({ page }) => {
