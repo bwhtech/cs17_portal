@@ -260,6 +260,21 @@ test.describe("Faculty Scratch projects", () => {
 		expect(saves).toBe(0);
 	});
 
+	test("keeps the editor tall when zen mode is left", async ({ page }) => {
+		await page.goto("/dashboard/faculty/projects");
+		const project = await createProjectAsFaculty(
+			page,
+			`${PROJECT_TITLE_PREFIX} Height ${Date.now()}`,
+		);
+
+		await page.goto(`/dashboard/faculty/projects/${project}/edit`);
+		await page.getByRole("button", { name: "Exit zen mode" }).click();
+		await expect(page.getByRole("button", { name: "Enter zen mode" })).toBeVisible();
+
+		const frame = await page.getByTitle("Scratch editor").boundingBox();
+		expect(frame?.height).toBeGreaterThan(400);
+	});
+
 	test("a faculty member without System Manager creates and opens a project", async ({
 		browser,
 		request,
