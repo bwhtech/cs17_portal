@@ -1,38 +1,43 @@
 <template>
-	<div
-		class="flex flex-col gap-3 rounded-4 border border-outline-gray-1 bg-surface-gray-1 px-4 py-3 sm:flex-row sm:items-end"
-	>
-		<p class="text-base font-medium text-ink-gray-7 sm:pb-2">
-			{{ submissions.length }} selected
-		</p>
+	<div class="flex justify-center">
+		<div
+			class="fixed bottom-20 z-10 flex max-w-[calc(100vw-1.5rem)] items-center gap-3 rounded-4 border border-outline-gray-1 bg-surface-base py-2 pl-4 pr-2 text-base shadow-2xl md:bottom-6"
+			role="region"
+			aria-label="Selected submissions"
+		>
+			<p class="whitespace-nowrap text-ink-gray-8">{{ submissions.length }} selected</p>
 
-		<div class="sm:w-56">
-			<FacultySelect
-				v-model="assignTo"
-				label="Assign selected to"
-				placeholder="Pick a faculty member"
-				:error="fieldError"
-				:cohort="cohort"
+			<div class="h-5 border-l border-outline-gray-2" />
+
+			<Dropdown :options="options" side="top" align="center" :offset="8">
+				<Button
+					label="Assign to"
+					icon-left="lucide-user-plus"
+					icon-right="lucide-chevron-up"
+					:loading="assign.loading"
+				/>
+				<template #item-prefix="{ item }">
+					<Avatar size="sm" :label="item.label" />
+				</template>
+			</Dropdown>
+
+			<Button
+				variant="ghost"
+				icon="lucide-x"
+				aria-label="Clear selection"
+				tooltip="Clear selection"
+				@click="emit('clear')"
 			/>
 		</div>
-
-		<Button
-			class="sm:mb-0.5"
-			variant="solid"
-			theme="gray"
-			label="Assign"
-			:loading="assign.loading"
-			@click="handleAssign"
-		/>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { Button, toast, useCall } from 'frappe-ui'
-import FacultySelect from '@/components/faculty/FacultySelect.vue'
+import { computed } from 'vue'
+import { Avatar, Button, Dropdown, toast, useCall } from 'frappe-ui'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { trySubmit } from '@/lib/trySubmit'
+import type { FacultyMember } from '@/types'
 
 const props = defineProps<{
 	/** The selected submission names. */
@@ -40,10 +45,13 @@ const props = defineProps<{
 	cohort?: string
 }>()
 
-const emit = defineEmits<{ done: [] }>()
+const emit = defineEmits<{ done: []; clear: [] }>()
 
-const assignTo = ref('')
-const fieldError = ref('')
+const members = useCall<FacultyMember[], { cohort?: string }>({
+	url: '/api/v2/method/cs17_portal.api.get_faculty_members',
+	params: () => ({ cohort: props.cohort }),
+	cacheKey: ['faculty-members', props.cohort ?? ''],
+})
 
 const assign = useCall<null, { submissions: string[]; assign_to: string }>({
 	url: '/api/v2/method/cs17_portal.api.assign_submissions',
@@ -51,23 +59,23 @@ const assign = useCall<null, { submissions: string[]; assign_to: string }>({
 	immediate: false,
 })
 
-watch(assignTo, () => {
-	fieldError.value = ''
-})
+const options = computed(() =>
+	(members.data ?? []).map((member) => ({
+		label: member.full_name,
+		onClick: () => handleAssign(member),
+	})),
+)
 
-async function handleAssign() {
-	if (!assignTo.value) {
-		fieldError.value = 'Pick a faculty member.'
-		return
-	}
-
-	await trySubmit(assign, { submissions: props.submissions, assign_to: assignTo.value })
+async function handleAssign(member: FacultyMember) {
+	const count = props.submissions.length
+	await trySubmit(assign, { submissions: props.submissions, assign_to: member.user })
 	if (assign.error) {
 		toast.error(frappeErrorMessage(assign.error, 'Could not assign the submissions.'))
 		return
 	}
-	toast.success(`Assigned ${props.submissions.length} submissions.`)
-	assignTo.value = ''
+	toast.success(
+		`Assigned ${count} ${count === 1 ? 'submission' : 'submissions'} to ${member.full_name}.`,
+	)
 	emit('done')
 }
 </script>

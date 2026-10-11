@@ -62,13 +62,6 @@
 					Submissions ({{ submissions.length }})
 				</h2>
 
-				<BulkAssignBar
-					v-if="selection.length"
-					:submissions="selection"
-					:cohort="assignment.cohort"
-					@done="clearSelection"
-				/>
-
 				<DataTable
 					v-model:selection="selection"
 					:columns="columns"
@@ -85,6 +78,17 @@
 
 					<template #cell-submitted="{ row }">
 						<span class="text-ink-gray-6">{{ formatDateTime(row.submitted_at) }}</span>
+					</template>
+
+					<template #cell-assignees="{ row }">
+						<div @click.stop>
+							<SubmissionAssignees
+								:submission="row.name"
+								:assigned-to="assigneesOf(row)"
+								:cohort="assignment.cohort"
+								@changed="detail.reload()"
+							/>
+						</div>
 					</template>
 
 					<template #cell-grade="{ row }">
@@ -111,10 +115,6 @@
 						<div class="flex flex-wrap items-center gap-2 md:justify-end">
 							<Button label="Preview" @click="previewTarget = row" />
 							<Button
-								:label="assigneesOf(row).length ? 'Assigned' : 'Assign'"
-								@click="assignTargetName = row.name"
-							/>
-							<Button
 								v-if="isGraded"
 								:label="row.grade ? 'Edit grade' : 'Grade'"
 								@click="gradeTarget = row"
@@ -122,6 +122,14 @@
 						</div>
 					</template>
 				</DataTable>
+
+				<BulkAssignBar
+					v-if="selection.length"
+					:submissions="selection"
+					:cohort="assignment.cohort"
+					@done="clearSelection"
+					@clear="selection = []"
+				/>
 			</section>
 		</div>
 	</PageBody>
@@ -134,15 +142,6 @@
 		:submission="previewTarget.name"
 		:file-url="previewTarget.submission_document || previewTarget.submission_url"
 		@update:open="previewTarget = null"
-	/>
-
-	<AssignSubmissionDialog
-		v-if="assignTarget"
-		:open="Boolean(assignTarget)"
-		:submission="assignTarget"
-		:cohort="assignment?.cohort"
-		@update:open="assignTargetName = null"
-		@success="detail.reload()"
 	/>
 
 	<GradeSubmissionDialog
@@ -168,11 +167,9 @@ import LoadError from '@/components/common/LoadError.vue'
 import MarkdownText from '@/components/common/MarkdownText.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import SubmissionPreviewDialog from '@/components/assignments/SubmissionPreviewDialog.vue'
-import AssignSubmissionDialog, {
-	type AssignTarget,
-} from '@/components/faculty/AssignSubmissionDialog.vue'
 import BulkAssignBar from '@/components/faculty/BulkAssignBar.vue'
 import GradeSubmissionDialog from '@/components/faculty/GradeSubmissionDialog.vue'
+import SubmissionAssignees from '@/components/faculty/SubmissionAssignees.vue'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useLoadFailed } from '@/composables/useLoadFailed'
@@ -203,11 +200,6 @@ const submissions = computed(() => detail.data?.submissions ?? [])
 const selection = ref<string[]>([])
 const previewTarget = ref<CS17Submission | null>(null)
 const gradeTarget = ref<CS17Submission | null>(null)
-/**
- * The assign dialog is addressed by name, not by row: it reloads the list after
- * every assign, and the chips have to follow the fresh `_assign`.
- */
-const assignTargetName = ref<string | null>(null)
 
 const isGraded = computed(() => assignment.value?.assignment_type === 'Graded')
 
@@ -229,8 +221,9 @@ const metaRows = computed(() => {
 const columns: Column[] = [
 	{ header: 'Student', key: 'student', variant: 'primary' },
 	{ header: 'Submitted', key: 'submitted', width: '11rem' },
+	{ header: 'Assigned to', key: 'assignees', width: '12rem' },
 	{ header: 'Grade', key: 'grade', width: '11rem' },
-	{ header: '', key: 'actions', variant: 'actions', width: '16rem', align: 'right' },
+	{ header: '', key: 'actions', variant: 'actions', width: '11rem', align: 'right' },
 ]
 
 /** `_assign` is Frappe's ToDo mirror: a JSON array of user ids, or nothing. */
@@ -243,12 +236,6 @@ function assigneesOf(submission: CS17Submission): string[] {
 		return []
 	}
 }
-
-const assignTarget = computed<AssignTarget | null>(() => {
-	const row = submissions.value.find((s) => s.name === assignTargetName.value)
-	if (!row) return null
-	return { name: row.name, fullName: row.full_name, assignedTo: assigneesOf(row) }
-})
 
 function gradeValue(grade: CS17Grade): string {
 	return formatGrade({
