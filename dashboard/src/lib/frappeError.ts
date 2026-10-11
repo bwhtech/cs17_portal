@@ -1,4 +1,5 @@
 export function frappeErrorMessage(error: unknown, fallback: string): string {
+	if (typeof error === 'string') return error || fallback
 	const err = error as { message?: string; type?: string; messages?: string[] }
 	if (err?.type) {
 		const prefix = `${err.type}: `
