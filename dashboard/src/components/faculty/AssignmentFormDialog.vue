@@ -9,7 +9,20 @@
 		:title="draftName ? 'Continue Draft' : 'New Assignment'"
 		@update:open="emit('update:open', $event)"
 	>
-		<div :class="isDesktop ? undefined : 'px-4 pb-6'">
+		<LoadError
+			v-if="loadFailed"
+			:class="isDesktop ? undefined : 'px-4 pb-6'"
+			title="Could not load this draft"
+			:loading="existingCall.loading"
+			@retry="draftName && loadExisting(draftName)"
+		/>
+
+		<PageSkeleton
+			v-else-if="existingCall.loading"
+			:class="isDesktop ? undefined : 'px-4 pb-6'"
+		/>
+
+		<div v-else :class="isDesktop ? undefined : 'px-4 pb-6'">
 			<p class="text-p-base text-ink-gray-5">
 				Fill in the details, then switch to Preview to see the student view. Closing keeps
 				your work as a draft.
@@ -155,6 +168,8 @@ import {
 	toast,
 	useCall,
 } from 'frappe-ui'
+import LoadError from '@/components/common/LoadError.vue'
+import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import PublishFields from '@/components/common/PublishFields.vue'
 import AssignmentPreview, { type AssignmentDraft } from '@/components/faculty/AssignmentPreview.vue'
 import DeleteAssignmentDialog from '@/components/faculty/DeleteAssignmentDialog.vue'
@@ -216,6 +231,7 @@ const activeTab = ref('edit')
 const confirmDelete = ref(false)
 /** The assignment behind the form once it exists server-side — update, not create. */
 const savedName = ref<string | null>(null)
+const loadFailed = ref(false)
 
 const errors = reactive<Record<'title' | 'cohort' | 'due_date' | 'publishOn' | 'form', string>>({
 	title: '',
@@ -299,6 +315,7 @@ function initialize() {
 	if (!props.open) return
 	activeTab.value = 'edit'
 	clearErrors()
+	loadFailed.value = false
 
 	if (props.draftName) {
 		if (savedName.value === props.draftName) return
@@ -315,6 +332,8 @@ function initialize() {
 
 async function loadExisting(name: string) {
 	const existing = await trySubmit(existingCall, { assignment: name })
+	if (existingCall.loading) return
+	loadFailed.value = !existing
 	if (!existing) return
 	Object.assign(draft, {
 		title: existing.title ?? '',
