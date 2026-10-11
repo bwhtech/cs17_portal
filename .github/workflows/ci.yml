@@ -30,7 +30,7 @@ jobs:
           if [ -n "$PR_NUMBER" ]; then
             if files=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" --jq '.[].filename'); then
               echo "$files"
-              if ! grep -qvE '^(dashboard/|e2e/|playwright\.config\.ts$)' <<< "$files"; then
+              if ! grep -qvE '^(dashboard/|e2e/|docs/|playwright\.config\.ts$|.*\.md$)' <<< "$files"; then
                 server=false
               fi
             fi
