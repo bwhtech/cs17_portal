@@ -124,6 +124,25 @@ class IntegrationTestCS17Assignment(IntegrationTestCase):
 
 		self.assertEqual(frappe.db.get_value("CS17 Assignment", assignment.name, "is_published"), 0)
 
+	def test_marks_assignment_without_max_marks_cannot_be_published(self):
+		cohort = make_cohort("C70TEST")
+		faculty_user = make_user("faculty76@cs17test.com")
+		make_profile("Faculty", cohort, faculty_user, "Faculty 76")
+
+		frappe.set_user(faculty_user)
+		self.addCleanup(frappe.set_user, "Administrator")
+
+		self.assertRaises(
+			frappe.ValidationError,
+			create_assignment,
+			"PDF Task 76",
+			cohort,
+			"2030-01-01 00:00:00",
+			assignment_type="Graded",
+			remarks="Marks",
+			publish="now",
+		)
+
 
 class TestQuarterAssignments(IntegrationTestCase):
 	def tearDown(self):
