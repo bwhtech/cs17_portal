@@ -124,6 +124,24 @@ test.describe("Faculty assignment portal", () => {
 		await deleteTestProfile(request, absent.name);
 	});
 
+	test("uploads an answer sheet and opens a student's answers", async ({ page }, testInfo) => {
+		const sheet = testInfo.outputPath("answers.csv");
+		fs.writeFileSync(
+			sheet,
+			`#,Task,Expected answer,Scored,${student.first_name} ${student.last_name}\n` +
+				"1,Create gallery folder,gallery/ at the assignment root,Yes,Named gallary\n",
+		);
+		await page.goto(`/dashboard/faculty/assignments/${graded.name}`);
+		await page
+			.locator("section", { hasText: "Answer sheet" })
+			.locator('input[type="file"]')
+			.setInputFiles(sheet);
+
+		const row = page.locator(LIST_ROW, { hasText: student.last_name });
+		await row.getByRole("button", { name: "Answers" }).click();
+		await expect(page.getByRole("dialog").getByText("Named gallary")).toBeVisible();
+	});
+
 	test("creates and publishes an assignment from the sheet", async ({ page }) => {
 		const title = `${TEST_ASSIGNMENT_PREFIX} UI ${Date.now()}`;
 		await page.goto("/dashboard/faculty/assignments");

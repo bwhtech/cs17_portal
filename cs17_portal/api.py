@@ -711,7 +711,10 @@ def get_student_assignments() -> dict:
 	when the background job flips `is_published`. `next_publish_on` lets the client reveal the
 	next one at the precise moment without polling.
 	"""
-	cohort = frappe.db.get_value("CS17 Profile", require_current_student(), "cohort")
+	from cs17_portal.answer_sheet import get_answers_for
+
+	student = require_current_student()
+	cohort = frappe.db.get_value("CS17 Profile", student, "cohort")
 	now = now_datetime()
 	assignments = frappe.get_all(
 		"CS17 Assignment",
@@ -726,10 +729,14 @@ def get_student_assignments() -> dict:
 			"modified",
 			"is_published",
 			"publish_on",
+			"show_answers",
 		],
 		order_by="due_date desc",
 	)
 	assignments = [assignment for assignment in assignments if is_published_now(assignment)]
+	for assignment in assignments:
+		shown = assignment.pop("show_answers")
+		assignment.has_answers = bool(shown and get_answers_for(assignment.name, student))
 	upcoming = frappe.get_all(
 		"CS17 Assignment",
 		filters=[["cohort", "=", cohort], ["is_published", "=", 0], ["publish_on", ">", now]],

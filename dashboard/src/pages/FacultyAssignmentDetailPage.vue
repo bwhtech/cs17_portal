@@ -57,6 +57,13 @@
 				</div>
 			</div>
 
+			<AnswerSheetCard
+				:assignment="assignment.name"
+				:sheet="sheet"
+				:show-answers="answerSheet.data?.show_answers ?? false"
+				@changed="answerSheet.reload()"
+			/>
+
 			<section class="space-y-3">
 				<h2 class="text-lg font-semibold text-ink-gray-8">
 					Submissions ({{ submissions.length }} of {{ rows.length }})
@@ -125,13 +132,19 @@
 					</template>
 
 					<template #cell-actions="{ row }">
-						<div
-							v-if="isSubmitted(row)"
-							class="flex flex-wrap items-center gap-2 md:justify-end"
-						>
-							<Button label="Preview" @click="previewTarget = row" />
+						<div class="flex flex-wrap items-center gap-2 md:justify-end">
 							<Button
-								v-if="isGraded"
+								v-if="isSubmitted(row)"
+								label="Preview"
+								@click="previewTarget = row"
+							/>
+							<Button
+								v-if="answersOf(row)"
+								label="Answers"
+								@click="answersTarget = row"
+							/>
+							<Button
+								v-if="isSubmitted(row) && isGraded"
 								:label="row.grade ? 'Edit grade' : 'Grade'"
 								@click="gradeTarget = row"
 							/>
@@ -160,6 +173,18 @@
 		@update:open="previewTarget = null"
 	/>
 
+	<AnswersDialog
+		v-if="answersTarget && answersOf(answersTarget)"
+		:open="Boolean(answersTarget)"
+		:title="`Answers: ${answersTarget.full_name ?? answersTarget.student}`"
+		:answers="answerRows"
+		:summary="answersOf(answersTarget)?.summary"
+		:note="sheet?.note"
+		editable
+		@update:open="answersTarget = null"
+		@status="setAnswerStatus"
+	/>
+
 	<GradeSubmissionDialog
 		v-if="gradeTarget"
 		:open="Boolean(gradeTarget)"
@@ -183,6 +208,8 @@ import LoadError from '@/components/common/LoadError.vue'
 import MarkdownText from '@/components/common/MarkdownText.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import SubmissionPreviewDialog from '@/components/assignments/SubmissionPreviewDialog.vue'
+import AnswersDialog from '@/components/answers/AnswersDialog.vue'
+import AnswerSheetCard from '@/components/faculty/AnswerSheetCard.vue'
 import BulkAssignBar from '@/components/faculty/BulkAssignBar.vue'
 import GradeSubmissionDialog from '@/components/faculty/GradeSubmissionDialog.vue'
 import SubmissionAssignees from '@/components/faculty/SubmissionAssignees.vue'
@@ -190,9 +217,17 @@ import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { formatDateTime } from '@/lib/dates'
-import { isRefusal } from '@/lib/frappeError'
+import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
 import { formatGrade } from '@/lib/grades'
-import type { CS17Assignment, CS17Grade, CS17Student, CS17Submission } from '@/types'
+import { trySubmit } from '@/lib/trySubmit'
+import type {
+	AnswerSheet,
+	AnswerStatus,
+	CS17Assignment,
+	CS17Grade,
+	CS17Student,
+	CS17Submission,
+} from '@/types'
 
 const route = useRoute()
 const breadcrumbs = useBreadcrumbs()
@@ -233,6 +268,48 @@ const selection = ref<string[]>([])
 const previewTarget = ref<CS17Submission | null>(null)
 const gradeTarget = ref<CS17Submission | null>(null)
 
+const answersTarget = ref<CS17Submission | null>(null)
+
+const answerSheet = useCall<
+	{ sheet: AnswerSheet | null; show_answers: boolean },
+	{ assignment: string }
+>({
+	url: '/api/v2/method/cs17_portal.answer_sheet.get_answer_sheet',
+	params: () => ({ assignment: assignmentId.value }),
+	refetch: true,
+})
+
+const answerStatus = useCall<
+	null,
+	{ assignment: string; column: string; task: number; status: AnswerStatus }
+>({
+	url: '/api/v2/method/cs17_portal.answer_sheet.set_answer_status',
+	method: 'POST',
+	immediate: false,
+})
+
+const sheet = computed(() => answerSheet.data?.sheet ?? null)
+
+function answersOf(row: CS17Submission) {
+	return sheet.value?.students.find((student) => student.student === row.student)
+}
+
+const answerRows = computed(() => {
+	const mine = answersTarget.value && answersOf(answersTarget.value)
+	if (!mine || !sheet.value) return []
+	return sheet.value.tasks.map((task, index) => ({ ...task, ...mine.results[index] }))
+})
+
+async function setAnswerStatus(task: number, status: AnswerStatus) {
+	const column = answersTarget.value && answersOf(answersTarget.value)?.column
+	if (!column) return
+	await trySubmit(answerStatus, { assignment: assignmentId.value, column, task, status })
+	if (answerStatus.error) {
+		toast.error(frappeErrorMessage(answerStatus.error, 'Could not save that mark.'))
+	}
+	answerSheet.reload()
+}
+
 const isGraded = computed(() => assignment.value?.assignment_type === 'Graded')
 
 const metaRows = computed(() => {
@@ -256,7 +333,7 @@ const columns: Column[] = [
 	{ header: 'Submitted', key: 'submitted', width: '9rem' },
 	{ header: 'Assigned to', key: 'assignees', width: '9rem' },
 	{ header: 'Grade', key: 'grade', width: '10rem' },
-	{ header: '', key: 'actions', variant: 'actions', width: '11rem', align: 'right' },
+	{ header: '', key: 'actions', variant: 'actions', width: '16rem', align: 'right' },
 ]
 
 /** `_assign` is Frappe's ToDo mirror: a JSON array of user ids, or nothing. */

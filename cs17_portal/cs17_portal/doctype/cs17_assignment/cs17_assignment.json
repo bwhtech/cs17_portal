@@ -21,7 +21,10 @@
   "column_break_vtqn",
   "publish_on",
   "due_date",
-  "description"
+  "description",
+  "answer_sheet_section",
+  "show_answers",
+  "answer_sheet"
  ],
  "fields": [
   {
@@ -117,6 +120,24 @@
    "fieldname": "publish_on",
    "fieldtype": "Datetime",
    "label": "Publish On"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "answer_sheet_section",
+   "fieldtype": "Section Break",
+   "label": "Answer Sheet"
+  },
+  {
+   "default": "0",
+   "fieldname": "show_answers",
+   "fieldtype": "Check",
+   "label": "Show Answers to Students"
+  },
+  {
+   "fieldname": "answer_sheet",
+   "fieldtype": "JSON",
+   "label": "Answer Sheet",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -130,7 +151,7 @@
    "link_fieldname": "assignment"
   }
  ],
- "modified": "2026-10-11 01:14:31.161931",
+ "modified": "2026-10-11 20:47:02.562900",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",

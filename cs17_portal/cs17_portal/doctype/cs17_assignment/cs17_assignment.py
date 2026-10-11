@@ -16,6 +16,7 @@ class CS17Assignment(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
+		answer_sheet: DF.JSON | None
 		assignment_type: DF.Literal["Graded", "Not Graded"]
 		cohort: DF.Link | None
 		description: DF.TextEditor | None
@@ -26,6 +27,7 @@ class CS17Assignment(Document):
 		publish_on: DF.Datetime | None
 		quarter: DF.Link | None
 		remarks: DF.Literal["Grade", "Marks"]
+		show_answers: DF.Check
 		submission_type: DF.Literal["Any", "PDF", "URL", "Image", "ZIP", "Scratch"]
 		title: DF.Data
 	# end: auto-generated types

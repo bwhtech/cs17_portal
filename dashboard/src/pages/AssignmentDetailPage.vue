@@ -83,8 +83,27 @@
 
 				<p v-else-if="isOverdue" class="text-sm text-ink-gray-5">Deadline passed</p>
 				<Button v-else class="w-full" label="Submit Assignment" @click="openSubmit" />
+
+				<div v-if="myAnswers.data" class="space-y-2 border-t border-outline-gray-1 pt-3">
+					<div>
+						<p class="text-xs text-ink-gray-5">Answers</p>
+						<p class="text-base text-ink-gray-8">
+							{{ answerCounts(myAnswers.data.answers) }}
+						</p>
+					</div>
+					<Button class="w-full" label="View answers" @click="answersOpen = true" />
+				</div>
 			</div>
 		</div>
+
+		<AnswersDialog
+			v-if="myAnswers.data"
+			v-model:open="answersOpen"
+			title="Answers"
+			:answers="myAnswers.data.answers"
+			:summary="myAnswers.data.summary"
+			:note="myAnswers.data.note"
+		/>
 
 		<SubmitAssignmentDialog
 			v-if="assignment"
@@ -104,14 +123,22 @@ import PageBody from '@/components/common/PageBody.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import MarkdownText from '@/components/common/MarkdownText.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
+import AnswersDialog from '@/components/answers/AnswersDialog.vue'
 import SubmitAssignmentDialog from '@/components/assignments/SubmitAssignmentDialog.vue'
 import { useScratchAssignment } from '@/components/assignments/scratchEditor'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { useSession } from '@/composables/useSession'
+import { answerCounts } from '@/lib/answers'
 import { formatDateTime, isPast } from '@/lib/dates'
 import { isRefusal } from '@/lib/frappeError'
-import type { CS17Assignment, CS17Submission, StudentGradesResponse } from '@/types'
+import type {
+	AnswerSummary,
+	CS17Assignment,
+	CS17Submission,
+	StudentAnswer,
+	StudentGradesResponse,
+} from '@/types'
 
 const props = defineProps<{ assignmentId: string }>()
 
@@ -165,6 +192,15 @@ const evaluationType = computed(() =>
 )
 
 const submitOpen = ref(false)
+const answersOpen = ref(false)
+
+const myAnswers = useCall<
+	{ answers: StudentAnswer[]; summary: AnswerSummary[]; note: string } | null,
+	{ assignment: string }
+>({
+	url: '/api/v2/method/cs17_portal.answer_sheet.get_my_answers',
+	params: () => ({ assignment: props.assignmentId }),
+})
 
 function openSubmit() {
 	if (!assignment.value) return

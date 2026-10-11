@@ -51,6 +51,7 @@
 					label="Preview"
 					@click="openPreview(row, submissionMap[row.name])"
 				/>
+				<Button v-if="row.has_answers" label="Answers" @click="openAnswers(row)" />
 				<Button
 					v-if="showsGrade(row)"
 					label="View Grade"
@@ -80,6 +81,15 @@
 		@success="onSubmitted"
 	/>
 
+	<AnswersDialog
+		v-if="answers.data"
+		v-model:open="answersOpen"
+		:title="`Answers: ${answersTitle}`"
+		:answers="answers.data.answers"
+		:summary="answers.data.summary"
+		:note="answers.data.note"
+	/>
+
 	<SubmissionPreviewDialog
 		v-if="previewAssignment"
 		v-model:open="previewOpen"
@@ -92,7 +102,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Badge, Button } from 'frappe-ui'
+import { Badge, Button, toast, useCall } from 'frappe-ui'
+import AnswersDialog from '@/components/answers/AnswersDialog.vue'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
 import SubmissionTypeIcon from '@/components/common/SubmissionTypeIcon.vue'
@@ -101,7 +112,14 @@ import SubmitAssignmentDialog from '@/components/assignments/SubmitAssignmentDia
 import { useScratchAssignment } from '@/components/assignments/scratchEditor'
 import { formatDateTime, isPast } from '@/lib/dates'
 import { assignmentStatus, assignmentStatusTheme } from '@/lib/status'
-import type { CS17Assignment, CS17Grade, CS17Submission } from '@/types'
+import { trySubmit } from '@/lib/trySubmit'
+import type {
+	AnswerSummary,
+	CS17Assignment,
+	CS17Grade,
+	CS17Submission,
+	StudentAnswer,
+} from '@/types'
 
 const props = defineProps<{
 	assignments: CS17Assignment[]
@@ -124,7 +142,7 @@ const columns: Column[] = [
 	{ header: 'Assignment', key: 'title', variant: 'primary' },
 	{ header: 'Status', key: 'status', width: '8rem' },
 	{ header: 'Submitted', key: 'submitted', width: '11rem' },
-	{ header: '', key: 'actions', variant: 'actions', width: '12rem', align: 'right' },
+	{ header: '', key: 'actions', variant: 'actions', width: '17rem', align: 'right' },
 ]
 
 const rowKey = (row: CS17Assignment) => row.name
@@ -136,6 +154,26 @@ const submitAssignment = ref<CS17Assignment | null>(null)
 const submitSubmission = ref<CS17Submission | null>(null)
 
 const previewOpen = ref(false)
+const answersOpen = ref(false)
+const answersTitle = ref('')
+
+const answers = useCall<
+	{ answers: StudentAnswer[]; summary: AnswerSummary[]; note: string } | null,
+	{ assignment: string }
+>({
+	url: '/api/v2/method/cs17_portal.answer_sheet.get_my_answers',
+	immediate: false,
+})
+
+async function openAnswers(assignment: CS17Assignment) {
+	answersTitle.value = assignment.title
+	await trySubmit(answers, { assignment: assignment.name })
+	if (answers.error || !answers.data) {
+		toast.error('Could not load your answers.')
+		return
+	}
+	answersOpen.value = true
+}
 const previewAssignment = ref<CS17Assignment | null>(null)
 const previewSubmission = ref<CS17Submission | null>(null)
 
