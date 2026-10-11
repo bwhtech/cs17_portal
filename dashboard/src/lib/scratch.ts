@@ -2,7 +2,7 @@ import { useColorScheme } from 'frappe-ui'
 
 export const SCRATCH_EDITOR_URL = '/assets/cs17_portal/scratch/editor.html'
 
-export const SCRATCH_TARGET_ORIGIN = '*'
+export const SCRATCH_TARGET_ORIGIN = window.location.origin
 
 export const SCRATCH_MESSAGE = {
 	loadProject: 'load-project',

@@ -99,6 +99,8 @@ function onLoad() {
 }
 
 function onMessage(event: MessageEvent) {
+	if (event.source !== frame.value?.contentWindow || event.origin !== window.location.origin)
+		return
 	const data = event.data ?? {}
 	if (data.type === SCRATCH_MESSAGE.ready) {
 		if (props.readOnly) applyScratchReadOnly(frame.value)
