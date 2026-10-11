@@ -186,7 +186,17 @@ def get_assignment_submissions(assignment: str) -> dict:
 		order_by="submitted_at desc",
 	)
 	_attach_grades(submissions)
-	return {"assignment": assignment_doc, "submissions": submissions}
+	not_submitted = frappe.get_all(
+		"CS17 Profile",
+		filters={
+			"profile_type": "Student",
+			"cohort": assignment_doc.cohort,
+			"name": ["not in", [submission["student"] for submission in submissions]],
+		},
+		fields=["name as student", "full_name"],
+		order_by="full_name asc",
+	)
+	return {"assignment": assignment_doc, "submissions": submissions, "not_submitted": not_submitted}
 
 
 def _attach_grades(submissions: list) -> None:

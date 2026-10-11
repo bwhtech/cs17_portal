@@ -59,14 +59,15 @@
 
 			<section class="space-y-3">
 				<h2 class="text-lg font-semibold text-ink-gray-8">
-					Submissions ({{ submissions.length }})
+					Submissions ({{ submissions.length }} of {{ rows.length }})
 				</h2>
 
 				<DataTable
 					v-model:selection="selection"
 					:columns="columns"
-					:rows="submissions"
+					:rows="rows"
 					:row-key="(row: CS17Submission) => row.name"
+					:is-row-selectable="isSubmitted"
 					selectable
 					empty="No submissions yet."
 				>
@@ -76,12 +77,23 @@
 						}}</span>
 					</template>
 
+					<template #cell-status="{ row }">
+						<Badge
+							:label="isSubmitted(row) ? 'Submitted' : 'Not submitted'"
+							:theme="isSubmitted(row) ? 'green' : 'gray'"
+							variant="subtle"
+						/>
+					</template>
+
 					<template #cell-submitted="{ row }">
-						<span class="text-ink-gray-6">{{ formatDateTime(row.submitted_at) }}</span>
+						<span v-if="isSubmitted(row)" class="text-ink-gray-6">{{
+							formatDateTime(row.submitted_at)
+						}}</span>
+						<span v-else class="text-ink-gray-5">—</span>
 					</template>
 
 					<template #cell-assignees="{ row }">
-						<div @click.stop>
+						<div v-if="isSubmitted(row)" @click.stop>
 							<SubmissionAssignees
 								:submission="row.name"
 								:assigned-to="assigneesOf(row)"
@@ -89,10 +101,11 @@
 								@changed="detail.reload()"
 							/>
 						</div>
+						<span v-else class="text-ink-gray-5">—</span>
 					</template>
 
 					<template #cell-grade="{ row }">
-						<span v-if="!isGraded" class="text-ink-gray-5">—</span>
+						<span v-if="!isSubmitted(row) || !isGraded" class="text-ink-gray-5">—</span>
 						<Badge
 							v-else-if="!row.grade"
 							label="Ungraded"
@@ -112,7 +125,10 @@
 					</template>
 
 					<template #cell-actions="{ row }">
-						<div class="flex flex-wrap items-center gap-2 md:justify-end">
+						<div
+							v-if="isSubmitted(row)"
+							class="flex flex-wrap items-center gap-2 md:justify-end"
+						>
 							<Button label="Preview" @click="previewTarget = row" />
 							<Button
 								v-if="isGraded"
@@ -176,7 +192,7 @@ import { useLoadFailed } from '@/composables/useLoadFailed'
 import { formatDateTime } from '@/lib/dates'
 import { isRefusal } from '@/lib/frappeError'
 import { formatGrade } from '@/lib/grades'
-import type { CS17Assignment, CS17Grade, CS17Submission } from '@/types'
+import type { CS17Assignment, CS17Grade, CS17Student, CS17Submission } from '@/types'
 
 const route = useRoute()
 const breadcrumbs = useBreadcrumbs()
@@ -185,7 +201,7 @@ const { isDesktop } = useBreakpoint()
 const assignmentId = computed(() => String(route.params.assignmentId ?? ''))
 
 const detail = useCall<
-	{ assignment: CS17Assignment; submissions: CS17Submission[] },
+	{ assignment: CS17Assignment; submissions: CS17Submission[]; not_submitted: CS17Student[] },
 	{ assignment: string }
 >({
 	url: '/api/v2/method/cs17_portal.api.get_assignment_submissions',
@@ -196,6 +212,22 @@ const detail = useCall<
 const assignment = computed(() => detail.data?.assignment ?? null)
 const failed = useLoadFailed(detail, { except: isRefusal })
 const submissions = computed(() => detail.data?.submissions ?? [])
+
+/** Every student of the cohort: those who submitted first, then a bare row for each who has not. */
+const rows = computed<CS17Submission[]>(() => [
+	...submissions.value,
+	...(detail.data?.not_submitted ?? []).map((student) => ({
+		name: student.student,
+		student: student.student,
+		full_name: student.full_name,
+		assignment: assignmentId.value,
+		submitted_at: '',
+	})),
+])
+
+function isSubmitted(row: CS17Submission): boolean {
+	return Boolean(row.submitted_at)
+}
 
 const selection = ref<string[]>([])
 const previewTarget = ref<CS17Submission | null>(null)
@@ -220,9 +252,10 @@ const metaRows = computed(() => {
 
 const columns: Column[] = [
 	{ header: 'Student', key: 'student', variant: 'primary' },
-	{ header: 'Submitted', key: 'submitted', width: '11rem' },
-	{ header: 'Assigned to', key: 'assignees', width: '12rem' },
-	{ header: 'Grade', key: 'grade', width: '11rem' },
+	{ header: 'Status', key: 'status', width: '7.5rem' },
+	{ header: 'Submitted', key: 'submitted', width: '9rem' },
+	{ header: 'Assigned to', key: 'assignees', width: '9rem' },
+	{ header: 'Grade', key: 'grade', width: '10rem' },
 	{ header: '', key: 'actions', variant: 'actions', width: '11rem', align: 'right' },
 ]
 

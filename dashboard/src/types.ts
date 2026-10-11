@@ -55,6 +55,11 @@ export interface CS17Submission {
 	grade?: CS17Grade | null
 }
 
+export interface CS17Student {
+	student: string
+	full_name: string
+}
+
 /** `CS17 Assignment Grade`. */
 export interface CS17Grade {
 	name?: string
