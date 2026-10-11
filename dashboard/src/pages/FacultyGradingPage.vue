@@ -1,5 +1,4 @@
 <template>
-	<!-- Zen skips the shell, so the shell header only exists on the way back. -->
 	<AppHeader v-if="!isZen" />
 
 	<LoadError

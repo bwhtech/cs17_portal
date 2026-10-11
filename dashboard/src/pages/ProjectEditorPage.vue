@@ -5,11 +5,6 @@
 		where `min-h` keeps the stage usable instead of collapsing to nothing.
 	-->
 	<div class="flex h-full min-h-[32rem] flex-col overflow-hidden bg-surface-base">
-		<!--
-			The editor carries its own toolbar in both modes: under zen there is no
-			shell header to teleport into, and the actions belong beside the stage
-			either way.
-		-->
 		<div
 			class="flex min-h-12 shrink-0 items-center gap-2 border-b border-outline-gray-1 px-3 sm:px-5"
 		>
@@ -63,11 +58,6 @@
 				</template>
 			</EmptyState>
 
-			<!--
-				The frame waits for the document: it needs `sb3_file` before it can
-				open anything, and mounting it later also spares the iframe a boot
-				it would throw away when zen mode swaps the shell out.
-			-->
 			<div v-else-if="!project.data" class="flex h-full items-center justify-center">
 				<LoadingIndicator class="size-6 text-ink-gray-5" />
 			</div>
@@ -76,6 +66,7 @@
 				v-else
 				ref="frame"
 				:sb3="sb3"
+				:blank="!project.data.sb3_file"
 				:read-only="readOnly"
 				@dirty="onDirty"
 				@sb3="onSb3"
@@ -183,7 +174,7 @@ async function openSavedProject(url: string) {
 		if (!response.ok) return
 		sb3.value = await response.arrayBuffer()
 	} catch {
-		toast.error('Could not open the saved project. Saving now would overwrite it.')
+		toast.error('Could not open the saved project.')
 	}
 }
 
@@ -222,9 +213,12 @@ watch(readOnly, (value) => {
 function requestSave(kind: SaveKind) {
 	if (readOnly.value) return
 	clearAutosave()
+	if (!frame.value?.requestSb3()) {
+		if (kind === 'manual') toast.error('The project is not loaded. Nothing was saved.')
+		return
+	}
 	pendingKind = kind
 	status.value = 'saving'
-	frame.value?.requestSb3()
 }
 
 async function onSb3(payload: { sb3: ArrayBuffer; thumbnail?: string }) {

@@ -54,6 +54,17 @@ export function applyScratchReadOnly(iframe: HTMLIFrameElement | null): void {
 	doc.addEventListener('contextmenu', (event) => event.preventDefault(), true)
 }
 
+interface ScratchRuntime {
+	targets: unknown[]
+	once(event: 'PROJECT_LOADED', listener: () => void): void
+}
+
+type EditorWindow = Window & { cs17vm?: { runtime: ScratchRuntime } }
+
+export function scratchRuntime(iframe: HTMLIFrameElement | null): ScratchRuntime | undefined {
+	return (iframe?.contentWindow as EditorWindow | null | undefined)?.cs17vm?.runtime
+}
+
 export function arrayBufferToBase64(buffer: ArrayBuffer): string {
 	const bytes = new Uint8Array(buffer)
 	const chunkSize = 0x8000
