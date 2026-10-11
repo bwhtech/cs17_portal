@@ -37,6 +37,7 @@ class CS17AssignmentGrade(Document):
 			self.graded_by = frappe.session.user
 
 	def validate(self):
+		self.validate_duplicate()
 		assignment = frappe.db.get_value(
 			"CS17 Assignment", self.assignment, ["assignment_type", "max_marks", "remarks"], as_dict=True
 		)
@@ -51,6 +52,15 @@ class CS17AssignmentGrade(Document):
 
 		if assignment.remarks == "Marks":
 			self.grade = get_grade_for_marks(flt(self.marks_obtained), max_marks, get_default_scale())
+
+	def validate_duplicate(self):
+		if not self.submission:
+			return
+		duplicate = frappe.db.exists(
+			"CS17 Assignment Grade", {"submission": self.submission, "name": ("!=", self.name)}
+		)
+		if duplicate:
+			frappe.throw(_("Grade {0} already exists for this submission.").format(duplicate))
 
 
 def get_grade_for_marks(marks_obtained: float, max_marks: float, scale: str | None) -> str | None:

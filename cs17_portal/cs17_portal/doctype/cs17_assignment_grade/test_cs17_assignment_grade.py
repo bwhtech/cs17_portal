@@ -51,6 +51,7 @@ class IntegrationTestCS17AssignmentGrade(IntegrationTestCase):
 				"remarks": "Solid work",
 			}
 		).insert(ignore_permissions=True)
+		self.addCleanup(self.grade.delete)
 		frappe.set_user("Administrator")
 
 	def test_grade_submission_without_grading_change_keeps_graded_by(self):
@@ -103,6 +104,18 @@ class IntegrationTestCS17AssignmentGrade(IntegrationTestCase):
 			api.update_assignment(assignment, "PDF Task 86", cohort, "2030-01-01 00:00:00", publish="draft")
 
 		self.assertIsNone(frappe.db.get_value("CS17 Assignment", assignment, "publish_on"))
+
+	def test_second_grade_for_same_submission_is_refused(self):
+		second_grade = frappe.get_doc(
+			{
+				"doctype": "CS17 Assignment Grade",
+				"assignment": self.assignment,
+				"submission": self.submission,
+				"marks_obtained": 12,
+			}
+		)
+
+		self.assertRaises(frappe.ValidationError, second_grade.insert)
 
 
 class TestGradeFromMarks(IntegrationTestCase):
