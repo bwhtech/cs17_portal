@@ -12,7 +12,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  plan:
+    runs-on: ubuntu-latest
+    name: Plan UI Tests
+    permissions:
+      pull-requests: read
+    outputs:
+      ui: ${{ steps.changed.outputs.ui }}
+
+    steps:
+      - name: Check changed files
+        id: changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          ui=true
+          if [ -n "$PR_NUMBER" ]; then
+            if files=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" --jq '.[].filename'); then
+              echo "$files"
+              if ! grep -qvE '^(docs/|cs17_portal/tests/|.*\.md$)' <<< "$files"; then
+                ui=false
+              fi
+            fi
+          fi
+          echo "ui=$ui" >> "$GITHUB_OUTPUT"
+
   ui-tests:
+    needs: plan
+    if: needs.plan.outputs.ui == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     name: Playwright E2E Tests
