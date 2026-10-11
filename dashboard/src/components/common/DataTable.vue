@@ -37,7 +37,7 @@
 
 		<!-- `ListRows`, not a bare `v-for`: it feeds the header's select-all the
 		     full set of row keys. -->
-		<ListRows v-else v-slot="{ item }" :items="rows" :row-key="listRowKey">
+		<ListRows v-else v-slot="{ item }" :items="selectableRows" :row-key="listRowKey">
 			<ListRow :value="rowKey(item)" @click="onRowClick?.(item)">
 				<ListCell
 					v-for="column in columns"
@@ -52,6 +52,19 @@
 				</ListCell>
 			</ListRow>
 		</ListRows>
+
+		<template v-if="!loading">
+			<ListRow v-for="row in plainRows" :key="rowKey(row)" @click="onRowClick?.(row)">
+				<ListCell
+					v-for="column in columns"
+					:key="column.header"
+					class="text-base"
+					:class="column.align === 'right' ? 'justify-end' : undefined"
+				>
+					<slot :name="`cell-${column.key}`" :row="row">{{ cellText(row, column) }}</slot>
+				</ListCell>
+			</ListRow>
+		</template>
 	</List>
 
 	<!-- Below `md` the same rows become cards: the primary column is the
@@ -86,7 +99,7 @@
 		>
 			<div class="flex items-start gap-2">
 				<Checkbox
-					v-if="selectable"
+					v-if="selectable && isRowSelectable(row)"
 					:model-value="selection.includes(rowKey(row))"
 					@click.stop
 					@update:model-value="toggleRow(rowKey(row))"
@@ -152,11 +165,18 @@ const props = withDefaults(
 		selectable?: boolean
 		/** The selected row keys. */
 		selection?: string[]
+		/** Rows it returns false for get no checkbox and sit after the others. */
+		isRowSelectable?: (row: T) => boolean
 		onRowClick?: (row: T) => void
 		/** Taller rows for a two-line primary cell; 44 is the dense default. */
 		rowHeight?: number
 	}>(),
-	{ empty: 'Nothing here yet.', selection: () => [], rowHeight: 44 },
+	{
+		empty: 'Nothing here yet.',
+		selection: () => [],
+		isRowSelectable: () => true,
+		rowHeight: 44,
+	},
 )
 
 const emit = defineEmits<{ 'update:selection': [value: string[]] }>()
@@ -190,8 +210,11 @@ const divider = computed(() => (avatarColumn.value ? 'inset' : 'full'))
 const fieldColumns = computed(() => props.columns.filter((c) => (c.variant ?? 'field') === 'field'))
 const actionColumns = computed(() => props.columns.filter((c) => c.variant === 'actions'))
 
+const selectableRows = computed(() => props.rows.filter(props.isRowSelectable))
+const plainRows = computed(() => props.rows.filter((row) => !props.isRowSelectable(row)))
+
 const allSelected = computed(
-	() => props.rows.length > 0 && props.selection.length === props.rows.length,
+	() => selectableRows.value.length > 0 && props.selection.length === selectableRows.value.length,
 )
 
 function toggleRow(key: string) {
@@ -202,6 +225,6 @@ function toggleRow(key: string) {
 }
 
 function toggleAll() {
-	emit('update:selection', allSelected.value ? [] : props.rows.map(props.rowKey))
+	emit('update:selection', allSelected.value ? [] : selectableRows.value.map(props.rowKey))
 }
 </script>

@@ -204,6 +204,14 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 		frappe.set_user(self.faculty_28_user)
 		self.assertRaises(frappe.PermissionError, api.get_assignment_submissions, self.assignment_27)
 
+	def test_get_assignment_submissions_lists_students_who_have_not_submitted(self):
+		absent = make_profile("Student", self.cohort_27, make_user("absent27@cs17test.com"), "Absent 27")
+		frappe.set_user(self.faculty_27_user)
+
+		not_submitted = api.get_assignment_submissions(self.assignment_27)["not_submitted"]
+
+		self.assertEqual([row.student for row in not_submitted], [absent])
+
 	def test_grade_submission_blocks_other_cohort_faculty(self):
 		frappe.set_user(self.faculty_28_user)
 		self.assertRaises(frappe.PermissionError, api.grade_submission, self.submission_27, grade="A")

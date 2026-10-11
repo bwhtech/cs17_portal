@@ -111,6 +111,19 @@ test.describe("Faculty assignment portal", () => {
 		await expect(row.getByRole("button", { name: /^Assigned to/ })).toBeVisible();
 	});
 
+	test("lists a student who has not submitted", async ({ page, request }) => {
+		const absent = await createTestProfile(request, {
+			profileType: "Student",
+			cohort: cohort.name,
+		});
+		await page.goto(`/dashboard/faculty/assignments/${graded.name}`);
+
+		const row = page.locator(LIST_ROW, { hasText: absent.first_name });
+		await expect(row.getByText("Not submitted")).toBeVisible();
+
+		await deleteTestProfile(request, absent.name);
+	});
+
 	test("creates and publishes an assignment from the sheet", async ({ page }) => {
 		const title = `${TEST_ASSIGNMENT_PREFIX} UI ${Date.now()}`;
 		await page.goto("/dashboard/faculty/assignments");
