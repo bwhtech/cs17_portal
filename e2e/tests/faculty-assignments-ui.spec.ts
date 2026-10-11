@@ -291,6 +291,54 @@ test.describe("Faculty assignment portal", () => {
 		expect(state.greenFlag).not.toBe("none");
 	});
 
+	test("keeps a Scratch preview hidden until the editor is read-only", async ({
+		page,
+		request,
+	}) => {
+		const scratch = await createTestAssignment(request, {
+			cohort: cohort.name,
+			submissionType: "Scratch",
+		});
+		const submission = await createTestSubmission(request, {
+			assignment: scratch.name,
+			student: student.name,
+		});
+		const uploaded = await uploadFile(request, {
+			fileName: "project.sb3",
+			content: fs.readFileSync(
+				"cs17_portal/public/scratch/sample.sb3",
+			),
+			doctype: "CS17 Assignment Submission",
+			docname: submission.name,
+		});
+		await updateDoc(request, "CS17 Assignment Submission", submission.name, {
+			submission_document: uploaded.file_url,
+		});
+
+		let releaseBlocks = () => {};
+		const blocksReleased = new Promise<void>((resolve) => {
+			releaseBlocks = resolve;
+		});
+		await page.route("**/scratch/js/pentapod/sb.*.js", async (route) => {
+			await blocksReleased;
+			await route.continue();
+		});
+		await page.goto(`/dashboard/faculty/assignments/${scratch.name}`);
+		const row = page.locator(LIST_ROW, { hasText: student.full_name! });
+		await row.getByRole("button", { name: "Preview", exact: true }).click();
+
+		const player = page.getByTitle("Scratch project player");
+		const editor = player.contentFrame();
+		const costumes = editor.getByText("Costumes", { exact: true });
+		await expect(costumes).toBeAttached();
+		await expect(player).toBeHidden();
+		await costumes.click({ force: true });
+
+		releaseBlocks();
+		await expect(player).toBeVisible();
+		await expect(editor.locator(".blocklySvg")).toBeVisible();
+	});
+
 	test("grades a submission and publishes the grade", async ({ page }) => {
 		await page.goto("/dashboard/faculty/assignments");
 		// The row title is a router link now, not a button.
