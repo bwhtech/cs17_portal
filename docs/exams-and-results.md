@@ -197,6 +197,10 @@ future `published_on` and leaving `is_published` unchecked lets `cs17_portal.tas
 flip the flag when the time passes, so a whole cohort's results go live at once instead of trickling
 out as each is entered.
 
+Unticking `is_published` also clears `published_on`, so a result whose time has passed is not
+published again by the next run. Setting a new `published_on` in the same save keeps that time and
+reschedules the result.
+
 A result can be published or scheduled only when every subject of its exam has marks. The check
 runs at that moment and on no other save: when a result is created published or scheduled, when
 `is_published` is ticked, and when `published_on` is set or changed. It refuses the save and names
