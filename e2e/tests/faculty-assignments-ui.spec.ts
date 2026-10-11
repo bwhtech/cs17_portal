@@ -227,6 +227,23 @@ test.describe("Faculty assignment portal", () => {
 		await deleteDoc(request, "CS17 Quarter", quarter.name);
 	});
 
+	test("shows no form when a draft cannot be loaded", async ({ page, request }) => {
+		const draft = await createTestAssignment(request, {
+			cohort: cohort.name,
+			isPublished: false,
+		});
+		await page.route(/cs17_portal\.api\.get_assignment\?/, (route) =>
+			route.fulfill({ status: 500 }),
+		);
+
+		await page.goto("/dashboard/faculty/assignments");
+		await page.getByRole("button", { name: /^Drafts/ }).click();
+		await page.getByRole("button", { name: draft.title, exact: true }).click();
+
+		await expect(page.getByText("Could not load this draft")).toBeVisible();
+		await expect(page.getByRole("button", { name: "Save Assignment" })).toHaveCount(0);
+	});
+
 	test("previews a Scratch submission in the read-only editor", async ({
 		page,
 		request,
