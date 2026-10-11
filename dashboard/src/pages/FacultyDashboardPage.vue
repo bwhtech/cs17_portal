@@ -24,25 +24,34 @@
 			</p>
 
 			<div v-else class="divide-y divide-outline-gray-1">
-				<RouterLink
+				<div
 					v-for="submission in assigned"
 					:key="submission.name"
-					:to="`/faculty/assignments/${submission.assignment}`"
-					class="-mx-2 flex items-center justify-between gap-4 rounded-4 px-2 py-3 hover:bg-surface-gray-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
+					class="flex items-center justify-between gap-4 py-3"
 				>
 					<div class="min-w-0">
 						<p class="truncate text-base text-ink-gray-8">{{ submission.full_name }}</p>
-						<p class="mt-1 truncate text-sm text-ink-gray-5">
+						<RouterLink
+							:to="`/faculty/assignments/${submission.assignment}`"
+							class="mt-1 block truncate rounded-1 text-sm text-ink-gray-5 hover:text-ink-gray-8 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
+						>
 							{{ submission.assignment_title }}
-						</p>
+						</RouterLink>
 					</div>
-					<span
-						class="shrink-0 text-sm"
-						:class="submission.grade ? 'text-ink-gray-5' : 'text-ink-gray-8'"
-					>
-						{{ submission.grade ? 'Graded' : 'Needs grading' }}
-					</span>
-				</RouterLink>
+					<div class="flex shrink-0 items-center gap-2">
+						<Badge
+							v-if="submission.grade"
+							label="Graded"
+							theme="green"
+							variant="subtle"
+						/>
+						<Button
+							:label="submission.grade ? 'Edit grade' : 'Grade'"
+							icon-right="lucide-arrow-right"
+							:route="`/faculty/submissions/${submission.name}`"
+						/>
+					</div>
+				</div>
 			</div>
 		</section>
 	</PageBody>
@@ -51,7 +60,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { ErrorMessage, Skeleton, useCall } from 'frappe-ui'
+import { Badge, Button, ErrorMessage, Skeleton, useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import { useSession } from '@/composables/useSession'

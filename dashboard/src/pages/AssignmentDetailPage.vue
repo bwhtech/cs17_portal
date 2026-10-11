@@ -25,7 +25,7 @@
 			<!-- The meta panel: everything about the assignment that is a value
 			     rather than prose, plus the one action the student can take. -->
 			<div
-				class="w-full shrink-0 space-y-3 rounded-4 border border-outline-gray-1 p-4 md:w-64"
+				class="w-full shrink-0 space-y-3 rounded-4 border border-outline-gray-1 p-4 md:w-64 md:self-start"
 			>
 				<div>
 					<p class="text-xs text-ink-gray-5">Due</p>
