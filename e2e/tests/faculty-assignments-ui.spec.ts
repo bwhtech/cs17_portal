@@ -244,6 +244,34 @@ test.describe("Faculty assignment portal", () => {
 		await expect(page.getByRole("button", { name: "Save Assignment" })).toHaveCount(0);
 	});
 
+	test("keeps a new assignment empty when a closed draft finishes loading", async ({
+		page,
+		request,
+	}) => {
+		const draft = await createTestAssignment(request, {
+			cohort: cohort.name,
+			isPublished: false,
+		});
+		let answerDraft = () => {};
+		const newAssignmentOpened = new Promise<void>((resolve) => (answerDraft = resolve));
+		await page.route(/cs17_portal\.api\.get_assignment\?/, async (route) => {
+			await newAssignmentOpened;
+			await route.fallback();
+		});
+
+		await page.goto("/dashboard/faculty/assignments");
+		await page.evaluate((key) => localStorage.removeItem(key), DRAFT_KEY);
+		await page.getByRole("button", { name: /^Drafts/ }).click();
+		await page.getByRole("button", { name: draft.title, exact: true }).click();
+		await expect(page.getByRole("dialog")).toBeVisible();
+		await page.keyboard.press("Escape");
+		await expect(page.getByRole("dialog")).toBeHidden();
+		await page.getByRole("button", { name: "New Assignment" }).click();
+		answerDraft();
+
+		await expect(page.getByPlaceholder("Assignment title")).toHaveValue("");
+	});
+
 	test("previews a Scratch submission in the read-only editor", async ({
 		page,
 		request,
