@@ -30,12 +30,15 @@
 				:rows="3"
 			/>
 
-			<PublishFields
-				v-model:mode="publishMode"
-				v-model:publish-on="publishOn"
-				include-draft
-				hint="Published grades are visible to the student."
-			/>
+			<div class="space-y-2">
+				<PublishFields
+					v-model:mode="publishMode"
+					v-model:publish-on="publishOn"
+					include-draft
+					hint="Published grades are visible to the student."
+				/>
+				<ErrorMessage :message="publishOnError" />
+			</div>
 
 			<ErrorMessage v-if="saveError" :message="saveError" />
 		</div>
@@ -91,6 +94,7 @@ const publishMode = ref<PublishMode>('draft')
 const publishOn = ref('')
 /** Validation, kept under the field it belongs to rather than sent to a toast. */
 const fieldError = ref('')
+const publishOnError = ref('')
 /** Whatever the API answered with. */
 const saveError = ref('')
 
@@ -147,16 +151,20 @@ watch(
 			publishOn.value = ''
 		}
 		fieldError.value = ''
+		publishOnError.value = ''
 		saveError.value = ''
 	},
 	{ immediate: true },
 )
 
-watch([grade, marks, publishOn], () => {
+watch([grade, marks], () => {
 	fieldError.value = ''
 })
 
-/** The message to show, or `null` when the form is good to send. */
+watch([publishMode, publishOn], () => {
+	publishOnError.value = ''
+})
+
 function validate(): string | null {
 	if (isGradeScale.value) {
 		if (!grade.value) return 'Please select a grade.'
@@ -169,19 +177,16 @@ function validate(): string | null {
 			return `Marks cannot exceed ${props.maxMarks}.`
 		}
 	}
-	if (publishMode.value === 'schedule' && !publishOn.value) return 'Pick a publish date.'
 	return null
 }
 
 async function handleSave() {
 	if (!props.submission) return
 	saveError.value = ''
-	const message = validate()
-	if (message) {
-		fieldError.value = message
-		return
-	}
-	fieldError.value = ''
+	fieldError.value = validate() ?? ''
+	publishOnError.value =
+		publishMode.value === 'schedule' && !publishOn.value ? 'Pick a publish date.' : ''
+	if (fieldError.value || publishOnError.value) return
 
 	await trySubmit(save, {
 		submission: props.submission.name,
