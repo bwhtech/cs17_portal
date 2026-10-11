@@ -159,10 +159,7 @@ function onUploaded(file: UploadedFile) {
 }
 
 function onUploadFailed(uploadError: unknown) {
-	error.value =
-		typeof uploadError === 'string'
-			? uploadError
-			: frappeErrorMessage(uploadError, 'Could not upload that file. Please try again.')
+	error.value = frappeErrorMessage(uploadError, 'Could not upload that file. Please try again.')
 }
 
 async function save() {
