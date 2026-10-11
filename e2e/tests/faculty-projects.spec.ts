@@ -1,3 +1,4 @@
+import * as fs from "fs";
 import { test, expect, Page } from "@playwright/test";
 import {
 	CS17Assignment,
@@ -14,6 +15,9 @@ import {
 import { createDoc, deleteDoc, getList } from "../helpers/frappe";
 
 const PROJECT_TITLE_PREFIX = "E2E Faculty Project";
+const SAMPLE_PROJECT = fs
+	.readFileSync("cs17_portal/public/scratch/sample.sb3")
+	.toString("base64");
 
 interface CallResult {
 	ok: boolean;
@@ -49,7 +53,11 @@ async function callAsFaculty(
 	);
 }
 
-async function createProjectAsFaculty(page: Page, title: string): Promise<string> {
+async function createProjectAsFaculty(
+	page: Page,
+	title: string,
+	content = btoa("PKtest"),
+): Promise<string> {
 	const created = await callAsFaculty(page, "cs17_portal.api.create_project", {
 		project_title: title,
 	});
@@ -57,9 +65,20 @@ async function createProjectAsFaculty(page: Page, title: string): Promise<string
 	await callAsFaculty(page, "cs17_portal.api.save_project", {
 		project: created.body.message.name,
 		filename: "p.sb3",
-		content: btoa("PKtest"),
+		content,
 	});
 	return created.body.message.name;
+}
+
+function spritesInEditor(page: Page): Promise<string[] | null> {
+	return page
+		.getByTitle("Scratch editor")
+		.contentFrame()
+		.locator("html")
+		.evaluate(() =>
+			(window as any).cs17vm?.runtime.targets.map((target: any) => target.getName()),
+		)
+		.catch(() => null);
 }
 
 test.describe("Faculty Scratch projects", () => {
@@ -169,6 +188,76 @@ test.describe("Faculty Scratch projects", () => {
 		await page.goto(`/dashboard/faculty/projects/${project}/edit`);
 		await expect(page.getByRole("button", { name: "Save" })).toBeVisible();
 		await expect(page.getByRole("button", { name: "Submit", exact: true })).toHaveCount(0);
+	});
+
+	test("keeps the opened project in the editor when zen mode is left", async ({ page }) => {
+		await page.goto("/dashboard/faculty/projects");
+		const project = await createProjectAsFaculty(
+			page,
+			`${PROJECT_TITLE_PREFIX} Zen ${Date.now()}`,
+			SAMPLE_PROJECT,
+		);
+		let saved = "";
+		await page.route("**/cs17_portal.api.save_project*", async (route) => {
+			saved = route.request().postDataJSON().content;
+			await route.fulfill({ json: { data: { sb3_file: "/private/files/p.sb3" } } });
+		});
+
+		await page.goto(`/dashboard/faculty/projects/${project}/edit`);
+		await expect.poll(() => spritesInEditor(page)).toEqual(["Stage"]);
+		const exported = await page
+			.getByTitle("Scratch editor")
+			.contentFrame()
+			.locator("html")
+			.evaluate(async () => (await (window as any).cs17vm.saveProjectSb3()).size);
+
+		await page.getByRole("button", { name: "Exit zen mode" }).click();
+		await expect(page.getByRole("button", { name: "Enter zen mode" })).toBeVisible();
+		expect(await spritesInEditor(page)).toEqual(["Stage"]);
+		await page.getByRole("button", { name: "Save", exact: true }).click();
+		await expect.poll(() => Buffer.from(saved, "base64").length).toBe(exported);
+	});
+
+	test("opens the project again when the editor frame reloads", async ({ page }) => {
+		await page.goto("/dashboard/faculty/projects");
+		const project = await createProjectAsFaculty(
+			page,
+			`${PROJECT_TITLE_PREFIX} Reload ${Date.now()}`,
+			SAMPLE_PROJECT,
+		);
+
+		await page.goto(`/dashboard/faculty/projects/${project}/edit`);
+		await expect.poll(() => spritesInEditor(page)).toEqual(["Stage"]);
+
+		await page.getByRole("button", { name: "Exit zen mode" }).click();
+		const reloaded = page.waitForEvent("framenavigated", (frame) =>
+			frame.url().includes("scratch/editor.html"),
+		);
+		await page.setViewportSize({ width: 390, height: 844 });
+		await reloaded;
+		await expect.poll(() => spritesInEditor(page)).toEqual(["Stage"]);
+	});
+
+	test("does not save over a project that could not be opened", async ({ page }) => {
+		await page.goto("/dashboard/faculty/projects");
+		const project = await createProjectAsFaculty(
+			page,
+			`${PROJECT_TITLE_PREFIX} Unopened ${Date.now()}`,
+		);
+		let saves = 0;
+		await page.route("**/cs17_portal.api.save_project*", async (route) => {
+			saves += 1;
+			await route.fulfill({ json: { data: { sb3_file: "/private/files/p.sb3" } } });
+		});
+		await page.route("**/private/files/**", (route) => route.abort());
+
+		await page.goto(`/dashboard/faculty/projects/${project}/edit`);
+		await page.getByRole("button", { name: "Save", exact: true }).click();
+
+		await expect(
+			page.getByText("The project is not loaded. Nothing was saved."),
+		).toBeVisible();
+		expect(saves).toBe(0);
 	});
 
 	test("a faculty member without System Manager creates and opens a project", async ({
