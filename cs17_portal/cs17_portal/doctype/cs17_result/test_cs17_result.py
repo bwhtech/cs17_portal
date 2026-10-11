@@ -155,3 +155,11 @@ class IntegrationTestCS17Result(IntegrationTestCase):
 			frappe.db.get_value("CS17 Result", self.result, "published_on"),
 			get_datetime("2100-01-01 00:00:00"),
 		)
+
+	def test_published_flag_sent_as_text_zero_unpublishes(self):
+		auto_publish_results()
+		result = frappe.get_doc("CS17 Result", self.result)
+		result.is_published = "0"
+		result.save()
+
+		self.assertIsNone(frappe.db.get_value("CS17 Result", self.result, "published_on"))

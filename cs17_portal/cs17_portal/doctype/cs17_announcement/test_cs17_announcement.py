@@ -1,6 +1,8 @@
 # Copyright (c) 2026, developers@bwh.tech and Contributors
 # See license.txt
 
+from unittest.mock import patch
+
 import frappe
 from frappe.tests import IntegrationTestCase
 
@@ -51,3 +53,19 @@ class IntegrationTestCS17Announcement(IntegrationTestCase):
 	def test_announcement_past_its_publish_time_is_listed_as_published(self):
 		row = next(row for row in get_faculty_announcements() if row.name == self.announcement)
 		self.assertEqual(row.is_published, 1)
+
+	def test_published_flag_sent_as_text_zero_sends_no_email(self):
+		announcement = frappe.get_doc(
+			{
+				"doctype": "CS17 Announcement",
+				"title": "Lab moved to Friday",
+				"content": "Room 204",
+				"cohort": self.cohort,
+				"is_published": "0",
+			}
+		)
+
+		with patch.object(announcement, "send_announcement_email") as send_announcement_email:
+			announcement.insert(ignore_permissions=True)
+
+		send_announcement_email.assert_not_called()

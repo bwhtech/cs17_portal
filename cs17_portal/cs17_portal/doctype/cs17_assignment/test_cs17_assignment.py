@@ -107,6 +107,23 @@ class IntegrationTestCS17Assignment(IntegrationTestCase):
 
 		self.assertIsNone(frappe.db.get_value("CS17 Assignment", name, "publish_on"))
 
+	def test_published_flag_sent_as_text_zero_saves_a_draft(self):
+		faculty_user = make_user("faculty75@cs17test.com")
+		make_profile("Faculty", make_cohort("C70TEST"), faculty_user, "Faculty 75")
+
+		frappe.set_user(faculty_user)
+		self.addCleanup(frappe.set_user, "Administrator")
+		assignment = frappe.get_doc(
+			{
+				"doctype": "CS17 Assignment",
+				"title": "PDF Task 75",
+				"submission_type": "PDF",
+				"is_published": "0",
+			}
+		).insert(ignore_permissions=True)
+
+		self.assertEqual(frappe.db.get_value("CS17 Assignment", assignment.name, "is_published"), 0)
+
 
 class TestQuarterAssignments(IntegrationTestCase):
 	def tearDown(self):
