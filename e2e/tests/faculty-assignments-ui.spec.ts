@@ -102,6 +102,15 @@ test.describe("Faculty assignment portal", () => {
 		await expect(page.getByText("Assignment not found")).toHaveCount(0);
 	});
 
+	test("assigns a submission from its row", async ({ page }) => {
+		await page.goto(`/dashboard/faculty/assignments/${graded.name}`);
+		const row = page.locator(LIST_ROW, { hasText: student.first_name });
+		await row.getByRole("button", { name: "Assign", exact: true }).click();
+		await page.getByRole("option").first().click();
+
+		await expect(row.getByRole("button", { name: /^Assigned to/ })).toBeVisible();
+	});
+
 	test("creates and publishes an assignment from the sheet", async ({ page }) => {
 		const title = `${TEST_ASSIGNMENT_PREFIX} UI ${Date.now()}`;
 		await page.goto("/dashboard/faculty/assignments");
