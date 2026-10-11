@@ -3,6 +3,7 @@
 
 import frappe
 from frappe.model.document import Document
+from frappe.utils import cint
 
 
 class CS17Announcement(Document):
@@ -23,6 +24,9 @@ class CS17Announcement(Document):
 		published_date: DF.Date | None
 		title: DF.Data
 	# end: auto-generated types
+
+	def validate(self):
+		self.is_published = cint(self.is_published)
 
 	def on_update(self):
 		if self.is_published and self.has_value_changed("is_published"):
