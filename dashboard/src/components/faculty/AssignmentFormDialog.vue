@@ -86,6 +86,7 @@
 						type="number"
 						label="Max Marks"
 						min="0"
+						:error="errors.max_marks"
 					/>
 
 					<DateTimePicker
@@ -233,10 +234,13 @@ const confirmDelete = ref(false)
 const savedName = ref<string | null>(null)
 const loadFailed = ref(false)
 
-const errors = reactive<Record<'title' | 'cohort' | 'due_date' | 'publishOn' | 'form', string>>({
+const errors = reactive<
+	Record<'title' | 'cohort' | 'due_date' | 'max_marks' | 'publishOn' | 'form', string>
+>({
 	title: '',
 	cohort: '',
 	due_date: '',
+	max_marks: '',
 	publishOn: '',
 	form: '',
 })
@@ -370,6 +374,7 @@ function clearErrors() {
 	errors.title = ''
 	errors.cohort = ''
 	errors.due_date = ''
+	errors.max_marks = ''
 	errors.publishOn = ''
 	errors.form = ''
 }
@@ -381,11 +386,20 @@ function validate(): boolean {
 	if (publishMode.value !== 'draft') {
 		if (!draft.cohort) errors.cohort = 'Cohort is required to publish.'
 		if (!draft.due_date) errors.due_date = 'Due date is required to publish.'
+		if (evaluationType.value === 'Marks' && !(Number(draft.max_marks) > 0)) {
+			errors.max_marks = 'Max marks are required to publish.'
+		}
 	}
 	if (publishMode.value === 'schedule' && !publishOn.value) {
 		errors.publishOn = 'Pick a publish date.'
 	}
-	return !(errors.title || errors.cohort || errors.due_date || errors.publishOn)
+	return !(
+		errors.title ||
+		errors.cohort ||
+		errors.due_date ||
+		errors.max_marks ||
+		errors.publishOn
+	)
 }
 
 function reset() {

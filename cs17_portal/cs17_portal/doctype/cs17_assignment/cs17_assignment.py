@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cint, get_datetime
+from frappe.utils import cint, flt, get_datetime
 
 
 class CS17Assignment(Document):
@@ -51,6 +51,8 @@ class CS17Assignment(Document):
 			frappe.throw(_("A cohort is required to publish an assignment"))
 		if not self.due_date:
 			frappe.throw(_("A due date is required to publish an assignment"))
+		if self.remarks == "Marks" and flt(self.max_marks) <= 0:
+			frappe.throw(_("Max marks are required to publish an assignment"))
 
 	def _validate_stays_published(self):
 		from cs17_portal.api import is_published_now
