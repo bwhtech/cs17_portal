@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt
+from frappe.utils import cint, flt
 
 from cs17_portal.cs17_portal.doctype.cs17_assignment.cs17_assignment import get_quarter_assignments
 from cs17_portal.cs17_portal.doctype.cs17_assignment_grade.cs17_assignment_grade import get_student_grades
@@ -55,6 +55,7 @@ class CS17Result(Document):
 		self.sync_scores_with_exam()
 		self.sync_assignments_with_quarter()
 		self.calculate()
+		self.is_published = cint(self.is_published)
 		self.clear_schedule_when_unpublished()
 		self.validate_publishable()
 

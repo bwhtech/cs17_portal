@@ -40,6 +40,7 @@ class CS17Assignment(Document):
 		if self.assignment_type == "Not Graded":
 			self.max_marks = 0
 			self.remarks = ""
+		self.is_published = cint(self.is_published)
 		self._validate_publishable()
 		self._validate_stays_published()
 
@@ -54,7 +55,6 @@ class CS17Assignment(Document):
 	def _validate_stays_published(self):
 		from cs17_portal.api import is_published_now
 
-		self.is_published = cint(self.is_published)
 		if self.publish_on:
 			self.publish_on = get_datetime(self.publish_on)
 		previous = self.get_doc_before_save()
