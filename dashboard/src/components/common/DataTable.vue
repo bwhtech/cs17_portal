@@ -42,6 +42,7 @@
 				<ListCell
 					v-for="column in columns"
 					:key="column.header"
+					class="text-base"
 					:class="column.align === 'right' ? 'justify-end' : undefined"
 					@click="column.variant === 'actions' && $event.stopPropagation()"
 				>
