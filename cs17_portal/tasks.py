@@ -2,16 +2,6 @@ import frappe
 from frappe.utils import now_datetime, today
 
 
-def publish_all_existing_assignments():
-	"""One-time: publish all assignments that have no publish_on schedule (legacy records)."""
-	Assignment = frappe.qb.DocType("CS17 Assignment")
-	(
-		frappe.qb.update(Assignment)
-		.set(Assignment.is_published, 1)
-		.where((Assignment.is_published == 0) & Assignment.publish_on.isnull())
-	).run()
-
-
 def auto_publish_assignments():
 	_publish_due("CS17 Assignment", "publish_on")
 
