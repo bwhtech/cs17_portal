@@ -197,7 +197,9 @@ def edit_submission(submission: str, file_url: str) -> dict:
 		},
 		pluck="name",
 	)
-	if sub_doc.submission_document:
+	if sub_doc.submission_document and frappe.db.exists(
+		"File", {"file_url": sub_doc.submission_document, "attached_to_name": submission}
+	):
 		leftover += frappe.get_all(
 			"File",
 			filters={
