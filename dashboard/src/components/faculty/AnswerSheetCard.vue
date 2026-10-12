@@ -12,8 +12,8 @@
 				{{ sheet.tasks.length }} {{ sheet.tasks.length === 1 ? 'task' : 'tasks'
 				}}<template v-if="sheet.students.length">
 					· {{ sheet.students.length }}
-					{{ sheet.students.length === 1 ? 'student' : 'students' }}</template
-				>
+					{{ sheet.students.length === 1 ? 'student' : 'students' }}
+				</template>
 			</p>
 			<p
 				v-if="unmatched.length"
