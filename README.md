@@ -37,6 +37,8 @@ SITE_HOST=cs17.localhost:8000 yarn test:e2e
 
 [docs/answer-sheets.md](docs/answer-sheets.md) explains answer sheets: the file a faculty uploads, and what students see.
 
+[docs/zip-preview.md](docs/zip-preview.md) explains how a ZIP submission is opened in the portal, for faculty and for students.
+
 ### Contributing
 
 This app uses `pre-commit` for code formatting and linting. Please [install pre-commit](https://pre-commit.com/#installation) and enable it for this repository:
