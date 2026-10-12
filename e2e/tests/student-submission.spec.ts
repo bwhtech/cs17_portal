@@ -56,6 +56,10 @@ async function submitAsStudent(page: Page, assignment: string, fileUrl: string) 
 	);
 }
 
+const SAMPLE_PROJECT = fs
+	.readFileSync("cs17_portal/public/scratch/sample.sb3")
+	.toString("base64");
+
 const BLANK_PDF =
 	"JVBERi0xLjQKMSAwIG9iago8PC9UeXBlL0NhdGFsb2cvUGFnZXMgMiAwIFI+PgplbmRvYmoKMiAwIG9iago8PC9UeXBlL1BhZ2VzL0tpZHNbMyAwIFJdL0NvdW50IDE+PgplbmRvYmoKMyAwIG9iago8PC9UeXBlL1BhZ2UvUGFyZW50IDIgMCBSL01lZGlhQm94WzAgMCAzIDNdPj4KZW5kb2JqCnhyZWYKMCA0CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAwOSAwMDAwMCBuIAowMDAwMDAwMDU0IDAwMDAwIG4gCjAwMDAwMDAxMDUgMDAwMDAgbiAKdHJhaWxlcgo8PC9TaXplIDQvUm9vdCAxIDAgUj4+CnN0YXJ0eHJlZgoxNjYKJSVFT0YK";
 
@@ -97,7 +101,7 @@ async function saveProjectAsStudent(page: Page, project: string) {
 		{ timeout: 15000 },
 	);
 	return page.evaluate(
-		async ({ project }) => {
+		async ({ project, content }) => {
 			const token =
 				(window as any).csrf_token ?? (window as any).frappe?.csrf_token;
 			const resp = await fetch("/api/method/cs17_portal.api.save_project", {
@@ -109,12 +113,12 @@ async function saveProjectAsStudent(page: Page, project: string) {
 				body: JSON.stringify({
 					project,
 					filename: "project.sb3",
-					content: btoa("PKtest"),
+					content,
 				}),
 			});
 			return { ok: resp.ok, status: resp.status };
 		},
-		{ project },
+		{ project, content: SAMPLE_PROJECT },
 	);
 }
 
@@ -146,7 +150,7 @@ async function submitScratchAsStudent(page: Page, assignment: string, title: str
 		{ timeout: 15000 },
 	);
 	return page.evaluate(
-		async ({ assignment, title }) => {
+		async ({ assignment, title, content }) => {
 			const token =
 				(window as any).csrf_token ?? (window as any).frappe?.csrf_token;
 			const call = async (method: string, body: unknown) => {
@@ -166,12 +170,12 @@ async function submitScratchAsStudent(page: Page, assignment: string, title: str
 			await call("cs17_portal.api.save_project", {
 				project,
 				filename: "p.sb3",
-				content: btoa("PKtest"),
+				content,
 			});
 			await call("cs17_portal.api.submit_scratch_project", { assignment, project });
 			return project as string;
 		},
-		{ assignment, title },
+		{ assignment, title, content: SAMPLE_PROJECT },
 	);
 }
 
