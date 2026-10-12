@@ -12,8 +12,10 @@
 			<Dropdown :options="options" side="top" align="center" :offset="8">
 				<Button
 					label="Assign to"
-					icon-left="lucide-user-plus"
-					icon-right="lucide-chevron-up"
+					:icon-left="isDesktop ? 'lucide-user-plus' : undefined"
+					:icon-right="isDesktop ? 'lucide-chevron-up' : undefined"
+					:icon="isDesktop ? undefined : 'lucide-user-plus'"
+					:tooltip="isDesktop ? undefined : 'Assign to'"
 					:loading="assign.loading"
 				/>
 				<template #item-prefix="{ item }">
@@ -23,8 +25,10 @@
 
 			<Button
 				v-if="draftGrades"
-				:label="`Publish ${draftGrades} ${draftGrades === 1 ? 'grade' : 'grades'}`"
-				icon-left="lucide-send"
+				:label="publishLabel"
+				:icon-left="isDesktop ? 'lucide-send' : undefined"
+				:icon="isDesktop ? undefined : 'lucide-send'"
+				:tooltip="isDesktop ? undefined : publishLabel"
 				:loading="publish.loading"
 				@click="confirmPublish"
 			/>
@@ -43,6 +47,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Avatar, Button, Dropdown, dialog, toast, useCall } from 'frappe-ui'
+import { useBreakpoint } from '@/composables/useBreakpoint'
+import { useFacultyMembers } from '@/composables/useFacultyMembers'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { trySubmit } from '@/lib/trySubmit'
 import type { FacultyMember } from '@/types'
@@ -57,11 +63,13 @@ const props = defineProps<{
 
 const emit = defineEmits<{ done: []; clear: [] }>()
 
-const members = useCall<FacultyMember[], { cohort?: string }>({
-	url: '/api/v2/method/cs17_portal.api.get_faculty_members',
-	params: () => ({ cohort: props.cohort }),
-	cacheKey: ['faculty-members', props.cohort ?? ''],
-})
+const { isDesktop } = useBreakpoint()
+
+const publishLabel = computed(
+	() => `Publish ${props.draftGrades} ${props.draftGrades === 1 ? 'grade' : 'grades'}`,
+)
+
+const members = useFacultyMembers(props.cohort)
 
 const assign = useCall<null, { submissions: string[]; assign_to: string }>({
 	url: '/api/v2/method/cs17_portal.api.assign_submissions',

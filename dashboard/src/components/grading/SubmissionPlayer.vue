@@ -16,11 +16,19 @@
 			</template>
 		</template>
 
+		<div
+			v-else-if="fileMissing"
+			class="flex h-full items-center justify-center p-6 text-center"
+		>
+			<p class="text-p-base text-ink-gray-5">Could not load the submitted file.</p>
+		</div>
+
 		<div v-else-if="kind === 'image'" class="flex h-full items-center justify-center p-4">
 			<img
 				:src="fileUrl ?? undefined"
 				:alt="`Submitted image by ${studentName}`"
 				class="max-h-full max-w-full rounded-3 object-contain"
+				@error="fileMissing = true"
 			/>
 		</div>
 
@@ -35,7 +43,7 @@
 			v-else-if="fileUrl"
 			class="flex h-full flex-col items-center justify-center gap-3 p-6 text-center"
 		>
-			<p class="max-w-md break-all text-p-sm text-ink-gray-5">{{ fileUrl }}</p>
+			<p class="max-w-md text-p-sm [overflow-wrap:anywhere] text-ink-gray-5">{{ fileUrl }}</p>
 			<Button icon-left="lucide-external-link" label="Open submission" :href="fileUrl" />
 		</div>
 
@@ -46,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef, watch, type ShallowRef } from 'vue'
+import { computed, ref, shallowRef, watch, type ShallowRef } from 'vue'
 import { Button, Skeleton, useCall } from 'frappe-ui'
 import ScratchFrame from '@/components/scratch/ScratchFrame.vue'
 import { base64ToArrayBuffer } from '@/lib/scratch'
@@ -65,6 +73,18 @@ const props = defineProps<{
 
 const isScratch = computed(() => props.submissionType === 'Scratch')
 const kind = computed(() => previewKind(props.submissionType ?? undefined, props.fileUrl))
+
+const fileMissing = ref(false)
+watch(
+	() => props.fileUrl,
+	async (fileUrl) => {
+		fileMissing.value = false
+		if (!fileUrl || kind.value !== 'pdf') return
+		const response = await fetch(fileUrl, { method: 'HEAD' }).catch(() => null)
+		fileMissing.value = !response?.ok
+	},
+	{ immediate: true },
+)
 
 /**
  * The `.sb3` comes back base64-encoded, and only for Scratch — the endpoint

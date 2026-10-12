@@ -10,6 +10,7 @@
 	<form
 		v-else
 		class="grid grid-cols-2 gap-3 md:flex md:items-end md:gap-4"
+		novalidate
 		@submit.prevent="save"
 	>
 		<FormControl
@@ -23,6 +24,7 @@
 			:error="marksError"
 			min="0"
 			:max="maxMarks"
+			step="any"
 		/>
 
 		<FormControl
@@ -162,7 +164,10 @@ const saveCall = useCall<
 /** `null` for "no marks", a number otherwise — or an error message. */
 function readMarks(): { value: number | null } | { error: string } {
 	const raw = marks.value.trim()
-	if (!showMarks.value || raw === '') return { value: null }
+	if (!showMarks.value) return { value: null }
+	if (raw === '') {
+		return props.evaluationType === 'Marks' ? { error: 'Enter the marks.' } : { value: null }
+	}
 	const value = Number(raw)
 	if (Number.isNaN(value)) return { error: 'Marks must be a number.' }
 	if (value < 0) return { error: 'Marks cannot be negative.' }
