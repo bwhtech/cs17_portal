@@ -99,6 +99,35 @@ class TestSubmissionArchive(FrappeTestCase):
 		for file_name, submission in submissions.items():
 			self.assertEqual(submission_archive.get_submission_archive(submission)["filename"], file_name)
 
+	def test_submission_without_its_file_is_reported_missing(self):
+		cohort = make_cohort("C45TEST")
+		faculty_user = make_user("faculty45@cs17test.com")
+		make_profile("Faculty", cohort, faculty_user, "Faculty 45")
+		frappe.set_user(faculty_user)
+		assignment = make_assignment(cohort, "Terminal Task 45", "ZIP", 20)
+
+		student_user = make_user("student45@cs17test.com")
+		make_profile("Student", cohort, student_user, "Student 45")
+		frappe.set_user(student_user)
+		file = frappe.get_doc(
+			{
+				"doctype": "File",
+				"file_name": "terminal-45.zip",
+				"is_private": 1,
+				"content": make_zip(FILES),
+			}
+		).save(ignore_permissions=True)
+		submission = submit_assignment(assignment, file.file_url)["name"]
+		frappe.db.delete("File", {"attached_to_name": submission})
+
+		frappe.set_user(faculty_user)
+		self.assertRaisesRegex(
+			frappe.DoesNotExistError,
+			"This submission's file is missing.",
+			submission_archive.get_submission_archive,
+			submission,
+		)
+
 	def test_student_cannot_read_a_submission_archive(self):
 		cohort = make_cohort("C33TEST")
 		student_user = make_user("student33@cs17test.com")

@@ -617,10 +617,16 @@ def get_submission_project(submission: str) -> dict:
 	if not submission_doc.submission_document:
 		frappe.throw(_("This submission has no project file."))
 
-	snapshot_file = frappe.get_doc(
+	attached_file = frappe.db.get_value(
 		"File",
 		{"file_url": submission_doc.submission_document, "attached_to_name": submission},
+		"*",
+		as_dict=True,
 	)
+	if not attached_file:
+		frappe.throw(_("This submission's project file is missing."), frappe.DoesNotExistError)
+
+	snapshot_file = frappe.get_doc({"doctype": "File", **attached_file})
 	return {
 		"filename": snapshot_file.file_name,
 		"content": base64.b64encode(snapshot_file.get_content()).decode(),
