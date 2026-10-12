@@ -19,10 +19,18 @@ def get_answer_sheet(assignment: str) -> dict:
 @frappe.whitelist(methods=["POST"])
 def upload_answer_sheet(assignment: str, file_url: str) -> dict:
 	require_faculty_for_assignment(assignment)
-	file = frappe.get_doc("File", {"file_url": file_url, "owner": frappe.session.user})
+	file = frappe.get_doc(
+		"File",
+		{"file_url": file_url, "owner": frappe.session.user, "attached_to_name": ("is", "not set")},
+	)
 	cohort = frappe.db.get_value(ASSIGNMENT, assignment, "cohort")
-	sheet = parse_answer_sheet(read_rows(file), cohort)
+	try:
+		sheet = parse_answer_sheet(read_rows(file), cohort)
+	except Exception:
+		frappe.enqueue("frappe.delete_doc", doctype="File", name=file.name, ignore_permissions=True)
+		raise
 	frappe.db.set_value(ASSIGNMENT, assignment, "answer_sheet", frappe.as_json(sheet))
+	frappe.delete_doc("File", file.name, ignore_permissions=True)
 	return read_answer_sheet(assignment)
 
 
