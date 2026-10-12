@@ -368,6 +368,32 @@ class TestCS17Project(FrappeTestCase):
 			1,
 		)
 
+	def test_project_file_that_is_not_a_zip_is_refused(self):
+		frappe.set_user(STUDENT1_USER)
+		project = api.create_project("Student 1 Project")["name"]
+
+		self.assertRaisesRegex(
+			frappe.ValidationError,
+			"This file is not a Scratch project.",
+			api.save_project,
+			project,
+			"project.sb3",
+			b64(b"PK\x03\x04v1"),
+		)
+
+	def test_zip_without_project_json_is_refused(self):
+		frappe.set_user(STUDENT1_USER)
+		project = api.create_project("Student 1 Project")["name"]
+
+		self.assertRaisesRegex(
+			frappe.ValidationError,
+			"This file is not a Scratch project.",
+			api.save_project,
+			project,
+			"project.sb3",
+			b64(make_zip({"notes.txt": b"ls -la\n"})),
+		)
+
 	def test_first_submit_saves_the_submission_once(self):
 		project = self.make_saved_project()
 		submission = frappe.get_doc(
