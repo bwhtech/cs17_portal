@@ -1044,7 +1044,7 @@ def update_assignment(
 		cohort,
 		due_date,
 		doc.submission_type if submission_type is None else submission_type,
-		description,
+		doc.description if description is None else description,
 		doc.assignment_type if assignment_type is None else assignment_type,
 		doc.max_marks if max_marks is None else max_marks,
 		doc.remarks if remarks is None else remarks,
