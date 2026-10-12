@@ -6,7 +6,12 @@ from unittest.mock import patch
 import frappe
 from frappe.tests import IntegrationTestCase
 
-from cs17_portal.api import create_announcement, get_faculty_announcements, update_announcement
+from cs17_portal.api import (
+	create_announcement,
+	get_faculty_announcements,
+	publish_announcement,
+	update_announcement,
+)
 from cs17_portal.tasks import auto_publish_announcements
 from cs17_portal.tests.test_api import make_cohort, make_profile, make_user
 
@@ -50,6 +55,22 @@ class IntegrationTestCS17Announcement(IntegrationTestCase):
 			"Lab moved to Monday",
 			"Room 204",
 			cohort=self.cohort,
+		)
+
+	def test_announcement_past_its_publish_time_cannot_be_published_again(self):
+		self.assertRaises(frappe.ValidationError, publish_announcement, self.announcement)
+
+	def test_published_announcement_cannot_be_scheduled(self):
+		announcement = create_announcement(
+			"Quiz moved to Monday", "Room 204", cohort=self.cohort, publish="now"
+		)
+
+		self.assertRaises(
+			frappe.ValidationError,
+			publish_announcement,
+			announcement,
+			publish="schedule",
+			publish_on=frappe.utils.add_days(frappe.utils.now(), 1),
 		)
 
 	def test_announcement_past_its_publish_time_is_listed_as_published(self):
