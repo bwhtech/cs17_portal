@@ -253,6 +253,20 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 		frappe.set_user(self.faculty_28_user)
 		self.assertRaises(frappe.PermissionError, api.grade_submission, self.submission_27, grade="A")
 
+	def test_grade_submission_stores_remarks_without_the_spaces_around_them(self):
+		frappe.set_user(self.faculty_28_user)
+		grade = api.grade_submission(self.submission_28, grade="B", remarks="Good work  ")["name"]
+		self.addCleanup(frappe.delete_doc, "CS17 Assignment Grade", grade)
+
+		self.assertEqual(frappe.db.get_value("CS17 Assignment Grade", grade, "remarks"), "Good work")
+
+	def test_grade_submission_stores_empty_remarks_as_no_remarks(self):
+		frappe.set_user(self.faculty_28_user)
+		grade = api.grade_submission(self.submission_28, grade="B", remarks="")["name"]
+		self.addCleanup(frappe.delete_doc, "CS17 Assignment Grade", grade)
+
+		self.assertIsNone(frappe.db.get_value("CS17 Assignment Grade", grade, "remarks"))
+
 	def test_grade_cannot_be_scheduled_for_a_time_that_has_passed(self):
 		frappe.set_user(self.faculty_27_user)
 		with self.assertRaises(frappe.ValidationError):
@@ -381,6 +395,20 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 	def test_save_grade_hides_missing_submission_from_student(self):
 		frappe.set_user(self.student_user)
 		self.assertRaises(frappe.PermissionError, api.save_grade, "missing-submission")
+
+	def test_save_grade_stores_remarks_without_the_spaces_around_them(self):
+		frappe.set_user(self.faculty_28_user)
+		grade = api.save_grade(self.submission_28, grade="B", remarks="Good work  ")
+		self.addCleanup(frappe.delete_doc, "CS17 Assignment Grade", grade["name"])
+
+		self.assertEqual(grade["remarks"], "Good work")
+
+	def test_save_grade_stores_empty_remarks_as_no_remarks(self):
+		frappe.set_user(self.faculty_28_user)
+		grade = api.save_grade(self.submission_28, grade="B", remarks="")
+		self.addCleanup(frappe.delete_doc, "CS17 Assignment Grade", grade["name"])
+
+		self.assertIsNone(grade["remarks"])
 
 	def test_faculty_lists_only_own_cohort_assignments(self):
 		frappe.set_user(self.faculty_27_user)
