@@ -37,7 +37,7 @@ def get_submission_archive(submission: str) -> dict:
 	if not submitted.submission_document:
 		frappe.throw(_("This submission has no file."))
 
-	file = frappe.get_doc("File", {"file_url": submitted.submission_document})
+	file = frappe.get_doc("File", {"file_url": submitted.submission_document, "attached_to_name": submission})
 	return {"filename": file.file_name, "entries": read_archive(file.get_content())}
 
 

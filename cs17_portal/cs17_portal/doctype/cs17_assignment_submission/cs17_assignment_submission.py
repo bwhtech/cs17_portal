@@ -146,12 +146,18 @@ def is_valid_url(value: str) -> bool:
 	return parsed.scheme in ("http", "https") and bool(parsed.netloc)
 
 
-def resolve_submission(assignment: str, file_url: str) -> dict:
+def resolve_submission(assignment: str, file_url: str, submission: str | None = None) -> dict:
 	submission_type = frappe.db.get_value("CS17 Assignment", assignment, "submission_type")
 	validate_submission_value(submission_type, file_url)
 	if submission_type == "URL":
 		return {"submission_url": file_url, "submission_document": None}
-	if not frappe.db.exists("File", {"file_url": file_url, "owner": frappe.session.user}):
+	uploaded = frappe.db.exists(
+		"File",
+		{"file_url": file_url, "owner": frappe.session.user, "attached_to_name": ("is", "not set")},
+	)
+	if not uploaded and not (
+		submission and frappe.db.exists("File", {"file_url": file_url, "attached_to_name": submission})
+	):
 		frappe.throw(_("Upload your file before submitting it."))
 	return {"submission_document": file_url, "submission_url": None}
 
@@ -178,7 +184,7 @@ def edit_submission(submission: str, file_url: str) -> dict:
 	sub_doc = frappe.get_doc("CS17 Assignment Submission", submission)
 	if sub_doc.student != student:
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	sub_doc.update(resolve_submission(sub_doc.assignment, file_url))
+	sub_doc.update(resolve_submission(sub_doc.assignment, file_url, submission))
 	sub_doc.submitted_at = frappe.utils.now_datetime()
 	sub_doc.save(ignore_permissions=True)
 	return {"name": sub_doc.name}

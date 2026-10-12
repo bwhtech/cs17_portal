@@ -117,6 +117,26 @@ class TestSubmissionFileOwnership(FrappeTestCase):
 		frappe.set_user(student_user)
 		self.assertRaises(frappe.ValidationError, submit_assignment, assignment, "/private/files/report.pdf")
 
+	def test_file_attached_to_a_submission_needs_a_new_upload_to_submit_again(self):
+		cohort = make_cohort("C34TEST")
+		student_user = make_user("student34@cs17test.com")
+		make_profile("Student", cohort, student_user, "Student 34")
+		faculty_user = make_user("faculty34@cs17test.com")
+		make_profile("Faculty", cohort, faculty_user, "Faculty 34")
+
+		frappe.set_user(faculty_user)
+		first = make_assignment(cohort, "Notes Task 34", "Any", 20)
+		second = make_assignment(cohort, "Notes Task 35", "Any", 20)
+
+		frappe.set_user(student_user)
+		file = frappe.get_doc(
+			{"doctype": "File", "file_name": "notes-34.txt", "is_private": 1, "content": "notes 34"}
+		).save(ignore_permissions=True)
+		submission = submit_assignment(first, file.file_url)["name"]
+
+		self.assertRaises(frappe.ValidationError, submit_assignment, second, file.file_url)
+		self.assertEqual(edit_submission(submission, file.file_url), {"name": submission})
+
 
 class TestGradePastItsPublishTime(FrappeTestCase):
 	@classmethod
