@@ -1,7 +1,7 @@
 # Copyright (c) 2026, developers@bwh.tech and Contributors
 # See license.txt
 
-# import frappe
+import frappe
 from frappe.tests import IntegrationTestCase
 
 # On IntegrationTestCase, the doctype test records and all
@@ -12,9 +12,13 @@ IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 
 
 class IntegrationTestCS17Cohort(IntegrationTestCase):
-	"""
-	Integration tests for CS17Cohort.
-	Use this class for testing interactions between multiple components.
-	"""
+	def test_cohort_code_unusable_in_a_profile_name_is_refused(self):
+		cohort = frappe.get_doc(
+			{
+				"doctype": "CS17 Cohort",
+				"cohort_code": "TESTCOHORT (A)",
+				"start_date": "2026-01-01",
+			}
+		)
 
-	pass
+		self.assertRaises(frappe.ValidationError, cohort.insert, ignore_permissions=True)
