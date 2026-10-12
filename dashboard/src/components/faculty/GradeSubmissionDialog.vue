@@ -77,7 +77,7 @@ const props = defineProps<{
 	/** The row being graded. Its `grade`, when set, seeds the form. */
 	submission: CS17Submission | null
 	/** The assignment's `remarks` field: `Grade` scores a letter, `Marks` a number. */
-	evaluationType: EvaluationType
+	evaluationType: EvaluationType | ''
 	maxMarks?: number
 }>()
 

@@ -34,7 +34,7 @@ export interface CS17Assignment {
 	submission_type?: SubmissionType
 	assignment_type?: AssignmentType
 	/** `Grade` or `Marks` — the field is named `remarks` in the doctype. */
-	remarks?: EvaluationType | null
+	remarks?: EvaluationType | '' | null
 	max_marks?: number
 	is_published?: Bool
 	publish_on?: string | null
