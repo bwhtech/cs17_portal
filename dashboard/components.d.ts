@@ -24,6 +24,7 @@ declare module 'vue' {
     AppMobileNav: typeof import('./src/components/shell/AppMobileNav.vue')['default']
     AppShell: typeof import('./src/components/shell/AppShell.vue')['default']
     AppSidebar: typeof import('./src/components/shell/AppSidebar.vue')['default']
+    ArchiveViewer: typeof import('./src/components/grading/ArchiveViewer.vue')['default']
     AssignmentFormDialog: typeof import('./src/components/faculty/AssignmentFormDialog.vue')['default']
     AssignmentPreview: typeof import('./src/components/faculty/AssignmentPreview.vue')['default']
     AssignmentTable: typeof import('./src/components/assignments/AssignmentTable.vue')['default']

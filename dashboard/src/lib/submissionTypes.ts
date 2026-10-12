@@ -7,6 +7,7 @@ export interface SubmissionTypeConfig {
 }
 
 export const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.webp']
+export const ARCHIVE_EXTENSIONS = ['.zip', '.tar.gz', '.tgz']
 
 const SUBMISSION_TYPE_CONFIG: Record<string, SubmissionTypeConfig> = {
 	PDF: {
@@ -28,7 +29,7 @@ const SUBMISSION_TYPE_CONFIG: Record<string, SubmissionTypeConfig> = {
 		help: 'Accepted: .zip, .tar.gz, .tgz.',
 		error: 'Please upload a ZIP archive only (.zip, .tar.gz, or .tgz).',
 		accept: '.zip,.tar.gz,.tgz',
-		extensions: ['.zip', '.tar.gz', '.tgz'],
+		extensions: ARCHIVE_EXTENSIONS,
 	},
 	URL: {
 		label: 'Paste a URL only',
@@ -66,7 +67,7 @@ export function isSubmissionValid(submissionType: string, file: File | null, url
 	return config.extensions.some((ext) => name.endsWith(ext))
 }
 
-export type PreviewKind = 'image' | 'pdf' | 'url' | 'file'
+export type PreviewKind = 'image' | 'pdf' | 'url' | 'archive' | 'file'
 
 export function previewKind(
 	submissionType: string | undefined,
@@ -79,6 +80,7 @@ export function previewKind(
 		return 'image'
 	}
 	if (submissionType === 'PDF' || lower.endsWith('.pdf')) return 'pdf'
+	if (ARCHIVE_EXTENSIONS.some((e) => lower.endsWith(e))) return 'archive'
 	// A stored upload lives under /files/; treat any other link as a URL.
 	if (/^https?:\/\//.test(lower) && !lower.includes('/files/')) return 'url'
 	return 'file'
