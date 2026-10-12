@@ -53,8 +53,8 @@ column per student after `Scored`.
 ```
 
 - Under a student, `OK` becomes Correct and any other text becomes Incorrect, with the text
-  kept as the note. An empty cell, or a row with Scored "No", is Not scored. Half is never
-  guessed; set it in the portal.
+  kept as the note. Text that starts with `Half:` becomes Half, and the rest of it is the
+  note: `Half: named gallary`. An empty cell, or a row with Scored "No", is Not scored.
 - A row with no number but with student cells is an extra line for each student, named by
   its `Task` cell: Score, Errors, Grade, Notes. Each student sees their own.
 - A column heading is matched to a student of the assignment's cohort by full name, first
