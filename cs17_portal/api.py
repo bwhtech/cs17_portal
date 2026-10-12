@@ -43,6 +43,7 @@ def update_my_profile(first_name: str, last_name: str, profile_picture: str = ""
 		)
 	):
 		frappe.throw(_("Upload your photo before saving it."))
+	previous_picture = profile.profile_picture
 	profile.update(
 		{
 			"first_name": first_name,
@@ -51,6 +52,18 @@ def update_my_profile(first_name: str, last_name: str, profile_picture: str = ""
 		}
 	)
 	profile.save(ignore_permissions=True)
+	if profile.profile_picture != previous_picture:
+		for file_name in frappe.get_all(
+			"File",
+			filters={
+				"attached_to_doctype": "CS17 Profile",
+				"attached_to_name": profile.name,
+				"attached_to_field": "profile_picture",
+				"file_url": ("!=", profile.profile_picture or ""),
+			},
+			pluck="name",
+		):
+			frappe.delete_doc("File", file_name, ignore_permissions=True)
 	return {
 		"name": profile.name,
 		"full_name": profile.full_name,
