@@ -151,12 +151,17 @@ def resolve_submission(assignment: str, file_url: str, submission: str | None = 
 	validate_submission_value(submission_type, file_url)
 	if submission_type == "URL":
 		return {"submission_url": file_url, "submission_document": None}
-	uploaded = frappe.db.exists(
+	uploaded = frappe.get_all(
 		"File",
-		{"file_url": file_url, "owner": frappe.session.user, "attached_to_name": ("is", "not set")},
+		filters={"file_url": file_url, "owner": frappe.session.user, "attached_to_name": ("is", "not set")},
+		pluck="file_url",
 	)
-	if not uploaded and not (
-		submission and frappe.db.exists("File", {"file_url": file_url, "attached_to_name": submission})
+	if file_url not in uploaded and not (
+		submission
+		and file_url
+		in frappe.get_all(
+			"File", filters={"file_url": file_url, "attached_to_name": submission}, pluck="file_url"
+		)
 	):
 		frappe.throw(_("Upload your file before submitting it."))
 	return {"submission_document": file_url, "submission_url": None}
