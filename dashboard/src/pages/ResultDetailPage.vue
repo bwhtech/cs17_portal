@@ -182,6 +182,7 @@ const { isDesktop } = useBreakpoint()
 const resultCall = useCall<CS17Result, { result: string }>({
 	url: '/api/v2/method/cs17_portal.api.get_student_result',
 	params: () => ({ result: props.resultId }),
+	refetch: true,
 })
 
 const result = computed(() => resultCall.data ?? null)
