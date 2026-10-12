@@ -28,6 +28,21 @@ def get_user_profile() -> dict | None:
 @frappe.whitelist(methods=["POST"])
 def update_my_profile(first_name: str, last_name: str, profile_picture: str = "") -> dict:
 	profile = frappe.get_doc("CS17 Profile", validate_membership("Faculty"))
+	if (
+		profile_picture
+		and profile_picture != profile.profile_picture
+		and profile_picture
+		not in frappe.get_all(
+			"File",
+			filters={
+				"file_url": profile_picture,
+				"owner": frappe.session.user,
+				"attached_to_name": ("is", "not set"),
+			},
+			pluck="file_url",
+		)
+	):
+		frappe.throw(_("Upload your photo before saving it."))
 	profile.update(
 		{
 			"first_name": first_name,
