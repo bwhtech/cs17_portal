@@ -46,6 +46,11 @@ class TestAnswerSheet(FrappeTestCase):
 		self.assertEqual(second["results"][0]["status"], "Incorrect")
 		self.assertEqual(first["summary"], [{"label": "Score (out of 20)", "value": "20"}])
 
+	def test_heading_with_stray_spaces_matches_the_student(self):
+		matched = answer_sheet.match_students([" Student  31 "], self.cohort)
+
+		self.assertEqual(matched, {" Student  31 ": self.student})
+
 	def test_student_gets_no_answers_until_they_are_shown(self):
 		frappe.set_user(self.student_user)
 

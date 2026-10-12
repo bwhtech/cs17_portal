@@ -161,9 +161,9 @@ def match_students(columns: list, cohort: str | None) -> dict:
 	for profile in profiles:
 		for key in (profile.full_name, profile.first_name, profile.user):
 			if key:
-				names_by_key.setdefault(key.strip().lower(), set()).add(profile.name)
+				names_by_key.setdefault(" ".join(key.lower().split()), set()).add(profile.name)
 	matched = {}
 	for column in columns:
-		names = names_by_key.get(column.lower(), set())
+		names = names_by_key.get(" ".join(column.lower().split()), set())
 		matched[column] = next(iter(names)) if len(names) == 1 else None
 	return matched
