@@ -54,14 +54,28 @@ test.describe("Faculty profile editing", () => {
 		expect(doc.last_name).toBe("Faculty");
 	});
 
-	test("sets and clears the profile picture", async ({ request }) => {
+	test("sets and clears the profile picture", async ({ request, page }) => {
+		await page.goto("/dashboard");
+		await page.waitForFunction(() => (window as any).csrf_token !== undefined, { timeout: 15000 });
+		const avatar: string = await page.evaluate(async () => {
+			const form = new FormData();
+			form.append("file", new File(["e2e avatar"], "e2e-avatar.png"));
+			form.append("is_private", "0");
+			const resp = await fetch("/api/method/upload_file", {
+				method: "POST",
+				headers: { "X-Frappe-CSRF-Token": (window as any).csrf_token },
+				body: form,
+			});
+			return (await resp.json()).message.file_url;
+		});
+
 		await callMethod<UpdatedProfile>(request, UPDATE, {
 			first_name: "Photo",
 			last_name: "Faculty",
-			profile_picture: "/files/e2e-avatar.png",
+			profile_picture: avatar,
 		});
 		let doc = await getDoc<CS17Profile>(request, "CS17 Profile", profileName);
-		expect(doc.profile_picture).toBe("/files/e2e-avatar.png");
+		expect(doc.profile_picture).toBe(avatar);
 
 		await callMethod<UpdatedProfile>(request, UPDATE, {
 			first_name: "Photo",

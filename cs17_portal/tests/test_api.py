@@ -693,6 +693,27 @@ class TestUpdateMyProfile(FrappeTestCase):
 
 		self.assertIsNone(frappe.db.get_value("CS17 Profile", self.faculty, "profile_picture"))
 
+	def test_profile_picture_must_be_the_callers_own_upload(self):
+		frappe.set_user(make_user("faculty111@cs17test.com"))
+		file = frappe.get_doc(
+			{"doctype": "File", "file_name": "faculty-111.png", "is_private": 1, "content": "picture 111"}
+		).save(ignore_permissions=True)
+
+		frappe.set_user(self.faculty_user)
+		self.assertRaises(
+			frappe.ValidationError, api.update_my_profile, "Faculty", "110", profile_picture=file.file_url
+		)
+
+	def test_name_only_save_keeps_the_saved_profile_picture(self):
+		frappe.db.set_value("CS17 Profile", self.faculty, "profile_picture", "/files/faculty-110.png")
+
+		frappe.set_user(self.faculty_user)
+		api.update_my_profile("Tejeshawari", "Mourya", profile_picture="/files/faculty-110.png")
+
+		self.assertEqual(
+			frappe.db.get_value("CS17 Profile", self.faculty, "profile_picture"), "/files/faculty-110.png"
+		)
+
 	def test_update_my_profile_blocks_student(self):
 		make_profile("Student", None, make_user("student110@cs17test.com"), "Student 110")
 
