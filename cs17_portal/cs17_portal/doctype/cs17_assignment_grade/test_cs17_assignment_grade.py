@@ -190,6 +190,21 @@ class TestGradeFromMarks(IntegrationTestCase):
 
 		self.assertEqual(grade.grade, "A1")
 
+	def test_letter_from_a_changed_scale_keeps_graded_by(self):
+		grade = frappe.get_doc(
+			{"doctype": "CS17 Assignment Grade", "assignment": self.assignment, "marks_obtained": 20}
+		).insert()
+		scale = frappe.get_doc("CS17 Grading Scale", self.scale)
+		scale.bands[-1].grade = "A1"
+		scale.save()
+		self.addCleanup(frappe.db.set_value, "CS17 Grade Band", scale.bands[-1].name, "grade", "A")
+		self.addCleanup(frappe.clear_document_cache, "CS17 Grading Scale", self.scale)
+
+		with self.set_user(make_user("faculty87@cs17test.com")):
+			grade.save(ignore_permissions=True)
+
+		self.assertEqual(grade.graded_by, "Administrator")
+
 	def test_letter_grade_outside_a_to_e_is_refused(self):
 		assignment = make_assignment(make_cohort("C87TEST"), "PDF Task 88", "PDF", 20)
 		grade = frappe.get_doc({"doctype": "CS17 Assignment Grade", "assignment": assignment, "grade": "A1"})
