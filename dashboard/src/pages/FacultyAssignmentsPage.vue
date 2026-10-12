@@ -92,6 +92,14 @@
 				<template #cell-actions="{ row }">
 					<div class="flex items-center justify-end gap-2">
 						<Button
+							v-if="row.statusLabel === 'Scheduled'"
+							variant="ghost"
+							icon="lucide-pencil"
+							:aria-label="`Edit ${row.title}`"
+							tooltip="Edit"
+							@click="openDraft(row.name)"
+						/>
+						<Button
 							v-if="!row.is_published"
 							:label="row.publish_on ? 'Reschedule' : 'Publish'"
 							@click="publishTarget = row"
@@ -111,6 +119,7 @@
 	</PageBody>
 
 	<AssignmentFormDialog
+		:key="formKey"
 		v-model:open="formOpen"
 		:cohorts="cohorts"
 		:quarters="quarters"
@@ -122,7 +131,7 @@
 		:open="Boolean(publishTarget)"
 		:assignment="publishTarget"
 		@update:open="onPublishOpen"
-		@success="assignmentsCall.reload()"
+		@success="onPublished"
 	/>
 
 	<DeleteAssignmentDialog
@@ -165,12 +174,13 @@ const columns: Column[] = [
 	{ header: 'Assignment', key: 'title', variant: 'primary' },
 	{ header: 'Submissions', key: 'submission_count', width: '6rem' },
 	{ header: 'Status', key: 'status', width: '7.5rem' },
-	{ header: '', key: 'actions', variant: 'actions', width: '9rem', align: 'right' },
+	{ header: '', key: 'actions', variant: 'actions', width: '10.5rem', align: 'right' },
 ]
 
 const cohortFilter = ref(ALL_COHORTS)
 const draftsOpen = ref(false)
 const formOpen = ref(false)
+const formKey = ref(0)
 const editingDraft = ref<string | null>(null)
 const publishTarget = ref<AssignmentRow | null>(null)
 const deleteTarget = ref<AssignmentRow | null>(null)
@@ -212,6 +222,12 @@ const drafts = computed(() => rows.value.filter((row) => row.statusLabel === 'Dr
 
 function onPublishOpen(open: boolean) {
 	if (!open) publishTarget.value = null
+}
+
+function onPublished() {
+	// The form keeps the last assignment it opened; a new schedule makes that copy stale.
+	if (publishTarget.value?.name === editingDraft.value) formKey.value += 1
+	assignmentsCall.reload()
 }
 
 function onDeleteOpen(open: boolean) {
