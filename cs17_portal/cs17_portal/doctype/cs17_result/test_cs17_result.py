@@ -4,8 +4,9 @@ import frappe
 from frappe.tests import IntegrationTestCase
 from frappe.utils import get_datetime
 
+from cs17_portal import api
 from cs17_portal.tasks import auto_publish_results
-from cs17_portal.tests.test_api import make_cohort, make_profile, make_user
+from cs17_portal.tests.test_api import make_cohort, make_profile, make_submission, make_user
 
 
 class IntegrationTestCS17Result(IntegrationTestCase):
@@ -15,6 +16,13 @@ class IntegrationTestCS17Result(IntegrationTestCase):
 
 		cls.cohort = make_cohort("C120TEST")
 		cls.student = make_profile("Student", cls.cohort, make_user("student120@cs17test.com"), "Student 120")
+		cls.faculty_user = make_user("faculty120@cs17test.com")
+		make_profile("Faculty", cls.cohort, cls.faculty_user, "Faculty 120")
+		cls.quarter = (
+			frappe.get_doc({"doctype": "CS17 Quarter", "quarter_name": "Quarter 120"})
+			.insert(ignore_permissions=True)
+			.name
+		)
 		cls.subject = (
 			frappe.get_doc(
 				{"doctype": "CS17 Subject", "subject_code": "MATHS120", "subject_name": "Maths 120"}
@@ -163,3 +171,46 @@ class IntegrationTestCS17Result(IntegrationTestCase):
 		result.save()
 
 		self.assertIsNone(frappe.db.get_value("CS17 Result", self.result, "published_on"))
+
+	def make_marks_submission(self) -> tuple[str, str]:
+		frappe.set_user(self.faculty_user)
+		assignment = api.create_assignment(
+			"PDF Task 120",
+			self.cohort,
+			"2030-01-01 00:00:00",
+			assignment_type="Graded",
+			max_marks=12.5,
+			remarks="Marks",
+			publish="now",
+			quarter=self.quarter,
+		)
+		frappe.set_user("Administrator")
+		return assignment, make_submission(assignment, self.student, "Student 120", "PDF Task 120")
+
+	def get_assignment_row(self, assignment: str):
+		result = frappe.get_doc("CS17 Result", self.result)
+		result.quarter = self.quarter
+		result.save()
+		return next(row for row in result.assignments if row.assignment == assignment)
+
+	def test_submitted_marks_assignment_without_a_grade_is_not_graded(self):
+		assignment, _submission = self.make_marks_submission()
+
+		row = self.get_assignment_row(assignment)
+
+		self.assertEqual((row.is_submitted, row.is_graded, row.marks_obtained), (1, 0, 0))
+
+	def test_marks_assignment_graded_zero_is_graded(self):
+		assignment, submission = self.make_marks_submission()
+		frappe.get_doc(
+			{
+				"doctype": "CS17 Assignment Grade",
+				"assignment": assignment,
+				"submission": submission,
+				"marks_obtained": 0,
+			}
+		).insert(ignore_permissions=True)
+
+		row = self.get_assignment_row(assignment)
+
+		self.assertEqual((row.is_graded, row.marks_obtained), (1, 0))
