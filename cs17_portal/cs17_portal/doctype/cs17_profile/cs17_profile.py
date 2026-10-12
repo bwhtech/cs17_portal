@@ -4,6 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import cstr
 
 
 class CS17Profile(Document):
@@ -42,6 +43,8 @@ class CS17Profile(Document):
 		self.validate_one_profile_per_user()
 
 	def set_full_name(self):
+		for fieldname in ("first_name", "last_name"):
+			self.set(fieldname, " ".join(cstr(self.get(fieldname)).split()))
 		self.full_name = " ".join(name for name in [self.first_name, self.last_name] if name)
 
 	def validate_one_profile_per_user(self):
