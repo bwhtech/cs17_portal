@@ -472,7 +472,7 @@ def run():
 		{
 			"doctype": "CS17 Project",
 			"project_title": "Maze game",
-			"student": students["Zoya"]["profile"],
+			"profile": students["Zoya"]["profile"],
 			"last_saved_at": add_to_date(now, hours=-5),
 		}
 	).insert()
@@ -480,7 +480,7 @@ def run():
 		{
 			"doctype": "CS17 Project",
 			"project_title": "Dodge the asteroids",
-			"student": students["Zoya"]["profile"],
+			"profile": students["Zoya"]["profile"],
 			"last_saved_at": add_to_date(now, days=-2),
 		}
 	).insert()
@@ -495,7 +495,7 @@ def run():
 			{
 				"doctype": "CS17 Project",
 				"project_title": f"{student}'s maze",
-				"student": students[student]["profile"],
+				"profile": students[student]["profile"],
 				"last_saved_at": add_to_date(now, days=-1),
 			}
 		).insert(ignore_permissions=True)
