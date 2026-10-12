@@ -641,5 +641,16 @@ test.describe("Faculty assignment portal", () => {
 			await expect(page.getByText("Could not load the grade")).toBeVisible();
 			await expect(page.getByRole("button", { name: "Save grade" })).toHaveCount(0);
 		});
+
+		test("offers a retry when the submitted file cannot be read", async ({ page }) => {
+			await page.route(
+				(url) => url.href.includes("get_assignment_submissions"),
+				(route) => route.fulfill({ status: 500 }),
+			);
+			await page.goto(`/dashboard/faculty/submissions/${markedSubmission.name}`);
+
+			await expect(page.getByText("Could not load the submitted file")).toBeVisible();
+			await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
+		});
 	});
 });
