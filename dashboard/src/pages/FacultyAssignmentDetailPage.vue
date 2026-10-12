@@ -38,6 +38,7 @@
 		</EmptyState>
 
 		<div v-else class="space-y-6">
+			<h1 class="break-words text-2xl text-ink-gray-9 md:hidden">{{ assignment.title }}</h1>
 			<div class="flex flex-col gap-6 md:flex-row">
 				<div class="min-w-0 flex-1">
 					<MarkdownText :content="assignment.description" />
@@ -66,7 +67,8 @@
 
 			<section class="space-y-3">
 				<h2 class="text-lg font-semibold text-ink-gray-8">
-					Submissions ({{ submissions.length }} of {{ rows.length }})
+					Submissions ({{ submissions.length.toLocaleString() }} of
+					{{ rows.length.toLocaleString() }})
 				</h2>
 
 				<DataTable
@@ -79,9 +81,12 @@
 					empty="No submissions yet."
 				>
 					<template #cell-student="{ row }">
-						<span class="truncate text-ink-gray-8">{{
-							row.full_name ?? row.student
-						}}</span>
+						<span
+							class="block truncate text-ink-gray-8"
+							:title="row.full_name ?? row.student"
+						>
+							{{ row.full_name ?? row.student }}
+						</span>
 					</template>
 
 					<template #cell-status="{ row }">
@@ -351,8 +356,8 @@ const metaRows = computed(() => {
 
 const columns: Column[] = [
 	{ header: 'Student', key: 'student', variant: 'primary' },
-	{ header: 'Status', key: 'status', width: '7.5rem' },
-	{ header: 'Submitted', key: 'submitted', width: '9rem' },
+	{ header: 'Status', key: 'status', width: '6.5rem' },
+	{ header: 'Submitted', key: 'submitted', width: '8rem' },
 	{ header: 'Assigned to', key: 'assignees', width: '9rem' },
 	{ header: 'Grade', key: 'grade', width: '10rem' },
 	{ header: '', key: 'actions', variant: 'actions', width: '16rem', align: 'right' },

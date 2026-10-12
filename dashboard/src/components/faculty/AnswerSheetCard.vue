@@ -9,13 +9,19 @@
 				student is optional.
 			</p>
 			<p v-else class="text-p-sm text-ink-gray-6">
-				{{ sheet.tasks.length }} tasks<template v-if="sheet.students.length">
+				{{ sheet.tasks.length }} {{ sheet.tasks.length === 1 ? 'task' : 'tasks'
+				}}<template v-if="sheet.students.length">
 					· {{ sheet.students.length }}
 					{{ sheet.students.length === 1 ? 'student' : 'students' }}</template
 				>
 			</p>
-			<p v-if="unmatched.length" class="text-p-sm text-ink-amber-7">
-				No student found for: {{ unmatched.join(', ') }}
+			<p
+				v-if="unmatched.length"
+				class="break-words text-p-sm text-ink-amber-7"
+				:title="unmatched.join(', ')"
+			>
+				No student found for: {{ unmatched.slice(0, 5).join(', ') }}
+				<template v-if="unmatched.length > 5">+{{ unmatched.length - 5 }} more</template>
 			</p>
 		</div>
 
@@ -36,7 +42,9 @@
 					<Button
 						:loading="uploading || upload.loading"
 						:label="sheet ? 'Replace' : 'Upload answer sheet'"
-						icon-left="lucide-upload"
+						:icon-left="sheet && !isDesktop ? undefined : 'lucide-upload'"
+						:icon="sheet && !isDesktop ? 'lucide-upload' : undefined"
+						:tooltip="sheet && !isDesktop ? 'Replace' : undefined"
 						@click="openFileSelector"
 					/>
 				</template>
@@ -57,11 +65,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Button, FileUploader, Switch, dialog, toast, useCall, type UploadedFile } from 'frappe-ui'
+import { useBreakpoint } from '@/composables/useBreakpoint'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { trySubmit } from '@/lib/trySubmit'
 import type { AnswerSheet } from '@/types'
 
 const METHOD = '/api/v2/method/cs17_portal.answer_sheet'
+
+const { isDesktop } = useBreakpoint()
 
 const props = defineProps<{
 	assignment: string
