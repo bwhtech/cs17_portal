@@ -41,7 +41,7 @@ def get_submission_archive(submission: str) -> dict:
 		require_faculty_for_assignment(submitted.assignment)
 
 	if not submitted.submission_document:
-		frappe.throw(_("This submission has no file."))
+		frappe.throw(_("This submission has no file."), frappe.DoesNotExistError)
 
 	attached_file = frappe.db.get_value(
 		"File",
