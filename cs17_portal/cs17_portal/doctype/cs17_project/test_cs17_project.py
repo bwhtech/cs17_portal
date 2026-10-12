@@ -219,6 +219,23 @@ class TestCS17Project(FrappeTestCase):
 			submission,
 		)
 
+	def test_get_submission_project_reports_a_missing_submission(self):
+		frappe.set_user(FACULTY_IN_USER)
+		self.assertRaises(frappe.DoesNotExistError, api.get_submission_project, "missing-submission")
+
+	def test_get_submission_project_reports_a_submission_without_a_file(self):
+		submission = frappe.get_doc(
+			{"doctype": "CS17 Assignment Submission", "student": self.student1, "assignment": self.assignment}
+		).insert(ignore_permissions=True)
+
+		frappe.set_user(FACULTY_IN_USER)
+		self.assertRaisesRegex(
+			frappe.ValidationError,
+			"This submission has no project file.",
+			api.get_submission_project,
+			submission.name,
+		)
+
 	def test_get_submission_project_blocks_faculty_out_of_cohort(self):
 		submission = self.make_submission()
 		frappe.set_user(FACULTY_OUT_USER)
