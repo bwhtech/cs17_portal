@@ -17,8 +17,12 @@
 				tooltip="Projects"
 				:route="projectsPath"
 			/>
-			<h1 class="min-w-0 truncate text-base text-ink-gray-8">{{ title }}</h1>
-			<span v-if="statusLabel" class="hidden shrink-0 text-sm sm:inline" :class="statusClass">
+			<h1 class="min-w-0 truncate text-base text-ink-gray-8" :title="title">{{ title }}</h1>
+			<span
+				v-if="statusLabel"
+				class="shrink-0 text-sm"
+				:class="[statusClass, status === 'error' && !readOnly ? '' : 'hidden sm:inline']"
+			>
 				{{ statusLabel }}
 			</span>
 
@@ -31,7 +35,8 @@
 				/>
 				<template v-if="!readOnly">
 					<Button
-						icon-left="lucide-save"
+						:icon-left="isDesktop ? 'lucide-save' : undefined"
+						:icon="isDesktop ? undefined : 'lucide-save'"
 						label="Save"
 						:loading="status === 'saving'"
 						@click="requestSave('manual')"
@@ -40,7 +45,8 @@
 						v-if="isStudent"
 						variant="solid"
 						theme="gray"
-						icon-left="lucide-send"
+						:icon-left="isDesktop ? 'lucide-send' : undefined"
+						:icon="isDesktop ? undefined : 'lucide-send'"
 						label="Submit"
 						@click="submitOpen = true"
 					/>
@@ -91,6 +97,7 @@ import { Button, LoadingIndicator, toast, useCall } from 'frappe-ui'
 import EmptyState from '@/components/common/EmptyState.vue'
 import ScratchFrame from '@/components/scratch/ScratchFrame.vue'
 import SubmitProjectDialog from '@/components/projects/SubmitProjectDialog.vue'
+import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useZenMode, useZenOnMount } from '@/composables/useZenMode'
 import { useProjectsPath } from '@/composables/useProjectsPath'
 import { useSession } from '@/composables/useSession'
@@ -119,6 +126,7 @@ const props = defineProps<{ id: string }>()
 const route = useRoute()
 const projectsPath = useProjectsPath()
 const { isStudent } = useSession()
+const { isDesktop } = useBreakpoint()
 const { isZen, toggle } = useZenMode()
 useZenOnMount()
 

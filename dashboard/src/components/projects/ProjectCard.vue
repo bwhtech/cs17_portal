@@ -6,15 +6,22 @@
 		>
 			<div class="flex aspect-[4/3] items-center justify-center bg-surface-gray-2">
 				<img
-					v-if="project.thumbnail"
+					v-if="project.thumbnail && !thumbnailFailed"
 					:src="project.thumbnail"
 					alt=""
+					loading="lazy"
 					class="h-full w-full object-cover"
+					@error="thumbnailFailed = true"
 				/>
 				<span v-else class="lucide-blocks size-8 text-ink-gray-4" aria-hidden="true" />
 			</div>
 			<div class="border-t border-outline-gray-1 p-3">
-				<p class="truncate text-base text-ink-gray-8">{{ project.project_title }}</p>
+				<p
+					class="line-clamp-2 break-words text-base text-ink-gray-8"
+					:title="project.project_title"
+				>
+					{{ project.project_title }}
+				</p>
 				<p class="mt-1 text-sm text-ink-gray-5">{{ savedLabel }}</p>
 			</div>
 		</router-link>
@@ -38,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { Badge, Button, Dropdown } from 'frappe-ui'
 import { useProjectsPath } from '@/composables/useProjectsPath'
 import { formatDateTime } from '@/lib/dates'
@@ -52,6 +59,8 @@ const emit = defineEmits<{
 }>()
 
 const projectsPath = useProjectsPath()
+
+const thumbnailFailed = ref(false)
 
 const actions = [
 	{ label: 'Rename', icon: 'lucide-pencil', onClick: () => emit('rename', props.project) },

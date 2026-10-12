@@ -28,8 +28,8 @@
 		>
 			<template #cell-exam="{ row }">
 				<RowTitle :title="row.exam_name" :to="`/results/${row.name}`">
-					<span v-if="row.quarter">{{ row.quarter }} · </span>
 					Published {{ formatDate(row.published_on) }}
+					<span v-if="row.quarter"> · {{ row.quarter }}</span>
 				</RowTitle>
 			</template>
 
@@ -91,9 +91,9 @@ const failed = useLoadFailed(resultsCall)
 const columns: Column[] = [
 	{ header: 'Exam', key: 'exam', variant: 'primary' },
 	{ header: 'Marks', key: 'marks', width: '8rem' },
-	{ header: 'Percentage', key: 'percentage', width: '7rem' },
+	{ header: 'Percentage', key: 'percentage', width: '5.5rem' },
 	{ header: 'Grade', key: 'grade', width: '6rem' },
-	{ header: 'Status', key: 'status', width: '6rem' },
+	{ header: 'Status', key: 'status', width: '4.5rem' },
 ]
 
 const rowKey = (row: CS17ResultSummary) => row.name

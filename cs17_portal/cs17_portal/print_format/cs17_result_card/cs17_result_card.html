@@ -17,7 +17,7 @@
 {%- macro lanes() -%}
 	<colgroup>
 		<col />
-		<col style="width: 60px" />
+		<col style="width: 100px" />
 	</colgroup>
 {%- endmacro -%}
 
@@ -38,8 +38,8 @@
 	<tbody>
 		{% for row in doc.scores %}
 		<tr>
-			<td class="rc-name">{{ row.subject_name or row.subject }}</td>
-			<td class="rc-r">{{ row.grade or "—" }}</td>
+			<td class="rc-name">{{ (row.subject_name or row.subject) | e }}</td>
+			<td class="rc-r">{{ (row.grade or "—") | e }}</td>
 		</tr>
 		{% endfor %}
 	</tbody>
@@ -55,20 +55,20 @@
 		{% for row in scored_assignments %}
 		<tr>
 			<td class="rc-name{% if not row.is_submitted %} rc-muted{% endif %}">
-				{{ row.assignment_title or row.assignment }}
+				{{ (row.assignment_title or row.assignment) | e }}
 			</td>
 			<td class="rc-r">
 				{%- if not row.is_submitted -%}
 				<span class="rc-muted">Absent</span>
 				{%- else -%}
-				{{ row.grade or "—" }}
+				{{ (row.grade or "—") | e }}
 				{%- endif -%}
 			</td>
 		</tr>
 		{% endfor %}
 		{% for row in missing_assignments %}
 		<tr>
-			<td class="rc-name rc-muted">{{ row.title }}</td>
+			<td class="rc-name rc-muted">{{ row.title | e }}</td>
 			<td class="rc-r"><span class="rc-muted">Absent</span></td>
 		</tr>
 		{% endfor %}
@@ -123,7 +123,8 @@
 		padding: 22px 0 14px 0;
 	}
 	.rc-meta td { padding: 0 24px 0 0 !important; }
-	.rc-meta .rc-value { font-weight: 500; padding-top: 3px; }
+	.rc-meta .rc-value, .rc-exam .rc-value { font-weight: 500; padding-top: 3px; }
+	.rc-exam { padding-top: 14px; }
 
 	/* verdict ------------------------------------------------------------ */
 	.rc-verdict {
@@ -157,7 +158,7 @@
 
 	/* the landscape page is wide enough to stand the two tables side by side;
 	   stacking them is what left the old card looking so empty */
-	.rc-cols { margin-top: 4px; }
+	.rc-cols { margin-top: 4px; table-layout: fixed; }
 	.rc-cols > tbody > tr > td { width: 50%; padding: 0 44px 0 0 !important; }
 	.rc-cols > tbody > tr > td + td { padding: 0 0 0 44px !important; border-left: 1px solid #ececf0; }
 
@@ -181,7 +182,8 @@
 		padding: 0 0 7px 0 !important;
 		border-bottom: 1px solid #18181b;
 	}
-	.rc-grades td { padding: 8px 0 !important; border-bottom: 1px solid #ececf0; }
+	.rc-grades { table-layout: fixed; }
+	.rc-grades td { padding: 8px 0 !important; border-bottom: 1px solid #ececf0; word-wrap: break-word; }
 	/* collapsed borders: drop the light rule so the dark tfoot rule draws */
 	.rc-grades tbody tr:last-child td { border-bottom: none; }
 	.rc-grades tfoot td {
@@ -196,8 +198,8 @@
 	.rc-grades th.rc-r { text-align: right; }
 
 	/* remarks, signature & footer ---------------------------------------- */
-	.rc-remarks { margin-top: 26px; }
-	.rc-remarks .rc-body { padding-top: 5px; }
+	.rc-remarks { margin-top: 26px; page-break-inside: avoid; }
+	.rc-remarks .rc-body { padding-top: 5px; white-space: pre-line; }
 
 	/* the margin above the rule is the space signed into, so it has to survive
 	   a page break intact rather than leaving the name stranded */
@@ -231,13 +233,12 @@
 		</tr>
 	</table>
 
-	<div class="rc-student">{{ doc.student_name or doc.student }}</div>
+	<div class="rc-student">{{ (doc.student_name or doc.student) | e }}</div>
 
 	{#- the exam is usually named after its quarter; don't print the same value twice -#}
 	{%- set meta = [
 		("Student ID", doc.student),
 		("Cohort", doc.cohort or "—"),
-		("Examination", exam_name or doc.exam),
 	] -%}
 	{%- if doc.quarter and doc.quarter != (exam_name or doc.exam) -%}
 		{%- set _ = meta.append(("Quarter", doc.quarter)) -%}
@@ -247,17 +248,22 @@
 			{% for label, value in meta %}
 			<td style="width: {{ (100 / meta | length) | round(2) }}%">
 				<div class="rc-cap">{{ label }}</div>
-				<div class="rc-value">{{ value }}</div>
+				<div class="rc-value">{{ value | e }}</div>
 			</td>
 			{% endfor %}
 		</tr>
 	</table>
 
+	<div class="rc-exam">
+		<div class="rc-cap">Examination</div>
+		<div class="rc-value">{{ (exam_name or doc.exam) | e }}</div>
+	</div>
+
 	<table class="rc-verdict">
 		<tr>
 			<td>
 				<div class="rc-cap">Overall Grade</div>
-				<div class="rc-big">{{ doc.overall_grade or "—" }}</div>
+				<div class="rc-big">{{ (doc.overall_grade or "—") | e }}</div>
 			</td>
 			{%- set passed = doc.scores | selectattr("is_pass") | list | length -%}
 			<td>
@@ -275,7 +281,10 @@
 		</tr>
 	</table>
 
-	{% if has_assignments %}
+	{% if has_assignments and doc.scores | length > 8 %}
+	{{ exam_table() }}
+	{{ assignment_table() }}
+	{% elif has_assignments %}
 	<table class="rc-cols">
 		<tr>
 			<td>{{ exam_table() }}</td>
@@ -290,7 +299,7 @@
 	{% if doc.remarks %}
 	<div class="rc-remarks">
 		<div class="rc-cap">Remarks</div>
-		<div class="rc-body">{{ doc.remarks }}</div>
+		<div class="rc-body">{{ doc.remarks | e }}</div>
 	</div>
 	{% endif %}
 

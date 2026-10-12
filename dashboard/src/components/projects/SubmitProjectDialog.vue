@@ -1,12 +1,12 @@
 <template>
 	<Dialog :open="open" :title="heading" @update:open="emit('update:open', $event)">
 		<template #default>
-			<div v-if="succeeded" class="text-p-base text-ink-gray-7">
+			<div v-if="succeeded" class="break-words text-p-base text-ink-gray-7">
 				Your project was submitted to {{ target?.title }}.
 			</div>
 
 			<div v-else-if="target" class="space-y-3">
-				<p class="text-p-base text-ink-gray-7">
+				<p class="break-words text-p-base text-ink-gray-7">
 					It will be submitted to {{ target.title }}. Your current project is snapshotted;
 					you can revise it until the deadline.
 				</p>
@@ -28,10 +28,18 @@
 					<Button
 						v-for="assignment in options"
 						:key="assignment.name"
-						class="w-full !justify-start"
+						class="!h-auto w-full !justify-start py-1.5 text-left"
 						@click="chosen = assignment"
 					>
-						<span class="truncate">{{ assignment.title }}</span>
+						<span class="block whitespace-normal break-words leading-5">
+							{{ assignment.title }}
+						</span>
+						<span
+							v-if="assignment.due_date"
+							class="block whitespace-normal text-sm leading-5 text-ink-gray-5"
+						>
+							Due {{ formatDateTime(assignment.due_date) }}
+						</span>
 					</Button>
 				</div>
 			</div>
@@ -69,6 +77,7 @@
 import { computed, ref, watch } from 'vue'
 import { Button, Dialog, ErrorMessage, Skeleton, useCall } from 'frappe-ui'
 import { useSession } from '@/composables/useSession'
+import { formatDateTime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { trySubmit } from '@/lib/trySubmit'
 import type { CS17Assignment, StudentAssignmentsResponse } from '@/types'
