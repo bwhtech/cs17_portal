@@ -137,6 +137,10 @@ def _apply_publish_state(
 	elif publish == "schedule":
 		if not publish_on:
 			frappe.throw(_("A publish date is required to schedule"))
+		if get_datetime(publish_on) <= now_datetime():
+			frappe.throw(
+				_("The publish date must be in the future. Pick a later time, or choose Publish now")
+			)
 		doc.is_published = 0
 		doc.set(publish_on_field, publish_on)
 	else:

@@ -253,6 +253,13 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 		frappe.set_user(self.faculty_28_user)
 		self.assertRaises(frappe.PermissionError, api.grade_submission, self.submission_27, grade="A")
 
+	def test_grade_cannot_be_scheduled_for_a_time_that_has_passed(self):
+		frappe.set_user(self.faculty_27_user)
+		with self.assertRaises(frappe.ValidationError):
+			api.grade_submission(
+				self.submission_27, grade="B", publish="schedule", publish_on="2000-01-01 00:00:00"
+			)
+
 	def test_update_assignment_blocks_other_cohort_faculty(self):
 		frappe.set_user(self.faculty_28_user)
 		self.assertRaises(
@@ -302,6 +309,17 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 			self.cohort_27,
 			"2030-01-01 00:00:00",
 		)
+
+	def test_assignment_cannot_be_scheduled_for_a_time_that_has_passed(self):
+		frappe.set_user(self.faculty_27_user)
+		with self.assertRaises(frappe.ValidationError):
+			api.create_assignment(
+				"Scratch Task 92",
+				self.cohort_27,
+				"2030-01-01 00:00:00",
+				publish="schedule",
+				publish_on="2000-01-01 00:00:00",
+			)
 
 	def test_update_assignment_blocks_move_to_other_cohort(self):
 		frappe.set_user(self.faculty_27_user)
