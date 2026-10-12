@@ -784,7 +784,7 @@ def run():
 	# Seeding as the record's real author, so the data reads true.
 	frappe.set_user("Administrator")  # nosemgrep
 
-	print("\nSeeded cs17.localhost")
+	print(f"\nSeeded {frappe.local.site}")
 	print(f"  cohorts     {COHORT_NOW} (current), {COHORT_PAST}")
 	print(f"  faculty     {faculty['Priya']['email']}, {faculty['Arjun']['email']}")
 	print(f"  students    {', '.join(s['email'] for s in students.values())}")
