@@ -187,4 +187,26 @@ def edit_submission(submission: str, file_url: str) -> dict:
 	sub_doc.update(resolve_submission(sub_doc.assignment, file_url, submission))
 	sub_doc.submitted_at = frappe.utils.now_datetime()
 	sub_doc.save(ignore_permissions=True)
+	leftover = frappe.get_all(
+		"File",
+		filters={
+			"attached_to_doctype": "CS17 Assignment Submission",
+			"attached_to_name": submission,
+			"attached_to_field": "submission_document",
+			"file_url": ("!=", sub_doc.submission_document or ""),
+		},
+		pluck="name",
+	)
+	if sub_doc.submission_document:
+		leftover += frappe.get_all(
+			"File",
+			filters={
+				"file_url": sub_doc.submission_document,
+				"owner": frappe.session.user,
+				"attached_to_name": ("is", "not set"),
+			},
+			pluck="name",
+		)
+	for file_name in leftover:
+		frappe.delete_doc("File", file_name, ignore_permissions=True)
 	return {"name": sub_doc.name}
