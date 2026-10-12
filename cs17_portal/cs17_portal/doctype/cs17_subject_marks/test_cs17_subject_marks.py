@@ -69,3 +69,6 @@ class IntegrationTestCS17SubjectMarks(IntegrationTestCase):
 
 		self.assertEqual(sum(row.max_marks for row in marks.components), 999)
 		self.assertEqual(frappe.db.get_value("CS17 Result", result, "total_marks_obtained"), 999)
+
+	def test_exam_student_and_subject_have_a_unique_index(self):
+		self.assertTrue(frappe.db.has_index("tabCS17 Subject Marks", "unique_exam_student_subject"))
