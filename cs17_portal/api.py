@@ -925,6 +925,7 @@ def get_student_result(result: str) -> dict:
 				"marks_obtained": row.marks_obtained,
 				"grade": row.grade,
 				"is_submitted": row.is_submitted,
+				"is_graded": row.is_graded,
 				"due_date": row.due_date,
 			}
 			for row in doc.assignments

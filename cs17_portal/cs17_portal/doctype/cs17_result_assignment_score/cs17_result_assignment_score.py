@@ -19,6 +19,7 @@ class CS17ResultAssignmentScore(Document):
 		due_date: DF.Datetime | None
 		evaluation_type: DF.Data | None
 		grade: DF.Data | None
+		is_graded: DF.Check
 		is_submitted: DF.Check
 		marks_obtained: DF.Float
 		max_marks: DF.Float
