@@ -1,6 +1,8 @@
 # Copyright (c) 2026, developers@bwh.tech and Contributors
 # See license.txt
 
+from unittest.mock import patch
+
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
@@ -148,3 +150,13 @@ class TestAnswerSheet(FrappeTestCase):
 
 		sheet = answer_sheet.get_answer_sheet(self.assignment)["sheet"]
 		self.assertEqual(sheet["students"][1]["results"][0]["status"], "Half")
+
+	def test_marking_an_answer_locks_the_sheet_it_reads(self):
+		frappe.set_user(self.faculty_user)
+
+		with patch.object(frappe.db, "get_value", wraps=frappe.db.get_value) as get_value:
+			answer_sheet.set_answer_status(self.assignment, "Student 32", 0, "Half")
+			answer_sheet.set_answer_remark(self.assignment, "Student 32", 0, "Named gallary")
+
+		locked = [call.args[:2] for call in get_value.call_args_list if call.kwargs.get("for_update")]
+		self.assertEqual(locked, [("CS17 Assignment", self.assignment)] * 2)
