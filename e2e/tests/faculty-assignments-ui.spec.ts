@@ -27,6 +27,7 @@ const TERMINAL_ASSIGNMENT_ZIP =
 
 /** frappe-ui's list is divs, not a table: a row carries this slot, a cell `list-cell`. */
 const LIST_ROW = '[data-slot="list-row"]';
+const LIST_CELL = '[data-slot="list-cell"]';
 
 /**
  * frappe-ui's DateTimePicker replaces `input[type="datetime-local"]`. It is a
@@ -546,8 +547,9 @@ test.describe("Faculty assignment portal", () => {
 		await page.getByRole("option", { name: "Publish now" }).click();
 		await page.getByRole("button", { name: "Save grade" }).click();
 
-		await expect(row.getByText("Published")).toBeVisible();
-		await expect(row.getByText("A", { exact: true })).toBeVisible();
+		const grade = row.locator(LIST_CELL, { hasText: "Published" });
+		await expect(grade).toBeVisible();
+		await expect(grade.getByText("A", { exact: true })).toBeVisible();
 	});
 
 	test.describe("a marks assignment", () => {
