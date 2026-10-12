@@ -33,3 +33,27 @@ class TestAssignmentApi(FrappeTestCase):
 		api.update_assignment(assignment, "PDF Task 190", self.cohort, "2030-02-01 00:00:00")
 
 		self.assertEqual(frappe.db.get_value("CS17 Assignment", assignment, "description"), "Read chapter 2")
+
+	def test_update_assignment_keeps_the_schedule_the_caller_sent_back(self):
+		frappe.set_user(self.faculty_user)
+		assignment = api.create_assignment(
+			"PDF Task 191",
+			self.cohort,
+			"2030-01-01 00:00:00",
+			publish="schedule",
+			publish_on="2031-03-01 09:00:00",
+		)
+
+		api.update_assignment(
+			assignment,
+			"PDF Task 191 revised",
+			self.cohort,
+			"2030-01-01 00:00:00",
+			publish="schedule",
+			publish_on="2031-03-01 09:00:00",
+		)
+
+		self.assertEqual(
+			frappe.db.get_value("CS17 Assignment", assignment, ["title", "is_published", "publish_on"]),
+			("PDF Task 191 revised", 0, frappe.utils.get_datetime("2031-03-01 09:00:00")),
+		)
