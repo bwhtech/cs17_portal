@@ -137,6 +137,33 @@ class TestSubmissionArchive(FrappeTestCase):
 			frappe.DoesNotExistError, submission_archive.get_submission_archive, "missing-submission"
 		)
 
+	def test_student_reads_only_their_own_submission_archive(self):
+		cohort = make_cohort("C47TEST")
+		faculty_user = make_user("faculty47@cs17test.com")
+		make_profile("Faculty", cohort, faculty_user, "Faculty 47")
+		frappe.set_user(faculty_user)
+		assignment = make_assignment(cohort, "Terminal Task 47", "ZIP", 20)
+
+		student_user = make_user("student47@cs17test.com")
+		make_profile("Student", cohort, student_user, "Student 47")
+		frappe.set_user(student_user)
+		file = frappe.get_doc(
+			{
+				"doctype": "File",
+				"file_name": "terminal-47.zip",
+				"is_private": 1,
+				"content": make_zip(FILES),
+			}
+		).save(ignore_permissions=True)
+		submission = submit_assignment(assignment, file.file_url)["name"]
+
+		self.assertEqual(submission_archive.get_submission_archive(submission)["filename"], "terminal-47.zip")
+
+		classmate_user = make_user("student48@cs17test.com")
+		make_profile("Student", cohort, classmate_user, "Student 48")
+		frappe.set_user(classmate_user)
+		self.assertRaises(frappe.PermissionError, submission_archive.get_submission_archive, submission)
+
 	def test_student_cannot_read_a_submission_archive(self):
 		cohort = make_cohort("C33TEST")
 		student_user = make_user("student33@cs17test.com")
