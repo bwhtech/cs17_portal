@@ -48,6 +48,14 @@ class TestAnswerSheet(FrappeTestCase):
 		self.assertEqual(second["results"][0]["status"], "Incorrect")
 		self.assertEqual(first["summary"], [{"label": "Score (out of 20)", "value": "20"}])
 
+	def test_cell_starting_with_half_is_marked_half(self):
+		header, task, *_rest = ROWS
+		rows = [header, [*task[:5], "Half: named gallary"]]
+
+		result = answer_sheet.parse_answer_sheet(rows, self.cohort)["students"][1]["results"][0]
+
+		self.assertEqual(result, {"remark": "named gallary", "status": "Half"})
+
 	def test_heading_with_stray_spaces_matches_the_student(self):
 		matched = answer_sheet.match_students([" Student  31 "], self.cohort)
 
