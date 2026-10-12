@@ -103,5 +103,5 @@ cd <bench> && bench build --app cs17_portal
 kept in the vendored dir as manual test aids; they are not produced by the build, so
 the `--exclude` flags protect them from `--delete`.
 
-Then verify: `http://cs17.localhost:8010/assets/cs17_portal/scratch/editor.html` loads
+Then verify: `http://cs17.localhost:8000/assets/cs17_portal/scratch/editor.html` loads
 the full editor UI (no 404s in the network tab for `js/` or `static/`).
