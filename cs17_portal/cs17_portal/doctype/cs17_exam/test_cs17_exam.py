@@ -94,6 +94,30 @@ class IntegrationTestCS17Exam(IntegrationTestCase):
 			frappe.db.exists("CS17 Exam Subject", {"parent": self.exam.name, "subject": english})
 		)
 
+	def test_subject_cannot_be_added_once_a_result_is_published(self):
+		frappe.get_doc(
+			{
+				"doctype": "CS17 Subject Marks",
+				"exam": self.exam.name,
+				"student": self.student,
+				"subject": self.science,
+				"components": [{"component": "Total", "marks_obtained": 74}],
+			}
+		).insert(ignore_permissions=True)
+		frappe.get_doc({"doctype": "CS17 Result", "exam": self.exam.name, "student": self.student}).insert(
+			ignore_permissions=True
+		).publish()
+		history = (
+			frappe.get_doc(
+				{"doctype": "CS17 Subject", "subject_code": "HISTORY130", "subject_name": "History 130"}
+			)
+			.insert(ignore_permissions=True)
+			.name
+		)
+		self.exam.append("subjects", {"subject": history})
+
+		self.assertRaises(frappe.ValidationError, self.exam.save)
+
 	def test_max_marks_cannot_change_once_marks_exist_even_at_zero(self):
 		frappe.get_doc(
 			{
