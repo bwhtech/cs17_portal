@@ -22,6 +22,13 @@
 			:class="isDesktop ? undefined : 'px-4 pb-6'"
 		/>
 
+		<EmptyState
+			v-else-if="published"
+			:class="isDesktop ? undefined : 'px-4 pb-6'"
+			icon="lucide-send"
+			title="A published assignment can no longer be edited"
+		/>
+
 		<div v-else :class="isDesktop ? undefined : 'px-4 pb-6'">
 			<p class="text-p-base text-ink-gray-5">
 				Fill in the details, then switch to Preview to see the student view. Closing keeps
@@ -170,13 +177,14 @@ import {
 	toast,
 	useCall,
 } from 'frappe-ui'
+import EmptyState from '@/components/common/EmptyState.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import PublishFields from '@/components/common/PublishFields.vue'
 import AssignmentPreview, { type AssignmentDraft } from '@/components/faculty/AssignmentPreview.vue'
 import DeleteAssignmentDialog from '@/components/faculty/DeleteAssignmentDialog.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
-import { toFrappeDatetime } from '@/lib/dates'
+import { isPast, toFrappeDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { STORAGE_KEYS, readJSON, removeKey, writeJSON } from '@/lib/storage'
 import { trySubmit } from '@/lib/trySubmit'
@@ -234,6 +242,7 @@ const confirmDelete = ref(false)
 /** The assignment behind the form once it exists server-side — update, not create. */
 const savedName = ref<string | null>(null)
 const loadFailed = ref(false)
+const published = ref(false)
 
 const errors = reactive<
 	Record<'title' | 'cohort' | 'due_date' | 'max_marks' | 'publishOn' | 'form', string>
@@ -324,6 +333,7 @@ function initialize() {
 	activeTab.value = 'edit'
 	clearErrors()
 	loadFailed.value = false
+	published.value = false
 
 	if (props.draftName) {
 		if (savedName.value === props.draftName) return
@@ -343,6 +353,11 @@ async function loadExisting(name: string) {
 	if (existingCall.loading || !props.open) return
 	loadFailed.value = !existing
 	if (!existing) return
+	published.value = Boolean(existing.is_published) || isPast(existing.publish_on)
+	if (published.value) {
+		emit('saved')
+		return
+	}
 	Object.assign(draft, {
 		title: existing.title ?? '',
 		cohort: existing.cohort ?? '',
