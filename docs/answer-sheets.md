@@ -58,8 +58,10 @@ column per student after `Scored`.
 - A row with no number but with student cells is an extra line for each student, named by
   its `Task` cell: Score, Errors, Grade, Notes. Each student sees their own.
 - A column heading is matched to a student of the assignment's cohort by full name, first
-  name or email. A first name only works when exactly one student in the cohort has it. A
-  column that matches no one is kept, and the box names it so the heading can be fixed.
+  name or email. A first name only works when exactly one student in the cohort has it. Two
+  columns that match the same student, such as a name and that student's email, match no
+  one. A column that matches no one is kept, and the box names it so the heading can be
+  fixed.
 
 ## For students
 
@@ -78,5 +80,6 @@ closing note). The code is in `cs17_portal/answer_sheet.py`; the dashboard side 
 The uploaded file is not kept. It is deleted once it has been read, and a file that was
 refused is removed as well, so keep your own copy.
 
-The whole sheet is one value. If two faculty mark the same sheet at the same moment, the
-later save wins.
+The whole sheet is one value. Saving a mark or a note locks the assignment's row while the
+sheet is read and written back, so two saves close together wait for each other and
+neither is lost.

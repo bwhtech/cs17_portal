@@ -108,8 +108,9 @@ frozen. Changing them would invalidate report cards already handed out.
 
 ### CS17 Subject Pattern (+ CS17 Subject Pattern Component)
 A reusable named split, e.g. `Theory 20 / Practical 30 / Project 50`. Each component carries a
-**weightage percent**; they must add up to 100. The pattern has no link to a subject - the exam
-decides which subject uses which pattern.
+**weightage percent**; they must add up to 100, give or take 0.01, so three parts of 33.33 are
+accepted. The total is rounded before it is checked and stored. The pattern has no link to a
+subject - the exam decides which subject uses which pattern.
 
 Component max marks are derived, never typed: `component max = subject max marks x weightage / 100`.
 So the same pattern works for a 100 mark paper and a 50 mark paper. Each maximum is rounded to two
