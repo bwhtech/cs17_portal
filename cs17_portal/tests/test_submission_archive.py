@@ -10,7 +10,10 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from cs17_portal import submission_archive
-from cs17_portal.tests.test_api import make_cohort, make_profile, make_user
+from cs17_portal.cs17_portal.doctype.cs17_assignment_submission.cs17_assignment_submission import (
+	submit_assignment,
+)
+from cs17_portal.tests.test_api import make_assignment, make_cohort, make_profile, make_user
 
 FILES = {
 	"terminal-assignment/notes.txt": b"ls -la\n",
@@ -69,6 +72,32 @@ class TestSubmissionArchive(FrappeTestCase):
 
 	def test_file_that_is_not_an_archive_is_refused(self):
 		self.assertRaises(frappe.ValidationError, submission_archive.read_archive, b"cat README.txt\n")
+
+	def test_identical_uploads_keep_their_own_file_names(self):
+		cohort = make_cohort("C35TEST")
+		faculty_user = make_user("faculty35@cs17test.com")
+		make_profile("Faculty", cohort, faculty_user, "Faculty 35")
+		frappe.set_user(faculty_user)
+		assignment = make_assignment(cohort, "Terminal Task 35", "ZIP", 20)
+
+		submissions = {}
+		for number in (35, 36):
+			student_user = make_user(f"student{number}@cs17test.com")
+			make_profile("Student", cohort, student_user, f"Student {number}")
+			frappe.set_user(student_user)
+			file = frappe.get_doc(
+				{
+					"doctype": "File",
+					"file_name": f"terminal-{number}.zip",
+					"is_private": 1,
+					"content": make_zip(FILES),
+				}
+			).save(ignore_permissions=True)
+			submissions[file.file_name] = submit_assignment(assignment, file.file_url)["name"]
+
+		frappe.set_user(faculty_user)
+		for file_name, submission in submissions.items():
+			self.assertEqual(submission_archive.get_submission_archive(submission)["filename"], file_name)
 
 	def test_student_cannot_read_a_submission_archive(self):
 		cohort = make_cohort("C33TEST")
