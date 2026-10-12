@@ -280,7 +280,7 @@ def grade_submission(
 	require_faculty_for_assignment(sub_doc.assignment)
 	evaluation_type = frappe.db.get_value("CS17 Assignment", sub_doc.assignment, "remarks")
 	if evaluation_type not in ("Grade", "Marks"):
-		frappe.throw(_("This assignment is not gradable"))
+		frappe.throw(_("Cannot grade a Not Graded assignment."))
 	doc = _get_or_new_grade(submission, sub_doc.assignment)
 	doc.update(
 		{
