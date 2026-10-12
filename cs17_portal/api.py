@@ -290,6 +290,8 @@ def grade_submission(
 			"remarks": remarks,
 		}
 	)
+	if publish == "now" and not is_published_now(doc, "published_on"):
+		doc.published_on = None
 	_apply_publish_state(doc, publish, publish_on, "published_on")
 	doc.save(ignore_permissions=True)
 	return {"name": doc.name}
@@ -769,6 +771,8 @@ def publish_grades(submissions: list | str) -> int:
 	)
 	for name in grades:
 		grade = frappe.get_doc("CS17 Assignment Grade", name)
+		if not is_published_now(grade, "published_on"):
+			grade.published_on = None
 		grade.is_published = 1
 		grade.save(ignore_permissions=True)
 	return len(grades)
