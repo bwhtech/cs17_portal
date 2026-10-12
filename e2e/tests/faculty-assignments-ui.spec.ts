@@ -641,5 +641,23 @@ test.describe("Faculty assignment portal", () => {
 			await expect(page.getByText("Could not load the grade")).toBeVisible();
 			await expect(page.getByRole("button", { name: "Save grade" })).toHaveCount(0);
 		});
+
+		test("keeps the update label when the reload after a save fails", async ({ page }) => {
+			let reads = 0;
+			await page.route(
+				(url) => url.href.includes("get_submission_grade"),
+				(route) =>
+					++reads === 1
+						? route.fulfill({ json: { data: null } })
+						: route.fulfill({ status: 500 }),
+			);
+			await page.goto(`/dashboard/faculty/submissions/${markedSubmission.name}`);
+
+			await page.getByLabel("Marks obtained").fill("15");
+			await page.getByRole("button", { name: "Save grade" }).click();
+
+			await expect.poll(() => reads).toBe(2);
+			await expect(page.getByRole("button", { name: "Update grade" })).toBeVisible();
+		});
 	});
 });
