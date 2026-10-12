@@ -153,7 +153,7 @@ const saveCall = useCall<
 		submission: string
 		marks_obtained: number | null
 		grade: string | null
-		remarks: string | null
+		remarks?: string
 	}
 >({
 	url: '/api/v2/method/cs17_portal.api.save_grade',
@@ -189,7 +189,7 @@ async function save() {
 		submission: props.submission,
 		marks_obtained: parsed.value,
 		grade: showGrade.value && gradeLetter.value ? gradeLetter.value : null,
-		remarks: remarks.value || null,
+		remarks: remarks.value.trim() || undefined,
 	})
 
 	if (saveCall.error) {
