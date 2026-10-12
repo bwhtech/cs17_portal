@@ -320,6 +320,33 @@ class TestCS17Project(FrappeTestCase):
 			1,
 		)
 
+	def test_first_submit_saves_the_submission_once(self):
+		project = self.make_saved_project()
+		submission = frappe.get_doc(
+			"CS17 Assignment Submission", api.submit_scratch_project(self.assignment, project)["name"]
+		)
+
+		self.assertEqual(submission.project, project)
+		self.assertTrue(submission.submitted_at)
+		self.assertEqual(
+			frappe.db.count(
+				"File",
+				{
+					"attached_to_doctype": "CS17 Assignment Submission",
+					"attached_to_name": submission.name,
+					"file_url": submission.submission_document,
+				},
+			),
+			1,
+		)
+		self.assertEqual(submission.modified, submission.creation)
+		self.assertEqual(
+			frappe.db.count(
+				"Version", {"ref_doctype": "CS17 Assignment Submission", "docname": submission.name}
+			),
+			0,
+		)
+
 	def test_resubmit_revises_the_same_submission(self):
 		frappe.set_user(STUDENT1_USER)
 		project = api.create_project("Revise Project")["name"]
