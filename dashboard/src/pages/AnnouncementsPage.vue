@@ -28,16 +28,12 @@
 				:announcement="announcement"
 				:dismissed="isDismissed(announcement.name)"
 				@dismiss="dismiss(announcement.name)"
-				@open="opened = announcement"
+				@open="openAnnouncement(announcement)"
 			/>
 		</div>
 	</PageBody>
 
-	<Dialog
-		:open="Boolean(opened)"
-		size="xl"
-		@update:open="(open: boolean) => open || (opened = null)"
-	>
+	<Dialog v-model:open="dialogOpen" size="xl">
 		<template #title>
 			<h3 class="text-2xl-semibold leading-6 text-ink-gray-8" dir="auto">
 				{{ opened?.title }}
@@ -80,6 +76,12 @@ const { isStudent } = useSession()
 const { dismiss, isDismissed } = useAnnouncementDismissals()
 
 const opened = ref<CS17Announcement | null>(null)
+const dialogOpen = ref(false)
+
+function openAnnouncement(announcement: CS17Announcement) {
+	opened.value = announcement
+	dialogOpen.value = true
+}
 
 const announcementsCall = useCall<StudentAnnouncementsResponse>({
 	url: '/api/v2/method/cs17_portal.api.get_student_announcements',
