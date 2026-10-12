@@ -51,6 +51,24 @@ class TestAnswerSheet(FrappeTestCase):
 
 		self.assertEqual(matched, {" Student  31 ": self.student})
 
+	def test_upload_and_replace_leave_no_file_behind(self):
+		frappe.set_user(self.faculty_user)
+
+		for rows in (ROWS, ROWS[:3]):
+			file = frappe.get_doc(
+				{
+					"doctype": "File",
+					"file_name": "answers-31.csv",
+					"is_private": 1,
+					"content": "\n".join(",".join(row) for row in rows),
+				}
+			).save(ignore_permissions=True)
+			answer_sheet.upload_answer_sheet(self.assignment, file.file_url)
+
+		self.assertFalse(
+			frappe.db.exists("File", {"owner": self.faculty_user, "attached_to_name": ("is", "not set")})
+		)
+
 	def test_student_gets_no_answers_until_they_are_shown(self):
 		frappe.set_user(self.student_user)
 
