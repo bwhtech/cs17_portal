@@ -1,9 +1,12 @@
 import base64
 import functools
+import io
+import zipfile
 from typing import TYPE_CHECKING
 
 import frappe
 from frappe import _
+from frappe.core.doctype.file.utils import decode_file_content
 from frappe.query_builder import Order
 from frappe.query_builder.functions import Coalesce, Date
 from frappe.rate_limiter import rate_limit
@@ -540,6 +543,14 @@ def save_project(
 	thumbnail_content: str | None = None,
 ) -> dict:
 	project_doc = require_owned_project(project)
+
+	try:
+		with zipfile.ZipFile(io.BytesIO(decode_file_content(content))) as archive:
+			names = archive.namelist()
+	except zipfile.BadZipFile:
+		names = []
+	if "project.json" not in names:
+		frappe.throw(_("This file is not a Scratch project."))
 
 	replace_project_file(project_doc, "sb3_file", filename, content)
 	if thumbnail_filename and thumbnail_content:
