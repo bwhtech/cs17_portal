@@ -4,6 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.query_builder.functions import Count
 from frappe.utils import cint, flt
 
 from cs17_portal.cs17_portal.doctype.cs17_assignment.cs17_assignment import get_quarter_assignments
@@ -244,3 +245,22 @@ def has_permission(doc: Document, ptype: str | None = None, user: str | None = N
 	return bool(
 		profile and profile.profile_type == "Student" and doc.student == profile.name and doc.is_published
 	)
+
+
+def on_doctype_update():
+	result = frappe.qb.DocType("CS17 Result")
+	duplicates = (
+		frappe.qb.from_(result)
+		.select(result.exam, result.student)
+		.groupby(result.exam, result.student)
+		.having(Count("*") > 1)
+		.run()
+	)
+	if duplicates:
+		frappe.log_error(
+			title="CS17 Result unique index on exam, student not created",
+			message=f"Duplicate (exam, student): {duplicates}",
+		)
+		return
+
+	frappe.db.add_unique("CS17 Result", ["exam", "student"])

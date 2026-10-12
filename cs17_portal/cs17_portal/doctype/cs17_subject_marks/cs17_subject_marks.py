@@ -4,6 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.query_builder.functions import Count
 from frappe.utils import flt
 
 from cs17_portal.cs17_portal.doctype.cs17_exam.cs17_exam import get_subject_rows
@@ -172,3 +173,22 @@ def get_subject_totals(exam: str, student: str) -> dict[str, float]:
 		fields=["subject", "total_marks_obtained"],
 	)
 	return {row.subject: flt(row.total_marks_obtained) for row in rows}
+
+
+def on_doctype_update():
+	marks = frappe.qb.DocType("CS17 Subject Marks")
+	duplicates = (
+		frappe.qb.from_(marks)
+		.select(marks.exam, marks.student, marks.subject)
+		.groupby(marks.exam, marks.student, marks.subject)
+		.having(Count("*") > 1)
+		.run()
+	)
+	if duplicates:
+		frappe.log_error(
+			title="CS17 Subject Marks unique index on exam, student, subject not created",
+			message=f"Duplicate (exam, student, subject): {duplicates}",
+		)
+		return
+
+	frappe.db.add_unique("CS17 Subject Marks", ["exam", "student", "subject"])
