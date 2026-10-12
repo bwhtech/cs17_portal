@@ -22,3 +22,14 @@ class IntegrationTestCS17Cohort(IntegrationTestCase):
 		)
 
 		self.assertRaises(frappe.ValidationError, cohort.insert, ignore_permissions=True)
+
+	def test_cohort_code_kept_for_students_without_a_cohort_is_refused(self):
+		cohort = frappe.get_doc(
+			{
+				"doctype": "CS17 Cohort",
+				"cohort_code": "GEN",
+				"start_date": "2026-01-01",
+			}
+		)
+
+		self.assertRaises(frappe.ValidationError, cohort.insert, ignore_permissions=True)
