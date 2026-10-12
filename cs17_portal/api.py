@@ -51,6 +51,14 @@ def update_my_profile(first_name: str, last_name: str, profile_picture: str = ""
 			"profile_picture": profile_picture or None,
 		}
 	)
+	profile.set_full_name()
+	missing_names = [
+		label
+		for label, value in ((_("first name"), profile.first_name), (_("last name"), profile.last_name))
+		if not value
+	]
+	if missing_names:
+		frappe.throw(_("Add your {0}.").format(" and ".join(missing_names)), frappe.MandatoryError)
 	profile.save(ignore_permissions=True)
 	if profile.profile_picture != previous_picture:
 		for file_name in frappe.get_all(
