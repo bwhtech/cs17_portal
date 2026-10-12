@@ -36,7 +36,7 @@ PNG. The bridge forces a `renderer.draw()` so the capture resolves immediately e
 an idle stage, and keeps it optional/non-blocking (a failed snapshot still sends the
 `.sb3` without a thumbnail).
 
-### 2. Read-only faculty player — `editor.html?readonly=1`
+### 2. Player-only view — `editor.html?readonly=1`
 
 `editor.jsx` reads the `readonly` URL param and passes `isPlayerOnly` to the GUI, so
 `editor.html?readonly=1` boots TurboWarp's built-in player-only view (stage +
