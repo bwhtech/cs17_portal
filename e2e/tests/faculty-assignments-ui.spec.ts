@@ -537,6 +537,41 @@ test.describe("Faculty assignment portal", () => {
 		await expect(editor.locator(".blocklySvg")).toBeVisible();
 	});
 
+	test("offers a retry when a Scratch submission's project fails to load", async ({
+		page,
+		request,
+	}) => {
+		const scratch = await createTestAssignment(request, {
+			cohort: cohort.name,
+			submissionType: "Scratch",
+		});
+		const submission = await createTestSubmission(request, {
+			assignment: scratch.name,
+			student: student.name,
+		});
+		const uploaded = await uploadFile(request, {
+			fileName: "project.sb3",
+			content: fs.readFileSync(
+				"cs17_portal/public/scratch/sample.sb3",
+			),
+			doctype: "CS17 Assignment Submission",
+			docname: submission.name,
+		});
+		await updateDoc(request, "CS17 Assignment Submission", submission.name, {
+			submission_document: uploaded.file_url,
+		});
+
+		await page.route(
+			(url) => url.href.includes("get_submission_project"),
+			(route) => route.fulfill({ status: 500 }),
+			{ times: 1 },
+		);
+		await page.goto(`/dashboard/faculty/submissions/${submission.name}`);
+
+		await page.getByRole("button", { name: "Try again" }).click();
+		await expect(page.getByTitle("Scratch project player")).toBeVisible();
+	});
+
 	test("grades a submission and publishes the grade", async ({ page }) => {
 		await page.goto("/dashboard/faculty/assignments");
 		// The row title is a router link now, not a button.
