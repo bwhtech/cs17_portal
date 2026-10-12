@@ -27,9 +27,9 @@
 			<Button
 				variant="ghost"
 				icon="lucide-arrow-left"
-				aria-label="Back to submissions"
-				tooltip="Submissions"
-				route="/faculty/submissions"
+				aria-label="Back"
+				tooltip="Back"
+				@click="goBack"
 			/>
 
 			<div class="min-w-0">
@@ -86,6 +86,7 @@
 
 <script setup lang="ts">
 import { computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { Button, useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import GradeBadge from '@/components/common/GradeBadge.vue'
@@ -102,6 +103,12 @@ const props = defineProps<{ submissionId: string }>()
 
 useZenOnMount()
 const { isZen, toggle } = useZenMode()
+const router = useRouter()
+
+function goBack() {
+	if (window.history.state?.back) router.back()
+	else router.push('/faculty/submissions')
+}
 const { set: setBreadcrumbs } = useBreadcrumbs()
 
 const zenLabel = computed(() => (isZen.value ? 'Exit zen mode' : 'Zen mode'))
