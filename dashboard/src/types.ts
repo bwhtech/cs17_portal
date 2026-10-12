@@ -48,7 +48,7 @@ export interface CS17Submission {
 	name: string
 	student: string
 	full_name?: string
-	assignment: string
+	assignment?: string
 	assignment_title?: string
 	submission_document?: string | null
 	submission_url?: string | null

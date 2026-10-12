@@ -65,6 +65,8 @@ export function submissionsByAssignment(
 	submissions: CS17Submission[],
 ): Record<string, CS17Submission> {
 	const map: Record<string, CS17Submission> = {}
-	for (const submission of submissions) map[submission.assignment] = submission
+	for (const submission of submissions) {
+		if (submission.assignment) map[submission.assignment] = submission
+	}
 	return map
 }
