@@ -35,7 +35,10 @@ class CS17AssignmentGrade(Document):
 	# end: auto-generated types
 
 	def before_save(self):
-		if any(self.has_value_changed(field) for field in ("marks_obtained", "grade", "remarks")):
+		grading_fields = ["marks_obtained", "remarks"]
+		if self.evaluation_type != "Marks":
+			grading_fields.append("grade")
+		if any(self.has_value_changed(field) for field in grading_fields):
 			self.graded_by = frappe.session.user
 
 	def validate(self):
