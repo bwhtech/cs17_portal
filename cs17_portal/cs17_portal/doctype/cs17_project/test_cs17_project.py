@@ -249,7 +249,7 @@ class TestCS17Project(FrappeTestCase):
 
 		frappe.set_user(FACULTY_IN_USER)
 		self.assertRaisesRegex(
-			frappe.ValidationError,
+			frappe.DoesNotExistError,
 			"This submission has no project file.",
 			api.get_submission_project,
 			submission.name,
