@@ -87,7 +87,7 @@
 				:key="submission.name"
 				:submission="submission.name"
 				:max-marks="submission.max_marks"
-				:evaluation-type="evaluationType"
+				:evaluation-type="submission.evaluation_type"
 				@saved="submissions.reload()"
 			/>
 		</div>
@@ -168,9 +168,6 @@ const detailRow = computed(
 const fileUrl = computed(
 	() => detailRow.value?.submission_document || detailRow.value?.submission_url || null,
 )
-
-/** The doctype keeps the evaluation type in a field called `remarks`. */
-const evaluationType = computed(() => detail.data?.assignment?.remarks ?? null)
 
 watch(
 	() => submission.value?.assignment_title,
