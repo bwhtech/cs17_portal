@@ -8,11 +8,13 @@ from frappe.tests.utils import FrappeTestCase
 
 from cs17_portal import api
 from cs17_portal.cs17_portal.doctype.cs17_project.cs17_project import get_permission_query_conditions
+from cs17_portal.tests.test_submission_archive import make_zip
 
 STUDENT1_USER = "cs17-project-student1@example.com"
 STUDENT2_USER = "cs17-project-student2@example.com"
 FACULTY_IN_USER = "cs17-project-faculty-in@example.com"
 FACULTY_OUT_USER = "cs17-project-faculty-out@example.com"
+SAMPLE_PROJECT = make_zip({"project.json": b"v1"})
 
 
 def ensure_user(email: str, roles: tuple[str, ...] = ()) -> str:
@@ -140,13 +142,13 @@ class TestCS17Project(FrappeTestCase):
 		frappe.set_user("Administrator")
 		return assignment.name
 
-	def make_saved_project(self, content: bytes = b"PK\x03\x04v1") -> str:
+	def make_saved_project(self, content: bytes = SAMPLE_PROJECT) -> str:
 		frappe.set_user(STUDENT1_USER)
 		project = api.create_project("Student 1 Project")["name"]
 		api.save_project(project, "project.sb3", b64(content))
 		return project
 
-	def make_submission(self, content: bytes = b"PK\x03\x04v1") -> str:
+	def make_submission(self, content: bytes = SAMPLE_PROJECT) -> str:
 		project = self.make_saved_project(content)
 		return api.submit_scratch_project(self.assignment, project)["name"]
 
@@ -180,7 +182,8 @@ class TestCS17Project(FrappeTestCase):
 	def test_submitted_snapshot_is_immutable(self):
 		frappe.set_user(STUDENT1_USER)
 		project = api.create_project("Immutable Project")["name"]
-		api.save_project(project, "project.sb3", b64(b"PK\x03\x04original"))
+		original = make_zip({"project.json": b"original"})
+		api.save_project(project, "project.sb3", b64(original))
 		submission = api.submit_scratch_project(self.assignment, project)["name"]
 
 		snapshot_url = frappe.db.get_value("CS17 Assignment Submission", submission, "submission_document")
@@ -189,23 +192,24 @@ class TestCS17Project(FrappeTestCase):
 		).get_content()
 
 		# Editing the live project after submission must not touch the snapshot bytes.
-		api.save_project(project, "project.sb3", b64(b"PK\x03\x04edited-after-submit"))
+		api.save_project(project, "project.sb3", b64(make_zip({"project.json": b"edited-after-submit"})))
 		snapshot_after = frappe.get_doc(
 			"File", {"file_url": snapshot_url, "attached_to_name": submission}
 		).get_content()
 
-		self.assertEqual(snapshot_before, b"PK\x03\x04original")
+		self.assertEqual(snapshot_before, original)
 		self.assertEqual(snapshot_before, snapshot_after)
 
 	def test_get_submission_project_returns_sb3_bytes_to_faculty_in_cohort(self):
-		submission = self.make_submission(content=b"PK\x03\x04real-project-bytes")
+		project = make_zip({"project.json": b"real-project-bytes"})
+		submission = self.make_submission(content=project)
 		frappe.set_user(FACULTY_IN_USER)
 		result = api.get_submission_project(submission)
 
 		self.assertTrue(result["filename"].endswith(".sb3"))
 		# The base64 content must decode back to the exact snapshot bytes so the read-only player
 		# renders the student's real project (regression for the blank-player 403).
-		self.assertEqual(base64.b64decode(result["content"]), b"PK\x03\x04real-project-bytes")
+		self.assertEqual(base64.b64decode(result["content"]), project)
 
 	def test_get_submission_project_reports_a_missing_project_file(self):
 		submission = self.make_submission()
@@ -339,7 +343,7 @@ class TestCS17Project(FrappeTestCase):
 
 	def test_second_save_replaces_the_project_file(self):
 		project = self.make_saved_project()
-		api.save_project(project, "project.sb3", b64(b"PK\x03\x04v2"))
+		api.save_project(project, "project.sb3", b64(make_zip({"project.json": b"v2"})))
 
 		self.assertEqual(
 			frappe.db.count(
@@ -379,9 +383,9 @@ class TestCS17Project(FrappeTestCase):
 	def test_resubmit_revises_the_same_submission(self):
 		frappe.set_user(STUDENT1_USER)
 		project = api.create_project("Revise Project")["name"]
-		api.save_project(project, "project.sb3", b64(b"PK\x03\x04v1"))
+		api.save_project(project, "project.sb3", b64(SAMPLE_PROJECT))
 		first = api.submit_scratch_project(self.assignment, project)["name"]
-		api.save_project(project, "project.sb3", b64(b"PK\x03\x04v2"))
+		api.save_project(project, "project.sb3", b64(make_zip({"project.json": b"v2"})))
 		second = api.submit_scratch_project(self.assignment, project)["name"]
 
 		self.assertEqual(first, second)
@@ -396,9 +400,9 @@ class TestCS17Project(FrappeTestCase):
 	def test_resubmit_replaces_the_snapshot_file(self):
 		frappe.set_user(STUDENT1_USER)
 		project = api.create_project("Revise Project")["name"]
-		api.save_project(project, "project.sb3", b64(b"PK\x03\x04v1"))
+		api.save_project(project, "project.sb3", b64(SAMPLE_PROJECT))
 		api.submit_scratch_project(self.assignment, project)
-		api.save_project(project, "project.sb3", b64(b"PK\x03\x04v2"))
+		api.save_project(project, "project.sb3", b64(make_zip({"project.json": b"v2"})))
 		submission = api.submit_scratch_project(self.assignment, project)["name"]
 
 		self.assertEqual(
@@ -412,12 +416,12 @@ class TestCS17Project(FrappeTestCase):
 	def test_cannot_resubmit_after_grade_published(self):
 		frappe.set_user(STUDENT1_USER)
 		project = api.create_project("Graded Project")["name"]
-		api.save_project(project, "project.sb3", b64(b"PK\x03\x04v1"))
+		api.save_project(project, "project.sb3", b64(SAMPLE_PROJECT))
 		submission = api.submit_scratch_project(self.assignment, project)["name"]
 
 		frappe.set_user(FACULTY_IN_USER)
 		api.save_grade(submission, marks_obtained=80)
 
 		frappe.set_user(STUDENT1_USER)
-		api.save_project(project, "project.sb3", b64(b"PK\x03\x04v2"))
+		api.save_project(project, "project.sb3", b64(make_zip({"project.json": b"v2"})))
 		self.assertRaises(frappe.ValidationError, api.submit_scratch_project, self.assignment, project)
