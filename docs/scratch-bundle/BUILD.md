@@ -45,10 +45,19 @@ suppresses the player-only homepage extras (the project-URL input and the
 `FeaturedProjects` grid, which fetches scratch.mit.edu and is dead offline) when
 `readonly` is set, leaving just the stage and run controls.
 
-**Contract for the faculty host page:** load `/assets/cs17_portal/scratch/editor.html?readonly=1`
-in an iframe. It emits `ready`, accepts `load-project {sb3: ArrayBuffer}`, and runs the
-loaded submission on green flag. The plain `editor.html` (no param) is the unchanged
-full student editor.
+The plain `editor.html` (no param) is the unchanged full student editor. Either way it
+emits `ready`, accepts `load-project {sb3: ArrayBuffer}`, and runs the loaded project on
+green flag.
+
+**The dashboard does not use the param.** `ScratchFrame.vue` always loads the plain
+`/assets/cs17_portal/scratch/editor.html`, for the student editor and for the read-only
+players alike. When its `readOnly` prop is set, `applyScratchReadOnly()` in
+`dashboard/src/lib/scratch.ts` adds a stylesheet to the iframe document that hides the
+menu bar, the block palette, the tab list, the target pane and the backpack, makes the
+blocks unclickable and blocks the context menu. The block workspace stays visible next
+to the stage. The `?readonly=1` in a dashboard
+URL (`/projects/:id/edit?readonly=1`) is the dashboard's own route query and is never
+passed on to the iframe.
 
 TurboWarp's anti-embed guard in `render-interface.jsx` (`isInvalidEmbed`) is also
 disabled — we embed the editor in an iframe on purpose.

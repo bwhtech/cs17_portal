@@ -75,5 +75,8 @@ file as JSON: the tasks, one entry per student with a note and a mark per task, 
 closing note). The code is in `cs17_portal/answer_sheet.py`; the dashboard side is
 `components/faculty/AnswerSheetCard.vue` and `components/answers/`.
 
+The uploaded file is not kept. It is deleted once it has been read, and a file that was
+refused is removed as well, so keep your own copy.
+
 The whole sheet is one value. If two faculty mark the same sheet at the same moment, the
 later save wins.

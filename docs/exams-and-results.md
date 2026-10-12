@@ -112,7 +112,9 @@ A reusable named split, e.g. `Theory 20 / Practical 30 / Project 50`. Each compo
 decides which subject uses which pattern.
 
 Component max marks are derived, never typed: `component max = subject max marks x weightage / 100`.
-So the same pattern works for a 100 mark paper and a 50 mark paper.
+So the same pattern works for a 100 mark paper and a 50 mark paper. Each maximum is rounded to two
+decimals, and the component with the largest weightage takes whatever the rounding leaves over, so
+the components always add up to the subject max marks.
 
 ### CS17 Subject Marks (+ CS17 Subject Marks Component)
 One student's component marks for one subject in one exam. Named `SM-{exam}-###`. The exam's
@@ -183,6 +185,10 @@ submitted reads as `is_submitted = 0` with no marks. Each row records `assignmen
 `evaluation_type` alongside the result, and reads only the side that was actually used — a
 Marks assignment fills `marks_obtained`, a Grade assignment fills `grade`, and a Not Graded one
 fills neither.
+
+`is_graded` is set when a `CS17 Assignment Grade` exists for the submission. A Marks row holds 0
+both when the work scored 0 and when nobody has graded it yet, so the flag is what tells them apart:
+the dashboard shows "Not graded" for a submitted Marks row without it.
 
 **Assignments do not count toward the exam.** The table is the whole of it — there is no assignment
 subtotal on the result, and `total_marks_obtained`, `percentage`, `overall_grade` and
@@ -297,6 +303,7 @@ assignment and grade pages do: a result becomes visible when `auto_publish_resul
 ## Not yet built
 
 - Faculty UI in the `dashboard` SPA. Entering marks and publishing results is desk-only.
-- Tests for grade-band lookup at boundaries (0, exactly on a band edge, 100), the duplicate guard,
-  and the frozen-after-publish rule. `test_cs17_result.py` covers publishing only: the scheduler,
-  the marks check, and entering and deleting marks.
+- Tests for what a grading scale refuses on save (overlapping bands, a gap at 0 or 100, a repeated
+  grade), for the duplicate guard on `CS17 Subject Marks`, and for the exam lock after publish beyond
+  adding a subject: removing one, or changing its max marks, pattern or grading scale, is refused
+  by the same check but only the add is tested.

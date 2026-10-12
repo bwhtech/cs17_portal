@@ -172,7 +172,7 @@ Rules for every stream
 | custom avatar `<img>` / initial circle | `Avatar` |
 | `react-markdown` + `rehype-raw` | `markdown-it` + `dompurify` in `MarkdownText.vue` |
 | `useFrappeGetCall` | `useCall` (GET) |
-| `useFrappePostCall` | `useCall` (POST, `immediate: false`, `submit()`) |
+| `useFrappePostCall` | `useCall` (POST, `immediate: false`), sent with `trySubmit(call, params)` |
 | `useFrappeGetDocList` | `useList` |
 | `useFrappeGetDoc` | `useDoc` |
 | `useFrappeGetDocCount` | `useCall('frappe.client.get_count')` |
