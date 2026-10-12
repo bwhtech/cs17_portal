@@ -318,6 +318,33 @@ test.describe("Faculty assignment portal", () => {
 		await deleteDoc(request, "CS17 Quarter", quarter.name);
 	});
 
+	test("keeps the schedule of a draft that was scheduled after the list loaded", async ({
+		page,
+		request,
+	}) => {
+		const draft = await createTestAssignment(request, {
+			cohort: cohort.name,
+			isPublished: false,
+		});
+
+		await page.goto("/dashboard/faculty/assignments");
+		await page.getByRole("button", { name: /^Drafts/ }).click();
+		await updateDoc(request, "CS17 Assignment", draft.name, {
+			publish_on: "2030-01-05 09:30:00",
+		});
+		await page.getByRole("button", { name: draft.title, exact: true }).click();
+		await page.getByPlaceholder("Assignment title").fill(`${draft.title} edited`);
+		await page.getByRole("button", { name: "Save Assignment" }).click();
+		await expect(page.getByText("Assignment saved")).toBeVisible();
+
+		const saved = await getDoc<{ publish_on: string | null }>(
+			request,
+			"CS17 Assignment",
+			draft.name,
+		);
+		expect(saved.publish_on).toBe("2030-01-05 09:30:00");
+	});
+
 	test("shows no form when a draft cannot be loaded", async ({ page, request }) => {
 		const draft = await createTestAssignment(request, {
 			cohort: cohort.name,
