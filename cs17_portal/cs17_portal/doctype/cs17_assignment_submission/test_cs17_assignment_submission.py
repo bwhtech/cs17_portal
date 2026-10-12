@@ -220,6 +220,41 @@ class TestSubmissionFileOwnership(FrappeTestCase):
 
 		self.assertTrue(frappe.db.exists("File", new.name))
 
+	def test_student_cannot_submit_an_upload_under_another_spelling_of_its_url(self):
+		cohort = make_cohort("C39TEST")
+		student_user = make_user("student39@cs17test.com")
+		make_profile("Student", cohort, student_user, "Student 39")
+		faculty_user = make_user("faculty39@cs17test.com")
+		make_profile("Faculty", cohort, faculty_user, "Faculty 39")
+
+		frappe.set_user(faculty_user)
+		assignment = make_assignment(cohort, "Notes Task 39", "Any", 20)
+
+		frappe.set_user(student_user)
+		file = frappe.get_doc(
+			{"doctype": "File", "file_name": "notes-39.txt", "is_private": 1, "content": "notes 39"}
+		).save(ignore_permissions=True)
+
+		self.assertRaises(frappe.ValidationError, submit_assignment, assignment, file.file_url.upper())
+
+	def test_edit_cannot_resend_the_attached_file_under_another_spelling_of_its_url(self):
+		cohort = make_cohort("C44TEST")
+		student_user = make_user("student44@cs17test.com")
+		make_profile("Student", cohort, student_user, "Student 44")
+		faculty_user = make_user("faculty44@cs17test.com")
+		make_profile("Faculty", cohort, faculty_user, "Faculty 44")
+
+		frappe.set_user(faculty_user)
+		assignment = make_assignment(cohort, "Notes Task 44", "Any", 20)
+
+		frappe.set_user(student_user)
+		file = frappe.get_doc(
+			{"doctype": "File", "file_name": "notes-44.txt", "is_private": 1, "content": "notes 44"}
+		).save(ignore_permissions=True)
+		submission = submit_assignment(assignment, file.file_url)["name"]
+
+		self.assertRaises(frappe.ValidationError, edit_submission, submission, file.file_url.upper())
+
 
 class TestGradePastItsPublishTime(FrappeTestCase):
 	@classmethod
