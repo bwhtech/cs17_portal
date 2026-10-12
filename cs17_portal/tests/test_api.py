@@ -531,6 +531,18 @@ class TestFacultyAnnouncementsUseOwnCohort(FrappeTestCase):
 		self.assertTrue(can_edit[self.announcement_100])
 		self.assertFalse(can_edit[self.announcement_for_all])
 
+	def test_announcement_past_its_publish_time_is_listed_with_that_date(self):
+		announcement = api.create_announcement(
+			"Announcement 100 scheduled",
+			"",
+			cohort=self.cohort_100,
+			publish="schedule",
+			publish_on="2000-01-01 00:00:00",
+		)
+
+		row = next(row for row in api.get_faculty_announcements() if row.name == announcement)
+		self.assertEqual(row.published_date, frappe.utils.getdate("2000-01-01"))
+
 
 class TestAssignmentQuarter(FrappeTestCase):
 	def tearDown(self):
