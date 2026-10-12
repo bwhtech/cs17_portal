@@ -427,6 +427,13 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 
 		self.assertIsNone(grade["remarks"])
 
+	def test_save_grade_stores_no_marks_on_a_letter_graded_assignment(self):
+		frappe.set_user(self.faculty_28_user)
+		grade = api.save_grade(self.submission_28, marks_obtained=15, grade="B")
+		self.addCleanup(frappe.delete_doc, "CS17 Assignment Grade", grade["name"])
+
+		self.assertEqual(grade["marks_obtained"], 0)
+
 	def test_faculty_lists_only_own_cohort_assignments(self):
 		frappe.set_user(self.faculty_27_user)
 		names = [row.name for row in api.get_faculty_assignments()]
