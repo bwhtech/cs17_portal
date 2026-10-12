@@ -1345,6 +1345,8 @@ def get_announcement(announcement: str) -> dict | None:
 def publish_announcement(announcement: str, publish: str = "now", publish_on: str | None = None) -> None:
 	require_faculty_for_announcement_cohort(frappe.db.get_value("CS17 Announcement", announcement, "cohort"))
 	doc = frappe.get_doc("CS17 Announcement", announcement)
+	if is_published_now(doc):
+		frappe.throw(_("A published announcement cannot be published or scheduled again"))
 	_apply_announcement_publish(doc, publish, publish_on)
 	doc.save(ignore_permissions=True)
 
