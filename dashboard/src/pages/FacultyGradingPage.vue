@@ -77,6 +77,12 @@
 				:loading="detail.loading"
 				@retry="detail.reload()"
 			/>
+			<div
+				v-else-if="detailLoading && submission.submission_type !== 'Scratch'"
+				class="cs17-delay-in h-full p-4"
+			>
+				<Skeleton class="h-full w-full" />
+			</div>
 			<SubmissionPlayer
 				v-else
 				:key="submission.name"
@@ -105,7 +111,7 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { Button, useCall } from 'frappe-ui'
+import { Button, Skeleton, useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import GradeBadge from '@/components/common/GradeBadge.vue'
 import LoadError from '@/components/common/LoadError.vue'
@@ -174,6 +180,8 @@ watch(
 const detailRow = computed(
 	() => detail.data?.submissions?.find((row) => row.name === props.submissionId) ?? null,
 )
+
+const detailLoading = computed(() => !detail.isFinished && !detailRow.value)
 
 const fileUrl = computed(
 	() => detailRow.value?.submission_document || detailRow.value?.submission_url || null,
