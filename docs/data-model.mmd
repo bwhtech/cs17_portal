@@ -3,7 +3,7 @@
 erDiagram
     CS17_Cohort ||--o{ CS17_Profile : "cohort"
     CS17_Cohort ||--o{ CS17_Assignment : "cohort"
-    CS17_Profile ||--o{ CS17_Project : "student"
+    CS17_Profile ||--o{ CS17_Project : "profile"
     CS17_Profile ||--o{ CS17_Assignment_Submission : "student"
     CS17_Assignment ||--o{ CS17_Assignment_Submission : "assignment"
     CS17_Assignment ||--o{ CS17_Assignment_Grade : "assignment"
@@ -52,7 +52,7 @@ erDiagram
     }
     CS17_Project {
         Data project_title
-        Link student FK "CS17 Profile"
+        Link profile FK "CS17 Profile"
         Attach sb3_file "live .sb3"
         AttachImage thumbnail
         Datetime last_saved_at
@@ -119,6 +119,7 @@ erDiagram
         Float marks_obtained "from CS17 Assignment Grade, Marks only"
         Data grade "from CS17 Assignment Grade, Grade only"
         Check is_submitted "derived"
+        Check is_graded "derived, a grade document exists"
     }
     CS17_Result_Subject_Score {
         Link subject FK "CS17 Subject"

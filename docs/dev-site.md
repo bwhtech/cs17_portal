@@ -25,7 +25,19 @@ settings.save()
 
 `cs17_portal/demo.py` seeds a term's worth of realistic data. It is re-runnable: it
 clears everything tagged with the `@cs17.test` user domain or the `C6` / `C7` cohort
-codes, then seeds again. Nothing else on the site is touched.
+codes, then seeds again.
+
+The clearing goes by those tags, not by who created the record. Every run deletes, for
+good:
+
+- every user whose email ends in `@cs17.test`, with their profile, their submissions and
+  their Scratch projects;
+- the `C6` and `C7` cohorts, with their assignments, the grades on those assignments,
+  their exams, and the subject marks and results of those exams;
+- every announcement for `C6` or `C7`, and every announcement with no cohort.
+
+So do not run it on a site where you keep your own `@cs17.test` accounts, a cohort named
+`C6` or `C7`, or all-cohort announcements you want to keep.
 
 Everyone shares the password `Cs17-Demo-Pass-123`.
 
