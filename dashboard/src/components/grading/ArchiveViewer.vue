@@ -1,6 +1,6 @@
 <template>
 	<div class="h-full bg-surface-base">
-		<div v-if="archive.error" class="flex h-full items-center justify-center p-6">
+		<div v-if="failed || archive.error" class="flex h-full items-center justify-center p-6">
 			<EmptyState
 				v-if="isRefusal(archive.error)"
 				icon="lucide-file-archive"
@@ -134,6 +134,7 @@ import { computed, ref, watch } from 'vue'
 import { Button, Skeleton, Tree, useCall, type TreeNode } from 'frappe-ui'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadError from '@/components/common/LoadError.vue'
+import { useLoadFailed } from '@/composables/useLoadFailed'
 import {
 	buildArchiveTree,
 	firstFile,
@@ -156,6 +157,8 @@ const archive = useCall<{ filename: string; entries: ArchiveEntry[] }, { submiss
 	params: () => ({ submission: props.submission }),
 	refetch: true,
 })
+
+const failed = useLoadFailed(archive, { except: isRefusal })
 
 const fileMissing = computed(() => archive.error?.type === 'DoesNotExistError')
 

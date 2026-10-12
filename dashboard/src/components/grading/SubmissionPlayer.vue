@@ -4,7 +4,7 @@
 		     viewer its file deserves. -->
 		<template v-if="isScratch">
 			<div
-				v-if="project.error"
+				v-if="failed || project.error"
 				class="flex h-full items-center justify-center p-6 text-center"
 			>
 				<p v-if="isRefusal(project.error)" class="text-p-base text-ink-gray-5">
@@ -73,6 +73,7 @@ import { Button, Skeleton, useCall } from 'frappe-ui'
 import LoadError from '@/components/common/LoadError.vue'
 import ArchiveViewer from '@/components/grading/ArchiveViewer.vue'
 import ScratchFrame from '@/components/scratch/ScratchFrame.vue'
+import { useLoadFailed } from '@/composables/useLoadFailed'
 import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
 import { base64ToArrayBuffer } from '@/lib/scratch'
 import { previewKind } from '@/lib/submissionTypes'
@@ -114,6 +115,8 @@ const project = useCall<{ filename: string; content: string }, { submission: str
 	immediate: isScratch.value,
 	refetch: true,
 })
+
+const failed = useLoadFailed(project, { except: isRefusal })
 
 // Decoded once into a shallow ref: `ScratchFrame` takes a copy before it
 // transfers the buffer, so this one stays intact across reloads of the frame.
