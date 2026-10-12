@@ -27,6 +27,12 @@ class CS17Announcement(Document):
 
 	def validate(self):
 		self.is_published = cint(self.is_published)
+		self.clear_schedule_when_unpublished()
+
+	def clear_schedule_when_unpublished(self):
+		unpublishing = not self.is_published and self.has_value_changed("is_published")
+		if unpublishing and not self.has_value_changed("publish_on"):
+			self.publish_on = None
 
 	def on_update(self):
 		if self.is_published and self.has_value_changed("is_published"):
