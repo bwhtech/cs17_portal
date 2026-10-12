@@ -53,11 +53,7 @@ async function callAsFaculty(
 	);
 }
 
-async function createProjectAsFaculty(
-	page: Page,
-	title: string,
-	content = btoa("PKtest"),
-): Promise<string> {
+async function createProjectAsFaculty(page: Page, title: string): Promise<string> {
 	const created = await callAsFaculty(page, "cs17_portal.api.create_project", {
 		project_title: title,
 	});
@@ -65,7 +61,7 @@ async function createProjectAsFaculty(
 	await callAsFaculty(page, "cs17_portal.api.save_project", {
 		project: created.body.message.name,
 		filename: "p.sb3",
-		content,
+		content: SAMPLE_PROJECT,
 	});
 	return created.body.message.name;
 }
@@ -195,7 +191,6 @@ test.describe("Faculty Scratch projects", () => {
 		const project = await createProjectAsFaculty(
 			page,
 			`${PROJECT_TITLE_PREFIX} Zen ${Date.now()}`,
-			SAMPLE_PROJECT,
 		);
 		let saved = "";
 		await page.route("**/cs17_portal.api.save_project*", async (route) => {
@@ -223,7 +218,6 @@ test.describe("Faculty Scratch projects", () => {
 		const project = await createProjectAsFaculty(
 			page,
 			`${PROJECT_TITLE_PREFIX} Reload ${Date.now()}`,
-			SAMPLE_PROJECT,
 		);
 
 		await page.goto(`/dashboard/faculty/projects/${project}/edit`);
