@@ -107,3 +107,20 @@ class IntegrationTestCS17Announcement(IntegrationTestCase):
 			auto_publish_announcements()
 
 		self.assertEqual(frappe.db.get_value("CS17 Announcement", self.announcement, "is_published"), 1)
+
+	def test_announcement_published_on_schedule_keeps_its_date_and_drops_the_schedule(self):
+		announcement = create_announcement(
+			"Quiz moved to Monday",
+			"Room 204",
+			cohort=self.cohort,
+			publish="schedule",
+			publish_on=frappe.utils.add_days(frappe.utils.now(), 1),
+		)
+		frappe.db.set_value("CS17 Announcement", announcement, "publish_on", "2000-01-01 00:00:00")
+
+		auto_publish_announcements()
+
+		self.assertEqual(
+			frappe.db.get_value("CS17 Announcement", announcement, ["published_date", "publish_on"]),
+			(frappe.utils.getdate("2000-01-01"), None),
+		)
