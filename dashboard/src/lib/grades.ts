@@ -1,5 +1,7 @@
 import type { EvaluationType, GradeBand } from '@/types'
 
+const marksFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 })
+
 export function formatGrade({
 	evaluationType,
 	grade,
@@ -12,7 +14,7 @@ export function formatGrade({
 	maxMarks?: number | null
 }): string {
 	if (evaluationType !== 'Marks') return grade || '—'
-	const marks = `${marksObtained ?? 0} / ${maxMarks ?? 0}`
+	const marks = `${marksFormat.format(marksObtained ?? 0)} / ${marksFormat.format(maxMarks ?? 0)}`
 	return grade ? `${grade} · ${marks}` : marks
 }
 

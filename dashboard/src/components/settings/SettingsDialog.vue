@@ -11,10 +11,10 @@
 						:label="profile?.full_name ?? ''"
 					/>
 					<div class="min-w-0">
-						<p class="truncate text-base font-medium text-ink-gray-8">
+						<p class="break-words text-base font-medium text-ink-gray-8">
 							{{ profile?.full_name ?? '—' }}
 						</p>
-						<p class="mt-1 truncate text-p-sm text-ink-gray-5">{{ roleLine }}</p>
+						<p class="mt-1 break-words text-p-sm text-ink-gray-5">{{ roleLine }}</p>
 					</div>
 				</div>
 			</section>
@@ -53,7 +53,7 @@ import { useSession } from '@/composables/useSession'
 import { useSettingsDialog } from '@/composables/useSettingsDialog'
 
 const { profile, isFaculty, cohort, logout } = useSession()
-const roleLine = computed(() => `cohort '${cohort.value ?? '—'}'`)
+const roleLine = computed(() => (cohort.value ? `cohort ${cohort.value}` : 'Student'))
 
 const { isOpen } = useSettingsDialog()
 const { resolvedColorScheme, setColorScheme } = useColorScheme()

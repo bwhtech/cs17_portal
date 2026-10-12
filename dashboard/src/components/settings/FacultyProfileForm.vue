@@ -27,8 +27,18 @@
 		</div>
 
 		<div class="grid gap-3 sm:grid-cols-2">
-			<FormControl v-model="firstName" label="First name" required />
-			<FormControl v-model="lastName" label="Last name" required />
+			<FormControl
+				v-model="firstName"
+				label="First name"
+				:maxlength="NAME_MAX_LENGTH"
+				required
+			/>
+			<FormControl
+				v-model="lastName"
+				label="Last name"
+				:maxlength="NAME_MAX_LENGTH"
+				required
+			/>
 		</div>
 
 		<ErrorMessage :message="error ?? undefined" />
@@ -62,6 +72,9 @@ type SavedProfile = Pick<
 
 const { profile } = useSession()
 const { isOpen } = useSettingsDialog()
+
+const FULL_NAME_MAX_LENGTH = 140
+const NAME_MAX_LENGTH = Math.floor((FULL_NAME_MAX_LENGTH - 1) / 2)
 
 const firstName = ref('')
 const lastName = ref('')
@@ -113,6 +126,10 @@ async function save() {
 	error.value = null
 	if (missingNames.value.length) {
 		error.value = `Add your ${missingNames.value.join(' and ')}.`
+		return
+	}
+	if (`${firstName.value.trim()} ${lastName.value.trim()}`.length > FULL_NAME_MAX_LENGTH) {
+		error.value = `Your full name can be at most ${FULL_NAME_MAX_LENGTH} characters.`
 		return
 	}
 	if (!isChanged.value) {
