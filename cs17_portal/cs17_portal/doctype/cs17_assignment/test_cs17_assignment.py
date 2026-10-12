@@ -143,6 +143,24 @@ class IntegrationTestCS17Assignment(IntegrationTestCase):
 			publish="now",
 		)
 
+	def test_graded_assignment_without_evaluation_type_is_refused(self):
+		cohort = make_cohort("C70TEST")
+		faculty_user = make_user("faculty77@cs17test.com")
+		make_profile("Faculty", cohort, faculty_user, "Faculty 77")
+
+		frappe.set_user(faculty_user)
+		self.addCleanup(frappe.set_user, "Administrator")
+
+		self.assertRaises(
+			frappe.ValidationError,
+			create_assignment,
+			"PDF Task 77",
+			cohort,
+			"2030-01-01 00:00:00",
+			assignment_type="Graded",
+			remarks="",
+		)
+
 
 class TestQuarterAssignments(IntegrationTestCase):
 	def tearDown(self):
