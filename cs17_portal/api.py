@@ -702,6 +702,22 @@ def save_grade(
 	}
 
 
+@frappe.whitelist(methods=["POST"])
+def publish_grades(submissions: list | str) -> int:
+	submissions = frappe.parse_json(submissions)
+	require_faculty_for_submissions(submissions)
+	grades = frappe.get_all(
+		"CS17 Assignment Grade",
+		filters={"submission": ["in", submissions], "is_published": 0},
+		pluck="name",
+	)
+	for name in grades:
+		grade = frappe.get_doc("CS17 Assignment Grade", name)
+		grade.is_published = 1
+		grade.save(ignore_permissions=True)
+	return len(grades)
+
+
 @frappe.whitelist(methods=["GET"])
 def get_student_assignments() -> dict:
 	"""Assignments a student can see now, plus the next scheduled publish time.

@@ -22,6 +22,14 @@
 			</Dropdown>
 
 			<Button
+				v-if="draftGrades"
+				:label="`Publish ${draftGrades} ${draftGrades === 1 ? 'grade' : 'grades'}`"
+				icon-left="lucide-send"
+				:loading="publish.loading"
+				@click="confirmPublish"
+			/>
+
+			<Button
 				variant="ghost"
 				icon="lucide-x"
 				aria-label="Clear selection"
@@ -34,7 +42,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Avatar, Button, Dropdown, toast, useCall } from 'frappe-ui'
+import { Avatar, Button, Dropdown, dialog, toast, useCall } from 'frappe-ui'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { trySubmit } from '@/lib/trySubmit'
 import type { FacultyMember } from '@/types'
@@ -43,6 +51,8 @@ const props = defineProps<{
 	/** The selected submission names. */
 	submissions: string[]
 	cohort?: string
+	/** How many of the selected submissions have a grade that is still a draft. */
+	draftGrades?: number
 }>()
 
 const emit = defineEmits<{ done: []; clear: [] }>()
@@ -58,6 +68,29 @@ const assign = useCall<null, { submissions: string[]; assign_to: string }>({
 	method: 'POST',
 	immediate: false,
 })
+
+const publish = useCall<number, { submissions: string[] }>({
+	url: '/api/v2/method/cs17_portal.api.publish_grades',
+	method: 'POST',
+	immediate: false,
+})
+
+function confirmPublish() {
+	const count = props.draftGrades
+	dialog.confirm({
+		title: `Publish ${count} ${count === 1 ? 'grade' : 'grades'}?`,
+		message: 'The students will see their grade and remarks right away.',
+		onConfirm: async () => {
+			await trySubmit(publish, { submissions: props.submissions })
+			if (publish.error) {
+				toast.error(frappeErrorMessage(publish.error, 'Could not publish the grades.'))
+				return
+			}
+			toast.success(`Published ${count} ${count === 1 ? 'grade' : 'grades'}.`)
+			emit('done')
+		},
+	})
+}
 
 const options = computed(() =>
 	(members.data ?? []).map((member) => ({

@@ -231,6 +231,15 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 		)
 		self.assertEqual(submitted_at, creation)
 
+	def test_publish_grades_publishes_the_draft_grade_of_a_submission(self):
+		grade = frappe.db.get_value("CS17 Assignment Grade", {"submission": self.submission_27})
+		frappe.db.set_value("CS17 Assignment Grade", grade, "is_published", 0)
+		frappe.set_user(self.faculty_27_user)
+
+		api.publish_grades([self.submission_27])
+
+		self.assertEqual(frappe.db.get_value("CS17 Assignment Grade", grade, "is_published"), 1)
+
 	def test_grade_submission_blocks_other_cohort_faculty(self):
 		frappe.set_user(self.faculty_28_user)
 		self.assertRaises(frappe.PermissionError, api.grade_submission, self.submission_27, grade="A")
