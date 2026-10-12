@@ -47,6 +47,19 @@ class TestCS17Profile(FrappeTestCase):
 
 		self.assertEqual(profile.full_name, "Tejeshawari Mourya")
 
+	def test_name_that_is_only_markup_is_refused(self):
+		profile = self._make_profile("Student")
+		profile.last_name = "<script>alert(1)</script>"
+
+		self.assertRaises(frappe.MandatoryError, profile.insert, ignore_permissions=True)
+
+	def test_full_name_matches_the_stored_names(self):
+		profile = self._make_profile("Student")
+		profile.update({"first_name": "Tejeshawari <script>alert(1)</script>", "last_name": "Mourya"})
+		profile.insert(ignore_permissions=True)
+
+		self.assertEqual(profile.full_name, "Tejeshawari Mourya")
+
 	def test_profile_without_user_is_allowed(self):
 		self._make_profile("Student").insert(ignore_permissions=True)
 		self._make_profile("Faculty").insert(ignore_permissions=True)
