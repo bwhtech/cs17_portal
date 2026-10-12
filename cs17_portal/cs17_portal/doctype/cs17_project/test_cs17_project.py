@@ -207,6 +207,18 @@ class TestCS17Project(FrappeTestCase):
 		# renders the student's real project (regression for the blank-player 403).
 		self.assertEqual(base64.b64decode(result["content"]), b"PK\x03\x04real-project-bytes")
 
+	def test_get_submission_project_reports_a_missing_project_file(self):
+		submission = self.make_submission()
+		frappe.db.delete("File", {"attached_to_name": submission})
+
+		frappe.set_user(FACULTY_IN_USER)
+		self.assertRaisesRegex(
+			frappe.DoesNotExistError,
+			"This submission's project file is missing.",
+			api.get_submission_project,
+			submission,
+		)
+
 	def test_get_submission_project_blocks_faculty_out_of_cohort(self):
 		submission = self.make_submission()
 		frappe.set_user(FACULTY_OUT_USER)
