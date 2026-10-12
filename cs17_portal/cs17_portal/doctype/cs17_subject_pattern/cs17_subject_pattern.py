@@ -31,8 +31,9 @@ class CS17SubjectPattern(Document):
 
 	def validate(self):
 		self.validate_components()
-		self.total_weightage = sum(flt(row.weightage) for row in self.components)
-		if abs(self.total_weightage - TOTAL_WEIGHTAGE) > WEIGHTAGE_TOLERANCE:
+		precision = self.precision("total_weightage")
+		self.total_weightage = flt(sum(flt(row.weightage) for row in self.components), precision)
+		if flt(abs(self.total_weightage - TOTAL_WEIGHTAGE), precision) > WEIGHTAGE_TOLERANCE:
 			frappe.throw(
 				_("Weightages add up to {0}%, they must add up to 100%.").format(self.total_weightage)
 			)
