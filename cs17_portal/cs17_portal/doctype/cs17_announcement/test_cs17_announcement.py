@@ -7,6 +7,7 @@ import frappe
 from frappe.tests import IntegrationTestCase
 
 from cs17_portal.api import create_announcement, get_faculty_announcements, update_announcement
+from cs17_portal.tasks import auto_publish_announcements
 from cs17_portal.tests.test_api import make_cohort, make_profile, make_user
 
 # On IntegrationTestCase, the doctype test records and all
@@ -69,3 +70,18 @@ class IntegrationTestCS17Announcement(IntegrationTestCase):
 			announcement.insert(ignore_permissions=True)
 
 		send_announcement_email.assert_not_called()
+
+	def test_due_announcement_is_published_when_another_one_fails(self):
+		failing = create_announcement(
+			"Quiz moved to Monday",
+			"Room 204",
+			cohort=self.cohort,
+			publish="schedule",
+			publish_on="2000-01-01 00:00:00",
+		)
+		frappe.db.set_value("CS17 Announcement", failing, "title", "")
+
+		with patch.object(frappe, "log_error"):
+			auto_publish_announcements()
+
+		self.assertEqual(frappe.db.get_value("CS17 Announcement", self.announcement, "is_published"), 1)

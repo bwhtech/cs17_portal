@@ -38,10 +38,18 @@ def auto_publish_announcements():
 		pluck="name",
 	)
 	for name in names:
-		doc = frappe.get_doc("CS17 Announcement", name)
-		doc.is_published = 1
-		doc.published_date = getdate(doc.publish_on)
-		doc.save(ignore_permissions=True)
+		try:
+			doc = frappe.get_doc("CS17 Announcement", name)
+			doc.is_published = 1
+			doc.published_date = getdate(doc.publish_on)
+			doc.save(ignore_permissions=True)
+		except Exception:
+			title = "Scheduled announcement not published"
+			if not frappe.db.exists(
+				"Error Log",
+				{"method": title, "reference_doctype": "CS17 Announcement", "reference_name": name},
+			):
+				frappe.log_error(title=title, reference_doctype="CS17 Announcement", reference_name=name)
 
 
 def _publish_due(doctype: str, publish_on_field: str) -> None:
