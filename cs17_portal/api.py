@@ -64,6 +64,17 @@ def update_my_profile(first_name: str, last_name: str, profile_picture: str = ""
 			pluck="name",
 		):
 			frappe.delete_doc("File", file_name, ignore_permissions=True)
+	if profile.profile_picture:
+		for file_name in frappe.get_all(
+			"File",
+			filters={
+				"file_url": profile.profile_picture,
+				"owner": frappe.session.user,
+				"attached_to_name": ("is", "not set"),
+			},
+			pluck="name",
+		):
+			frappe.delete_doc("File", file_name, ignore_permissions=True)
 	return {
 		"name": profile.name,
 		"full_name": profile.full_name,
