@@ -56,6 +56,14 @@ class TestAnswerSheet(FrappeTestCase):
 
 		self.assertEqual(result, {"remark": "named gallary", "status": "Half"})
 
+	def test_task_heading_with_a_zero_width_space_is_accepted(self):
+		header, task, *_rest = ROWS
+		rows = [[header[0], "Task\u200b", *header[2:]], task]
+
+		sheet = answer_sheet.parse_answer_sheet(rows, self.cohort)
+
+		self.assertEqual(sheet["tasks"][0]["task"], "Create gallery folder")
+
 	def test_heading_with_stray_spaces_matches_the_student(self):
 		matched = answer_sheet.match_students([" Student  31 "], self.cohort)
 
