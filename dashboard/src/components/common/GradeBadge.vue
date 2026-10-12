@@ -10,7 +10,7 @@ import type { EvaluationType } from '@/types'
 
 const props = defineProps<{
 	graded: boolean
-	evaluationType?: EvaluationType | null
+	evaluationType?: EvaluationType | '' | null
 	/** Set on a Marks assignment. */
 	marksObtained?: number | null
 	grade?: string | null

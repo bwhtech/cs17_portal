@@ -199,7 +199,7 @@ export interface CohortSubmission {
 	submission_type: SubmissionType | null
 	submission_document?: string | null
 	max_marks: number
-	evaluation_type: EvaluationType | null
+	evaluation_type: EvaluationType | '' | null
 	submitted_at: string
 	marks_obtained: number | null
 	grade: string | null
@@ -248,7 +248,7 @@ export type SubmissionType = (typeof SUBMISSION_TYPES)[number]
 export const ASSIGNMENT_TYPES = ['Graded', 'Not Graded'] as const
 export type AssignmentType = (typeof ASSIGNMENT_TYPES)[number]
 
-/** How a graded assignment is scored. `null` on a Not Graded assignment. */
+/** How a graded assignment is scored. `''` on a Not Graded assignment. */
 export const EVALUATION_TYPES = ['Grade', 'Marks'] as const
 export type EvaluationType = (typeof EVALUATION_TYPES)[number]
 
