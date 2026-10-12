@@ -978,7 +978,7 @@ def update_assignment(
 	assignment_type: str | None = None,
 	max_marks: float | None = None,
 	remarks: str | None = None,
-	publish: str = "draft",
+	publish: str | None = None,
 	publish_on: str | None = None,
 	quarter: str | None = None,
 ) -> str:
@@ -1001,7 +1001,8 @@ def update_assignment(
 		doc.remarks if remarks is None else remarks,
 		quarter,
 	)
-	_apply_publish_state(doc, publish, publish_on)
+	if publish is not None:
+		_apply_publish_state(doc, publish, publish_on)
 	doc.save(ignore_permissions=True)
 	return doc.name
 

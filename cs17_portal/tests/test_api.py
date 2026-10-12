@@ -292,6 +292,23 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 			("Graded", 50, "Marks", "Scratch"),
 		)
 
+	def test_update_assignment_keeps_the_schedule_the_caller_left_out(self):
+		frappe.set_user(self.faculty_27_user)
+		assignment = api.create_assignment(
+			"Scratch Task 93",
+			self.cohort_27,
+			"2030-01-01 00:00:00",
+			publish="schedule",
+			publish_on="2031-03-01 09:00:00",
+		)
+
+		api.update_assignment(assignment, "Scratch Task 93", self.cohort_27, "2030-02-01 00:00:00")
+
+		self.assertEqual(
+			frappe.db.get_value("CS17 Assignment", assignment, "publish_on"),
+			frappe.utils.get_datetime("2031-03-01 09:00:00"),
+		)
+
 	def test_delete_assignment_blocks_other_cohort_faculty(self):
 		frappe.set_user(self.faculty_28_user)
 		self.assertRaises(frappe.PermissionError, api.delete_assignment, self.assignment_27)
