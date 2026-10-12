@@ -13,3 +13,4 @@ cs17_portal.patches.v1_0.add_unique_subject_marks
 cs17_portal.patches.v1_0.rename_project_student_to_profile
 cs17_portal.patches.v1_0.link_projects_to_submitted_assignment
 cs17_portal.patches.v1_0.set_grade_for_marks_assignments
+cs17_portal.patches.v1_0.set_submitted_at_on_old_submissions
