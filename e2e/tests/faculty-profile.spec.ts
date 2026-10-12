@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { CS17Profile, ensureSessionFaculty, getProfileForUser } from "../helpers/cs17";
-import { callMethod, deleteDoc, getDoc, updateDoc } from "../helpers/frappe";
+import { callMethod, deleteDoc, getDoc, getList, updateDoc } from "../helpers/frappe";
 
 const UPDATE = "cs17_portal.api.update_my_profile";
 
@@ -27,10 +27,14 @@ test.describe("Faculty profile editing", () => {
 			await deleteTestProfileSafely(request, createdProfile);
 			return;
 		}
+		const picture = original.profile_picture ?? null;
+		const pictureFiles = picture
+			? await getList(request, "File", { filters: { file_url: picture }, limit: 1 })
+			: [];
 		await updateDoc(request, "CS17 Profile", profileName, {
 			first_name: original.first_name,
 			last_name: original.last_name,
-			profile_picture: original.profile_picture ?? null,
+			profile_picture: pictureFiles.length ? picture : null,
 		});
 	});
 
