@@ -1,9 +1,17 @@
 <template>
-	<div v-if="!seeded" class="flex gap-3">
+	<div v-if="!seeded && !failed" class="flex gap-3">
 		<Skeleton class="h-8 w-36 rounded-2" />
 		<Skeleton class="h-8 flex-1 rounded-2" />
 		<Skeleton class="h-8 w-28 rounded-2" />
 	</div>
+
+	<LoadError
+		v-else-if="!seeded"
+		class="!py-0"
+		title="Could not load the grade"
+		:loading="existing.loading"
+		@retry="existing.reload()"
+	/>
 
 	<!-- Two columns on a phone, one row from `md`: the form is pinned to the
 	     foot of the workspace, so every line it saves goes to the player. -->
@@ -59,6 +67,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { Button, FormControl, Skeleton, toast, useCall } from 'frappe-ui'
+import LoadError from '@/components/common/LoadError.vue'
+import { useLoadFailed } from '@/composables/useLoadFailed'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { gradeForMarks } from '@/lib/grades'
 import { trySubmit } from '@/lib/trySubmit'
@@ -111,6 +121,8 @@ const existing = useCall<SubmissionGrade | null, { submission: string }>({
 	refetch: true,
 })
 
+const failed = useLoadFailed(existing)
+
 // The form is seeded from the saved grade rather than bound to it: a reload
 // after saving must not wipe what the grader is still typing.
 // `isFinished`, not `data`: an ungraded submission answers with `null`, which
@@ -118,7 +130,7 @@ const existing = useCall<SubmissionGrade | null, { submission: string }>({
 watch(
 	() => existing.isFinished,
 	(finished) => {
-		if (!finished || seeded.value) return
+		if (!finished || seeded.value || existing.error) return
 		const grade = existing.data
 		marks.value = grade?.marks_obtained != null ? String(grade.marks_obtained) : ''
 		gradeLetter.value = grade?.grade ?? ''

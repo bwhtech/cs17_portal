@@ -4,6 +4,7 @@ import {
 	CS17Assignment,
 	CS17Cohort,
 	CS17Profile,
+	CS17Submission,
 	TEST_ASSIGNMENT_PREFIX,
 	TestDefaultScale,
 	cleanupTestAssignments,
@@ -596,6 +597,7 @@ test.describe("Faculty assignment portal", () => {
 	test.describe("a marks assignment", () => {
 		let defaultScale: TestDefaultScale;
 		let marked: CS17Assignment;
+		let markedSubmission: CS17Submission;
 
 		test.beforeAll(async ({ request }) => {
 			defaultScale = await createTestDefaultScale(request);
@@ -607,7 +609,7 @@ test.describe("Faculty assignment portal", () => {
 				remarks: "Marks",
 				max_marks: 20,
 			});
-			await createTestSubmission(request, {
+			markedSubmission = await createTestSubmission(request, {
 				assignment: marked.name,
 				student: student.name,
 			});
@@ -627,6 +629,17 @@ test.describe("Faculty assignment portal", () => {
 			await page.getByRole("button", { name: "Save grade" }).click();
 
 			await expect(row.getByText("B · 15 / 20", { exact: true })).toBeVisible();
+		});
+
+		test("offers no grade form when the saved grade cannot be read", async ({ page }) => {
+			await page.route(
+				(url) => url.href.includes("get_submission_grade"),
+				(route) => route.fulfill({ status: 500 }),
+			);
+			await page.goto(`/dashboard/faculty/submissions/${markedSubmission.name}`);
+
+			await expect(page.getByText("Could not load the grade")).toBeVisible();
+			await expect(page.getByRole("button", { name: "Save grade" })).toHaveCount(0);
 		});
 	});
 });
