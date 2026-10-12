@@ -3,10 +3,11 @@
 		<component
 			:is="to ? RouterLink : 'span'"
 			:to="to"
-			class="block truncate text-base font-normal text-ink-gray-8"
+			class="block truncate text-base font-normal text-ink-gray-8 [[data-card-heading]_&]:line-clamp-2 [[data-card-heading]_&]:whitespace-normal [[data-card-heading]_&]:break-words"
 			:class="to && 'hover:underline'"
+			:title="title"
 		>
-			{{ title }}
+			<bdi>{{ title }}</bdi>
 		</component>
 		<div v-if="$slots.default" class="mt-1.5 truncate text-sm font-normal text-ink-gray-5">
 			<slot />

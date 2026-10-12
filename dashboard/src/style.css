@@ -16,6 +16,10 @@
 	body {
 		@apply bg-surface-base text-ink-gray-8 antialiased;
 	}
+
+	[role='dialog'] :where(h3, p) {
+		overflow-wrap: anywhere;
+	}
 }
 
 /*
@@ -25,12 +29,12 @@
  */
 @layer components {
 	.cs17-prose {
-		@apply text-p-base text-ink-gray-8;
+		@apply break-words text-p-base text-ink-gray-8;
 	}
 	/* The size utilities are composites that carry a weight of their own, so
 	   the weight has to come from the same class — a separate `font-semibold`
 	   is declared earlier and loses. */
-	.cs17-prose :where(h1, h2, h3, h4) {
+	.cs17-prose :where(h1, h2, h3, h4, h5, h6) {
 		@apply mb-1 mt-4 text-ink-gray-9 first:mt-0;
 	}
 	.cs17-prose :where(h1) {
@@ -39,7 +43,7 @@
 	.cs17-prose :where(h2) {
 		@apply text-base-semibold;
 	}
-	.cs17-prose :where(h3, h4) {
+	.cs17-prose :where(h3, h4, h5, h6) {
 		@apply text-sm-semibold;
 	}
 	.cs17-prose :where(p) {
@@ -70,7 +74,7 @@
 		@apply my-2 border-l-2 border-outline-gray-2 pl-3 text-ink-gray-7;
 	}
 	.cs17-prose :where(img) {
-		@apply my-2 max-w-full rounded-3;
+		@apply my-2 max-h-[32rem] max-w-full rounded-3;
 	}
 	/* A wide table scrolls inside the description rather than stretching it. */
 	.cs17-prose :where(table) {

@@ -12,14 +12,19 @@ export function parseDatetime(value: string) {
 	return value.length > 10 ? dayjsLocal(value) : dayjs(value)
 }
 
-/** "Mar 4" — for dense rows where the year is implied. */
-export function formatDate(value?: string | null): string {
-	return value ? parseDatetime(value).format('MMM D') : ''
+function formatWithYear(value: string, time = ''): string {
+	const date = parseDatetime(value)
+	return date.format(date.year() === dayjs().year() ? `MMM D${time}` : `MMM D, YYYY${time}`)
 }
 
-/** "Mar 4, 5:30 PM" — anywhere a time matters (due dates, submitted-at). */
+/** "Mar 4", or "Mar 4, 2023" outside the current year — for dense rows. */
+export function formatDate(value?: string | null): string {
+	return value ? formatWithYear(value) : ''
+}
+
+/** "Mar 4, 5:30 PM", or "Mar 4, 2023, 5:30 PM" outside the current year. */
 export function formatDateTime(value?: string | null): string {
-	return value ? parseDatetime(value).format('MMM D, h:mm A') : ''
+	return value ? formatWithYear(value, ', h:mm A') : ''
 }
 
 /** "Tuesday, 4 March" — the dashboard greeting line. */

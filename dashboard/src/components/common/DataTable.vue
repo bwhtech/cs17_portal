@@ -1,135 +1,144 @@
 <template>
-	<EmptyState v-if="!loading && !rows.length" :title="empty" />
+	<div ref="root">
+		<EmptyState v-if="!loading && !rows.length" :title="empty" />
 
-	<!-- Desktop: one frappe-ui List in column mode. -->
-	<!-- `list-row-px-3` is what keeps the header aligned with the rows: an
-	     interactive row insets its content by 0.75rem on its own, but the
-	     header only picks that up from this public hook. `-mx-3` then lets the
-	     hover surface bleed into the page gutter while the text stays lined up
-	     with everything above it. -->
-	<List
-		v-else-if="isDesktop"
-		class="-mx-3 list-row-px-3"
-		:columns="trackSizes"
-		:selectable="selectable"
-		:selection="selection"
-		:row-height="rowHeight"
-		:divider="divider"
-		@update:selection="emit('update:selection', $event)"
-	>
-		<ListHeader>
-			<ListHeaderCell
-				v-for="column in columns"
-				:key="column.header"
-				:class="column.align === 'right' ? 'justify-end' : undefined"
+		<!-- Desktop, when the columns fit: one frappe-ui List in column mode. -->
+		<!-- `list-row-px-3` is what keeps the header aligned with the rows: an
+		     interactive row insets its content by 0.75rem on its own, but the
+		     header only picks that up from this public hook. `-mx-3` then lets the
+		     hover surface bleed into the page gutter while the text stays lined up
+		     with everything above it. -->
+		<List
+			v-else-if="showTable"
+			class="-mx-3 list-row-px-3"
+			:columns="trackSizes"
+			:selectable="selectable"
+			:selection="selection"
+			:row-height="rowHeight"
+			:divider="divider"
+			@update:selection="emit('update:selection', $event)"
+		>
+			<ListHeader>
+				<ListHeaderCell
+					v-for="column in columns"
+					:key="column.header"
+					:class="column.align === 'right' ? 'justify-end' : undefined"
+				>
+					{{ column.header }}
+				</ListHeaderCell>
+			</ListHeader>
+
+			<template v-if="loading">
+				<ListRow v-for="n in skeletonRows" :key="`skeleton-${n}`" :value="`skeleton-${n}`">
+					<ListCell v-for="column in columns" :key="column.header" class="cs17-delay-in">
+						<Skeleton class="h-3 w-full max-w-24 rounded-full" />
+					</ListCell>
+				</ListRow>
+			</template>
+
+			<!-- `ListRows`, not a bare `v-for`: it feeds the header's select-all the
+			     full set of row keys. -->
+			<ListRows v-else v-slot="{ item }" :items="selectableRows" :row-key="listRowKey">
+				<ListRow :value="rowKey(item)" @click="onRowClick?.(item)">
+					<ListCell
+						v-for="column in columns"
+						:key="column.header"
+						class="text-base"
+						:class="column.align === 'right' ? 'justify-end' : undefined"
+						@click="column.variant === 'actions' && $event.stopPropagation()"
+					>
+						<slot :name="`cell-${column.key}`" :row="item">{{
+							cellText(item, column)
+						}}</slot>
+					</ListCell>
+				</ListRow>
+			</ListRows>
+
+			<template v-if="!loading">
+				<ListRow v-for="row in plainRows" :key="rowKey(row)" @click="onRowClick?.(row)">
+					<ListCell
+						v-for="column in columns"
+						:key="column.header"
+						class="text-base"
+						:class="column.align === 'right' ? 'justify-end' : undefined"
+					>
+						<slot :name="`cell-${column.key}`" :row="row">{{
+							cellText(row, column)
+						}}</slot>
+					</ListCell>
+				</ListRow>
+			</template>
+		</List>
+
+		<!-- Otherwise the same rows become cards: the primary column is the
+		     heading, `field` columns are label/value pairs, actions sit at the
+		     foot. Same contract as the React ResponsiveTable it replaces. -->
+		<div v-else-if="loading" class="cs17-delay-in space-y-3">
+			<div
+				v-for="n in skeletonRows"
+				:key="`skeleton-${n}`"
+				class="space-y-2 rounded-4 border border-outline-gray-1 p-4"
 			>
-				{{ column.header }}
-			</ListHeaderCell>
-		</ListHeader>
-
-		<template v-if="loading">
-			<ListRow v-for="n in skeletonRows" :key="`skeleton-${n}`" :value="`skeleton-${n}`">
-				<ListCell v-for="column in columns" :key="column.header" class="cs17-delay-in">
-					<Skeleton class="h-3 w-full max-w-24 rounded-full" />
-				</ListCell>
-			</ListRow>
-		</template>
-
-		<!-- `ListRows`, not a bare `v-for`: it feeds the header's select-all the
-		     full set of row keys. -->
-		<ListRows v-else v-slot="{ item }" :items="selectableRows" :row-key="listRowKey">
-			<ListRow :value="rowKey(item)" @click="onRowClick?.(item)">
-				<ListCell
-					v-for="column in columns"
-					:key="column.header"
-					class="text-base"
-					:class="column.align === 'right' ? 'justify-end' : undefined"
-					@click="column.variant === 'actions' && $event.stopPropagation()"
-				>
-					<slot :name="`cell-${column.key}`" :row="item">{{
-						cellText(item, column)
-					}}</slot>
-				</ListCell>
-			</ListRow>
-		</ListRows>
-
-		<template v-if="!loading">
-			<ListRow v-for="row in plainRows" :key="rowKey(row)" @click="onRowClick?.(row)">
-				<ListCell
-					v-for="column in columns"
-					:key="column.header"
-					class="text-base"
-					:class="column.align === 'right' ? 'justify-end' : undefined"
-				>
-					<slot :name="`cell-${column.key}`" :row="row">{{ cellText(row, column) }}</slot>
-				</ListCell>
-			</ListRow>
-		</template>
-	</List>
-
-	<!-- Below `md` the same rows become cards: the primary column is the
-	     heading, `field` columns are label/value pairs, actions sit at the
-	     foot. Same contract as the React ResponsiveTable it replaces. -->
-	<div v-else-if="loading" class="cs17-delay-in space-y-3">
-		<div
-			v-for="n in skeletonRows"
-			:key="`skeleton-${n}`"
-			class="space-y-2 rounded-4 border border-outline-gray-1 p-4"
-		>
-			<Skeleton class="h-3.5 w-40 rounded-full" />
-			<Skeleton class="h-3 w-24 rounded-full" />
-		</div>
-	</div>
-
-	<div v-else class="space-y-3">
-		<label
-			v-if="selectable"
-			class="flex items-center gap-2 text-sm text-ink-gray-6"
-			@click.prevent="toggleAll"
-		>
-			<Checkbox :model-value="allSelected" />
-			Select all
-		</label>
-
-		<div
-			v-for="row in rows"
-			:key="rowKey(row)"
-			class="space-y-2 rounded-4 border border-outline-gray-1 p-4"
-			@click="onRowClick?.(row)"
-		>
-			<div class="flex items-start gap-2">
-				<Checkbox
-					v-if="selectable && isRowSelectable(row)"
-					:model-value="selection.includes(rowKey(row))"
-					@click.stop
-					@update:model-value="toggleRow(rowKey(row))"
-				/>
-				<slot v-if="avatarColumn" :name="`cell-${avatarColumn.key}`" :row="row" />
-				<div class="min-w-0 flex-1 text-base font-medium text-ink-gray-8">
-					<slot v-if="primaryColumn" :name="`cell-${primaryColumn.key}`" :row="row" />
-				</div>
+				<Skeleton class="h-3.5 w-40 rounded-full" />
+				<Skeleton class="h-3 w-24 rounded-full" />
 			</div>
+		</div>
+
+		<div v-else class="space-y-3">
+			<label
+				v-if="selectable"
+				class="flex items-center gap-2 text-sm text-ink-gray-6"
+				@click.prevent="toggleAll"
+			>
+				<Checkbox :model-value="allSelected" />
+				Select all
+			</label>
 
 			<div
-				v-for="column in fieldColumns"
-				:key="column.header"
-				class="flex items-center justify-between gap-4 text-base"
+				v-for="row in rows"
+				:key="rowKey(row)"
+				class="space-y-2 rounded-4 border border-outline-gray-1 p-4"
+				@click="onRowClick?.(row)"
 			>
-				<span class="shrink-0 text-ink-gray-5">{{ column.header }}</span>
-				<span class="min-w-0 text-right text-ink-gray-7">
-					<slot :name="`cell-${column.key}`" :row="row">{{ cellText(row, column) }}</slot>
-				</span>
-			</div>
+				<div class="flex items-start gap-2">
+					<Checkbox
+						v-if="selectable && isRowSelectable(row)"
+						:model-value="selection.includes(rowKey(row))"
+						@click.stop
+						@update:model-value="toggleRow(rowKey(row))"
+					/>
+					<slot v-if="avatarColumn" :name="`cell-${avatarColumn.key}`" :row="row" />
+					<div
+						data-card-heading
+						class="flex min-w-0 flex-1 items-center text-base font-medium text-ink-gray-8 [&>.truncate]:line-clamp-2 [&>.truncate]:whitespace-normal [&>.truncate]:break-words"
+					>
+						<slot v-if="primaryColumn" :name="`cell-${primaryColumn.key}`" :row="row" />
+					</div>
+				</div>
 
-			<div v-for="column in actionColumns" :key="column.header" class="pt-1">
-				<slot :name="`cell-${column.key}`" :row="row" />
+				<div
+					v-for="column in fieldColumns"
+					:key="column.header"
+					class="flex items-center justify-between gap-4 text-base"
+				>
+					<span class="shrink-0 text-ink-gray-5">{{ column.header }}</span>
+					<span class="flex min-w-0 items-center justify-end text-right text-ink-gray-7">
+						<slot :name="`cell-${column.key}`" :row="row">{{
+							cellText(row, column)
+						}}</slot>
+					</span>
+				</div>
+
+				<div v-for="column in actionColumns" :key="column.header" class="pt-1">
+					<slot :name="`cell-${column.key}`" :row="row" />
+				</div>
 			</div>
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts" generic="T">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { Checkbox, Skeleton } from 'frappe-ui'
 import EmptyState from '@/components/common/EmptyState.vue'
 import { List, ListCell, ListHeader, ListHeaderCell, ListRow, ListRows } from 'frappe-ui/list'
@@ -147,7 +156,7 @@ export interface Column {
 	 * desktop and sits beside the heading on a card.
 	 */
 	variant?: 'avatar' | 'primary' | 'field' | 'actions'
-	/** A grid track size, e.g. `'8rem'`. Defaults to an equal share. */
+	/** A grid track in rem, e.g. `'8rem'` or `'minmax(6rem,1fr)'`. Defaults to an equal share. */
 	width?: string
 	align?: 'left' | 'right'
 }
@@ -184,6 +193,37 @@ const emit = defineEmits<{ 'update:selection': [value: string[]] }>()
 const skeletonRows = 4
 
 const { isDesktop } = useBreakpoint()
+
+const FLEXIBLE_COLUMN_REM = 6
+const COLUMN_GAP_PX = 8
+const CHECKBOX_PX = 32
+
+const root = ref<HTMLElement | null>(null)
+const width = ref(0)
+const resizeObserver = new ResizeObserver(([entry]) => {
+	width.value = entry.contentRect.width
+})
+onMounted(() => root.value && resizeObserver.observe(root.value))
+onBeforeUnmount(() => resizeObserver.disconnect())
+
+const tableMinWidth = computed(() => {
+	const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+	const tracks = props.columns.reduce(
+		(total, column) =>
+			total +
+			(parseFloat(column.width?.match(/[\d.]+rem/)?.[0] ?? '') || FLEXIBLE_COLUMN_REM),
+		0,
+	)
+	return (
+		tracks * rem +
+		(props.columns.length - 1) * COLUMN_GAP_PX +
+		(props.selectable ? CHECKBOX_PX : 0)
+	)
+})
+
+const showTable = computed(
+	() => isDesktop.value && (!width.value || width.value >= tableMinWidth.value),
+)
 
 // `auto` tracks size per row and would let the columns drift between rows, so
 // a column without an explicit width takes an equal, shrinkable share.

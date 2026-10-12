@@ -104,7 +104,10 @@ const nav = computed(() => navConfig(isFaculty.value))
 // Students are identified by their cohort, faculty simply by the role. The
 // signed-in name sits in the account menu's Settings dialog instead — a long
 // one overruns the header's subtitle line.
-const roleLine = computed(() => (isFaculty.value ? 'Faculty' : `cohort '${cohort.value ?? '—'}'`))
+const roleLine = computed(() => {
+	if (isFaculty.value) return 'Faculty'
+	return cohort.value ? `cohort ${cohort.value}` : 'Student'
+})
 
 const accountOptions = [
 	{ label: 'Settings', icon: 'lucide-settings', onClick: () => settings.open() },
