@@ -58,7 +58,8 @@ column per student after `Scored`.
 - A row with no number but with student cells is an extra line for each student, named by
   its `Task` cell: Score, Errors, Grade, Notes. Each student sees their own.
 - A column heading is matched to a student of the assignment's cohort by full name, first
-  name or email. A first name only works when exactly one student in the cohort has it. Two
+  name or email. A name, full or first, only works when exactly one student in the cohort
+  has it. Two
   columns that match the same student, such as a name and that student's email, match no
   one. A column that matches no one is kept, and the box names it so the heading can be
   fixed.
