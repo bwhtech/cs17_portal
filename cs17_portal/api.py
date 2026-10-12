@@ -7,7 +7,7 @@ from frappe import _
 from frappe.query_builder import Order
 from frappe.query_builder.functions import Coalesce, Date
 from frappe.rate_limiter import rate_limit
-from frappe.utils import flt, getdate, now_datetime, today
+from frappe.utils import flt, get_datetime, getdate, now_datetime, today
 
 if TYPE_CHECKING:
 	from frappe.model.document import Document
@@ -1303,6 +1303,10 @@ def _apply_announcement_publish(doc: "Document", publish: str, publish_on: str |
 	elif publish == "schedule":
 		if not publish_on:
 			frappe.throw(_("A publish date is required to schedule"))
+		if get_datetime(publish_on) <= now_datetime():
+			frappe.throw(
+				_("The publish date must be in the future. Pick a later time, or choose Publish now")
+			)
 		doc.is_published = 0
 		doc.publish_on = publish_on
 	else:

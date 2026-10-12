@@ -20,6 +20,7 @@ import {
 	deleteDoc,
 	docExists,
 	getDoc,
+	updateDoc,
 } from "../helpers/frappe";
 
 const CREATE = "cs17_portal.api.create_announcement";
@@ -198,8 +199,11 @@ test.describe("Faculty announcement management", () => {
 		});
 		const pastScheduled = await createAnnouncement(request, {
 			publish: "schedule",
-			publish_on: "2000-01-01 00:00:00",
+			publish_on: "2035-01-01 00:00:00",
 			cohort: cohort.name,
+		});
+		await updateDoc(request, "CS17 Announcement", pastScheduled, {
+			publish_on: "2000-01-01 00:00:00",
 		});
 		const futureScheduled = await createAnnouncement(request, {
 			publish: "schedule",
