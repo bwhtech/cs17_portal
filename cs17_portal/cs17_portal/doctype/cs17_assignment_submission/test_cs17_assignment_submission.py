@@ -137,6 +137,59 @@ class TestSubmissionFileOwnership(FrappeTestCase):
 		self.assertRaises(frappe.ValidationError, submit_assignment, second, file.file_url)
 		self.assertEqual(edit_submission(submission, file.file_url), {"name": submission})
 
+	def test_edit_to_a_new_file_removes_the_old_one(self):
+		cohort = make_cohort("C36TEST")
+		student_user = make_user("student36@cs17test.com")
+		make_profile("Student", cohort, student_user, "Student 36")
+		faculty_user = make_user("faculty36@cs17test.com")
+		make_profile("Faculty", cohort, faculty_user, "Faculty 36")
+
+		frappe.set_user(faculty_user)
+		assignment = make_assignment(cohort, "Notes Task 36", "Any", 20)
+
+		frappe.set_user(student_user)
+		old = frappe.get_doc(
+			{"doctype": "File", "file_name": "notes-36.txt", "is_private": 1, "content": "notes 36"}
+		).save(ignore_permissions=True)
+		submission = submit_assignment(assignment, old.file_url)["name"]
+		new = frappe.get_doc(
+			{
+				"doctype": "File",
+				"file_name": "notes-36-final.txt",
+				"is_private": 1,
+				"content": "final notes 36",
+			}
+		).save(ignore_permissions=True)
+		edit_submission(submission, new.file_url)
+
+		self.assertEqual(
+			frappe.get_all("File", filters={"attached_to_name": submission}, pluck="name"), [new.name]
+		)
+
+	def test_edit_with_the_same_file_uploaded_again_leaves_one_file(self):
+		cohort = make_cohort("C37TEST")
+		student_user = make_user("student37@cs17test.com")
+		make_profile("Student", cohort, student_user, "Student 37")
+		faculty_user = make_user("faculty37@cs17test.com")
+		make_profile("Faculty", cohort, faculty_user, "Faculty 37")
+
+		frappe.set_user(faculty_user)
+		assignment = make_assignment(cohort, "Notes Task 37", "Any", 20)
+
+		frappe.set_user(student_user)
+		file = frappe.get_doc(
+			{"doctype": "File", "file_name": "notes-37.txt", "is_private": 1, "content": "notes 37"}
+		).save(ignore_permissions=True)
+		submission = submit_assignment(assignment, file.file_url)["name"]
+		uploaded_again = frappe.get_doc(
+			{"doctype": "File", "file_name": "notes-37.txt", "is_private": 1, "content": "notes 37"}
+		).save(ignore_permissions=True)
+		edit_submission(submission, uploaded_again.file_url)
+
+		self.assertEqual(
+			frappe.get_all("File", filters={"file_url": file.file_url}, pluck="name"), [file.name]
+		)
+
 
 class TestGradePastItsPublishTime(FrappeTestCase):
 	@classmethod
