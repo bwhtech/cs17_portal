@@ -70,7 +70,15 @@
 		</header>
 
 		<div :class="['min-h-0 bg-surface-gray-2', isZen ? 'flex-1' : 'h-[60vh] min-h-80']">
+			<LoadError
+				v-if="detailFailed && submission.submission_type !== 'Scratch'"
+				class="h-full"
+				title="Could not load the submitted file"
+				:loading="detail.loading"
+				@retry="detail.reload()"
+			/>
 			<SubmissionPlayer
+				v-else
 				:key="submission.name"
 				:submission="submission.name"
 				:submission-type="submission.submission_type"
@@ -152,6 +160,8 @@ const detail = useCall<
 	params: () => ({ assignment: submission.value?.assignment ?? '' }),
 	immediate: false,
 })
+
+const detailFailed = useLoadFailed(detail)
 
 watch(
 	() => submission.value?.assignment,
