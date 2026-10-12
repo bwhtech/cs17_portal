@@ -695,9 +695,10 @@ def save_grade(
 
 	require_faculty_for_assignment(assignment)
 
+	evaluation_type = frappe.db.get_value("CS17 Assignment", assignment, "remarks")
 	grade_doc = _get_or_new_grade(submission, assignment)
-	grade_doc.marks_obtained = flt(marks_obtained)
-	grade_doc.grade = grade
+	grade_doc.marks_obtained = flt(marks_obtained) if evaluation_type == "Marks" else 0
+	grade_doc.grade = grade if evaluation_type == "Grade" else None
 	grade_doc.remarks = (remarks or "").strip() or None
 	if grade_doc.is_new():
 		grade_doc.is_published = 1
