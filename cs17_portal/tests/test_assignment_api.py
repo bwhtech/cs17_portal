@@ -23,3 +23,13 @@ class TestAssignmentApi(FrappeTestCase):
 	def test_get_assignment_submissions_reports_a_missing_assignment_to_cohort_faculty(self):
 		frappe.set_user(self.faculty_user)
 		self.assertRaises(frappe.DoesNotExistError, api.get_assignment_submissions, "missing-assignment")
+
+	def test_update_assignment_keeps_the_description_the_caller_left_out(self):
+		frappe.set_user(self.faculty_user)
+		assignment = api.create_assignment(
+			"PDF Task 190", self.cohort, "2030-01-01 00:00:00", description="Read chapter 2"
+		)
+
+		api.update_assignment(assignment, "PDF Task 190", self.cohort, "2030-02-01 00:00:00")
+
+		self.assertEqual(frappe.db.get_value("CS17 Assignment", assignment, "description"), "Read chapter 2")
