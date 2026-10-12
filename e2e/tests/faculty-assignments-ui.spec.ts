@@ -22,6 +22,9 @@ import { createDoc, deleteDoc, getDoc, updateDoc, uploadFile } from "../helpers/
 
 const DRAFT_KEY = "cs17-new-assignment-draft";
 
+const TERMINAL_ASSIGNMENT_ZIP =
+	"UEsDBBQAAAAAAFJOTF1WucDaDwAAAA8AAAAfAAAAdGVybWluYWwtYXNzaWdubWVudC9oaXN0b3J5LnR4dGNhdCBSRUFETUUudHh0ClBLAQIUAxQAAAAAAFJOTF1WucDaDwAAAA8AAAAfAAAAAAAAAAAAAACAAQAAAAB0ZXJtaW5hbC1hc3NpZ25tZW50L2hpc3RvcnkudHh0UEsFBgAAAAABAAEATQAAAEwAAAAAAA==";
+
 /** frappe-ui's list is divs, not a table: a row carries this slot, a cell `list-cell`. */
 const LIST_ROW = '[data-slot="list-row"]';
 
@@ -358,6 +361,34 @@ test.describe("Faculty assignment portal", () => {
 		answerDraft();
 
 		await expect(page.getByPlaceholder("Assignment title")).toHaveValue("");
+	});
+
+	test("opens a zip submission's files in the grading page", async ({ page, request }) => {
+		const zip = await createTestAssignment(request, {
+			cohort: cohort.name,
+			submissionType: "ZIP",
+		});
+		const submission = await createTestSubmission(request, {
+			assignment: zip.name,
+			student: student.name,
+		});
+		const uploaded = await uploadFile(request, {
+			fileName: "terminal-assignment.zip",
+			content: Buffer.from(TERMINAL_ASSIGNMENT_ZIP, "base64"),
+			doctype: "CS17 Assignment Submission",
+			docname: submission.name,
+		});
+		await updateDoc(request, "CS17 Assignment Submission", submission.name, {
+			submission_document: uploaded.file_url,
+		});
+
+		await page.goto(`/dashboard/faculty/assignments/${zip.name}`);
+		const row = page.locator(LIST_ROW, { hasText: student.full_name! });
+		await row.getByRole("button", { name: "Preview", exact: true }).click();
+
+		await expect(page).toHaveURL(new RegExp(`/faculty/submissions/${submission.name}$`));
+		await expect(page.getByRole("treeitem", { name: "history.txt", exact: true })).toBeVisible();
+		await expect(page.getByText("cat README.txt")).toBeVisible();
 	});
 
 	test("previews a Scratch submission in the read-only editor", async ({
