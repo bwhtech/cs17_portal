@@ -654,7 +654,7 @@ def get_submission_project(submission: str) -> dict:
 	require_faculty_for_assignment(submission_doc.assignment)
 
 	if not submission_doc.submission_document:
-		frappe.throw(_("This submission has no project file."))
+		frappe.throw(_("This submission has no project file."), frappe.DoesNotExistError)
 
 	attached_file = frappe.db.get_value(
 		"File",
