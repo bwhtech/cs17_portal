@@ -1,11 +1,5 @@
 <template>
-	<Dialog
-		:open="open"
-		title="Preview"
-		message="How students will see this announcement."
-		size="xl"
-		@update:open="emit('update:open', $event)"
-	>
+	<Dialog :open="open" title="Preview" size="xl" @update:open="emit('update:open', $event)">
 		<AnnouncementPreview
 			v-if="announcement"
 			:title="announcement.title"
