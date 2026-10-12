@@ -152,6 +152,7 @@
 					v-if="selection.length"
 					:submissions="selection"
 					:cohort="assignment.cohort"
+					:draft-grades="selectedDraftGrades"
 					@done="clearSelection"
 					@clear="selection = []"
 				/>
@@ -376,6 +377,13 @@ function gradeValue(grade: CS17Grade): string {
 		maxMarks: assignment.value?.max_marks,
 	})
 }
+
+const selectedDraftGrades = computed(
+	() =>
+		submissions.value.filter(
+			(row) => selection.value.includes(row.name) && row.grade && !row.grade.is_published,
+		).length,
+)
 
 function clearSelection() {
 	selection.value = []
