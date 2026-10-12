@@ -642,4 +642,36 @@ test.describe("Faculty assignment portal", () => {
 			await expect(page.getByRole("button", { name: "Save grade" })).toHaveCount(0);
 		});
 	});
+
+	test("offers a retry when a Scratch preview fails to load", async ({ page, request }) => {
+		const scratch = await createTestAssignment(request, {
+			cohort: cohort.name,
+			submissionType: "Scratch",
+		});
+		const submission = await createTestSubmission(request, {
+			assignment: scratch.name,
+			student: student.name,
+		});
+		const uploaded = await uploadFile(request, {
+			fileName: "project.sb3",
+			content: fs.readFileSync("cs17_portal/public/scratch/sample.sb3"),
+			doctype: "CS17 Assignment Submission",
+			docname: submission.name,
+		});
+		await updateDoc(request, "CS17 Assignment Submission", submission.name, {
+			submission_document: uploaded.file_url,
+		});
+
+		await page.route(
+			(url) => url.href.includes("get_submission_project"),
+			(route) => route.fulfill({ status: 500 }),
+			{ times: 1 },
+		);
+		await page.goto(`/dashboard/faculty/assignments/${scratch.name}`);
+		const row = page.locator(LIST_ROW, { hasText: student.full_name! });
+		await row.getByRole("button", { name: "Preview", exact: true }).click();
+
+		await page.getByRole("button", { name: "Try again" }).click();
+		await expect(page.getByTitle("Scratch project player")).toBeVisible();
+	});
 });
