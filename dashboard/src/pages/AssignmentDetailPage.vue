@@ -18,7 +18,7 @@
 		<p v-else-if="!assignment" class="text-p-base text-ink-gray-5">Assignment not found.</p>
 
 		<div v-else class="flex flex-col gap-6 md:flex-row">
-			<h1 class="order-first break-words text-2xl text-ink-gray-9 md:hidden">
+			<h1 class="order-first break-words text-2xl text-ink-gray-9 md:sr-only">
 				{{ assignment.title }}
 			</h1>
 			<div class="min-w-0 flex-1">

@@ -38,7 +38,7 @@
 		</EmptyState>
 
 		<div v-else class="space-y-6">
-			<h1 class="break-words text-2xl text-ink-gray-9 md:hidden">{{ assignment.title }}</h1>
+			<h1 class="break-words text-2xl text-ink-gray-9 md:sr-only">{{ assignment.title }}</h1>
 			<div class="flex flex-col gap-6 md:flex-row">
 				<div class="min-w-0 flex-1">
 					<MarkdownText :content="assignment.description" />
