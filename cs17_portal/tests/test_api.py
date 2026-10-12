@@ -212,6 +212,15 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 
 		self.assertEqual([row.student for row in not_submitted], [absent])
 
+	def test_get_assignment_submissions_leaves_out_students_whose_user_is_disabled(self):
+		make_profile("Student", self.cohort_27, make_user("left27@cs17test.com"), "Left 27")
+		frappe.db.set_value("User", "left27@cs17test.com", "enabled", 0)
+		frappe.set_user(self.faculty_27_user)
+
+		not_submitted = api.get_assignment_submissions(self.assignment_27)["not_submitted"]
+
+		self.assertEqual(not_submitted, [])
+
 	def test_patch_gives_an_old_submission_its_submitted_time(self):
 		from cs17_portal.patches.v1_0.set_submitted_at_on_old_submissions import execute
 
