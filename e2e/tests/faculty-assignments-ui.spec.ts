@@ -169,6 +169,27 @@ test.describe("Faculty assignment portal", () => {
 		await expect(note).toHaveValue("Named gallary");
 	});
 
+	test("shows a submission with no submit time as submitted", async ({ page, request }) => {
+		const other = await createTestProfile(request, {
+			profileType: "Student",
+			cohort: cohort.name,
+		});
+		const submission = await createTestSubmission(request, {
+			assignment: graded.name,
+			student: other.name,
+		});
+		await updateDoc(request, "CS17 Assignment Submission", submission.name, {
+			submitted_at: null,
+		});
+		await page.goto(`/dashboard/faculty/assignments/${graded.name}`);
+
+		const row = page.locator(LIST_ROW, { hasText: other.last_name });
+		await expect(row.getByText("Submitted", { exact: true })).toBeVisible();
+
+		await deleteDoc(request, "CS17 Assignment Submission", submission.name);
+		await deleteTestProfile(request, other.name);
+	});
+
 	test("creates and publishes an assignment from the sheet", async ({ page }) => {
 		const title = `${TEST_ASSIGNMENT_PREFIX} UI ${Date.now()}`;
 		await page.goto("/dashboard/faculty/assignments");

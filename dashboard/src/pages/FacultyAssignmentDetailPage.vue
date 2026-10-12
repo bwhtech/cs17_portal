@@ -93,7 +93,7 @@
 					</template>
 
 					<template #cell-submitted="{ row }">
-						<span v-if="isSubmitted(row)" class="text-ink-gray-6">{{
+						<span v-if="row.submitted_at" class="text-ink-gray-6">{{
 							formatDateTime(row.submitted_at)
 						}}</span>
 						<span v-else class="text-ink-gray-5">—</span>
@@ -257,8 +257,10 @@ const rows = computed<CS17Submission[]>(() => [
 	})),
 ])
 
+const submissionNames = computed(() => new Set(submissions.value.map((row) => row.name)))
+
 function isSubmitted(row: CS17Submission): boolean {
-	return Boolean(row.submitted_at)
+	return submissionNames.value.has(row.name)
 }
 
 const selection = ref<string[]>([])

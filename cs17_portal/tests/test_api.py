@@ -212,6 +212,25 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 
 		self.assertEqual([row.student for row in not_submitted], [absent])
 
+	def test_patch_gives_an_old_submission_its_submitted_time(self):
+		from cs17_portal.patches.v1_0.set_submitted_at_on_old_submissions import execute
+
+		frappe.db.set_value("CS17 Assignment Submission", self.submission_27, "submitted_at", None)
+		self.addCleanup(
+			frappe.db.set_value,
+			"CS17 Assignment Submission",
+			self.submission_27,
+			"submitted_at",
+			"2026-02-01 10:00:00",
+		)
+
+		execute()
+
+		submitted_at, creation = frappe.db.get_value(
+			"CS17 Assignment Submission", self.submission_27, ["submitted_at", "creation"]
+		)
+		self.assertEqual(submitted_at, creation)
+
 	def test_grade_submission_blocks_other_cohort_faculty(self):
 		frappe.set_user(self.faculty_28_user)
 		self.assertRaises(frappe.PermissionError, api.grade_submission, self.submission_27, grade="A")
