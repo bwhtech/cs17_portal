@@ -287,7 +287,7 @@ def grade_submission(
 			"evaluation_type": evaluation_type,
 			"grade": grade if evaluation_type == "Grade" else None,
 			"marks_obtained": flt(marks_obtained) if evaluation_type == "Marks" else 0,
-			"remarks": (remarks or "").strip() or None,
+			"remarks": remarks,
 		}
 	)
 	_apply_publish_state(doc, publish, publish_on, "published_on")
@@ -744,7 +744,7 @@ def save_grade(
 	grade_doc = _get_or_new_grade(submission, assignment)
 	grade_doc.marks_obtained = flt(marks_obtained) if evaluation_type == "Marks" else 0
 	grade_doc.grade = grade if evaluation_type == "Grade" else None
-	grade_doc.remarks = (remarks or "").strip() or None
+	grade_doc.remarks = remarks
 	if grade_doc.is_new():
 		grade_doc.is_published = 1
 	grade_doc.save(ignore_permissions=True)

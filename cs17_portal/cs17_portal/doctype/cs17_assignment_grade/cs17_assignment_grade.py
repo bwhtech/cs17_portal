@@ -39,6 +39,7 @@ class CS17AssignmentGrade(Document):
 			self.graded_by = frappe.session.user
 
 	def validate(self):
+		self.remarks = (self.remarks or "").strip() or None
 		self.validate_duplicate()
 		assignment = frappe.db.get_value(
 			"CS17 Assignment", self.assignment, ["assignment_type", "max_marks", "remarks"], as_dict=True
