@@ -4,7 +4,13 @@
 			<PageHeaderBackButton fallback-route="/results" />
 		</template>
 		<template #actions>
-			<Button v-if="result" icon-left="download" label="Download" @click="downloadPdf" />
+			<Button
+				v-if="result"
+				:icon-left="isDesktop ? 'lucide-download' : undefined"
+				:icon="isDesktop ? undefined : 'lucide-download'"
+				label="Download"
+				@click="downloadPdf"
+			/>
 		</template>
 	</AppHeader>
 
@@ -23,6 +29,8 @@
 		</p>
 
 		<div v-else class="space-y-6">
+			<h1 class="break-words text-2xl text-ink-gray-9 md:hidden">{{ result.exam_name }}</h1>
+
 			<!-- The headline: the numbers a student looks for before anything
 			     else, in one panel above the subject-by-subject breakdown. -->
 			<section class="rounded-4 border border-outline-gray-1 p-5">
@@ -141,7 +149,9 @@
 
 			<section v-if="result.remarks" class="space-y-2">
 				<h2 class="text-base-medium text-ink-gray-8">Remarks</h2>
-				<p class="text-p-base whitespace-pre-line text-ink-gray-7">{{ result.remarks }}</p>
+				<p class="text-p-base whitespace-pre-line break-words text-ink-gray-7">
+					{{ result.remarks }}
+				</p>
 			</section>
 		</div>
 	</PageBody>
@@ -157,6 +167,7 @@ import LoadError from '@/components/common/LoadError.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
+import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { formatDate } from '@/lib/dates'
 import { isRefusal } from '@/lib/frappeError'
@@ -166,6 +177,7 @@ import type { CS17Result, CS17ResultAssignmentScore, CS17ResultSubjectScore } fr
 const props = defineProps<{ resultId: string }>()
 
 const breadcrumbs = useBreadcrumbs()
+const { isDesktop } = useBreakpoint()
 
 const resultCall = useCall<CS17Result, { result: string }>({
 	url: '/api/v2/method/cs17_portal.api.get_student_result',
@@ -185,9 +197,9 @@ const metaLine = computed(() => {
 const subjectColumns: Column[] = [
 	{ header: 'Subject', key: 'subject', variant: 'primary' },
 	{ header: 'Marks', key: 'marks', width: '8rem' },
-	{ header: 'Percentage', key: 'percentage', width: '7rem' },
+	{ header: 'Percentage', key: 'percentage', width: '5.5rem' },
 	{ header: 'Grade', key: 'grade', width: '6rem' },
-	{ header: 'Result', key: 'outcome', width: '6rem' },
+	{ header: 'Result', key: 'outcome', width: '4.5rem' },
 ]
 
 const assignmentColumns: Column[] = [

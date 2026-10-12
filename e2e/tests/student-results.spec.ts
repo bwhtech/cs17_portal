@@ -72,7 +72,7 @@ test.describe("Student results", () => {
 		await page.getByRole("link", { name: own.examName }).click();
 
 		await expect(page).toHaveURL(new RegExp(`/dashboard/results/${own.result}$`));
-		await expect(page.getByText(own.examName, { exact: true })).toBeVisible();
+		await expect(page.getByText(own.examName, { exact: true }).first()).toBeVisible();
 		await expect(page.getByText("Total marks")).toBeVisible();
 		await expect(page.getByText(`${MARKS_OBTAINED} / ${MAX_MARKS}`).first()).toBeVisible();
 

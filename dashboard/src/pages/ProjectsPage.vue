@@ -63,6 +63,8 @@ import { frappeErrorMessage } from '@/lib/frappeError'
 import { trySubmit } from '@/lib/trySubmit'
 import type { CS17Project } from '@/types'
 
+const PROJECT_NAME_LENGTH = 140
+
 const router = useRouter()
 const { isDesktop } = useBreakpoint()
 const projectsPath = useProjectsPath()
@@ -93,6 +95,12 @@ const projects = computed(() => projectList.data ?? [])
 const loading = computed(() => projectList.loading && !projectList.data)
 const failed = useLoadFailed(projectList)
 
+function projectNameError(value: string) {
+	return String(value ?? '').trim().length > PROJECT_NAME_LENGTH
+		? `Keep the name to ${PROJECT_NAME_LENGTH} characters or fewer.`
+		: null
+}
+
 /**
  * The name is asked for up front because a Scratch project is only ever
  * opened from this grid — an untitled card is unfindable a week later.
@@ -106,6 +114,7 @@ function promptForNewProject() {
 				label: 'Project name',
 				placeholder: 'Maze game',
 				required: true,
+				validate: projectNameError,
 			},
 		],
 		confirmLabel: 'Create',
@@ -136,6 +145,7 @@ function promptForRename(project: CS17Project) {
 				label: 'Project name',
 				defaultValue: project.project_title,
 				required: true,
+				validate: projectNameError,
 			},
 		],
 		confirmLabel: 'Rename',

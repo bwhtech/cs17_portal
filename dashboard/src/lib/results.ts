@@ -12,7 +12,7 @@ export function formatMarks(obtained?: number | null, max?: number | null): stri
 	return max ? `${trim(obtained)} / ${trim(max)}` : trim(obtained)
 }
 
-/** "86.5%", to one decimal at most. */
+/** "86.5%", to two decimals at most, as the server rounds it. */
 export function formatPercent(value?: number | null): string {
 	if (value === null || value === undefined) return '—'
 	return `${trim(value)}%`
@@ -48,5 +48,7 @@ export function resultTitle(result: Pick<CS17ResultSummary, 'exam_name' | 'quart
 
 /** Floats arrive as `45.0`; a report card should not show the trailing zero. */
 function trim(value: number): string {
-	return Number.isInteger(value) ? String(value) : value.toFixed(1)
+	return numberFormat.format(value)
 }
+
+const numberFormat = new Intl.NumberFormat('en', { maximumFractionDigits: 2 })
