@@ -149,6 +149,9 @@ class IntegrationTestCS17Result(IntegrationTestCase):
 			frappe.ValidationError, "already exists for this student and exam", second.insert
 		)
 
+	def test_exam_and_student_have_a_unique_index(self):
+		self.assertTrue(frappe.db.has_index("tabCS17 Result", "unique_exam_student"))
+
 	def test_unpublished_result_is_not_published_again(self):
 		auto_publish_results()
 		result = frappe.get_doc("CS17 Result", self.result)
