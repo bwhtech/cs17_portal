@@ -59,7 +59,7 @@
 			theme="gray"
 			type="submit"
 			:loading="saveCall.loading"
-			:label="existing.data ? 'Update grade' : 'Save grade'"
+			:label="graded ? 'Update grade' : 'Save grade'"
 		/>
 	</form>
 </template>
@@ -113,6 +113,7 @@ const gradeLetter = ref('')
 const remarks = ref('')
 const marksError = ref('')
 const seeded = ref(false)
+const graded = ref(false)
 
 const existing = useCall<SubmissionGrade | null, { submission: string }>({
 	url: '/api/v2/method/cs17_portal.api.get_submission_grade',
@@ -135,6 +136,7 @@ watch(
 		marks.value = grade?.marks_obtained != null ? String(grade.marks_obtained) : ''
 		gradeLetter.value = grade?.grade ?? ''
 		remarks.value = grade?.remarks ?? ''
+		graded.value = grade != null
 		seeded.value = true
 	},
 	{ immediate: true },
@@ -209,6 +211,7 @@ async function save() {
 		return
 	}
 
+	graded.value = true
 	toast.success('Grade saved.')
 	existing.reload()
 	emit('saved')
