@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt, getdate
+from frappe.utils import cstr, flt, getdate
 
 from cs17_portal.cs17_portal.doctype.cs17_grading_scale.cs17_grading_scale import get_default_scale
 
@@ -95,8 +95,8 @@ class CS17Exam(Document):
 			old = previous.get(row.subject)
 			if not old:
 				continue
-			if (old.subject_pattern, flt(old.max_marks), old.grading_scale) == (
-				row.subject_pattern,
+			if (cstr(old.subject_pattern), flt(old.max_marks), old.grading_scale) == (
+				cstr(row.subject_pattern),
 				flt(row.max_marks),
 				row.grading_scale,
 			):
@@ -119,7 +119,9 @@ class CS17Exam(Document):
 
 	@staticmethod
 	def subject_signature(rows) -> set:
-		return {(row.subject, flt(row.max_marks), row.grading_scale, row.subject_pattern) for row in rows}
+		return {
+			(row.subject, flt(row.max_marks), row.grading_scale, cstr(row.subject_pattern)) for row in rows
+		}
 
 
 def get_subject_rows(exam: str) -> list[dict]:
