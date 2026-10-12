@@ -194,7 +194,7 @@ const isOverdue = computed(() => isPast(assignment.value?.due_date))
 /** `remarks` is the doctype's field for how a graded assignment is scored. */
 const evaluationType = computed(() =>
 	assignment.value?.assignment_type === 'Graded'
-		? (assignment.value.remarks ?? 'Graded')
+		? assignment.value.remarks || 'Graded'
 		: 'Non-graded',
 )
 

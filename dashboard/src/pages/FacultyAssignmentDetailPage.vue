@@ -349,7 +349,7 @@ const metaRows = computed(() => {
 		{ label: 'Cohort', value: assignment.value?.cohort ?? '—' },
 		{
 			label: 'Evaluation Type',
-			value: isGraded.value ? (assignment.value?.remarks ?? '—') : 'Non-graded',
+			value: isGraded.value ? assignment.value?.remarks || '—' : 'Non-graded',
 		},
 	]
 	if (isGraded.value && assignment.value?.remarks === 'Marks') {
