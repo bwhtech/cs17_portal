@@ -1,6 +1,8 @@
 # Copyright (c) 2026, developers@bwh.tech and Contributors
 # See license.txt
 
+from unittest.mock import patch
+
 import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_days, now_datetime
@@ -189,6 +191,34 @@ class TestSubmissionFileOwnership(FrappeTestCase):
 		self.assertEqual(
 			frappe.get_all("File", filters={"file_url": file.file_url}, pluck="name"), [file.name]
 		)
+
+	def test_edit_keeps_the_upload_that_was_not_attached(self):
+		cohort = make_cohort("C38TEST")
+		student_user = make_user("student38@cs17test.com")
+		make_profile("Student", cohort, student_user, "Student 38")
+		faculty_user = make_user("faculty38@cs17test.com")
+		make_profile("Faculty", cohort, faculty_user, "Faculty 38")
+
+		frappe.set_user(faculty_user)
+		assignment = make_assignment(cohort, "Notes Task 38", "Any", 20)
+
+		frappe.set_user(student_user)
+		old = frappe.get_doc(
+			{"doctype": "File", "file_name": "notes-38.txt", "is_private": 1, "content": "notes 38"}
+		).save(ignore_permissions=True)
+		submission = submit_assignment(assignment, old.file_url)["name"]
+		new = frappe.get_doc(
+			{
+				"doctype": "File",
+				"file_name": "notes-38-final.txt",
+				"is_private": 1,
+				"content": "final notes 38",
+			}
+		).save(ignore_permissions=True)
+		with patch("frappe.core.doctype.file.utils.attach_files_to_document"):
+			edit_submission(submission, new.file_url)
+
+		self.assertTrue(frappe.db.exists("File", new.name))
 
 
 class TestGradePastItsPublishTime(FrappeTestCase):
