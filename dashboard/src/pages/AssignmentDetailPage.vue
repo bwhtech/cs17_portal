@@ -155,6 +155,7 @@ const scratch = useScratchAssignment()
 const assignmentCall = useCall<CS17Assignment, { assignment: string }>({
 	url: '/api/v2/method/cs17_portal.api.get_student_assignment',
 	params: () => ({ assignment: props.assignmentId }),
+	refetch: true,
 })
 
 const submissions = useList<CS17Submission>({
@@ -206,6 +207,7 @@ const myAnswers = useCall<
 >({
 	url: '/api/v2/method/cs17_portal.answer_sheet.get_my_answers',
 	params: () => ({ assignment: props.assignmentId }),
+	refetch: true,
 })
 
 function openSubmit() {
