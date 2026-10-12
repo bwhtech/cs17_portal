@@ -459,17 +459,13 @@ test.describe("Student submission types", () => {
 			page.getByRole("button", { name: "Save", exact: true }),
 		).toHaveCount(0);
 
-		const frame = page
-			.frames()
-			.find((f) => f.url().includes("scratch/editor.html"))!;
-		await expect
-			.poll(() =>
-				frame.evaluate(() => {
-					const canvas = document.querySelector(".blocklyBlockCanvas");
-					return canvas ? getComputedStyle(canvas).pointerEvents : "missing";
-				}),
-			)
-			.toBe("none");
+		await expect(
+			page
+				.getByTitle("Scratch project player")
+				.contentFrame()
+				.locator(".blocklyBlockCanvas")
+				.first(),
+		).toHaveCSS("pointer-events", "none");
 
 		await page.goto(
 			`/dashboard/projects/${project}/edit?assignment=${scratchGraded.name}`,
