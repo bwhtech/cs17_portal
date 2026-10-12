@@ -15,9 +15,16 @@
 				icon-left="lucide-user-plus"
 				:loading="saving"
 			/>
-			<Button v-else variant="ghost" :loading="saving" :aria-label="triggerLabel">
-				<span class="flex items-center gap-2">
-					<span class="flex items-center">
+			<Button
+				v-else
+				class="max-w-full"
+				variant="ghost"
+				:loading="saving"
+				:aria-label="triggerLabel"
+				:tooltip="triggerLabel"
+			>
+				<span class="flex min-w-0 items-center gap-2">
+					<span class="flex shrink-0 items-center">
 						<Avatar
 							v-for="member in shownMembers.slice(0, 3)"
 							:key="member.user"
@@ -27,7 +34,7 @@
 						/>
 					</span>
 					<span v-if="shownMembers.length === 1" class="truncate text-ink-gray-8">
-						{{ shownMembers[0].full_name }}
+						{{ shownMembers[0].full_name.split(' ')[0] }}
 					</span>
 					<span v-else-if="shownMembers.length > 3" class="text-ink-gray-6">
 						+{{ shownMembers.length - 3 }}

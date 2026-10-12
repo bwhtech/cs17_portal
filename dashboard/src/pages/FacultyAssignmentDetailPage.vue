@@ -100,7 +100,7 @@
 					</template>
 
 					<template #cell-assignees="{ row }">
-						<div v-if="isSubmitted(row)" @click.stop>
+						<div v-if="isSubmitted(row)" class="min-w-0 max-w-full" @click.stop>
 							<SubmissionAssignees
 								:submission="row.name"
 								:assigned-to="assigneesOf(row)"
