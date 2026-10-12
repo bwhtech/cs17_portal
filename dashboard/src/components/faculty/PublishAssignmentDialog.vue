@@ -1,7 +1,7 @@
 <template>
 	<Dialog
 		:open="open"
-		:title="`Publish: ${assignment?.title ?? 'Assignment'}`"
+		:title="`${assignment?.publish_on ? 'Reschedule' : 'Publish'}: ${assignment?.title ?? 'Assignment'}`"
 		@update:open="emit('update:open', $event)"
 	>
 		<div class="space-y-4">
@@ -37,7 +37,7 @@ import type { PublishMode } from '@/types'
 
 const props = defineProps<{
 	open: boolean
-	assignment: { name: string; title: string } | null
+	assignment: { name: string; title: string; publish_on?: string | null } | null
 }>()
 
 const emit = defineEmits<{ 'update:open': [value: boolean]; success: [] }>()
@@ -56,9 +56,9 @@ const publishCall = useCall<null, { assignment: string; publish: string; publish
 // form starts over whenever the target changes rather than only on mount.
 watch(
 	() => props.assignment,
-	() => {
-		mode.value = 'now'
-		publishOn.value = ''
+	(assignment) => {
+		mode.value = assignment?.publish_on ? 'schedule' : 'now'
+		publishOn.value = assignment?.publish_on ?? ''
 		error.value = ''
 	},
 )

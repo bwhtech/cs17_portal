@@ -44,6 +44,7 @@
 						type="text"
 						label="Title"
 						placeholder="Assignment title"
+						maxlength="140"
 						required
 						:error="errors.title"
 					/>

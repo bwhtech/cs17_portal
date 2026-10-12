@@ -26,13 +26,14 @@
 				<Button
 					v-for="draft in drafts"
 					:key="draft.name"
+					class="max-w-full"
 					:label="draft.title || 'Untitled'"
 					@click="openDraft(draft.name)"
 				/>
 			</div>
 		</div>
 
-		<div class="max-w-xs">
+		<div v-if="cohorts.length > 1" class="max-w-xs">
 			<Select
 				label="Cohort"
 				:model-value="cohortFilter"
@@ -66,14 +67,16 @@
 				     cohort, what is expected, and when it is due. -->
 				<template #cell-title="{ row }">
 					<RowTitle :title="row.title" :to="`/faculty/assignments/${row.name}`">
-						{{ row.cohort }} · {{ row.submission_type ?? 'Any' }} · Due
-						{{ formatDateTime(row.due_date) }}
+						<template v-if="row.due_date">
+							Due {{ formatDateTime(row.due_date) }} ·
+						</template>
+						{{ row.submission_type ?? 'Any' }} · {{ row.cohort }}
 					</RowTitle>
 				</template>
 
 				<template #cell-submission_count="{ row }">
 					<span class="text-base text-ink-gray-7">
-						{{ row.submission_count ?? 0 }}
+						{{ (row.submission_count ?? 0).toLocaleString() }}
 					</span>
 				</template>
 
@@ -160,9 +163,9 @@ const ALL_COHORTS = 'all'
 const columns: Column[] = [
 	{ header: '', key: 'icon', variant: 'avatar', width: '2.75rem' },
 	{ header: 'Assignment', key: 'title', variant: 'primary' },
-	{ header: 'Submissions', key: 'submission_count', width: '7rem' },
-	{ header: 'Status', key: 'status', width: '9rem' },
-	{ header: '', key: 'actions', variant: 'actions', width: '12rem', align: 'right' },
+	{ header: 'Submissions', key: 'submission_count', width: '6rem' },
+	{ header: 'Status', key: 'status', width: '7.5rem' },
+	{ header: '', key: 'actions', variant: 'actions', width: '9rem', align: 'right' },
 ]
 
 const cohortFilter = ref(ALL_COHORTS)

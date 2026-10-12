@@ -3,7 +3,7 @@
 	     the author is looking at the real thing and not an approximation. -->
 	<div class="flex flex-col gap-6 md:flex-row">
 		<div class="min-w-0 flex-1">
-			<h2 class="mb-4 text-2xl font-semibold text-ink-gray-9">
+			<h2 class="mb-4 break-words text-2xl font-semibold text-ink-gray-9">
 				{{ draft.title || 'Untitled Assignment' }}
 			</h2>
 			<MarkdownText :content="draft.description" />
