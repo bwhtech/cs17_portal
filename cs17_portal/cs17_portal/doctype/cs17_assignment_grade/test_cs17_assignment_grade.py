@@ -82,6 +82,14 @@ class IntegrationTestCS17AssignmentGrade(IntegrationTestCase):
 
 		self.assertEqual(self.grade.graded_by, "Administrator")
 
+	def test_save_stores_remarks_without_the_spaces_around_them(self):
+		self.grade.remarks = "Solid work  "
+		self.grade.save()
+
+		self.assertEqual(
+			frappe.db.get_value("CS17 Assignment Grade", self.grade.name, "remarks"), "Solid work"
+		)
+
 	def test_scheduled_grade_saved_as_draft_loses_its_schedule(self):
 		with self.set_user(self.faculty_user):
 			api.grade_submission(
