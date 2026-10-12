@@ -141,6 +141,14 @@ class IntegrationTestCS17Result(IntegrationTestCase):
 
 		self.assertRaises(frappe.ValidationError, frappe.delete_doc, "CS17 Subject Marks", self.marks)
 
+	def test_second_result_for_the_same_exam_and_student_is_refused(self):
+		exam = frappe.db.get_value("CS17 Result", self.result, "exam")
+		second = frappe.get_doc({"doctype": "CS17 Result", "exam": exam, "student": self.student})
+
+		self.assertRaisesRegex(
+			frappe.ValidationError, "already exists for this student and exam", second.insert
+		)
+
 	def test_unpublished_result_is_not_published_again(self):
 		auto_publish_results()
 		result = frappe.get_doc("CS17 Result", self.result)
