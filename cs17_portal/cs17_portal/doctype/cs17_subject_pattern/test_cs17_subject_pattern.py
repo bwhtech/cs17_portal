@@ -74,6 +74,21 @@ class IntegrationTestCS17SubjectPattern(IntegrationTestCase):
 
 		self.assertRaises(frappe.ValidationError, self.pattern_with_marks.save)
 
+	def test_three_equal_components_of_33_33_are_accepted(self):
+		pattern = frappe.get_doc(
+			{
+				"doctype": "CS17 Subject Pattern",
+				"pattern_name": "Theory Practical Project 142",
+				"components": [
+					{"component": "Theory", "weightage": 33.33},
+					{"component": "Practical", "weightage": 33.33},
+					{"component": "Project", "weightage": 33.33},
+				],
+			}
+		).insert(ignore_permissions=True)
+
+		self.assertEqual(pattern.total_weightage, 99.99)
+
 	def test_components_of_a_pattern_without_marks_can_change(self):
 		self.pattern_without_marks.components[0].weightage = 30
 		self.pattern_without_marks.components[1].weightage = 70
