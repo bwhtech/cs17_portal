@@ -8,6 +8,7 @@ from cs17_portal.api import get_student_assignment, require_current_student, req
 
 ASSIGNMENT = "CS17 Assignment"
 STATUSES = ("Correct", "Half", "Incorrect", "")
+HALF_PREFIX = "half:"
 
 
 @frappe.whitelist(methods=["GET"])
@@ -146,7 +147,9 @@ def parse_answer_sheet(rows: list, cohort: str | None) -> dict:
 			is_scored = scored.lower() != "no"
 			tasks.append({"number": number, "task": task, "expected": expected, "scored": is_scored})
 			for student, cell in zip(students, cells, strict=False):
-				student["results"].append({"remark": cell, "status": default_status(cell, is_scored)})
+				status = default_status(cell, is_scored)
+				remark = cell[len(HALF_PREFIX) :].strip() if status == "Half" else cell
+				student["results"].append({"remark": remark, "status": status})
 		elif any(cells):
 			for student, cell in zip(students, cells, strict=False):
 				student["summary"].append({"label": task, "value": cell})
@@ -158,7 +161,9 @@ def parse_answer_sheet(rows: list, cohort: str | None) -> dict:
 def default_status(remark: str, is_scored: bool) -> str:
 	if not (is_scored and remark):
 		return ""
-	return "Correct" if remark.lower() == "ok" else "Incorrect"
+	if remark.lower() == "ok":
+		return "Correct"
+	return "Half" if remark.lower().startswith(HALF_PREFIX) else "Incorrect"
 
 
 def match_students(columns: list, cohort: str | None) -> dict:
