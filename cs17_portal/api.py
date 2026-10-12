@@ -610,7 +610,7 @@ def get_submission_project(submission: str) -> dict:
 		as_dict=True,
 	)
 	if not submission_doc:
-		frappe.throw(_("Submission not found"))
+		frappe.throw(_("Submission not found"), frappe.DoesNotExistError)
 
 	require_faculty_for_assignment(submission_doc.assignment)
 
@@ -676,7 +676,7 @@ def get_submission_grade(submission: str) -> dict | None:
 	get_current_faculty()
 	assignment = frappe.db.get_value("CS17 Assignment Submission", submission, "assignment")
 	if not assignment:
-		frappe.throw(_("Submission not found"))
+		frappe.throw(_("Submission not found"), frappe.DoesNotExistError)
 
 	require_faculty_for_assignment(assignment)
 	return frappe.db.get_value(
@@ -697,7 +697,7 @@ def save_grade(
 	get_current_faculty()
 	assignment = frappe.db.get_value("CS17 Assignment Submission", submission, "assignment")
 	if not assignment:
-		frappe.throw(_("Submission not found"))
+		frappe.throw(_("Submission not found"), frappe.DoesNotExistError)
 
 	require_faculty_for_assignment(assignment)
 

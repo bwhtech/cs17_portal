@@ -30,7 +30,7 @@ def get_submission_archive(submission: str) -> dict:
 		as_dict=True,
 	)
 	if not submitted:
-		frappe.throw(_("Submission not found"))
+		frappe.throw(_("Submission not found"), frappe.DoesNotExistError)
 
 	require_faculty_for_assignment(submitted.assignment)
 

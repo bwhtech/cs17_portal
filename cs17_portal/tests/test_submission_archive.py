@@ -128,6 +128,15 @@ class TestSubmissionArchive(FrappeTestCase):
 			submission,
 		)
 
+	def test_submission_that_does_not_exist_is_reported_missing(self):
+		faculty_user = make_user("faculty46@cs17test.com")
+		make_profile("Faculty", make_cohort("C46TEST"), faculty_user, "Faculty 46")
+		frappe.set_user(faculty_user)
+
+		self.assertRaises(
+			frappe.DoesNotExistError, submission_archive.get_submission_archive, "missing-submission"
+		)
+
 	def test_student_cannot_read_a_submission_archive(self):
 		cohort = make_cohort("C33TEST")
 		student_user = make_user("student33@cs17test.com")

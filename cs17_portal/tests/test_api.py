@@ -192,6 +192,10 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 		frappe.set_user(self.faculty_28_user)
 		self.assertRaises(frappe.PermissionError, get_submission_grade, self.submission_27)
 
+	def test_get_submission_grade_reports_a_missing_submission(self):
+		frappe.set_user(self.faculty_27_user)
+		self.assertRaises(frappe.DoesNotExistError, get_submission_grade, "missing-submission")
+
 	def test_faculty_reads_own_cohort_assignment(self):
 		frappe.set_user(self.faculty_27_user)
 		self.assertEqual(api.get_assignment(self.assignment_27).title, "Scratch Task 27")
@@ -412,6 +416,10 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 	def test_save_grade_hides_missing_submission_from_student(self):
 		frappe.set_user(self.student_user)
 		self.assertRaises(frappe.PermissionError, api.save_grade, "missing-submission")
+
+	def test_save_grade_reports_a_missing_submission(self):
+		frappe.set_user(self.faculty_27_user)
+		self.assertRaises(frappe.DoesNotExistError, api.save_grade, "missing-submission")
 
 	def test_save_grade_stores_remarks_without_the_spaces_around_them(self):
 		frappe.set_user(self.faculty_28_user)
