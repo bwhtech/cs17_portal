@@ -1,6 +1,6 @@
 import frappe
 from frappe import _
-from frappe.utils import cint, cstr
+from frappe.utils import cint, cstr, strip
 from frappe.utils.csvutils import read_csv_content
 from frappe.utils.xlsxutils import read_xlsx_file_from_attached_file
 
@@ -130,7 +130,7 @@ def parse_answer_sheet(rows: list, cohort: str | None) -> dict:
 	A row with a number is a task. A row without one that has student cells is a
 	summary line (score, grade, notes), named by its Task cell. Anything else is a note.
 	"""
-	rows = [[cstr(cell).strip() for cell in row] for row in rows if any(row)]
+	rows = [[strip(cstr(cell)) for cell in row] for row in rows if any(row)]
 	if not rows or len(rows[0]) < 4 or rows[0][1].lower() != "task":
 		frappe.throw(
 			_("The first row must be: #, Task, Expected answer, Scored. A column per student can follow.")
