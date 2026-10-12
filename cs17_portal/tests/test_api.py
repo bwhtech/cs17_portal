@@ -731,3 +731,31 @@ class TestUpdateMyProfile(FrappeTestCase):
 	def test_update_my_profile_refuses_an_empty_last_name(self):
 		frappe.set_user(self.faculty_user)
 		self.assertRaises(frappe.MandatoryError, api.update_my_profile, "Faculty", "")
+
+	def test_replacing_the_profile_picture_deletes_the_old_file(self):
+		frappe.set_user(self.faculty_user)
+		old = frappe.get_doc(
+			{"doctype": "File", "file_name": "faculty-110.png", "is_private": 0, "content": "picture 110"}
+		).save(ignore_permissions=True)
+		api.update_my_profile("Faculty", "110", profile_picture=old.file_url)
+		new = frappe.get_doc(
+			{
+				"doctype": "File",
+				"file_name": "faculty-110-new.png",
+				"is_private": 0,
+				"content": "new picture 110",
+			}
+		).save(ignore_permissions=True)
+		api.update_my_profile("Faculty", "110", profile_picture=new.file_url)
+
+		self.assertFalse(frappe.db.exists("File", old.name))
+
+	def test_clearing_the_profile_picture_deletes_its_file(self):
+		frappe.set_user(self.faculty_user)
+		file = frappe.get_doc(
+			{"doctype": "File", "file_name": "faculty-110.png", "is_private": 0, "content": "picture 110"}
+		).save(ignore_permissions=True)
+		api.update_my_profile("Faculty", "110", profile_picture=file.file_url)
+		api.update_my_profile("Faculty", "110", profile_picture="")
+
+		self.assertFalse(frappe.db.exists("File", file.name))
