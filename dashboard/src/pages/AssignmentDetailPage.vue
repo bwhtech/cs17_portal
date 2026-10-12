@@ -18,6 +18,9 @@
 		<p v-else-if="!assignment" class="text-p-base text-ink-gray-5">Assignment not found.</p>
 
 		<div v-else class="flex flex-col gap-6 md:flex-row">
+			<h1 class="order-first break-words text-2xl text-ink-gray-9 md:hidden">
+				{{ assignment.title }}
+			</h1>
 			<div class="min-w-0 flex-1">
 				<MarkdownText :content="assignment.description" />
 			</div>
@@ -25,9 +28,9 @@
 			<!-- The meta panel: everything about the assignment that is a value
 			     rather than prose, plus the one action the student can take. -->
 			<div
-				class="w-full shrink-0 space-y-3 rounded-4 border border-outline-gray-1 p-4 md:w-64 md:self-start"
+				class="order-first w-full shrink-0 space-y-3 rounded-4 border border-outline-gray-1 p-4 md:order-none md:w-64 md:self-start"
 			>
-				<div>
+				<div v-if="assignment.due_date">
 					<p class="text-xs text-ink-gray-5">Due</p>
 					<p
 						:class="
@@ -156,7 +159,7 @@ const assignmentCall = useCall<CS17Assignment, { assignment: string }>({
 
 const submissions = useList<CS17Submission>({
 	doctype: 'CS17 Assignment Submission',
-	fields: ['name', 'student', 'assignment', 'submitted_at', 'project'],
+	fields: ['name', 'student', 'assignment', 'submitted_at', 'submission_url', 'project'],
 	filters: () => ({ student: profile.value?.name ?? '', assignment: props.assignmentId }),
 	limit: 1,
 	immediate: Boolean(profile.value?.name),

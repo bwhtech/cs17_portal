@@ -3,7 +3,7 @@
 
 	<PageBody width="narrow" class="space-y-6">
 		<div>
-			<h1 class="text-2xl text-ink-gray-9">Welcome back, {{ firstName }}.</h1>
+			<h1 class="break-words text-2xl text-ink-gray-9">Welcome back, {{ firstName }}.</h1>
 			<p class="mt-1 text-sm text-ink-gray-5">{{ today }}</p>
 		</div>
 
@@ -34,7 +34,9 @@
 				@submitted="reloadSubmissionsAndGrades"
 				@view-grade="gradeAssignment = $event"
 			/>
-			<p v-else class="text-p-xs text-ink-gray-5">No upcoming assignments.</p>
+			<p v-else class="text-p-xs text-ink-gray-5">
+				{{ cohort ? 'No upcoming assignments.' : 'You are not in a cohort yet.' }}
+			</p>
 		</section>
 	</PageBody>
 
@@ -44,7 +46,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { ErrorMessage, useCall, useList } from 'frappe-ui'
+import { ErrorMessage, useCall } from 'frappe-ui'
 import AlertBanner from '@/components/announcements/AlertBanner.vue'
 import AssignmentTable from '@/components/assignments/AssignmentTable.vue'
 import GradeDialog from '@/components/assignments/GradeDialog.vue'
@@ -56,7 +58,6 @@ import { useSession } from '@/composables/useSession'
 import { dayjs, formatLongDate, isPast } from '@/lib/dates'
 import { gradesByAssignment, submissionsByAssignment } from '@/lib/status'
 import type {
-	CS17Submission,
 	StudentAnnouncementsResponse,
 	StudentAssignmentsResponse,
 	StudentGradesResponse,
@@ -67,7 +68,7 @@ const UPCOMING_LIMIT = 3
 
 const { profile, cohort, isStudent } = useSession()
 
-const firstName = computed(() => profile.value?.full_name?.split(' ')[0] ?? 'Student')
+const firstName = computed(() => profile.value?.first_name || 'Student')
 const today = formatLongDate()
 
 const announcementsCall = useCall<StudentAnnouncementsResponse>({
@@ -85,22 +86,6 @@ const gradesCall = useCall<StudentGradesResponse>({
 	immediate: Boolean(profile.value?.name),
 })
 
-const submissionsList = useList<CS17Submission>({
-	doctype: 'CS17 Assignment Submission',
-	fields: [
-		'name',
-		'student',
-		'assignment',
-		'submitted_at',
-		'submission_document',
-		'submission_url',
-		'project',
-	],
-	filters: () => ({ student: profile.value?.name ?? '' }),
-	limit: 100,
-	immediate: Boolean(profile.value?.name),
-})
-
 // Each student endpoint answers with the next scheduled publish beside its
 // rows, so a publish lands on the second; the interval covers everything else.
 for (const handle of [announcementsCall, assignmentsCall, gradesCall]) {
@@ -112,7 +97,7 @@ usePublishTimer(() => gradesCall.data?.next_publish_on, gradesCall.reload)
 
 const announcements = computed(() => announcementsCall.data?.announcements ?? [])
 const assignments = computed(() => assignmentsCall.data?.assignments ?? [])
-const submissions = computed(() => submissionsList.data ?? [])
+const submissions = computed(() => assignments.value.flatMap((row) => row.submission ?? []))
 
 const submissionMap = computed(() => submissionsByAssignment(submissions.value))
 /** §7: a grade is only the student's to see when it traces back to their own work. */
@@ -128,11 +113,7 @@ const upcoming = computed(() =>
 		.slice(0, UPCOMING_LIMIT),
 )
 
-const loading = computed(
-	() =>
-		(assignmentsCall.loading && !assignmentsCall.data) ||
-		(submissionsList.loading && !submissionsList.data),
-)
+const loading = computed(() => assignmentsCall.loading && !assignmentsCall.data)
 
 const failed = useLoadFailed(assignmentsCall)
 
@@ -150,7 +131,7 @@ const gradeOpen = computed({
 })
 
 function reloadSubmissionsAndGrades() {
-	submissionsList.reload()
+	assignmentsCall.reload()
 	gradesCall.reload()
 }
 </script>

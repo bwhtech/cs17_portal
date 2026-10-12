@@ -25,6 +25,8 @@ export interface CS17Assignment {
 	title: string
 	/** Student lists only: an answer sheet is shown and has this student's answers. */
 	has_answers?: boolean
+	/** Student lists only: this student's own submission. */
+	submission?: CS17Submission | null
 	description?: string | null
 	due_date: string
 	cohort?: string

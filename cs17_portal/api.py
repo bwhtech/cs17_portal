@@ -751,9 +751,24 @@ def get_student_assignments() -> dict:
 		order_by="due_date desc",
 	)
 	assignments = [assignment for assignment in assignments if is_published_now(assignment)]
+	submissions = frappe.get_all(
+		ASSIGNMENT_SUBMISSION,
+		filters={"student": student, "assignment": ["in", [assignment.name for assignment in assignments]]},
+		fields=[
+			"name",
+			"student",
+			"assignment",
+			"submitted_at",
+			"submission_document",
+			"submission_url",
+			"project",
+		],
+	)
+	submission_by_assignment = {submission.assignment: submission for submission in submissions}
 	for assignment in assignments:
 		shown = assignment.pop("show_answers")
 		assignment.has_answers = bool(shown and get_answers_for(assignment.name, student))
+		assignment.submission = submission_by_assignment.get(assignment.name)
 	upcoming = frappe.get_all(
 		"CS17 Assignment",
 		filters=[["cohort", "=", cohort], ["is_published", "=", 0], ["publish_on", ">", now]],

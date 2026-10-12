@@ -53,6 +53,7 @@
    "fieldname": "submission_url",
    "fieldtype": "Data",
    "label": "Submission URL",
+   "length": 1000,
    "options": "URL"
   },
   {
@@ -115,7 +116,7 @@
    "link_fieldname": "submission"
   }
  ],
- "modified": "2026-10-11 02:52:21.839003",
+ "modified": "2026-10-12 09:15:55.954317",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Submission",

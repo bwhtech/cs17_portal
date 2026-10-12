@@ -30,7 +30,7 @@
 					@failure="onUploadFailed"
 				>
 					<template #default="{ uploading, progress, openFileSelector }">
-						<div class="flex items-center gap-3">
+						<div class="flex flex-wrap items-center gap-x-3 gap-y-1">
 							<Button
 								:loading="uploading"
 								:label="uploading ? `Uploading ${progress}%` : chooseLabel"
@@ -40,13 +40,19 @@
 							<span
 								v-if="fileName"
 								class="min-w-0 truncate text-base text-ink-gray-7"
+								:title="fileName"
 							>
 								{{ fileName }}
 							</span>
 						</div>
 					</template>
 				</FileUploader>
-				<p v-if="error" data-slot="error" role="alert" class="text-p-sm text-ink-red-5">
+				<p
+					v-if="error"
+					data-slot="error"
+					role="alert"
+					class="break-words text-p-sm text-ink-red-5"
+				>
 					{{ error }}
 				</p>
 				<p v-else class="text-p-xs text-ink-gray-5">{{ config.help }}</p>
@@ -138,7 +144,7 @@ watch(
 )
 
 function reset() {
-	url.value = ''
+	url.value = props.existingSubmission?.submission_url ?? ''
 	fileUrl.value = null
 	fileName.value = ''
 	imagePreview.value = null
