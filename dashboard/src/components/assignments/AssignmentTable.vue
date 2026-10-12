@@ -5,7 +5,7 @@
 		:row-key="rowKey"
 		:loading="loading"
 		:row-height="60"
-		empty="No assignments yet."
+		:empty="cohort ? 'No assignments yet.' : 'You are not in a cohort yet.'"
 	>
 		<template #cell-icon="{ row }">
 			<SubmissionTypeIcon :submission-type="row.submission_type" />
@@ -15,10 +15,13 @@
 		     due — the pair a student scans for. -->
 		<template #cell-title="{ row }">
 			<RowTitle :title="row.title" :to="`/assignments/${row.name}/submission`">
-				{{ row.submission_type ?? 'Any' }} ·
-				<span :class="isOverdue(row) && 'text-ink-red-6'">
-					Due {{ formatDateTime(row.due_date) }}
-				</span>
+				{{ row.submission_type ?? 'Any' }}
+				<template v-if="row.due_date">
+					·
+					<span :class="isOverdue(row) && 'text-ink-red-6'">
+						Due {{ formatDateTime(row.due_date) }}
+					</span>
+				</template>
 			</RowTitle>
 		</template>
 
@@ -110,7 +113,9 @@ import SubmissionTypeIcon from '@/components/common/SubmissionTypeIcon.vue'
 import SubmissionPreviewDialog from '@/components/assignments/SubmissionPreviewDialog.vue'
 import SubmitAssignmentDialog from '@/components/assignments/SubmitAssignmentDialog.vue'
 import { useScratchAssignment } from '@/components/assignments/scratchEditor'
+import { useSession } from '@/composables/useSession'
 import { formatDateTime, isPast } from '@/lib/dates'
+import { formatGrade } from '@/lib/grades'
 import { assignmentStatus, assignmentStatusTheme } from '@/lib/status'
 import { trySubmit } from '@/lib/trySubmit'
 import type {
@@ -140,14 +145,15 @@ const emit = defineEmits<{
 const columns: Column[] = [
 	{ header: '', key: 'icon', variant: 'avatar', width: '2.75rem' },
 	{ header: 'Assignment', key: 'title', variant: 'primary' },
-	{ header: 'Status', key: 'status', width: '8rem' },
-	{ header: 'Submitted', key: 'submitted', width: '11rem' },
+	{ header: 'Status', key: 'status', width: '6rem' },
+	{ header: 'Submitted', key: 'submitted', width: '9rem' },
 	{ header: '', key: 'actions', variant: 'actions', width: '17rem', align: 'right' },
 ]
 
 const rowKey = (row: CS17Assignment) => row.name
 
 const scratch = useScratchAssignment()
+const { cohort } = useSession()
 
 const submitOpen = ref(false)
 const submitAssignment = ref<CS17Assignment | null>(null)
@@ -195,9 +201,13 @@ function gradeLine(assignment: CS17Assignment): string {
 	if (!showsGrade(assignment)) return ''
 	const grade = props.gradeMap?.[assignment.name]
 	if (!grade) return ''
-	if (grade.grade) return `Grade ${grade.grade}`
-	if (grade.marks_obtained === null || grade.marks_obtained === undefined) return ''
-	return `${grade.marks_obtained} / ${assignment.max_marks ?? 0} marks`
+	if (grade.evaluation_type !== 'Marks') return grade.grade ? `Grade ${grade.grade}` : ''
+	return formatGrade({
+		evaluationType: 'Marks',
+		grade: grade.grade,
+		marksObtained: grade.marks_obtained,
+		maxMarks: assignment.max_marks,
+	})
 }
 
 function isScratch(assignment: CS17Assignment): boolean {

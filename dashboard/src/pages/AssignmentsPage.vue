@@ -15,7 +15,7 @@
 			:submission-map="submissionMap"
 			:grade-map="gradeMap"
 			:loading="loading"
-			@submitted="reloadSubmissions"
+			@submitted="reloadPublished"
 			@view-grade="gradeAssignment = $event"
 		/>
 
@@ -25,7 +25,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useCall, useList } from 'frappe-ui'
+import { useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import LoadError from '@/components/common/LoadError.vue'
@@ -35,9 +35,9 @@ import { useLoadFailed } from '@/composables/useLoadFailed'
 import { usePolling, usePublishTimer } from '@/composables/usePolling'
 import { useSession } from '@/composables/useSession'
 import { gradesByAssignment, submissionsByAssignment } from '@/lib/status'
-import type { CS17Submission, StudentAssignmentsResponse, StudentGradesResponse } from '@/types'
+import type { StudentAssignmentsResponse, StudentGradesResponse } from '@/types'
 
-const { profile, cohort } = useSession()
+const { cohort } = useSession()
 
 const assignmentsCall = useCall<StudentAssignmentsResponse>({
 	url: '/api/v2/method/cs17_portal.api.get_student_assignments',
@@ -48,26 +48,11 @@ const gradesCall = useCall<StudentGradesResponse>({
 	url: '/api/v2/method/cs17_portal.api.get_student_grades',
 })
 
-const submissions = useList<CS17Submission>({
-	doctype: 'CS17 Assignment Submission',
-	fields: [
-		'name',
-		'student',
-		'assignment',
-		'submitted_at',
-		'submission_document',
-		'submission_url',
-		'project',
-	],
-	filters: () => ({ student: profile.value?.name ?? '' }),
-	limit: 100,
-	immediate: Boolean(profile.value?.name),
-})
-
 const assignments = computed(() => assignmentsCall.data?.assignments ?? [])
-const submissionMap = computed(() => submissionsByAssignment(submissions.data ?? []))
+const submissions = computed(() => assignments.value.flatMap((row) => row.submission ?? []))
+const submissionMap = computed(() => submissionsByAssignment(submissions.value))
 const gradeMap = computed(() =>
-	gradesByAssignment(gradesCall.data?.grades ?? [], submissions.data ?? []),
+	gradesByAssignment(gradesCall.data?.grades ?? [], submissions.value),
 )
 
 const loading = computed(() => assignmentsCall.loading && !assignmentsCall.data)
@@ -89,11 +74,6 @@ usePublishTimer(
 	() => gradesCall.data?.next_publish_on,
 	() => gradesCall.reload(),
 )
-
-function reloadSubmissions() {
-	submissions.reload()
-	gradesCall.reload()
-}
 
 const gradeAssignment = ref<string | null>(null)
 const activeGrade = computed(() =>

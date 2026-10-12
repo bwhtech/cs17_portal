@@ -6,7 +6,7 @@
 			class="flex flex-col gap-2 py-3 sm:flex-row sm:items-start sm:gap-4"
 		>
 			<span class="w-6 shrink-0 text-sm text-ink-gray-5 sm:pt-0.5">{{ answer.number }}</span>
-			<div class="min-w-0 flex-1 space-y-1">
+			<div class="min-w-0 flex-1 space-y-1 break-words">
 				<p class="text-base text-ink-gray-8">{{ answer.task }}</p>
 				<p class="text-p-sm text-ink-gray-6">
 					<span class="text-ink-gray-5">Expected: </span>{{ answer.expected }}

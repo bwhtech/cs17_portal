@@ -35,7 +35,9 @@
 		/>
 
 		<div v-else class="space-y-3">
-			<p v-if="kind === 'url'" class="break-all text-p-base text-ink-gray-5">{{ fileUrl }}</p>
+			<p class="break-all text-p-base text-ink-gray-5">
+				{{ kind === 'url' ? fileUrl : fileUrl.split('/').pop() }}
+			</p>
 			<Button
 				class="w-full"
 				icon-left="lucide-external-link"

@@ -9,7 +9,7 @@
 				v-if="summary.length"
 				class="grid gap-3 rounded-4 border border-outline-gray-1 p-4 sm:grid-cols-2"
 			>
-				<div v-for="line in summary" :key="line.label">
+				<div v-for="line in summary" :key="line.label" class="min-w-0 break-words">
 					<dt class="text-xs text-ink-gray-5">{{ line.label }}</dt>
 					<dd class="text-base text-ink-gray-8">{{ line.value || '—' }}</dd>
 				</div>
@@ -23,7 +23,9 @@
 				@remark="(index, remark) => emit('remark', index, remark)"
 			/>
 
-			<p v-if="note" class="text-p-sm text-ink-gray-5">{{ note }}</p>
+			<p v-if="note" class="whitespace-pre-line break-words text-p-sm text-ink-gray-5">
+				{{ note }}
+			</p>
 		</div>
 	</Dialog>
 </template>
