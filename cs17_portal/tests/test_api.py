@@ -558,11 +558,22 @@ class TestFacultyAnnouncementsUseOwnCohort(FrappeTestCase):
 			"",
 			cohort=self.cohort_100,
 			publish="schedule",
-			publish_on="2000-01-01 00:00:00",
+			publish_on=frappe.utils.add_days(frappe.utils.now(), 1),
 		)
+		frappe.db.set_value("CS17 Announcement", announcement, "publish_on", "2000-01-01 00:00:00")
 
 		row = next(row for row in api.get_faculty_announcements() if row.name == announcement)
 		self.assertEqual(row.published_date, frappe.utils.getdate("2000-01-01"))
+
+	def test_announcement_cannot_be_scheduled_for_a_time_that_has_passed(self):
+		with self.assertRaises(frappe.ValidationError):
+			api.create_announcement(
+				"Announcement 100 scheduled",
+				"",
+				cohort=self.cohort_100,
+				publish="schedule",
+				publish_on="2000-01-01 00:00:00",
+			)
 
 
 class TestAssignmentQuarter(FrappeTestCase):

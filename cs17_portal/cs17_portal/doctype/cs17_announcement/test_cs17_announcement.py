@@ -31,8 +31,9 @@ class IntegrationTestCS17Announcement(IntegrationTestCase):
 			"Room 204",
 			cohort=cls.cohort,
 			publish="schedule",
-			publish_on="2000-01-01 00:00:00",
+			publish_on=frappe.utils.add_days(frappe.utils.now(), 1),
 		)
+		frappe.db.set_value("CS17 Announcement", cls.announcement, "publish_on", "2000-01-01 00:00:00")
 		frappe.set_user("Administrator")
 
 	def setUp(self):
@@ -77,9 +78,9 @@ class IntegrationTestCS17Announcement(IntegrationTestCase):
 			"Room 204",
 			cohort=self.cohort,
 			publish="schedule",
-			publish_on="2000-01-01 00:00:00",
+			publish_on=frappe.utils.add_days(frappe.utils.now(), 1),
 		)
-		frappe.db.set_value("CS17 Announcement", failing, "title", "")
+		frappe.db.set_value("CS17 Announcement", failing, {"title": "", "publish_on": "2000-01-01 00:00:00"})
 
 		with patch.object(frappe, "log_error"):
 			auto_publish_announcements()
