@@ -1,5 +1,5 @@
 import frappe
-from frappe.utils import now_datetime, today
+from frappe.utils import getdate, now_datetime
 
 
 def auto_publish_assignments():
@@ -40,7 +40,7 @@ def auto_publish_announcements():
 	for name in names:
 		doc = frappe.get_doc("CS17 Announcement", name)
 		doc.is_published = 1
-		doc.published_date = today()
+		doc.published_date = getdate(doc.publish_on)
 		doc.save(ignore_permissions=True)
 
 

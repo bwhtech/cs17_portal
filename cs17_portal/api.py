@@ -5,8 +5,9 @@ from typing import TYPE_CHECKING
 import frappe
 from frappe import _
 from frappe.query_builder import Order
+from frappe.query_builder.functions import Coalesce, Date
 from frappe.rate_limiter import rate_limit
-from frappe.utils import flt, now_datetime, today
+from frappe.utils import flt, getdate, now_datetime, today
 
 if TYPE_CHECKING:
 	from frappe.model.document import Document
@@ -1194,6 +1195,8 @@ def get_faculty_announcements() -> list:
 	)
 	for announcement in announcements:
 		announcement.is_published = int(is_published_now(announcement))
+		if announcement.is_published and not announcement.published_date and announcement.publish_on:
+			announcement.published_date = getdate(announcement.publish_on)
 		announcement.can_edit = not faculty.cohort or announcement.cohort == faculty.cohort
 	return announcements
 
@@ -1213,7 +1216,7 @@ def get_student_announcements() -> dict:
 			table.content,
 			table.alert_variant,
 			table.is_dismissible,
-			table.published_date,
+			Coalesce(table.published_date, Date(table.publish_on)).as_("published_date"),
 		)
 		.where(in_scope & visible)
 		.orderby(table.creation, order=Order.desc)
