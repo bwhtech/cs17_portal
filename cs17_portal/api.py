@@ -188,7 +188,7 @@ def get_assignment_submissions(assignment: str) -> dict:
 		as_dict=True,
 	)
 	if not assignment_doc:
-		frappe.throw(_("Assignment not found"))
+		frappe.throw(_("Assignment not found"), frappe.DoesNotExistError)
 	submissions = frappe.get_all(
 		"CS17 Assignment Submission",
 		filters={"assignment": assignment},

@@ -208,6 +208,11 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 		frappe.set_user(self.faculty_28_user)
 		self.assertRaises(frappe.PermissionError, api.get_assignment_submissions, self.assignment_27)
 
+	def test_get_assignment_submissions_reports_a_missing_assignment(self):
+		make_profile("Faculty", None, make_user("faculty53@cs17test.com"), "Faculty 53")
+		frappe.set_user("faculty53@cs17test.com")
+		self.assertRaises(frappe.DoesNotExistError, api.get_assignment_submissions, "missing-assignment")
+
 	def test_get_assignment_submissions_lists_students_who_have_not_submitted(self):
 		absent = make_profile("Student", self.cohort_27, make_user("absent27@cs17test.com"), "Absent 27")
 		frappe.set_user(self.faculty_27_user)
