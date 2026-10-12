@@ -311,8 +311,5 @@ assignment and grade pages do: a result becomes visible when `auto_publish_resul
 
 - Faculty UI in the `dashboard` SPA. Entering marks and publishing results is desk-only.
 - Tests for what a grading scale refuses on save (overlapping bands, a gap at 0 or 100, a repeated
-  grade), for the `validate` duplicate check on `CS17 Subject Marks`, and for the exam lock after
-  publish beyond adding a subject: removing one, or changing its max marks, pattern or grading
-  scale, is refused by the same check but only the add is tested. On `CS17 Subject Marks` the test
-  covers only that the unique index exists; nothing saves a second document for the same exam,
-  student and subject and reads the refusal.
+  grade), and for the exam lock after publish beyond adding a subject: removing one, or changing
+  its max marks, pattern or grading scale, is refused by the same check but only the add is tested.

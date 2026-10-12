@@ -70,5 +70,49 @@ class IntegrationTestCS17SubjectMarks(IntegrationTestCase):
 		self.assertEqual(sum(row.max_marks for row in marks.components), 999)
 		self.assertEqual(frappe.db.get_value("CS17 Result", result, "total_marks_obtained"), 999)
 
+	def test_second_marks_for_the_same_exam_student_and_subject_are_refused(self):
+		cohort = make_cohort("C151TEST")
+		student = make_profile("Student", cohort, make_user("student151@cs17test.com"), "Student 151")
+		subject = (
+			frappe.get_doc(
+				{"doctype": "CS17 Subject", "subject_code": "MATHS151", "subject_name": "Maths 151"}
+			)
+			.insert(ignore_permissions=True)
+			.name
+		)
+		scale = (
+			frappe.get_doc(
+				{
+					"doctype": "CS17 Grading Scale",
+					"scale_name": "Scale 151",
+					"bands": [{"grade": "A", "min_percent": 0, "max_percent": 100}],
+				}
+			)
+			.insert(ignore_permissions=True)
+			.name
+		)
+		exam = (
+			frappe.get_doc(
+				{
+					"doctype": "CS17 Exam",
+					"exam_name": "Quarter Exam 151",
+					"cohort": cohort,
+					"grading_scale": scale,
+					"subjects": [{"subject": subject, "max_marks": 100}],
+				}
+			)
+			.insert(ignore_permissions=True)
+			.name
+		)
+		marks = {"doctype": "CS17 Subject Marks", "exam": exam, "student": student, "subject": subject}
+		first = frappe.get_doc(marks).insert(ignore_permissions=True)
+
+		self.assertRaisesRegex(
+			frappe.ValidationError,
+			f"Marks {first.name} already exist for this student and subject.",
+			frappe.get_doc(marks).insert,
+			ignore_permissions=True,
+		)
+
 	def test_exam_student_and_subject_have_a_unique_index(self):
 		self.assertTrue(frappe.db.has_index("tabCS17 Subject Marks", "unique_exam_student_subject"))
