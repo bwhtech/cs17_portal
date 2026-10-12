@@ -223,6 +223,21 @@ class TestCS17Project(FrappeTestCase):
 			submission,
 		)
 
+	def test_get_submission_project_reports_a_project_file_gone_from_disk(self):
+		submission = self.make_submission()
+		frappe.db.set_value("File", {"attached_to_name": submission}, "file_url", "/private/files/gone.sb3")
+		frappe.db.set_value(
+			"CS17 Assignment Submission", submission, "submission_document", "/private/files/gone.sb3"
+		)
+
+		frappe.set_user(FACULTY_IN_USER)
+		self.assertRaisesRegex(
+			frappe.DoesNotExistError,
+			"This submission's project file is missing.",
+			api.get_submission_project,
+			submission,
+		)
+
 	def test_get_submission_project_reports_a_missing_submission(self):
 		frappe.set_user(FACULTY_IN_USER)
 		self.assertRaises(frappe.DoesNotExistError, api.get_submission_project, "missing-submission")
