@@ -3,6 +3,7 @@
 		<div v-if="failed || archive.error" class="flex h-full items-center justify-center p-6">
 			<EmptyState
 				v-if="isRefusal(archive.error)"
+				class="!py-0"
 				icon="lucide-file-archive"
 				:title="frappeErrorMessage(archive.error, 'This archive could not be read.')"
 			>
@@ -12,6 +13,7 @@
 			</EmptyState>
 			<LoadError
 				v-else
+				class="!py-0"
 				title="Could not load this archive"
 				:loading="archive.loading"
 				@retry="archive.reload()"
