@@ -666,3 +666,39 @@ class TestAssignmentQuarter(FrappeTestCase):
 		)
 
 		self.assertEqual([row.name for row in get_quarter_assignments(quarter, cohort)], [assignment])
+
+
+class TestUpdateMyProfile(FrappeTestCase):
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+
+		cls.faculty_user = make_user("faculty110@cs17test.com")
+		cls.faculty = make_profile("Faculty", None, cls.faculty_user, "Faculty 110")
+
+	def tearDown(self):
+		frappe.set_user("Administrator")
+
+	def test_faculty_saves_own_name(self):
+		frappe.set_user(self.faculty_user)
+		api.update_my_profile("Tejeshawari", "Mourya")
+
+		self.assertEqual(frappe.db.get_value("CS17 Profile", self.faculty, "full_name"), "Tejeshawari Mourya")
+
+	def test_empty_profile_picture_clears_the_saved_one(self):
+		frappe.db.set_value("CS17 Profile", self.faculty, "profile_picture", "/files/faculty-110.png")
+
+		frappe.set_user(self.faculty_user)
+		api.update_my_profile("Faculty", "110", profile_picture="")
+
+		self.assertIsNone(frappe.db.get_value("CS17 Profile", self.faculty, "profile_picture"))
+
+	def test_update_my_profile_blocks_student(self):
+		make_profile("Student", None, make_user("student110@cs17test.com"), "Student 110")
+
+		frappe.set_user("student110@cs17test.com")
+		self.assertRaises(frappe.PermissionError, api.update_my_profile, "Student", "Renamed")
+
+	def test_update_my_profile_refuses_an_empty_last_name(self):
+		frappe.set_user(self.faculty_user)
+		self.assertRaises(frappe.MandatoryError, api.update_my_profile, "Faculty", "")
