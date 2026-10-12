@@ -11,8 +11,8 @@
 			v-if="isScratch"
 			class="h-[70vh] overflow-hidden rounded-4 border border-outline-gray-1"
 		>
-			<p v-if="projectError" class="p-6 text-p-base text-ink-gray-5">
-				Could not load the submitted project.
+			<p v-if="projectCall.error" class="p-6 text-p-base text-ink-gray-5">
+				{{ projectError }}
 			</p>
 			<Skeleton v-else-if="!sb3" class="h-full w-full" />
 			<ScratchFrame v-else :sb3="sb3" read-only />
@@ -52,6 +52,7 @@
 import { computed, ref, watch } from 'vue'
 import { Button, Dialog, Skeleton, useCall } from 'frappe-ui'
 import ScratchFrame from '@/components/scratch/ScratchFrame.vue'
+import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
 import { base64ToArrayBuffer } from '@/lib/scratch'
 import { previewKind } from '@/lib/submissionTypes'
 
@@ -81,7 +82,10 @@ const projectCall = useCall<{ filename: string; content: string }, { submission:
 	},
 })
 
-const projectError = computed(() => Boolean(projectCall.error))
+const projectError = computed(() => {
+	const fallback = 'Could not load the submitted project.'
+	return isRefusal(projectCall.error) ? frappeErrorMessage(projectCall.error, fallback) : fallback
+})
 
 // The project is a base64 payload of its own, so it is fetched when the dialog
 // actually opens rather than for every row of the table behind it.
