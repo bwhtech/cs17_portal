@@ -197,7 +197,6 @@ export interface CohortSubmission {
 	assignment: string
 	assignment_title: string
 	submission_type: SubmissionType | null
-	submission_document?: string | null
 	max_marks: number
 	evaluation_type: EvaluationType | '' | null
 	submitted_at: string
