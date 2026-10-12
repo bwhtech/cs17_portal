@@ -764,3 +764,20 @@ class TestUpdateMyProfile(FrappeTestCase):
 		api.update_my_profile("Faculty", "110", profile_picture="")
 
 		self.assertFalse(frappe.db.exists("File", file.name))
+
+	def test_same_profile_picture_uploaded_again_keeps_one_file(self):
+		frappe.set_user(self.faculty_user)
+		picture = {
+			"doctype": "File",
+			"file_name": "faculty-110.png",
+			"is_private": 0,
+			"content": "picture 110",
+		}
+		file = frappe.get_doc(picture).save(ignore_permissions=True)
+		api.update_my_profile("Faculty", "110", profile_picture=file.file_url)
+		again = frappe.get_doc(picture).save(ignore_permissions=True)
+		api.update_my_profile("Faculty", "110", profile_picture=again.file_url)
+
+		self.assertEqual(
+			frappe.get_all("File", filters={"file_url": file.file_url}, pluck="name"), [file.name]
+		)
