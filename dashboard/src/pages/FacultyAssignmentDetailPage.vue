@@ -141,7 +141,7 @@
 							<Button
 								v-if="isSubmitted(row)"
 								label="Preview"
-								@click="previewTarget = row"
+								@click="openPreview(row)"
 							/>
 							<Button v-if="sheet" label="Answers" @click="answersTarget = row" />
 							<Button
@@ -201,7 +201,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { Badge, Button, PageHeaderBackButton, toast, useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
@@ -222,6 +222,7 @@ import { useLoadFailed } from '@/composables/useLoadFailed'
 import { formatDateTime } from '@/lib/dates'
 import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
 import { formatGrade } from '@/lib/grades'
+import { previewKind } from '@/lib/submissionTypes'
 import { trySubmit } from '@/lib/trySubmit'
 import type {
 	AnswerSheet,
@@ -233,6 +234,7 @@ import type {
 } from '@/types'
 
 const route = useRoute()
+const router = useRouter()
 const breadcrumbs = useBreadcrumbs()
 const { isDesktop } = useBreakpoint()
 
@@ -272,6 +274,12 @@ function isSubmitted(row: CS17Submission): boolean {
 const selection = ref<string[]>([])
 const previewTarget = ref<CS17Submission | null>(null)
 const gradeTarget = ref<CS17Submission | null>(null)
+
+function openPreview(row: CS17Submission) {
+	const kind = previewKind(assignment.value?.submission_type, row.submission_document)
+	if (kind === 'archive') router.push(`/faculty/submissions/${row.name}`)
+	else previewTarget.value = row
+}
 
 const answersTarget = ref<CS17Submission | null>(null)
 

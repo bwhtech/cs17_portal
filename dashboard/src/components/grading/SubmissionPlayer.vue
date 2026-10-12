@@ -39,6 +39,12 @@
 			class="h-full w-full border-0"
 		/>
 
+		<ArchiveViewer
+			v-else-if="kind === 'archive' && fileUrl"
+			:submission="submission"
+			:file-url="fileUrl"
+		/>
+
 		<div
 			v-else-if="fileUrl"
 			class="flex h-full flex-col items-center justify-center gap-3 p-6 text-center"
@@ -56,6 +62,7 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch, type ShallowRef } from 'vue'
 import { Button, Skeleton, useCall } from 'frappe-ui'
+import ArchiveViewer from '@/components/grading/ArchiveViewer.vue'
 import ScratchFrame from '@/components/scratch/ScratchFrame.vue'
 import { base64ToArrayBuffer } from '@/lib/scratch'
 import { previewKind } from '@/lib/submissionTypes'
