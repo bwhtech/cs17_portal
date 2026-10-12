@@ -99,6 +99,24 @@ class IntegrationTestCS17AssignmentGrade(IntegrationTestCase):
 
 		self.assertIsNone(frappe.db.get_value("CS17 Assignment Grade", grade, "published_on"))
 
+	def test_scheduled_grade_published_now_loses_its_schedule(self):
+		with self.set_user(self.faculty_user):
+			api.grade_submission(
+				self.submission, grade="B", publish="schedule", publish_on=add_days(now(), 1)
+			)
+			grade = api.grade_submission(self.submission, grade="B", publish="now")["name"]
+
+		self.assertIsNone(frappe.db.get_value("CS17 Assignment Grade", grade, "published_on"))
+
+	def test_scheduled_grade_published_by_publish_grades_loses_its_schedule(self):
+		with self.set_user(self.faculty_user):
+			grade = api.grade_submission(
+				self.submission, grade="B", publish="schedule", publish_on=add_days(now(), 1)
+			)["name"]
+			api.publish_grades([self.submission])
+
+		self.assertIsNone(frappe.db.get_value("CS17 Assignment Grade", grade, "published_on"))
+
 	def test_scheduled_assignment_saved_as_draft_loses_its_schedule(self):
 		cohort = make_cohort("C85TEST")
 		with self.set_user(self.faculty_user):
