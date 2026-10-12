@@ -35,3 +35,7 @@ class CS17Cohort(Document):
 					"Cohort Code {0} can only have letters, numbers, spaces, hyphens (-), underscores (_) and slashes (/)."
 				).format(frappe.bold(cohort_code))
 			)
+		if cohort_code.strip().upper() == "GEN":
+			frappe.throw(
+				_("Cohort Code {0} is kept for students who have no cohort.").format(frappe.bold(cohort_code))
+			)
