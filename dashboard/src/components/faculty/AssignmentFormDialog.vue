@@ -354,8 +354,8 @@ async function loadExisting(name: string) {
 		due_date: existing.due_date ?? '',
 		description: existing.description ?? '',
 	} satisfies AssignmentDraft)
-	publishMode.value = 'draft'
-	publishOn.value = ''
+	publishMode.value = existing.publish_on ? 'schedule' : 'draft'
+	publishOn.value = existing.publish_on ?? ''
 	savedName.value = name
 }
 
