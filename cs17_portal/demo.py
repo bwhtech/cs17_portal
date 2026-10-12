@@ -97,7 +97,7 @@ def attach(doctype: str, name: str, field: str, filename: str, content: bytes) -
 
 
 def wipe():
-	"""Drop anything a previous run of this script created."""
+	"""Delete the demo users, both cohorts and their records, and every cohort-less announcement."""
 	# Seeding as the record's real author, so the data reads true.
 	frappe.set_user("Administrator")  # nosemgrep
 
