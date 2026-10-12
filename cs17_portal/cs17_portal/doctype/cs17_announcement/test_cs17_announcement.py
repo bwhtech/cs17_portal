@@ -124,3 +124,15 @@ class IntegrationTestCS17Announcement(IntegrationTestCase):
 			frappe.db.get_value("CS17 Announcement", announcement, ["published_date", "publish_on"]),
 			(frappe.utils.getdate("2000-01-01"), None),
 		)
+
+	def test_unpublished_announcement_drops_a_publish_time_that_has_passed(self):
+		announcement = create_announcement(
+			"Quiz moved to Monday", "Room 204", cohort=self.cohort, publish="now"
+		)
+		frappe.db.set_value("CS17 Announcement", announcement, "publish_on", "2000-01-01 00:00:00")
+
+		doc = frappe.get_doc("CS17 Announcement", announcement)
+		doc.is_published = 0
+		doc.save(ignore_permissions=True)
+
+		self.assertIsNone(frappe.db.get_value("CS17 Announcement", announcement, "publish_on"))
