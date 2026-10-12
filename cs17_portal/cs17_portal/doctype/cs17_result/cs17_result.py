@@ -157,6 +157,7 @@ class CS17Result(Document):
 					"marks_obtained": flt(grade.get("marks_obtained")) if by_marks else 0,
 					"grade": grade.get("grade") if by_grade else None,
 					"is_submitted": 1 if grade.get("submission") else 0,
+					"is_graded": 1 if grade.get("grade_name") else 0,
 					"remarks": grade.get("remarks"),
 				},
 			)

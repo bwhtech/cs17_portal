@@ -162,6 +162,7 @@ export interface CS17ResultAssignmentScore {
 	marks_obtained: number | null
 	grade: string | null
 	is_submitted: Bool
+	is_graded: Bool
 	due_date: string | null
 }
 

@@ -95,7 +95,7 @@ def get_student_grades(student: str, assignments: list[str]) -> dict[str, dict]:
 	grades = frappe.get_all(
 		"CS17 Assignment Grade",
 		filters={"submission": ("in", [row.name for row in submissions])},
-		fields=["assignment", "marks_obtained", "grade", "remarks"],
+		fields=["name as grade_name", "assignment", "marks_obtained", "grade", "remarks"],
 	)
 	for grade in grades:
 		if grade.assignment in by_assignment:

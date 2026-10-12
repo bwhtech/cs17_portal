@@ -35,7 +35,7 @@ export function assignmentScoreLabel(row: CS17ResultAssignmentScore): string {
 	if (!row.is_submitted) return '—'
 	if (row.evaluation_type === 'Grade') return row.grade || 'Not graded'
 	if (row.evaluation_type === 'Marks') {
-		if (row.marks_obtained === null || row.marks_obtained === undefined) return 'Not graded'
+		if (!row.is_graded) return 'Not graded'
 		return formatMarks(row.marks_obtained, row.max_marks)
 	}
 	return 'Submitted'
