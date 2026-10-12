@@ -737,6 +737,16 @@ class TestUpdateMyProfile(FrappeTestCase):
 		frappe.set_user(self.faculty_user)
 		self.assertRaises(frappe.MandatoryError, api.update_my_profile, "Faculty", "")
 
+	def test_refused_name_is_answered_in_the_forms_words(self):
+		frappe.set_user(self.faculty_user)
+		self.assertRaisesRegex(
+			frappe.MandatoryError,
+			"Add your last name",
+			api.update_my_profile,
+			"Faculty",
+			"<script>alert(1)</script>",
+		)
+
 	def test_replacing_the_profile_picture_deletes_the_old_file(self):
 		frappe.set_user(self.faculty_user)
 		old = frappe.get_doc(
