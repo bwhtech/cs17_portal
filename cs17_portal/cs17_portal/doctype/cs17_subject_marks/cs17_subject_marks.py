@@ -115,6 +115,11 @@ class CS17SubjectMarks(Document):
 			row.weightage = by_component[row.component].weightage
 			row.max_marks = flt(flt(self.max_marks) * flt(row.weightage) / 100, 2)
 
+		largest = max(self.components, key=lambda row: flt(row.weightage))
+		largest.max_marks = flt(
+			largest.max_marks + flt(self.max_marks) - sum(row.max_marks for row in self.components), 2
+		)
+
 	def calculate(self):
 		for row in self.components:
 			marks = flt(row.marks_obtained)
