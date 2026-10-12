@@ -33,14 +33,21 @@
 			/>
 
 			<div class="min-w-0">
-				<h1 class="truncate text-base font-medium text-ink-gray-8">
+				<h1
+					class="text-base font-medium text-ink-gray-8 [overflow-wrap:anywhere] max-md:line-clamp-2 md:truncate"
+					dir="auto"
+					:title="submission.assignment_title"
+				>
 					{{ submission.assignment_title }}
 				</h1>
-				<p class="truncate text-p-sm text-ink-gray-5">
-					{{ submission.full_name }}
-					<template v-if="submission.evaluation_type === 'Marks'">
-						· out of {{ submission.max_marks }} marks
-					</template>
+				<p class="flex flex-wrap gap-x-1 text-p-sm text-ink-gray-5 md:flex-nowrap">
+					<span class="truncate" :title="submission.full_name">{{
+						submission.full_name
+					}}</span>
+					<span v-if="submission.evaluation_type === 'Marks'" class="shrink-0">
+						· out of {{ submission.max_marks }}
+						{{ submission.max_marks === 1 ? 'mark' : 'marks' }}
+					</span>
 				</p>
 			</div>
 
@@ -72,7 +79,10 @@
 			/>
 		</div>
 
-		<div class="shrink-0 border-t border-outline-gray-1 bg-surface-base px-3 py-4 sm:px-5">
+		<div
+			v-if="submission.evaluation_type"
+			class="shrink-0 border-t border-outline-gray-1 bg-surface-base px-3 py-4 sm:px-5"
+		>
 			<GradeForm
 				:key="submission.name"
 				:submission="submission.name"

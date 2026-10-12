@@ -54,6 +54,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { Avatar, Button, MultiSelect, toast, useCall } from 'frappe-ui'
+import { useFacultyMembers } from '@/composables/useFacultyMembers'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { trySubmit } from '@/lib/trySubmit'
 import type { FacultyMember } from '@/types'
@@ -66,11 +67,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{ changed: [] }>()
 
-const members = useCall<FacultyMember[], { cohort?: string }>({
-	url: '/api/v2/method/cs17_portal.api.get_faculty_members',
-	params: () => ({ cohort: props.cohort }),
-	cacheKey: ['faculty-members', props.cohort ?? ''],
-})
+const members = useFacultyMembers(props.cohort)
 
 const assign = useCall<null, { submission: string; assign_to: string }>({
 	url: '/api/v2/method/cs17_portal.api.assign_submission',

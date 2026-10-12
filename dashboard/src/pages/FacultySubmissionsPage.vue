@@ -23,11 +23,15 @@
 			empty="No submissions yet."
 		>
 			<template #cell-full_name="{ row }">
-				<span class="truncate text-ink-gray-8">{{ row.full_name }}</span>
+				<span class="block truncate text-ink-gray-8" :title="row.full_name">{{
+					row.full_name
+				}}</span>
 			</template>
 
 			<template #cell-assignment_title="{ row }">
-				<span class="truncate">{{ row.assignment_title }}</span>
+				<span class="block truncate" :title="row.assignment_title">{{
+					row.assignment_title
+				}}</span>
 			</template>
 
 			<template #cell-submission_type="{ row }">
@@ -57,7 +61,7 @@
 			<!-- The whole row opens the workspace; this is the affordance that
 			     says so, and names what the grader is walking into. -->
 			<template #cell-actions="{ row }">
-				<Button :label="row.graded ? 'Review' : 'Grade'" @click.stop="openGrading(row)" />
+				<Button :label="openLabel(row)" @click.stop="openGrading(row)" />
 			</template>
 		</DataTable>
 	</PageBody>
@@ -79,12 +83,12 @@ import type { CohortSubmission } from '@/types'
 const router = useRouter()
 
 const columns: Column[] = [
-	{ header: 'Student', key: 'full_name', variant: 'primary', width: '12rem' },
-	{ header: 'Assignment', key: 'assignment_title' },
-	{ header: 'Type', key: 'submission_type', width: '8rem' },
-	{ header: 'Submitted', key: 'submitted_at', width: '11rem' },
-	{ header: 'Grade', key: 'grade', width: '9rem' },
-	{ header: '', key: 'actions', variant: 'actions', width: '7rem', align: 'right' },
+	{ header: 'Student', key: 'full_name', variant: 'primary', width: 'minmax(6rem,12rem)' },
+	{ header: 'Assignment', key: 'assignment_title', width: 'minmax(6rem,1fr)' },
+	{ header: 'Type', key: 'submission_type', width: 'minmax(4.5rem,8rem)' },
+	{ header: 'Submitted', key: 'submitted_at', width: 'minmax(8rem,11rem)' },
+	{ header: 'Grade', key: 'grade', width: 'minmax(8.5rem,9rem)' },
+	{ header: '', key: 'actions', variant: 'actions', width: '5rem', align: 'right' },
 ]
 
 const submissions = useCall<CohortSubmission[]>({
@@ -97,6 +101,11 @@ const rows = computed(() => submissions.data ?? [])
 const failed = useLoadFailed(submissions)
 
 const rowKey = (row: CohortSubmission) => row.name
+
+function openLabel(row: CohortSubmission): string {
+	if (!row.evaluation_type) return 'Open'
+	return row.graded ? 'Review' : 'Grade'
+}
 
 function openGrading(row: CohortSubmission) {
 	router.push(`/faculty/submissions/${row.name}`)
