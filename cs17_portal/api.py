@@ -529,7 +529,8 @@ def submit_scratch_project(assignment: str, project: str) -> dict:
 	submission.flags.ignore_permissions = True
 	submission.project = project
 	submission.submitted_at = frappe.utils.now_datetime()
-	if submission.is_new():
+	is_first_submit = submission.is_new()
+	if is_first_submit:
 		submission.insert()
 
 	previous_snapshots = frappe.get_all(
@@ -548,8 +549,11 @@ def submit_scratch_project(assignment: str, project: str) -> dict:
 		f"{submission.name}.sb3",
 		source_file.get_content(),
 	)
-	submission.submission_document = snapshot.file_url
-	submission.save()
+	if is_first_submit:
+		submission.db_set("submission_document", snapshot.file_url, update_modified=False)
+	else:
+		submission.submission_document = snapshot.file_url
+		submission.save()
 	for file_name in previous_snapshots:
 		frappe.delete_doc("File", file_name, ignore_permissions=True)
 	return {"name": submission.name, "submission_document": submission.submission_document}
