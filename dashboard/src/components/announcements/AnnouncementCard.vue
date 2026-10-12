@@ -23,17 +23,17 @@
 
 		<span v-if="publishedOn" class="shrink-0 text-xs text-ink-gray-5">{{ publishedOn }}</span>
 
-		<span v-if="dismissed" class="shrink-0 text-xs text-ink-gray-5">Dismissed</span>
-		<Button
-			v-else-if="announcement.is_dismissible"
-			variant="ghost"
-			size="sm"
-			icon="lucide-x"
-			class="shrink-0"
-			:aria-label="`Dismiss ${announcement.title}`"
-			@click="emit('dismiss')"
-		/>
-		<span v-else class="size-7 shrink-0" aria-hidden="true" />
+		<div class="flex w-14 shrink-0 justify-end">
+			<span v-if="dismissed" class="text-xs text-ink-gray-5">Dismissed</span>
+			<Button
+				v-else-if="announcement.is_dismissible"
+				variant="ghost"
+				size="sm"
+				icon="lucide-x"
+				:aria-label="`Dismiss ${announcement.title}`"
+				@click="emit('dismiss')"
+			/>
+		</div>
 	</div>
 </template>
 
