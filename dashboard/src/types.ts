@@ -157,7 +157,7 @@ export interface CS17ResultAssignmentScore {
 	assignment: string
 	assignment_title: string | null
 	assignment_type: AssignmentType | null
-	evaluation_type: EvaluationType | null
+	evaluation_type: EvaluationType | '' | null
 	max_marks: number
 	marks_obtained: number | null
 	grade: string | null
