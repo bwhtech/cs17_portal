@@ -100,7 +100,7 @@ const projectCall = useCall<{ filename: string; content: string }, { submission:
 	},
 })
 
-const failed = useLoadFailed(projectCall)
+const failed = useLoadFailed(projectCall, { except: isRefusal })
 
 // The project is a base64 payload of its own, so it is fetched when the dialog
 // actually opens rather than for every row of the table behind it.
