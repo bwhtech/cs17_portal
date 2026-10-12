@@ -149,7 +149,7 @@
 					</template>
 				</DataTable>
 
-				<BulkAssignBar
+				<SubmissionBulkActions
 					v-if="selection.length"
 					:submissions="selection"
 					:cohort="assignment.cohort"
@@ -209,9 +209,9 @@ import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import SubmissionPreviewDialog from '@/components/assignments/SubmissionPreviewDialog.vue'
 import AnswersDialog from '@/components/answers/AnswersDialog.vue'
 import AnswerSheetCard from '@/components/faculty/AnswerSheetCard.vue'
-import BulkAssignBar from '@/components/faculty/BulkAssignBar.vue'
 import GradeSubmissionDialog from '@/components/faculty/GradeSubmissionDialog.vue'
 import SubmissionAssignees from '@/components/faculty/SubmissionAssignees.vue'
+import SubmissionBulkActions from '@/components/faculty/SubmissionBulkActions.vue'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useLoadFailed } from '@/composables/useLoadFailed'
