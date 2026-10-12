@@ -174,4 +174,5 @@ def match_students(columns: list, cohort: str | None) -> dict:
 	for column in columns:
 		names = names_by_key.get(" ".join(column.lower().split()), set())
 		matched[column] = next(iter(names)) if len(names) == 1 else None
-	return matched
+	students = [matched[column] for column in columns]
+	return {column: student if students.count(student) == 1 else None for column, student in matched.items()}

@@ -51,6 +51,19 @@ class TestAnswerSheet(FrappeTestCase):
 
 		self.assertEqual(matched, {" Student  31 ": self.student})
 
+	def test_two_headings_for_one_student_match_no_one(self):
+		matched = answer_sheet.match_students(["Student 31", "student  31"], self.cohort)
+
+		self.assertEqual(matched, {"Student 31": None, "student  31": None})
+
+	def test_heading_repeated_in_two_columns_matches_no_one(self):
+		header, *body = ROWS
+		rows = [[*header[:5], "Student 31"], *body]
+
+		students = answer_sheet.parse_answer_sheet(rows, self.cohort)["students"]
+
+		self.assertEqual([row["student"] for row in students], [None, None])
+
 	def test_upload_and_replace_leave_no_file_behind(self):
 		frappe.set_user(self.faculty_user)
 
