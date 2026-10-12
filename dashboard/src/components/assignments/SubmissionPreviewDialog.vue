@@ -2,7 +2,7 @@
 	<Dialog
 		:open="open"
 		:title="title"
-		:size="isScratch ? '6xl' : '2xl'"
+		:size="isScratch || isArchive ? '6xl' : '2xl'"
 		@update:open="emit('update:open', $event)"
 	>
 		<!-- A Scratch submission is a project, not a file: it plays in the
@@ -27,6 +27,13 @@
 		</div>
 
 		<p v-else-if="!fileUrl" class="text-p-base text-ink-gray-5">No submission found.</p>
+
+		<div
+			v-else-if="isArchive"
+			class="h-[70vh] overflow-hidden rounded-4 border border-outline-gray-1"
+		>
+			<ArchiveViewer :submission="submission ?? ''" :file-url="fileUrl" />
+		</div>
 
 		<img
 			v-else-if="kind === 'image'"
@@ -60,6 +67,7 @@
 import { computed, ref, watch } from 'vue'
 import { Button, Dialog, Skeleton, useCall } from 'frappe-ui'
 import LoadError from '@/components/common/LoadError.vue'
+import ArchiveViewer from '@/components/grading/ArchiveViewer.vue'
 import ScratchFrame from '@/components/scratch/ScratchFrame.vue'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
@@ -72,7 +80,6 @@ const props = defineProps<{
 	submissionType?: string
 	/** The stored file, or the submitted link for a URL assignment. */
 	fileUrl?: string | null
-	/** The submission name — only a Scratch submission needs it. */
 	submission?: string | null
 }>()
 
@@ -80,6 +87,7 @@ const emit = defineEmits<{ 'update:open': [value: boolean] }>()
 
 const isScratch = computed(() => props.submissionType === 'Scratch' && Boolean(props.submission))
 const kind = computed(() => previewKind(props.submissionType, props.fileUrl))
+const isArchive = computed(() => kind.value === 'archive' && Boolean(props.submission))
 
 const sb3 = ref<ArrayBuffer | null>(null)
 

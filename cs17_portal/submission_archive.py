@@ -9,7 +9,11 @@ from collections.abc import Callable, Iterator
 import frappe
 from frappe import _
 
-from cs17_portal.api import get_current_faculty, require_faculty_for_assignment
+from cs17_portal.api import (
+	get_current_faculty,
+	get_current_profile_name,
+	require_faculty_for_assignment,
+)
 from cs17_portal.cs17_portal.doctype.cs17_assignment_submission.cs17_assignment_submission import (
 	SUBMISSION_EXTENSIONS,
 )
@@ -22,17 +26,19 @@ MAX_PREVIEW_TOTAL = 8 * 1024 * 1024
 
 @frappe.whitelist(methods=["GET"])
 def get_submission_archive(submission: str) -> dict:
-	get_current_faculty()
 	submitted = frappe.db.get_value(
 		"CS17 Assignment Submission",
 		submission,
-		["assignment", "submission_document"],
+		["assignment", "submission_document", "student"],
 		as_dict=True,
 	)
-	if not submitted:
-		frappe.throw(_("Submission not found"), frappe.DoesNotExistError)
+	student = get_current_profile_name("Student")
+	if not (student and submitted and submitted.student == student):
+		get_current_faculty()
+		if not submitted:
+			frappe.throw(_("Submission not found"), frappe.DoesNotExistError)
 
-	require_faculty_for_assignment(submitted.assignment)
+		require_faculty_for_assignment(submitted.assignment)
 
 	if not submitted.submission_document:
 		frappe.throw(_("This submission has no file."))
