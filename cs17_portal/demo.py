@@ -3,9 +3,9 @@
 Not shipped to any real site — this exists so the portal can be run and looked at
 without hand-entering a cohort, a term of assignments and a class of students.
 
-Re-runnable. Everything it creates is tagged with the `@cs17.test` user domain or
-one of the two cohort codes below, and it clears exactly that set before seeding.
-Nothing else on the site is touched.
+Re-runnable. Before seeding it deletes every `@cs17.test` user, the two cohorts
+below and what hangs off them, and every announcement with no cohort, whoever
+made it. `docs/dev-site.md` lists the full set.
 
     bench --site <site> execute cs17_portal.demo.run
 """
