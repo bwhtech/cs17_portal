@@ -128,11 +128,7 @@
 							<span class="text-base font-medium text-ink-gray-8">{{
 								gradeValue(row.grade)
 							}}</span>
-							<Badge
-								:label="row.grade.is_published ? 'Published' : 'Draft'"
-								:theme="row.grade.is_published ? 'green' : 'amber'"
-								variant="subtle"
-							/>
+							<Badge v-bind="publishStatus(row.grade)" variant="subtle" />
 						</span>
 					</template>
 
@@ -389,6 +385,18 @@ function gradeValue(grade: CS17Grade): string {
 		marksObtained: grade.marks_obtained,
 		maxMarks: assignment.value?.max_marks,
 	})
+}
+
+function publishStatus(grade: CS17Grade) {
+	if (grade.is_published) return { label: 'Published', theme: 'green' } as const
+	if (grade.published_on) {
+		return {
+			label: 'Scheduled',
+			theme: 'amber',
+			title: formatDateTime(grade.published_on),
+		} as const
+	}
+	return { label: 'Draft', theme: 'gray' } as const
 }
 
 const selectedDraftGrades = computed(
