@@ -41,7 +41,7 @@ def set_answer_status(
 	require_faculty_for_assignment(assignment)
 	if status not in STATUSES:
 		frappe.throw(_("Mark the answer as Correct, Half or Incorrect."))
-	sheet = read_answer_sheet(assignment)["sheet"]
+	sheet = read_answer_sheet(assignment, for_update=True)["sheet"]
 	get_student_answers(sheet, column, student)["results"][cint(task)]["status"] = status
 	frappe.db.set_value(ASSIGNMENT, assignment, "answer_sheet", frappe.as_json(sheet))
 
@@ -51,7 +51,7 @@ def set_answer_remark(
 	assignment: str, column: str, task: int, remark: str, student: str | None = None
 ) -> None:
 	require_faculty_for_assignment(assignment)
-	sheet = read_answer_sheet(assignment)["sheet"]
+	sheet = read_answer_sheet(assignment, for_update=True)["sheet"]
 	get_student_answers(sheet, column, student)["results"][cint(task)]["remark"] = remark.strip()
 	frappe.db.set_value(ASSIGNMENT, assignment, "answer_sheet", frappe.as_json(sheet))
 
@@ -107,8 +107,10 @@ def unmarked_results(sheet: dict) -> list:
 	return [{"remark": "", "status": ""} for _task in sheet["tasks"]]
 
 
-def read_answer_sheet(assignment: str) -> dict:
-	sheet, show = frappe.db.get_value(ASSIGNMENT, assignment, ["answer_sheet", "show_answers"])
+def read_answer_sheet(assignment: str, for_update: bool = False) -> dict:
+	sheet, show = frappe.db.get_value(
+		ASSIGNMENT, assignment, ["answer_sheet", "show_answers"], for_update=for_update
+	)
 	return {"sheet": frappe.parse_json(sheet) if sheet else None, "show_answers": bool(show)}
 
 
