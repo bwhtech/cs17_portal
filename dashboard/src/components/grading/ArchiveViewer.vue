@@ -6,7 +6,7 @@
 				icon="lucide-file-archive"
 				:title="frappeErrorMessage(archive.error, 'This archive could not be read.')"
 			>
-				<template #action>
+				<template v-if="!fileMissing" #action>
 					<Button icon-left="lucide-download" label="Download" :href="fileUrl" />
 				</template>
 			</EmptyState>
@@ -156,6 +156,8 @@ const archive = useCall<{ filename: string; entries: ArchiveEntry[] }, { submiss
 	params: () => ({ submission: props.submission }),
 	refetch: true,
 })
+
+const fileMissing = computed(() => archive.error?.type === 'DoesNotExistError')
 
 const nodes = computed(() => buildArchiveTree(archive.data?.entries ?? []))
 
