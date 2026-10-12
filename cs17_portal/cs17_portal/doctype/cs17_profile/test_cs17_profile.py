@@ -40,6 +40,13 @@ class TestCS17Profile(FrappeTestCase):
 		faculty = self._make_profile("Faculty", TEST_USER)
 		self.assertRaises(frappe.ValidationError, faculty.insert, ignore_permissions=True)
 
+	def test_full_name_has_no_stray_spaces(self):
+		profile = self._make_profile("Student")
+		profile.update({"first_name": "Tejeshawari ", "last_name": " Mourya"})
+		profile.insert(ignore_permissions=True)
+
+		self.assertEqual(profile.full_name, "Tejeshawari Mourya")
+
 	def test_profile_without_user_is_allowed(self):
 		self._make_profile("Student").insert(ignore_permissions=True)
 		self._make_profile("Faculty").insert(ignore_permissions=True)
