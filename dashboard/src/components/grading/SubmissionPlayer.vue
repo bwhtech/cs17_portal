@@ -7,7 +7,15 @@
 				v-if="project.error"
 				class="flex h-full items-center justify-center p-6 text-center"
 			>
-				<p class="text-p-base text-ink-gray-5">{{ projectError }}</p>
+				<p v-if="isRefusal(project.error)" class="text-p-base text-ink-gray-5">
+					{{ frappeErrorMessage(project.error, 'Could not load the submitted project.') }}
+				</p>
+				<LoadError
+					v-else
+					title="Could not load the submitted project"
+					:loading="project.loading"
+					@retry="project.reload()"
+				/>
 			</div>
 			<template v-else>
 				<ScratchFrame read-only :sb3="sb3" />
@@ -62,6 +70,7 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch, type ShallowRef } from 'vue'
 import { Button, Skeleton, useCall } from 'frappe-ui'
+import LoadError from '@/components/common/LoadError.vue'
 import ArchiveViewer from '@/components/grading/ArchiveViewer.vue'
 import ScratchFrame from '@/components/scratch/ScratchFrame.vue'
 import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
@@ -104,11 +113,6 @@ const project = useCall<{ filename: string; content: string }, { submission: str
 	params: () => ({ submission: props.submission }),
 	immediate: isScratch.value,
 	refetch: true,
-})
-
-const projectError = computed(() => {
-	const fallback = 'Could not load the submitted project.'
-	return isRefusal(project.error) ? frappeErrorMessage(project.error, fallback) : fallback
 })
 
 // Decoded once into a shallow ref: `ScratchFrame` takes a copy before it
