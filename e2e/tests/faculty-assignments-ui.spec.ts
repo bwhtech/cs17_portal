@@ -157,16 +157,22 @@ test.describe("Faculty assignment portal", () => {
 			"#,Task,Expected answer,Scored\n1,Create gallery folder,gallery/ at the assignment root,Yes\n",
 		);
 		await page.goto(`/dashboard/faculty/assignments/${graded.name}`);
+		const uploaded = page.waitForResponse(/answer_sheet\.upload_answer_sheet/);
 		await page
 			.locator("section", { hasText: "Answer sheet" })
 			.locator('input[type="file"]')
 			.setInputFiles(sheet);
+		await uploaded;
+		await page.waitForResponse(/answer_sheet\.get_answer_sheet/);
 
 		const row = page.locator(LIST_ROW, { hasText: student.last_name });
 		await row.getByRole("button", { name: "Answers" }).click();
 		const note = page.getByRole("dialog").getByRole("textbox", { name: "Note on task 1" });
+		await expect(note).toHaveValue("");
 		await note.fill("Named gallary");
+		const saved = page.waitForResponse(/answer_sheet\.set_answer_remark/);
 		await note.press("Tab");
+		await saved;
 
 		await page.reload();
 		await row.getByRole("button", { name: "Answers" }).click();
