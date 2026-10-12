@@ -143,9 +143,8 @@ class CS17Result(Document):
 		for assignment in assignments:
 			graded = assignment.assignment_type == "Graded"
 			grade = grades.get(assignment.name, {})
-			# an unused Select still carries its first option, so read only the side that was used
+			# a letter assignment still carries marks it never used; the letter is set on both kinds
 			by_marks = graded and assignment.evaluation_type == "Marks"
-			by_grade = graded and assignment.evaluation_type == "Grade"
 			self.append(
 				"assignments",
 				{
@@ -156,7 +155,7 @@ class CS17Result(Document):
 					"due_date": assignment.due_date,
 					"max_marks": flt(assignment.max_marks) if by_marks else 0,
 					"marks_obtained": flt(grade.get("marks_obtained")) if by_marks else 0,
-					"grade": grade.get("grade") if by_grade else None,
+					"grade": grade.get("grade") if graded else None,
 					"is_submitted": 1 if grade.get("submission") else 0,
 					"is_graded": 1 if grade.get("grade_name") else 0,
 					"remarks": grade.get("remarks"),
