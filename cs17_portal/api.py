@@ -192,6 +192,7 @@ def get_assignment_submissions(assignment: str) -> dict:
 			"profile_type": "Student",
 			"cohort": assignment_doc.cohort,
 			"name": ["not in", [submission["student"] for submission in submissions]],
+			"user": ["not in", frappe.get_all("User", filters={"enabled": 0}, pluck="name")],
 		},
 		fields=["name as student", "full_name"],
 		order_by="full_name asc",
