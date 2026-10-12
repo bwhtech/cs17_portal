@@ -403,6 +403,15 @@ class TestStudentListsUseOwnCohort(FrappeTestCase):
 		names = [row.name for row in get_student_assignments()["assignments"]]
 		self.assertEqual(names, [self.assignment_40])
 
+	def test_student_assignment_row_carries_own_submission(self):
+		user = make_user("student43@cs17test.com")
+		student = make_profile("Student", self.cohort_40, user, "Student 43")
+		submission = make_submission(self.assignment_40, student, "Student 43", "Scratch Task 40")
+
+		frappe.set_user(user)
+		row = get_student_assignments()["assignments"][0]
+		self.assertEqual(row.submission.name, submission)
+
 	def test_student_does_not_list_draft_assignments(self):
 		frappe.set_user(self.faculty_user)
 		draft = make_assignment(self.cohort_40, "PDF Draft 40", "PDF", 20)
