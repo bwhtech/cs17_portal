@@ -12,6 +12,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AlertBanner: typeof import('./src/components/announcements/AlertBanner.vue')['default']
+    AnnouncementAlert: typeof import('./src/components/announcements/AnnouncementAlert.vue')['default']
     AnnouncementCard: typeof import('./src/components/announcements/AnnouncementCard.vue')['default']
     AnnouncementFormDialog: typeof import('./src/components/faculty/AnnouncementFormDialog.vue')['default']
     AnnouncementPreview: typeof import('./src/components/faculty/AnnouncementPreview.vue')['default']

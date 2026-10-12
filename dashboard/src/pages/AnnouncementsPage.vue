@@ -28,17 +28,44 @@
 				:announcement="announcement"
 				:dismissed="isDismissed(announcement.name)"
 				@dismiss="dismiss(announcement.name)"
+				@open="opened = announcement"
 			/>
 		</div>
 	</PageBody>
+
+	<Dialog
+		:open="Boolean(opened)"
+		size="xl"
+		@update:open="(open: boolean) => open || (opened = null)"
+	>
+		<template #title>
+			<h3 class="text-2xl-semibold leading-6 text-ink-gray-8" dir="auto">
+				{{ opened?.title }}
+			</h3>
+		</template>
+
+		<template #default>
+			<div class="space-y-2 break-words">
+				<time
+					v-if="opened?.published_date"
+					class="block text-sm text-ink-gray-5"
+					:datetime="opened.published_date"
+				>
+					{{ formatDate(opened.published_date) }}
+				</time>
+				<MarkdownText v-if="opened?.content?.trim()" :content="opened.content" />
+			</div>
+		</template>
+	</Dialog>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useCall } from 'frappe-ui'
+import { computed, ref } from 'vue'
+import { Dialog, useCall } from 'frappe-ui'
 import AnnouncementCard from '@/components/announcements/AnnouncementCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadError from '@/components/common/LoadError.vue'
+import MarkdownText from '@/components/common/MarkdownText.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
@@ -46,10 +73,13 @@ import { useAnnouncementDismissals } from '@/composables/useAnnouncementDismissa
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { usePolling, usePublishTimer } from '@/composables/usePolling'
 import { useSession } from '@/composables/useSession'
-import type { StudentAnnouncementsResponse } from '@/types'
+import { formatDate } from '@/lib/dates'
+import type { CS17Announcement, StudentAnnouncementsResponse } from '@/types'
 
 const { isStudent } = useSession()
 const { dismiss, isDismissed } = useAnnouncementDismissals()
+
+const opened = ref<CS17Announcement | null>(null)
 
 const announcementsCall = useCall<StudentAnnouncementsResponse>({
 	url: '/api/v2/method/cs17_portal.api.get_student_announcements',

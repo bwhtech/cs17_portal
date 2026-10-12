@@ -29,7 +29,9 @@
 			empty="No announcements yet."
 		>
 			<template #cell-title="{ row }">
-				<span class="truncate text-ink-gray-8">{{ row.title }}</span>
+				<span class="truncate text-ink-gray-8" dir="auto" :title="row.title">
+					{{ row.title }}
+				</span>
 			</template>
 
 			<template #cell-cohort="{ row }">

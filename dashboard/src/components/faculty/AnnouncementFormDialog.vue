@@ -7,13 +7,14 @@
 		@update:open="emit('update:open', $event)"
 	>
 		<template #default>
-			<div class="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+			<div class="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
 				<div class="space-y-4">
 					<FormControl
 						v-model="form.title"
 						label="Title"
 						required
 						placeholder="Announcement title"
+						maxlength="140"
 						:error="fieldErrors.title"
 					/>
 
@@ -52,13 +53,14 @@
 
 				<div class="space-y-1.5">
 					<p class="text-sm text-ink-gray-6">Preview</p>
-					<AnnouncementPreview
-						v-if="hasPreview"
-						:title="form.title"
-						:content="form.content"
-						:variant="form.alert_variant"
-						:dismissible="form.is_dismissible"
-					/>
+					<ScrollArea v-if="hasPreview" class="max-h-[60vh]">
+						<AnnouncementPreview
+							:title="form.title"
+							:content="form.content"
+							:variant="form.alert_variant"
+							:dismissible="form.is_dismissible"
+						/>
+					</ScrollArea>
 					<div
 						v-else
 						class="rounded-4 border border-dashed border-outline-gray-2 p-4 text-p-sm text-ink-gray-5"
@@ -91,6 +93,7 @@ import {
 	Dialog,
 	ErrorMessage,
 	FormControl,
+	ScrollArea,
 	Select,
 	Switch,
 	Textarea,

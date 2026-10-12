@@ -1,42 +1,37 @@
 <template>
 	<div v-if="visible.length" class="space-y-2">
-		<Alert
-			v-for="announcement in visible"
+		<AnnouncementAlert
+			v-for="announcement in visible.slice(0, SHOWN)"
 			:key="announcement.name"
 			:title="announcement.title"
-			:theme="THEMES[announcement.alert_variant] ?? 'blue'"
+			:content="announcement.content"
+			:variant="announcement.alert_variant"
 			:dismissible="Boolean(announcement.is_dismissible)"
 			@dismiss="dismiss(announcement.name)"
+		/>
+		<RouterLink
+			v-if="visible.length > SHOWN"
+			to="/announcements"
+			class="inline-block rounded-2 text-xs text-ink-gray-5 hover:text-ink-gray-8 focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
 		>
-			<template v-if="announcement.content?.trim()" #description>
-				<MarkdownText :content="announcement.content" />
-			</template>
-		</Alert>
+			{{ visible.length - SHOWN }} more
+		</RouterLink>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Alert } from 'frappe-ui'
-import MarkdownText from '@/components/common/MarkdownText.vue'
+import { RouterLink } from 'vue-router'
+import AnnouncementAlert from '@/components/announcements/AnnouncementAlert.vue'
 import { useAnnouncementDismissals } from '@/composables/useAnnouncementDismissals'
-import type { AlertVariant, CS17Announcement } from '@/types'
+import type { CS17Announcement } from '@/types'
 
 const props = defineProps<{
 	/** Everything in scope; the banner shows only what is still undismissed. */
 	announcements: CS17Announcement[]
 }>()
 
-/**
- * The variant ladder as frappe-ui reads it. The container stays neutral and
- * the theme colours the status glyph — the Frappe language, in place of the
- * React banner's fully tinted card.
- */
-const THEMES: Record<AlertVariant, 'blue' | 'amber' | 'red'> = {
-	info: 'blue',
-	warning: 'amber',
-	error: 'red',
-}
+const SHOWN = 3
 
 const { dismissed, dismiss } = useAnnouncementDismissals()
 
