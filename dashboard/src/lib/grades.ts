@@ -8,7 +8,7 @@ export function formatGrade({
 	marksObtained,
 	maxMarks,
 }: {
-	evaluationType?: EvaluationType | null
+	evaluationType?: EvaluationType | '' | null
 	grade?: string | null
 	marksObtained?: number | null
 	maxMarks?: number | null
