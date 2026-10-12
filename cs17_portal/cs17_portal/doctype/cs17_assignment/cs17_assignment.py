@@ -42,6 +42,8 @@ class CS17Assignment(Document):
 		if self.assignment_type == "Not Graded":
 			self.max_marks = 0
 			self.remarks = ""
+		elif not self.remarks:
+			frappe.throw(_("Choose an Evaluation Type, Grade or Marks, for a graded assignment"))
 		self.is_published = cint(self.is_published)
 		self._validate_publishable()
 		self._validate_stays_published()
