@@ -42,6 +42,7 @@ def auto_publish_announcements():
 			doc = frappe.get_doc("CS17 Announcement", name)
 			doc.is_published = 1
 			doc.published_date = getdate(doc.publish_on)
+			doc.publish_on = None
 			doc.save(ignore_permissions=True)
 		except Exception:
 			title = "Scheduled announcement not published"
