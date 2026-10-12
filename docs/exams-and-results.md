@@ -125,7 +125,8 @@ and `is_pass`.
 A subject with no pattern on its exam row gets a single implicit `Total` component at 100%, so an
 exam can mix split and unsplit subjects.
 
-One document per (exam, student, subject), enforced by a validate check and a unique index.
+One document per (exam, student, subject), enforced by a validate check and a unique index,
+`unique_exam_student_subject`, declared the same way as the one on `CS17 Result` below.
 
 Once a subject has a marks document, even one with every mark at 0, its `max_marks`,
 `subject_pattern` and `grading_scale` are frozen on the exam. Component max marks and grades are
@@ -150,8 +151,12 @@ One student's rolled-up result for one exam. Named `RES-{exam}-###`.
   `result_status` are computed.
 
 One result per (exam, student) is enforced twice: a `validate` check for a readable error message,
-and a unique index added by `cs17_portal.patches.v1_0.add_unique_result_per_exam_student` for the
-concurrent case.
+and a unique index, `unique_exam_student`, for the concurrent case. The index is declared in
+`on_doctype_update()` at the end of `cs17_result.py`, because a fresh install marks every patch as
+run without running it; `cs17_portal.patches.v1_0.add_unique_indexes_missing_on_fresh_installs`
+calls the same hook on sites that already exist. If the table already holds duplicates the index is
+skipped, nothing is deleted, and the duplicates are listed in the Error Log as
+`CS17 Result unique index on exam, student not created`.
 
 ### CS17 Quarter
 A term label — `Q1`, `Q2`, `Q3` — named by `quarter_name`, with optional start/end dates and a
