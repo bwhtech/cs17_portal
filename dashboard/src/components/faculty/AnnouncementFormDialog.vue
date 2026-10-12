@@ -2,7 +2,6 @@
 	<Dialog
 		:open="open"
 		:title="announcement ? 'Edit announcement' : 'New announcement'"
-		message="Fill in the details; the preview shows how students will see it."
 		size="4xl"
 		@update:open="emit('update:open', $event)"
 	>
