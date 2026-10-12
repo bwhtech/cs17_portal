@@ -15,8 +15,10 @@
 				</div>
 			</ListCell>
 			<ListCell>
-				<div class="min-w-0 flex-1">
-					<p class="text-base-medium text-ink-gray-8">{{ announcement.title }}</p>
+				<div class="min-w-0 flex-1 break-words">
+					<p class="text-base-medium text-ink-gray-8" dir="auto">
+						{{ announcement.title }}
+					</p>
 					<MarkdownText
 						v-if="announcement.content?.trim()"
 						class="mt-1 text-p-sm text-ink-gray-6"

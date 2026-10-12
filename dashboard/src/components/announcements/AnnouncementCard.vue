@@ -4,18 +4,28 @@
 		     announcement per line, so the accent has to survive at 4px wide. -->
 		<span class="h-8 w-1 shrink-0 rounded-full" :class="barClass" aria-hidden="true" />
 
-		<div class="min-w-0 flex-1">
-			<p class="truncate text-base text-ink-gray-8">{{ announcement.title }}</p>
-			<p v-if="announcement.content" class="truncate text-xs text-ink-gray-5">
-				{{ announcement.content }}
-			</p>
-		</div>
+		<button
+			type="button"
+			class="min-w-0 flex-1 rounded-2 text-start focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
+			@click="emit('open')"
+		>
+			<span
+				class="line-clamp-2 break-words text-base text-ink-gray-8 md:line-clamp-1"
+				dir="auto"
+				:title="announcement.title"
+			>
+				{{ announcement.title }}
+			</span>
+			<span v-if="summary" class="block truncate text-xs text-ink-gray-5" dir="auto">
+				{{ summary }}
+			</span>
+		</button>
 
 		<span v-if="publishedOn" class="shrink-0 text-xs text-ink-gray-5">{{ publishedOn }}</span>
 
 		<span v-if="dismissed" class="shrink-0 text-xs text-ink-gray-5">Dismissed</span>
 		<Button
-			v-else
+			v-else-if="announcement.is_dismissible"
 			variant="ghost"
 			size="sm"
 			icon="lucide-x"
@@ -23,12 +33,15 @@
 			:aria-label="`Dismiss ${announcement.title}`"
 			@click="emit('dismiss')"
 		/>
+		<span v-else class="size-7 shrink-0" aria-hidden="true" />
 	</div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import DOMPurify from 'dompurify'
 import { Button } from 'frappe-ui'
+import MarkdownIt from 'markdown-it'
 import { formatDate } from '@/lib/dates'
 import type { AlertVariant, CS17Announcement } from '@/types'
 
@@ -38,7 +51,9 @@ const props = defineProps<{
 	dismissed?: boolean
 }>()
 
-const emit = defineEmits<{ dismiss: [] }>()
+const emit = defineEmits<{ dismiss: []; open: [] }>()
+
+const markdown = new MarkdownIt({ html: true, linkify: true, breaks: true })
 
 const BARS: Record<AlertVariant, string> = {
 	info: 'bg-surface-blue-4',
@@ -47,5 +62,10 @@ const BARS: Record<AlertVariant, string> = {
 }
 
 const barClass = computed(() => BARS[props.announcement.alert_variant] ?? BARS.info)
+const summary = computed(() =>
+	DOMPurify.sanitize(markdown.render(props.announcement.content ?? ''), {
+		RETURN_DOM: true,
+	}).textContent?.trim(),
+)
 const publishedOn = computed(() => formatDate(props.announcement.published_date))
 </script>
