@@ -49,7 +49,8 @@
 						:icon-left="isDesktop ? 'lucide-send' : undefined"
 						:icon="isDesktop ? undefined : 'lucide-send'"
 						label="Submit"
-						@click="submitOpen = true"
+						:loading="status === 'saving'"
+						@click="openSubmit"
 					/>
 				</template>
 			</div>
@@ -225,11 +226,11 @@ watch(readOnly, (value) => {
 
 /** Ask the editor to serialize; the answer comes back on `@sb3`. */
 function requestSave(kind: SaveKind) {
-	if (readOnly.value) return
+	if (readOnly.value) return false
 	clearAutosave()
 	if (!frame.value?.requestSb3()) {
 		if (kind === 'manual') toast.error('The project is not loaded. Nothing was saved.')
-		return
+		return false
 	}
 	pendingKind = kind
 	status.value = 'saving'
@@ -238,6 +239,23 @@ function requestSave(kind: SaveKind) {
 		status.value = 'error'
 		toast.error('Could not save the project.')
 	}, EDITOR_ANSWER_TIMEOUT_MS)
+	return true
+}
+
+function saveEnded() {
+	return new Promise<boolean>((resolve) => {
+		watch(status, (value) => resolve(value === 'saved'), { once: true })
+	})
+}
+
+/** False only when the editor holds a project and saving it failed. */
+async function saveNow() {
+	if (!requestSave('auto')) return true
+	return saveEnded()
+}
+
+async function openSubmit() {
+	if (await saveNow()) submitOpen.value = true
 }
 
 async function onSb3(payload: { sb3: ArrayBuffer; thumbnail?: string }) {
