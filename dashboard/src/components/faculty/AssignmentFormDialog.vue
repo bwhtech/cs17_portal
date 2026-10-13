@@ -184,6 +184,7 @@ import PublishFields from '@/components/common/PublishFields.vue'
 import AssignmentPreview, { type AssignmentDraft } from '@/components/faculty/AssignmentPreview.vue'
 import DeleteAssignmentDialog from '@/components/faculty/DeleteAssignmentDialog.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
+import { useSession } from '@/composables/useSession'
 import { isPast, toFrappeDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { STORAGE_KEYS, readJSON, removeKey, writeJSON } from '@/lib/storage'
@@ -233,6 +234,7 @@ function emptyDraft(): AssignmentDraft {
 }
 
 const { isDesktop } = useBreakpoint()
+const { cohort: facultyCohort } = useSession()
 
 const draft = reactive<AssignmentDraft>(emptyDraft())
 const publishMode = ref<PublishMode>('draft')
@@ -255,9 +257,10 @@ const errors = reactive<
 	form: '',
 })
 
-const cohortOptions = computed(() =>
-	props.cohorts.map((cohort) => ({ label: cohort, value: cohort })),
-)
+const cohortOptions = computed(() => [
+	...(facultyCohort.value ? [] : [{ label: 'No cohort', value: '' }]),
+	...props.cohorts.map((cohort) => ({ label: cohort, value: cohort })),
+])
 
 const quarterOptions = computed(() => [
 	{ label: 'No quarter', value: '' },
