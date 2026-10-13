@@ -117,8 +117,9 @@ class CS17SubjectMarks(Document):
 			row.max_marks = flt(flt(self.max_marks) * flt(row.weightage) / 100, 2)
 
 		largest = max(self.components, key=lambda row: flt(row.weightage))
+		# 9, not 2: what is left over carries every decimal the subject maximum has
 		largest.max_marks = flt(
-			largest.max_marks + flt(self.max_marks) - sum(row.max_marks for row in self.components), 2
+			largest.max_marks + flt(self.max_marks) - sum(row.max_marks for row in self.components), 9
 		)
 
 	def calculate(self):
