@@ -19,7 +19,14 @@ import {
 	deleteTestProfile,
 	ensureSessionFaculty,
 } from "../helpers/cs17";
-import { createDoc, deleteDoc, getDoc, updateDoc, uploadFile } from "../helpers/frappe";
+import {
+	callMethod,
+	createDoc,
+	deleteDoc,
+	getDoc,
+	updateDoc,
+	uploadFile,
+} from "../helpers/frappe";
 
 const DRAFT_KEY = "cs17-new-assignment-draft";
 
@@ -769,5 +776,29 @@ test.describe("Faculty assignment portal", () => {
 
 		await page.getByRole("button", { name: "Try again" }).click();
 		await expect(page.getByTitle("Scratch project player")).toBeVisible();
+	});
+
+	test("publishes the draft grade of a selected submission", async ({ page, request }) => {
+		const assignment = await createTestAssignment(request, {
+			cohort: cohort.name,
+			assignmentType: "Graded",
+		});
+		const submission = await createTestSubmission(request, {
+			assignment: assignment.name,
+			student: student.name,
+		});
+		await callMethod(request, "cs17_portal.api.grade_submission", {
+			submission: submission.name,
+			grade: "B",
+			publish: "draft",
+		});
+
+		await page.goto(`/dashboard/faculty/assignments/${assignment.name}`);
+		const row = page.locator(LIST_ROW, { hasText: student.full_name! });
+		await row.getByRole("checkbox").click();
+		await page.getByRole("button", { name: "Publish 1 grade" }).click();
+		await page.getByRole("button", { name: "Confirm" }).click();
+
+		await expect(row.locator(LIST_CELL, { hasText: "Published" })).toBeVisible();
 	});
 });
