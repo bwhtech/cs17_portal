@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt, getdate
+from frappe.utils import cstr, flt, getdate
 
 from cs17_portal.cs17_portal.doctype.cs17_grading_scale.cs17_grading_scale import get_default_scale
 
@@ -38,6 +38,7 @@ class CS17Exam(Document):
 		self.validate_removed_subjects()
 		self.validate_locked_after_publish()
 		self.validate_locked_after_marks()
+		self.validate_locked_after_result()
 		self.validate_grading_scale_locked()
 		self.total_max_marks = sum(flt(row.max_marks) for row in self.subjects)
 
@@ -95,8 +96,8 @@ class CS17Exam(Document):
 			old = previous.get(row.subject)
 			if not old:
 				continue
-			if (old.subject_pattern, flt(old.max_marks), old.grading_scale) == (
-				row.subject_pattern,
+			if (cstr(old.subject_pattern), flt(old.max_marks), old.grading_scale) == (
+				cstr(row.subject_pattern),
 				flt(row.max_marks),
 				row.grading_scale,
 			):
@@ -106,6 +107,23 @@ class CS17Exam(Document):
 					_(
 						"Marks are already recorded for {0}; its pattern, max marks and grading scale cannot change."
 					).format(row.subject)
+				)
+
+	def validate_locked_after_result(self):
+		previous = self.get_doc_before_save()
+		if not previous:
+			return
+
+		previous_rows = {row.subject: row for row in previous.subjects}
+		for row in self.subjects:
+			old = previous_rows.get(row.subject)
+			if not old or (flt(old.max_marks), old.grading_scale) == (flt(row.max_marks), row.grading_scale):
+				continue
+			if frappe.db.exists("CS17 Result", {"exam": self.name, "scores.subject": row.subject}):
+				frappe.throw(
+					_("A result already lists {0}; its max marks and grading scale cannot change.").format(
+						row.subject
+					)
 				)
 
 	def validate_grading_scale_locked(self):
@@ -119,7 +137,9 @@ class CS17Exam(Document):
 
 	@staticmethod
 	def subject_signature(rows) -> set:
-		return {(row.subject, flt(row.max_marks), row.grading_scale, row.subject_pattern) for row in rows}
+		return {
+			(row.subject, flt(row.max_marks), row.grading_scale, cstr(row.subject_pattern)) for row in rows
+		}
 
 
 def get_subject_rows(exam: str) -> list[dict]:

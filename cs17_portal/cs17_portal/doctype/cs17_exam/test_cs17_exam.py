@@ -141,3 +141,41 @@ class IntegrationTestCS17Exam(IntegrationTestCase):
 		self.exam.grading_scale = self.project_scale
 
 		self.assertRaises(frappe.ValidationError, self.exam.save)
+
+	def test_blank_pattern_sent_as_empty_string_is_accepted_once_marks_exist(self):
+		self.maths_row.subject_pattern = ""
+
+		self.exam.save()
+
+	def test_blank_pattern_sent_as_empty_string_is_accepted_once_a_result_is_published(self):
+		frappe.get_doc(
+			{
+				"doctype": "CS17 Subject Marks",
+				"exam": self.exam.name,
+				"student": self.student,
+				"subject": self.science,
+				"components": [{"component": "Total", "marks_obtained": 74}],
+			}
+		).insert(ignore_permissions=True)
+		frappe.get_doc({"doctype": "CS17 Result", "exam": self.exam.name, "student": self.student}).insert(
+			ignore_permissions=True
+		).publish()
+		self.science_row.subject_pattern = ""
+
+		self.exam.save()
+
+	def test_max_marks_cannot_change_once_a_result_lists_the_subject(self):
+		frappe.get_doc({"doctype": "CS17 Result", "exam": self.exam.name, "student": self.student}).insert(
+			ignore_permissions=True
+		)
+		self.science_row.max_marks = 50
+
+		self.assertRaises(frappe.ValidationError, self.exam.save)
+
+	def test_subject_grading_scale_cannot_change_once_a_result_lists_the_subject(self):
+		frappe.get_doc({"doctype": "CS17 Result", "exam": self.exam.name, "student": self.student}).insert(
+			ignore_permissions=True
+		)
+		self.science_row.grading_scale = self.project_scale
+
+		self.assertRaises(frappe.ValidationError, self.exam.save)
