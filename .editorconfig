@@ -14,6 +14,12 @@ indent_style = tab
 indent_size = 4
 max_line_length = 99
 
+# Not `*.ts`: that would change how the dashboard's own Prettier wraps its .ts files
+[{e2e/**.ts,playwright.config.ts}]
+indent_style = tab
+indent_size = 4
+max_line_length = 99
+
 # JSON files - mostly doctype schema files
 [{*.json}]
 insert_final_newline = false
