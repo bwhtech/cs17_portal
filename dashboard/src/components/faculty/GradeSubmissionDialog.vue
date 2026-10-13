@@ -33,6 +33,7 @@
 					v-model:mode="publishMode"
 					v-model:publish-on="publishOn"
 					include-draft
+					:published="published"
 					hint="Published grades are visible to the student."
 				/>
 				<ErrorMessage :message="publishOnError" />
@@ -93,6 +94,7 @@ const marks = ref('')
 const remarks = ref('')
 const publishMode = ref<PublishMode>('draft')
 const publishOn = ref('')
+const published = ref(false)
 /** Validation, kept under the field it belongs to rather than sent to a toast. */
 const fieldError = ref('')
 const publishOnError = ref('')
@@ -141,7 +143,8 @@ watch(
 		grade.value = existing?.grade ?? ''
 		marks.value = existing?.marks_obtained == null ? '' : String(existing.marks_obtained)
 		remarks.value = existing?.remarks ?? ''
-		if (existing?.is_published || isPast(existing?.published_on)) {
+		published.value = Boolean(existing?.is_published) || isPast(existing?.published_on)
+		if (published.value) {
 			publishMode.value = 'now'
 			publishOn.value = ''
 		} else if (existing?.published_on) {

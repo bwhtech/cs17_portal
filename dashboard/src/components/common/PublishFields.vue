@@ -32,10 +32,11 @@ const props = withDefaults(
 		publishOn: string
 		/** Offer "Save as draft". Off where a draft makes no sense (republishing). */
 		includeDraft?: boolean
+		published?: boolean
 		/** Helper text under the mode select. */
 		hint?: string
 	}>(),
-	{ includeDraft: false },
+	{ includeDraft: false, published: false },
 )
 
 const emit = defineEmits<{
@@ -52,6 +53,10 @@ const ALL_MODES = [
 const now = dayjsLocal().format('YYYY-MM-DD HH:mm:ss')
 
 const modeOptions = computed(() =>
-	props.includeDraft ? ALL_MODES : ALL_MODES.filter((option) => option.value !== 'draft'),
+	ALL_MODES.filter(
+		(option) =>
+			(props.includeDraft || option.value !== 'draft') &&
+			!(props.published && option.value === 'schedule'),
+	),
 )
 </script>
