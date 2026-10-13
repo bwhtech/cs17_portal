@@ -140,7 +140,8 @@ const project = useCall<CS17Project, { project: string }>({
 	params: () => ({ project: props.id }),
 	refetch: true,
 })
-const failed = computed(() => Boolean(project.error) && !project.data)
+const openFailed = ref(false)
+const failed = computed(() => (Boolean(project.error) && !project.data) || openFailed.value)
 const title = computed(() => project.data?.project_title ?? 'Project')
 
 // Whether the assignment this project was opened for still accepts revisions.
@@ -182,10 +183,10 @@ const statusClass = computed(() =>
 async function openSavedProject(url: string) {
 	try {
 		const response = await fetch(url, { credentials: 'include' })
-		if (!response.ok) return
+		if (!response.ok) throw new Error(response.statusText)
 		sb3.value = await response.arrayBuffer()
 	} catch {
-		toast.error('Could not open the saved project.')
+		openFailed.value = true
 	}
 }
 
