@@ -25,7 +25,9 @@ class TestAnswerSheet(FrappeTestCase):
 		cls.cohort = make_cohort("C31TEST")
 		cls.faculty_user = make_user("faculty31@cs17test.com")
 		cls.student_user = make_user("student31@cs17test.com")
+		cls.faculty_without_cohort_user = make_user("faculty33@cs17test.com")
 		make_profile("Faculty", cls.cohort, cls.faculty_user, "Faculty 31")
+		make_profile("Faculty", None, cls.faculty_without_cohort_user, "Faculty 33")
 		cls.student = make_profile("Student", cls.cohort, cls.student_user, "Student 31")
 		make_profile("Student", cls.cohort, make_user("student32@cs17test.com"), "Student 32")
 		frappe.set_user(cls.faculty_user)
@@ -176,3 +178,43 @@ class TestAnswerSheet(FrappeTestCase):
 
 		locked = [call.args[:2] for call in get_value.call_args_list if call.kwargs.get("for_update")]
 		self.assertEqual(locked, [("CS17 Assignment", self.assignment)] * 2)
+
+	def test_marking_an_answer_is_refused_once_the_sheet_is_removed(self):
+		frappe.set_user(self.faculty_user)
+		answer_sheet.remove_answer_sheet(self.assignment)
+
+		self.assertRaises(
+			frappe.DoesNotExistError,
+			answer_sheet.set_answer_status,
+			self.assignment,
+			"Student 32",
+			0,
+			"Half",
+		)
+
+	def test_note_on_a_task_the_sheet_does_not_have_is_refused(self):
+		frappe.set_user(self.faculty_user)
+
+		self.assertRaises(
+			frappe.DoesNotExistError,
+			answer_sheet.set_answer_remark,
+			self.assignment,
+			"Student 32",
+			2,
+			"Named gallary",
+		)
+
+	def test_reading_the_sheet_reports_a_missing_assignment(self):
+		frappe.set_user(self.faculty_without_cohort_user)
+
+		self.assertRaises(frappe.DoesNotExistError, answer_sheet.get_answer_sheet, "missing-assignment")
+
+	def test_showing_answers_reports_a_missing_assignment(self):
+		frappe.set_user(self.faculty_without_cohort_user)
+
+		self.assertRaises(frappe.DoesNotExistError, answer_sheet.show_answers, "missing-assignment", True)
+
+	def test_removing_the_sheet_reports_a_missing_assignment(self):
+		frappe.set_user(self.faculty_without_cohort_user)
+
+		self.assertRaises(frappe.DoesNotExistError, answer_sheet.remove_answer_sheet, "missing-assignment")
