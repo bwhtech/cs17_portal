@@ -58,7 +58,7 @@
 import { computed, ref, watch } from 'vue'
 import { Button, Dialog, ErrorMessage, FormControl, Select, useCall } from 'frappe-ui'
 import PublishFields from '@/components/common/PublishFields.vue'
-import { toFrappeDatetime } from '@/lib/dates'
+import { isPast, toFrappeDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { gradeForMarks } from '@/lib/grades'
 import { trySubmit } from '@/lib/trySubmit'
@@ -141,7 +141,7 @@ watch(
 		grade.value = existing?.grade ?? ''
 		marks.value = existing?.marks_obtained == null ? '' : String(existing.marks_obtained)
 		remarks.value = existing?.remarks ?? ''
-		if (existing?.is_published) {
+		if (existing?.is_published || isPast(existing?.published_on)) {
 			publishMode.value = 'now'
 			publishOn.value = ''
 		} else if (existing?.published_on) {
