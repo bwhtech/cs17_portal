@@ -43,7 +43,7 @@ def set_answer_status(
 	if status not in STATUSES:
 		frappe.throw(_("Mark the answer as Correct, Half or Incorrect."))
 	sheet = read_answer_sheet(assignment, for_update=True)["sheet"]
-	get_student_answers(sheet, column, student)["results"][cint(task)]["status"] = status
+	get_student_result(sheet, column, task, student)["status"] = status
 	frappe.db.set_value(ASSIGNMENT, assignment, "answer_sheet", frappe.as_json(sheet))
 
 
@@ -53,8 +53,17 @@ def set_answer_remark(
 ) -> None:
 	require_faculty_for_assignment(assignment)
 	sheet = read_answer_sheet(assignment, for_update=True)["sheet"]
-	get_student_answers(sheet, column, student)["results"][cint(task)]["remark"] = remark.strip()
+	get_student_result(sheet, column, task, student)["remark"] = remark.strip()
 	frappe.db.set_value(ASSIGNMENT, assignment, "answer_sheet", frappe.as_json(sheet))
+
+
+def get_student_result(sheet: dict | None, column: str, task: int, student: str | None) -> dict:
+	if not sheet:
+		frappe.throw(_("This assignment has no answer sheet."), frappe.DoesNotExistError)
+	results = get_student_answers(sheet, column, student)["results"]
+	if not 0 <= cint(task) < len(results):
+		frappe.throw(_("This answer sheet has no such task."), frappe.DoesNotExistError)
+	return results[cint(task)]
 
 
 def get_student_answers(sheet: dict, column: str, student: str | None) -> dict:
@@ -75,12 +84,14 @@ def get_student_answers(sheet: dict, column: str, student: str | None) -> dict:
 @frappe.whitelist(methods=["POST"])
 def show_answers(assignment: str, show: bool) -> None:
 	require_faculty_for_assignment(assignment)
+	read_answer_sheet(assignment)
 	frappe.db.set_value(ASSIGNMENT, assignment, "show_answers", cint(show))
 
 
 @frappe.whitelist(methods=["POST"])
 def remove_answer_sheet(assignment: str) -> None:
 	require_faculty_for_assignment(assignment)
+	read_answer_sheet(assignment)
 	frappe.db.set_value(ASSIGNMENT, assignment, {"answer_sheet": None, "show_answers": 0})
 
 
@@ -109,9 +120,12 @@ def unmarked_results(sheet: dict) -> list:
 
 
 def read_answer_sheet(assignment: str, for_update: bool = False) -> dict:
-	sheet, show = frappe.db.get_value(
+	values = frappe.db.get_value(
 		ASSIGNMENT, assignment, ["answer_sheet", "show_answers"], for_update=for_update
 	)
+	if not values:
+		frappe.throw(_("Assignment not found"), frappe.DoesNotExistError)
+	sheet, show = values
 	return {"sheet": frappe.parse_json(sheet) if sheet else None, "show_answers": bool(show)}
 
 
