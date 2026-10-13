@@ -3,6 +3,7 @@
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
+from frappe.utils import add_days, now
 
 from cs17_portal import api
 from cs17_portal.tests.test_api import make_assignment, make_cohort, make_profile, make_submission, make_user
@@ -36,3 +37,29 @@ class TestGradingMarksAssignment(FrappeTestCase):
 
 	def test_grade_submission_refuses_a_marks_assignment_without_marks(self):
 		self.assertRaises(frappe.ValidationError, api.grade_submission, self.submission)
+
+	def test_scheduled_assignment_published_now_loses_its_schedule(self):
+		assignment = api.create_assignment(
+			"PDF Task 161",
+			make_cohort("C160TEST"),
+			"2030-01-01 00:00:00",
+			publish="schedule",
+			publish_on=add_days(now(), 1),
+		)
+
+		api.publish_assignment(assignment)
+
+		self.assertIsNone(frappe.db.get_value("CS17 Assignment", assignment, "publish_on"))
+
+	def test_grade_submission_refuses_to_schedule_a_published_grade(self):
+		grade = api.grade_submission(self.submission, marks_obtained=15, publish="now")["name"]
+		self.addCleanup(frappe.delete_doc, "CS17 Assignment Grade", grade)
+
+		self.assertRaises(
+			frappe.ValidationError,
+			api.grade_submission,
+			self.submission,
+			marks_obtained=15,
+			publish="schedule",
+			publish_on=add_days(now(), 1),
+		)
