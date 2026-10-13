@@ -695,7 +695,7 @@ def get_submission_project(submission: str) -> dict:
 
 	snapshot_file = frappe.get_doc({"doctype": "File", **attached_file})
 	try:
-		content = snapshot_file.get_content()
+		content = snapshot_file.get_content(encodings=())
 	except FileNotFoundError:
 		frappe.throw(_("This submission's project file is missing."), frappe.DoesNotExistError)
 
