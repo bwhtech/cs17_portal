@@ -49,7 +49,8 @@
 						:icon-left="isDesktop ? 'lucide-send' : undefined"
 						:icon="isDesktop ? undefined : 'lucide-send'"
 						label="Submit"
-						@click="submitOpen = true"
+						:loading="status === 'saving'"
+						@click="openSubmit"
 					/>
 				</template>
 			</div>
@@ -92,8 +93,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { onBeforeRouteLeave, useRoute } from 'vue-router'
 import { Button, LoadingIndicator, toast, useCall } from 'frappe-ui'
 import EmptyState from '@/components/common/EmptyState.vue'
 import ScratchFrame from '@/components/scratch/ScratchFrame.vue'
@@ -109,6 +110,7 @@ import type { CS17Project } from '@/types'
 
 /** How long the editor has to go quiet before an autosave fires. */
 const AUTOSAVE_IDLE_MS = 15000
+const EDITOR_ANSWER_TIMEOUT_MS = 15000
 
 type SaveKind = 'manual' | 'auto'
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
@@ -140,7 +142,8 @@ const project = useCall<CS17Project, { project: string }>({
 	params: () => ({ project: props.id }),
 	refetch: true,
 })
-const failed = computed(() => Boolean(project.error) && !project.data)
+const openFailed = ref(false)
+const failed = computed(() => (Boolean(project.error) && !project.data) || openFailed.value)
 const title = computed(() => project.data?.project_title ?? 'Project')
 
 // Whether the assignment this project was opened for still accepts revisions.
@@ -165,6 +168,7 @@ const submitOpen = ref(false)
 
 let pendingKind: SaveKind | null = null
 let autosaveTimer: ReturnType<typeof setTimeout> | null = null
+let answerTimer: ReturnType<typeof setTimeout> | undefined
 let opened = false
 
 const statusLabel = computed(() => {
@@ -182,10 +186,10 @@ const statusClass = computed(() =>
 async function openSavedProject(url: string) {
 	try {
 		const response = await fetch(url, { credentials: 'include' })
-		if (!response.ok) return
+		if (!response.ok) throw new Error(response.statusText)
 		sb3.value = await response.arrayBuffer()
 	} catch {
-		toast.error('Could not open the saved project.')
+		openFailed.value = true
 	}
 }
 
@@ -222,17 +226,41 @@ watch(readOnly, (value) => {
 
 /** Ask the editor to serialize; the answer comes back on `@sb3`. */
 function requestSave(kind: SaveKind) {
-	if (readOnly.value) return
+	if (readOnly.value) return false
 	clearAutosave()
 	if (!frame.value?.requestSb3()) {
 		if (kind === 'manual') toast.error('The project is not loaded. Nothing was saved.')
-		return
+		return false
 	}
 	pendingKind = kind
 	status.value = 'saving'
+	clearTimeout(answerTimer)
+	answerTimer = setTimeout(() => {
+		status.value = 'error'
+		toast.error('Could not save the project.')
+	}, EDITOR_ANSWER_TIMEOUT_MS)
+	return true
+}
+
+function saveEnded() {
+	return new Promise<boolean>((resolve) => {
+		watch(status, (value) => resolve(value === 'saved'), { once: true })
+	})
+}
+
+/** False only when the editor holds a project and saving it failed. */
+async function saveNow() {
+	if (status.value === 'saving') await saveEnded()
+	if (!requestSave('auto')) return true
+	return saveEnded()
+}
+
+async function openSubmit() {
+	if (await saveNow()) submitOpen.value = true
 }
 
 async function onSb3(payload: { sb3: ArrayBuffer; thumbnail?: string }) {
+	clearTimeout(answerTimer)
 	const kind = pendingKind ?? 'manual'
 	pendingKind = null
 
@@ -249,9 +277,7 @@ async function onSb3(payload: { sb3: ArrayBuffer; thumbnail?: string }) {
 	const saved = await trySubmit(saveProject, params)
 	if (saveProject.error || !saved) {
 		status.value = 'error'
-		if (kind === 'manual') {
-			toast.error(frappeErrorMessage(saveProject.error, 'Could not save the project.'))
-		}
+		toast.error(frappeErrorMessage(saveProject.error, 'Could not save the project.'))
 		return
 	}
 
@@ -261,5 +287,20 @@ async function onSb3(payload: { sb3: ArrayBuffer; thumbnail?: string }) {
 	if (kind === 'manual') project.reload()
 }
 
-onBeforeUnmount(clearAutosave)
+function hasUnsavedEdits() {
+	return autosaveTimer !== null || status.value === 'saving'
+}
+
+onBeforeRouteLeave(() => !hasUnsavedEdits() || saveNow())
+
+function warnBeforeUnload(event: BeforeUnloadEvent) {
+	if (hasUnsavedEdits()) event.preventDefault()
+}
+
+onMounted(() => window.addEventListener('beforeunload', warnBeforeUnload))
+onBeforeUnmount(() => {
+	clearAutosave()
+	clearTimeout(answerTimer)
+	window.removeEventListener('beforeunload', warnBeforeUnload)
+})
 </script>

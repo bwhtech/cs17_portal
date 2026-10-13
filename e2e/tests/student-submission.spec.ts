@@ -173,6 +173,33 @@ async function submitScratchAsStudent(page: Page, assignment: string, title: str
 	);
 }
 
+async function openProjectWithUnsavedEdit(page: Page, assignment?: string) {
+	await page.goto("/dashboard/projects");
+	const created = await callAsStudent(page, "cs17_portal.api.create_project", {
+		project_title: `${TEST_ASSIGNMENT_PREFIX} Unsaved ${Date.now()}`,
+		assignment,
+	});
+	await saveProjectAsStudent(page, created.body.message.name);
+
+	await page.goto(`/dashboard/projects/${created.body.message.name}/edit`);
+	const editor = page.getByTitle("Scratch editor");
+	await expect(editor).toBeVisible();
+	await expect
+		.poll(() =>
+			editor
+				.contentFrame()
+				.locator("html")
+				.evaluate(() =>
+					(window as any).cs17vm?.runtime.targets.map((target: any) => target.getName())
+				)
+		)
+		.toEqual(["Stage"]);
+	await editor
+		.contentFrame()
+		.locator("html")
+		.evaluate(() => (window as any).cs17vm.runtime.emitProjectChanged());
+}
+
 test.describe("Student submission types", () => {
 	let pdf: CS17Assignment;
 	let url: CS17Assignment;
@@ -514,6 +541,58 @@ test.describe("Student submission types", () => {
 			buffer: Buffer.from("report"),
 		});
 		await expect(page.getByText("Please upload a PDF file only.")).toBeVisible();
+	});
+
+	test("submit saves an unsaved edit before it submits", async ({ page }) => {
+		await openProjectWithUnsavedEdit(page, scratch.name);
+		const calls: string[] = [];
+		page.on("request", (request) => {
+			const call = request.url().match(/api\.(save_project|submit_scratch_project)/);
+			if (call) calls.push(call[1]);
+		});
+
+		await page.getByRole("button", { name: "Submit", exact: true }).click();
+		const dialog = page.getByRole("dialog");
+		await dialog.getByRole("button", { name: "Submit", exact: true }).click();
+		await expect(dialog.getByText("Submission successful")).toBeVisible();
+
+		expect(calls).toEqual(["save_project", "submit_scratch_project"]);
+	});
+
+	test("does not submit when the save before it fails", async ({ page }) => {
+		await openProjectWithUnsavedEdit(page, scratch.name);
+		await page.route("**/cs17_portal.api.save_project*", (route) => route.abort());
+
+		await page.getByRole("button", { name: "Submit", exact: true }).click();
+
+		await expect(page.getByText("Save failed")).toBeVisible();
+		await expect(page.getByRole("dialog")).toHaveCount(0);
+	});
+
+	test("a saved project that cannot be opened says so", async ({ page }) => {
+		await page.goto("/dashboard/projects");
+		const created = await callAsStudent(page, "cs17_portal.api.create_project", {
+			project_title: `${TEST_ASSIGNMENT_PREFIX} Unopened ${Date.now()}`,
+		});
+		await saveProjectAsStudent(page, created.body.message.name);
+		await page.route("**/private/files/**", (route) => route.fulfill({ status: 404 }));
+
+		await page.goto(`/dashboard/projects/${created.body.message.name}/edit`);
+
+		await expect(page.getByText("Could not open this project")).toBeVisible();
+	});
+
+	test("leaving the editor saves an unsaved edit first", async ({ page }) => {
+		await openProjectWithUnsavedEdit(page);
+		let saves = 0;
+		page.on("request", (request) => {
+			if (request.url().includes("cs17_portal.api.save_project")) saves += 1;
+		});
+
+		await page.getByRole("link", { name: "Back to projects" }).click();
+		await page.waitForURL((url) => url.pathname === "/dashboard/projects");
+
+		expect(saves).toBe(1);
 	});
 });
 
