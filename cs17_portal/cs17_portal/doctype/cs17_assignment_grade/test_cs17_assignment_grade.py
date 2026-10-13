@@ -82,12 +82,38 @@ class IntegrationTestCS17AssignmentGrade(IntegrationTestCase):
 
 		self.assertEqual(self.grade.graded_by, "Administrator")
 
+	def test_save_stores_remarks_without_the_spaces_around_them(self):
+		self.grade.remarks = "Solid work  "
+		self.grade.save()
+
+		self.assertEqual(
+			frappe.db.get_value("CS17 Assignment Grade", self.grade.name, "remarks"), "Solid work"
+		)
+
 	def test_scheduled_grade_saved_as_draft_loses_its_schedule(self):
 		with self.set_user(self.faculty_user):
 			api.grade_submission(
 				self.submission, grade="B", publish="schedule", publish_on=add_days(now(), 1)
 			)
 			grade = api.grade_submission(self.submission, grade="B", publish="draft")["name"]
+
+		self.assertIsNone(frappe.db.get_value("CS17 Assignment Grade", grade, "published_on"))
+
+	def test_scheduled_grade_published_now_loses_its_schedule(self):
+		with self.set_user(self.faculty_user):
+			api.grade_submission(
+				self.submission, grade="B", publish="schedule", publish_on=add_days(now(), 1)
+			)
+			grade = api.grade_submission(self.submission, grade="B", publish="now")["name"]
+
+		self.assertIsNone(frappe.db.get_value("CS17 Assignment Grade", grade, "published_on"))
+
+	def test_scheduled_grade_published_by_publish_grades_loses_its_schedule(self):
+		with self.set_user(self.faculty_user):
+			grade = api.grade_submission(
+				self.submission, grade="B", publish="schedule", publish_on=add_days(now(), 1)
+			)["name"]
+			api.publish_grades([self.submission])
 
 		self.assertIsNone(frappe.db.get_value("CS17 Assignment Grade", grade, "published_on"))
 
@@ -163,6 +189,21 @@ class TestGradeFromMarks(IntegrationTestCase):
 		).insert()
 
 		self.assertEqual(grade.grade, "A1")
+
+	def test_letter_from_a_changed_scale_keeps_graded_by(self):
+		grade = frappe.get_doc(
+			{"doctype": "CS17 Assignment Grade", "assignment": self.assignment, "marks_obtained": 20}
+		).insert()
+		scale = frappe.get_doc("CS17 Grading Scale", self.scale)
+		scale.bands[-1].grade = "A1"
+		scale.save()
+		self.addCleanup(frappe.db.set_value, "CS17 Grade Band", scale.bands[-1].name, "grade", "A")
+		self.addCleanup(frappe.clear_document_cache, "CS17 Grading Scale", self.scale)
+
+		with self.set_user(make_user("faculty87@cs17test.com")):
+			grade.save(ignore_permissions=True)
+
+		self.assertEqual(grade.graded_by, "Administrator")
 
 	def test_letter_grade_outside_a_to_e_is_refused(self):
 		assignment = make_assignment(make_cohort("C87TEST"), "PDF Task 88", "PDF", 20)
