@@ -7,8 +7,6 @@
 				label="Grade"
 				placeholder="Select a grade"
 				:options="gradeOptions"
-				:error="fieldError"
-				required
 			/>
 			<FormControl
 				v-else
@@ -85,7 +83,10 @@ const emit = defineEmits<{ 'update:open': [value: boolean]; success: [] }>()
 
 const isGradeScale = computed(() => props.evaluationType === 'Grade')
 
-const gradeOptions = GRADE_SCALE.map((letter) => ({ label: letter, value: letter }))
+const gradeOptions = [
+	{ label: 'No grade', value: '' },
+	...GRADE_SCALE.map((letter) => ({ label: letter, value: letter })),
+]
 
 const grade = ref('')
 const marks = ref('')
@@ -157,7 +158,7 @@ watch(
 	{ immediate: true },
 )
 
-watch([grade, marks], () => {
+watch(marks, () => {
 	fieldError.value = ''
 })
 
@@ -166,9 +167,7 @@ watch([publishMode, publishOn], () => {
 })
 
 function validate(): string | null {
-	if (isGradeScale.value) {
-		if (!grade.value) return 'Please select a grade.'
-	} else {
+	if (!isGradeScale.value) {
 		const value = Number(marks.value)
 		if (marks.value.trim() === '' || Number.isNaN(value) || value < 0) {
 			return 'Please enter valid marks.'
@@ -190,7 +189,7 @@ async function handleSave() {
 
 	await trySubmit(save, {
 		submission: props.submission.name,
-		grade: isGradeScale.value ? grade.value : undefined,
+		grade: isGradeScale.value && grade.value ? grade.value : undefined,
 		marks_obtained: isGradeScale.value ? undefined : Number(marks.value),
 		remarks: remarks.value.trim() || undefined,
 		publish: publishMode.value,
