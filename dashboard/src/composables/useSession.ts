@@ -1,5 +1,6 @@
 import { computed, ref, type ComputedRef, type Ref } from 'vue'
 import { call } from 'frappe-ui'
+import { clear as clearFrappeUICache } from 'idb-keyval'
 import type { CS17Profile } from '@/types'
 
 /**
@@ -23,6 +24,7 @@ const cohort = computed(() => profile.value?.cohort ?? null)
 async function logout(): Promise<void> {
 	try {
 		await call('logout')
+		await clearFrappeUICache()
 	} finally {
 		window.location.href = '/login'
 	}
