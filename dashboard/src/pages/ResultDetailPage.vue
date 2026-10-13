@@ -29,7 +29,7 @@
 		</p>
 
 		<div v-else class="space-y-6">
-			<h1 class="break-words text-2xl text-ink-gray-9 md:hidden">{{ result.exam_name }}</h1>
+			<h1 class="break-words text-2xl text-ink-gray-9 md:sr-only">{{ result.exam_name }}</h1>
 
 			<!-- The headline: the numbers a student looks for before anything
 			     else, in one panel above the subject-by-subject breakdown. -->
