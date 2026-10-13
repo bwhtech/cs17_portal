@@ -10,7 +10,7 @@ from frappe.core.doctype.file.utils import decode_file_content
 from frappe.query_builder import Order
 from frappe.query_builder.functions import Coalesce, Date
 from frappe.rate_limiter import rate_limit
-from frappe.utils import flt, get_datetime, getdate, now_datetime, today
+from frappe.utils import flt, get_datetime, getdate, now_datetime
 
 if TYPE_CHECKING:
 	from frappe.model.document import Document
