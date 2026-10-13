@@ -23,6 +23,9 @@ export class LoginPage {
 		await this.page.goto("/login");
 		await this.emailInput.waitFor({ state: "visible" });
 		await this.passwordInput.waitFor({ state: "visible" });
+		// Frappe drops `hide` from this form in the callback that binds the submit
+		// handler. A click before that is a plain form submit: /login reloads.
+		await expect(this.page.locator("form.form-forgot")).not.toHaveClass(/\bhide\b/);
 	}
 
 	async fillCredentials(email: string, password: string): Promise<void> {
