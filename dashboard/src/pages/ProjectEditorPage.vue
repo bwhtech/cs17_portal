@@ -109,6 +109,7 @@ import type { CS17Project } from '@/types'
 
 /** How long the editor has to go quiet before an autosave fires. */
 const AUTOSAVE_IDLE_MS = 15000
+const EDITOR_ANSWER_TIMEOUT_MS = 15000
 
 type SaveKind = 'manual' | 'auto'
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
@@ -166,6 +167,7 @@ const submitOpen = ref(false)
 
 let pendingKind: SaveKind | null = null
 let autosaveTimer: ReturnType<typeof setTimeout> | null = null
+let answerTimer: ReturnType<typeof setTimeout> | undefined
 let opened = false
 
 const statusLabel = computed(() => {
@@ -231,9 +233,15 @@ function requestSave(kind: SaveKind) {
 	}
 	pendingKind = kind
 	status.value = 'saving'
+	clearTimeout(answerTimer)
+	answerTimer = setTimeout(() => {
+		status.value = 'error'
+		toast.error('Could not save the project.')
+	}, EDITOR_ANSWER_TIMEOUT_MS)
 }
 
 async function onSb3(payload: { sb3: ArrayBuffer; thumbnail?: string }) {
+	clearTimeout(answerTimer)
 	const kind = pendingKind ?? 'manual'
 	pendingKind = null
 
@@ -260,5 +268,8 @@ async function onSb3(payload: { sb3: ArrayBuffer; thumbnail?: string }) {
 	if (kind === 'manual') project.reload()
 }
 
-onBeforeUnmount(clearAutosave)
+onBeforeUnmount(() => {
+	clearAutosave()
+	clearTimeout(answerTimer)
+})
 </script>
