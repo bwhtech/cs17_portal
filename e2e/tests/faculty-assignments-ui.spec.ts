@@ -594,6 +594,27 @@ test.describe("Faculty assignment portal", () => {
 		await expect(grade.getByText("A", { exact: true })).toBeVisible();
 	});
 
+	test("publishes a grade with no letter from the grade dialog", async ({ page, request }) => {
+		const assignment = await createTestAssignment(request, {
+			cohort: cohort.name,
+			assignmentType: "Graded",
+		});
+		await createTestSubmission(request, {
+			assignment: assignment.name,
+			student: student.name,
+		});
+		await page.goto(`/dashboard/faculty/assignments/${assignment.name}`);
+
+		const row = page.locator(LIST_ROW, { hasText: student.full_name! });
+		await row.getByRole("button", { name: "Grade", exact: true }).click();
+		await page.getByRole("combobox").filter({ hasText: "Save as draft" }).click();
+		await page.getByRole("option", { name: "Publish now" }).click();
+		await page.getByRole("button", { name: "Save grade" }).click();
+
+		const grade = row.locator(LIST_CELL, { hasText: "Published" });
+		await expect(grade.getByText("—", { exact: true })).toBeVisible();
+	});
+
 	test.describe("a marks assignment", () => {
 		let defaultScale: TestDefaultScale;
 		let marked: CS17Assignment;
