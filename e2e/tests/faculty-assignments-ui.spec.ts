@@ -7,6 +7,7 @@ import {
 	CS17Submission,
 	TEST_ASSIGNMENT_PREFIX,
 	TestDefaultScale,
+	TestFaculty,
 	cleanupTestAssignments,
 	cleanupTestDefaultScale,
 	cleanupTestGrades,
@@ -800,5 +801,34 @@ test.describe("Faculty assignment portal", () => {
 		await page.getByRole("button", { name: "Confirm" }).click();
 
 		await expect(row.locator(LIST_CELL, { hasText: "Published" })).toBeVisible();
+	});
+
+	test.describe("a submission assigned to the faculty", () => {
+		let assigned: CS17Submission;
+
+		test.beforeAll(async ({ request }) => {
+			const faculty: TestFaculty = JSON.parse(
+				fs.readFileSync("e2e/.auth/faculty-info.json", "utf-8")
+			);
+			const assignment = await createTestAssignment(request, {
+				cohort: cohort.name,
+				assignmentType: "Graded",
+			});
+			assigned = await createTestSubmission(request, {
+				assignment: assignment.name,
+				student: student.name,
+			});
+			await callMethod(request, "cs17_portal.api.assign_submission", {
+				submission: assigned.name,
+				assign_to: faculty.email,
+			});
+		});
+
+		test("opens the grading page from the dashboard's Grade button", async ({ page }) => {
+			await page.goto("/dashboard/faculty");
+			await page.getByRole("link", { name: "Grade", exact: true }).first().click();
+
+			await expect(page).toHaveURL(new RegExp(`/faculty/submissions/${assigned.name}$`));
+		});
 	});
 });
