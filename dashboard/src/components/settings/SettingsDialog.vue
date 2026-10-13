@@ -1,82 +1,68 @@
 <template>
-	<Dialog v-model:open="isOpen" title="Settings" size="lg">
-		<div class="space-y-8">
-			<section class="space-y-3">
-				<h3 class="text-sm font-medium text-ink-gray-5">Profile</h3>
-				<FacultyProfileForm v-if="isFaculty" />
-				<div v-else class="flex items-center gap-3">
-					<Avatar
-						size="2xl"
-						:image="profile?.profile_picture ?? undefined"
-						:label="profile?.full_name ?? ''"
-					/>
-					<div class="min-w-0">
-						<p class="break-words text-base font-medium text-ink-gray-8">
-							{{ profile?.full_name ?? '—' }}
-						</p>
-						<p class="mt-1 break-words text-p-sm text-ink-gray-5">{{ roleLine }}</p>
-					</div>
-				</div>
-			</section>
+	<SettingsDialog v-if="isDesktop" v-model:open="isOpen" v-model:tab="tab">
+		<SettingsSidebar>
+			<SettingsNavGroup label="Settings">
+				<SettingsNavItem value="profile">
+					<template #prefix>
+						<Avatar
+							class="shrink-0"
+							size="xs"
+							:image="profile?.profile_picture ?? undefined"
+							:label="profile?.full_name ?? ''"
+						/>
+					</template>
+					Profile
+				</SettingsNavItem>
+				<SettingsNavItem value="preferences">
+					<template #prefix>
+						<span
+							class="lucide-sliders-horizontal size-4 shrink-0 text-ink-gray-6"
+							aria-hidden="true"
+						/>
+					</template>
+					Preferences
+				</SettingsNavItem>
+			</SettingsNavGroup>
+		</SettingsSidebar>
+		<SettingsContent>
+			<SettingsPanel value="profile">
+				<ProfileSettings />
+			</SettingsPanel>
+			<SettingsPanel value="preferences">
+				<PreferencesSettings />
+			</SettingsPanel>
+		</SettingsContent>
+	</SettingsDialog>
 
-			<section class="space-y-3">
-				<h3 class="text-sm font-medium text-ink-gray-5">Appearance</h3>
-				<Switch
-					v-model="isDark"
-					size="md"
-					label="Dark mode"
-					description="Switch between light and dark theme"
-				/>
-			</section>
-
-			<section class="space-y-3">
-				<h3 class="text-sm font-medium text-ink-gray-5">Account</h3>
-				<div class="flex flex-wrap items-center justify-between gap-3">
-					<div class="min-w-0">
-						<p class="text-base font-medium text-ink-gray-8">Log out</p>
-						<p class="mt-1 text-p-sm text-ink-gray-5">
-							End this session and return to the login page.
-						</p>
-					</div>
-					<Button theme="red" variant="subtle" label="Log out" @click="confirmLogout" />
-				</div>
-			</section>
+	<Dialog v-else v-model:open="isOpen" title="Settings">
+		<div class="space-y-11">
+			<ProfileSettings />
+			<PreferencesSettings />
 		</div>
 	</Dialog>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { Avatar, Button, Dialog, Switch, dialog, useColorScheme } from 'frappe-ui'
-import FacultyProfileForm from '@/components/settings/FacultyProfileForm.vue'
+import { ref } from 'vue'
+import {
+	Avatar,
+	Dialog,
+	SettingsContent,
+	SettingsDialog,
+	SettingsNavGroup,
+	SettingsNavItem,
+	SettingsPanel,
+	SettingsSidebar,
+} from 'frappe-ui'
+import PreferencesSettings from '@/components/settings/PreferencesSettings.vue'
+import ProfileSettings from '@/components/settings/ProfileSettings.vue'
+import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useSession } from '@/composables/useSession'
 import { useSettingsDialog } from '@/composables/useSettingsDialog'
 
-const { profile, isFaculty, cohort, logout } = useSession()
-const roleLine = computed(() => (cohort.value ? `cohort ${cohort.value}` : 'Student'))
-
+const { profile } = useSession()
 const { isOpen } = useSettingsDialog()
-const { resolvedColorScheme, setColorScheme } = useColorScheme()
+const { isDesktop } = useBreakpoint()
 
-/**
- * The switch is a light/dark toggle, but the stored preference has a third
- * value (`system`, the default until someone picks). Reading through the
- * resolved scheme is what keeps the switch showing what the app is actually
- * painted in; flipping it commits to an explicit choice.
- */
-const isDark = computed({
-	get: () => resolvedColorScheme.value === 'dark',
-	set: (next: boolean) => setColorScheme(next ? 'dark' : 'light'),
-})
-
-function confirmLogout(): void {
-	dialog.danger({
-		title: 'Log out',
-		message: 'Are you sure you want to log out?',
-		confirmLabel: 'Log out',
-		// `logout()` navigates to /login, so the dialog never has to close
-		// itself — the promise stays pending until the page unloads.
-		onConfirm: () => logout(),
-	})
-}
+const tab = ref<string | number | undefined>('profile')
 </script>
