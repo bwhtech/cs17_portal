@@ -14,10 +14,7 @@ setup("seed and authenticate a student", async ({ page, request }) => {
 
 	const cohort = await createTestCohort(request);
 	const student = await createTestStudent(request, cohort.cohort_code);
-	fs.writeFileSync(
-		studentInfoFile,
-		JSON.stringify({ ...student, cohortName: cohort.name }),
-	);
+	fs.writeFileSync(studentInfoFile, JSON.stringify({ ...student, cohortName: cohort.name }));
 
 	await page.goto("/login");
 	await page.waitForLoadState("domcontentloaded");
@@ -31,7 +28,7 @@ setup("seed and authenticate a student", async ({ page, request }) => {
 			});
 			return { ok: resp.ok, status: resp.status };
 		},
-		{ usr: student.email, pwd: student.password },
+		{ usr: student.email, pwd: student.password }
 	);
 	expect(loginResult.ok).toBeTruthy();
 

@@ -99,7 +99,7 @@ test.describe("Faculty assignment portal", () => {
 
 	test("says the list could not load when the request fails", async ({ page }) => {
 		await page.route("**/cs17_portal.api.get_faculty_assignments*", (route) =>
-			route.fulfill({ status: 500 }),
+			route.fulfill({ status: 500 })
 		);
 		await page.goto("/dashboard/faculty/assignments");
 		await expect(page.getByText("Could not load assignments")).toBeVisible();
@@ -108,7 +108,7 @@ test.describe("Faculty assignment portal", () => {
 
 	test("says an assignment could not load when the request fails", async ({ page }) => {
 		await page.route("**/cs17_portal.api.get_assignment_submissions*", (route) =>
-			route.fulfill({ status: 500 }),
+			route.fulfill({ status: 500 })
 		);
 		await page.goto(`/dashboard/faculty/assignments/${graded.name}`);
 		await expect(page.getByText("Could not load this assignment")).toBeVisible();
@@ -142,7 +142,7 @@ test.describe("Faculty assignment portal", () => {
 		fs.writeFileSync(
 			sheet,
 			`#,Task,Expected answer,Scored,${student.first_name} ${student.last_name}\n` +
-				"1,Create gallery folder,gallery/ at the assignment root,Yes,Named gallary\n",
+				"1,Create gallery folder,gallery/ at the assignment root,Yes,Named gallary\n"
 		);
 		await page.goto(`/dashboard/faculty/assignments/${graded.name}`);
 		await page
@@ -153,7 +153,7 @@ test.describe("Faculty assignment portal", () => {
 		const row = page.locator(LIST_ROW, { hasText: student.last_name });
 		await row.getByRole("button", { name: "Answers" }).click();
 		await expect(
-			page.getByRole("dialog").getByRole("textbox", { name: "Note on task 1" }),
+			page.getByRole("dialog").getByRole("textbox", { name: "Note on task 1" })
 		).toHaveValue("Named gallary");
 	});
 
@@ -163,7 +163,7 @@ test.describe("Faculty assignment portal", () => {
 		const sheet = testInfo.outputPath("answers-only.csv");
 		fs.writeFileSync(
 			sheet,
-			"#,Task,Expected answer,Scored\n1,Create gallery folder,gallery/ at the assignment root,Yes\n",
+			"#,Task,Expected answer,Scored\n1,Create gallery folder,gallery/ at the assignment root,Yes\n"
 		);
 		await page.goto(`/dashboard/faculty/assignments/${graded.name}`);
 		const uploaded = page.waitForResponse(/answer_sheet\.upload_answer_sheet/);
@@ -215,7 +215,10 @@ test.describe("Faculty assignment portal", () => {
 		await page.getByRole("button", { name: "New Assignment" }).click();
 
 		await page.getByPlaceholder("Assignment title").fill(title);
-		await page.getByRole("combobox").filter({ hasText: /Select a cohort|No cohort/ }).click();
+		await page
+			.getByRole("combobox")
+			.filter({ hasText: /Select a cohort|No cohort/ })
+			.click();
 		await page.getByRole("listbox").waitFor();
 		await page.keyboard.type(cohort.name);
 		await page.keyboard.press("Enter");
@@ -236,7 +239,10 @@ test.describe("Faculty assignment portal", () => {
 		await page.getByRole("button", { name: "New Assignment" }).click();
 
 		await page.getByPlaceholder("Assignment title").fill(title);
-		await page.getByRole("combobox").filter({ hasText: /Select a cohort|No cohort/ }).click();
+		await page
+			.getByRole("combobox")
+			.filter({ hasText: /Select a cohort|No cohort/ })
+			.click();
 		await page.getByRole("listbox").waitFor();
 		await page.keyboard.type(cohort.name);
 		await page.keyboard.press("Enter");
@@ -269,7 +275,7 @@ test.describe("Faculty assignment portal", () => {
 
 		const stored = await page.evaluate(
 			(key) => JSON.parse(localStorage.getItem(key) || "null"),
-			DRAFT_KEY,
+			DRAFT_KEY
 		);
 		expect(stored?.draft?.title).toBe(title);
 		expect(stored?.draft?.description).toBe("Draft body text");
@@ -277,7 +283,7 @@ test.describe("Faculty assignment portal", () => {
 		await page.getByRole("button", { name: "New Assignment" }).click();
 		await expect(page.getByPlaceholder("Assignment title")).toHaveValue(title);
 		await expect(page.getByPlaceholder(/What should students do/)).toHaveValue(
-			"Draft body text",
+			"Draft body text"
 		);
 
 		await page.evaluate((key) => localStorage.removeItem(key), DRAFT_KEY);
@@ -289,7 +295,10 @@ test.describe("Faculty assignment portal", () => {
 		await page.getByRole("button", { name: "New Assignment" }).click();
 
 		await page.getByPlaceholder("Assignment title").fill(title);
-		await page.getByRole("combobox").filter({ hasText: /Select a cohort|No cohort/ }).click();
+		await page
+			.getByRole("combobox")
+			.filter({ hasText: /Select a cohort|No cohort/ })
+			.click();
 		await page.getByRole("listbox").waitFor();
 		await page.keyboard.type(cohort.name);
 		await page.keyboard.press("Enter");
@@ -299,10 +308,7 @@ test.describe("Faculty assignment portal", () => {
 		await page.getByRole("button", { name: "Create Assignment" }).click();
 
 		await expect(page.locator(LIST_ROW, { hasText: title })).toBeVisible();
-		const stored = await page.evaluate(
-			(key) => localStorage.getItem(key),
-			DRAFT_KEY,
-		);
+		const stored = await page.evaluate((key) => localStorage.getItem(key), DRAFT_KEY);
 		expect(stored).toBeNull();
 	});
 
@@ -327,7 +333,7 @@ test.describe("Faculty assignment portal", () => {
 		const saved = await getDoc<{ quarter: string | null }>(
 			request,
 			"CS17 Assignment",
-			draft.name,
+			draft.name
 		);
 		expect(saved.quarter).toBeFalsy();
 
@@ -356,7 +362,7 @@ test.describe("Faculty assignment portal", () => {
 		const saved = await getDoc<{ publish_on: string | null }>(
 			request,
 			"CS17 Assignment",
-			draft.name,
+			draft.name
 		);
 		expect(saved.publish_on).toBe("2030-01-05 09:30:00");
 	});
@@ -380,7 +386,7 @@ test.describe("Faculty assignment portal", () => {
 		const saved = await getDoc<{ publish_on: string | null }>(
 			request,
 			"CS17 Assignment",
-			scheduled.name,
+			scheduled.name
 		);
 		expect(saved.publish_on).toBe("2030-01-05 09:30:00");
 	});
@@ -391,7 +397,7 @@ test.describe("Faculty assignment portal", () => {
 			isPublished: false,
 		});
 		await page.route(/cs17_portal\.api\.get_assignment\?/, (route) =>
-			route.fulfill({ status: 500 }),
+			route.fulfill({ status: 500 })
 		);
 
 		await page.goto("/dashboard/faculty/assignments");
@@ -454,14 +460,13 @@ test.describe("Faculty assignment portal", () => {
 		await row.getByRole("button", { name: "Preview", exact: true }).click();
 
 		await expect(page).toHaveURL(new RegExp(`/faculty/submissions/${submission.name}$`));
-		await expect(page.getByRole("treeitem", { name: "history.txt", exact: true })).toBeVisible();
+		await expect(
+			page.getByRole("treeitem", { name: "history.txt", exact: true })
+		).toBeVisible();
 		await expect(page.getByText("cat README.txt")).toBeVisible();
 	});
 
-	test("previews a Scratch submission in the read-only editor", async ({
-		page,
-		request,
-	}) => {
+	test("previews a Scratch submission in the read-only editor", async ({ page, request }) => {
 		const scratch = await createTestAssignment(request, {
 			cohort: cohort.name,
 			submissionType: "Scratch",
@@ -472,9 +477,7 @@ test.describe("Faculty assignment portal", () => {
 		});
 		const uploaded = await uploadFile(request, {
 			fileName: "project.sb3",
-			content: fs.readFileSync(
-				"cs17_portal/public/scratch/sample.sb3",
-			),
+			content: fs.readFileSync("cs17_portal/public/scratch/sample.sb3"),
 			doctype: "CS17 Assignment Submission",
 			docname: submission.name,
 		});
@@ -536,9 +539,7 @@ test.describe("Faculty assignment portal", () => {
 		});
 		const uploaded = await uploadFile(request, {
 			fileName: "project.sb3",
-			content: fs.readFileSync(
-				"cs17_portal/public/scratch/sample.sb3",
-			),
+			content: fs.readFileSync("cs17_portal/public/scratch/sample.sb3"),
 			doctype: "CS17 Assignment Submission",
 			docname: submission.name,
 		});
@@ -584,9 +585,7 @@ test.describe("Faculty assignment portal", () => {
 		});
 		const uploaded = await uploadFile(request, {
 			fileName: "project.sb3",
-			content: fs.readFileSync(
-				"cs17_portal/public/scratch/sample.sb3",
-			),
+			content: fs.readFileSync("cs17_portal/public/scratch/sample.sb3"),
 			doctype: "CS17 Assignment Submission",
 			docname: submission.name,
 		});
@@ -597,7 +596,7 @@ test.describe("Faculty assignment portal", () => {
 		await page.route(
 			(url) => url.href.includes("get_submission_project"),
 			(route) => route.fulfill({ status: 500 }),
-			{ times: 1 },
+			{ times: 1 }
 		);
 		await page.goto(`/dashboard/faculty/submissions/${submission.name}`);
 
@@ -615,7 +614,10 @@ test.describe("Faculty assignment portal", () => {
 		const row = page.locator(LIST_ROW, { hasText: student.full_name! });
 		await row.getByRole("button", { name: "Grade", exact: true }).click();
 
-		await page.getByRole("combobox").filter({ hasText: /Select a grade|No grade/ }).click();
+		await page
+			.getByRole("combobox")
+			.filter({ hasText: /Select a grade|No grade/ })
+			.click();
 		await page.getByRole("option", { name: "A", exact: true }).click();
 		await page.getByRole("combobox").filter({ hasText: "Save as draft" }).click();
 		await page.getByRole("option", { name: "Publish now" }).click();
@@ -687,7 +689,7 @@ test.describe("Faculty assignment portal", () => {
 		test("offers no grade form when the saved grade cannot be read", async ({ page }) => {
 			await page.route(
 				(url) => url.href.includes("get_submission_grade"),
-				(route) => route.fulfill({ status: 500 }),
+				(route) => route.fulfill({ status: 500 })
 			);
 			await page.goto(`/dashboard/faculty/submissions/${markedSubmission.name}`);
 
@@ -720,7 +722,7 @@ test.describe("Faculty assignment portal", () => {
 		test("offers a retry when the submitted file cannot be read", async ({ page }) => {
 			await page.route(
 				(url) => url.href.includes("get_assignment_submissions"),
-				(route) => route.fulfill({ status: 500 }),
+				(route) => route.fulfill({ status: 500 })
 			);
 			await page.goto(`/dashboard/faculty/submissions/${markedSubmission.name}`);
 
@@ -735,7 +737,7 @@ test.describe("Faculty assignment portal", () => {
 				(route) =>
 					++reads === 1
 						? route.fulfill({ json: { data: null } })
-						: route.fulfill({ status: 500 }),
+						: route.fulfill({ status: 500 })
 			);
 			await page.goto(`/dashboard/faculty/submissions/${markedSubmission.name}`);
 
@@ -769,7 +771,7 @@ test.describe("Faculty assignment portal", () => {
 		await page.route(
 			(url) => url.href.includes("get_submission_project"),
 			(route) => route.fulfill({ status: 500 }),
-			{ times: 1 },
+			{ times: 1 }
 		);
 		await page.goto(`/dashboard/faculty/assignments/${scratch.name}`);
 		const row = page.locator(LIST_ROW, { hasText: student.full_name! });

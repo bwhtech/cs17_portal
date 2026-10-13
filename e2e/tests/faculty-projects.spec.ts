@@ -15,9 +15,7 @@ import {
 import { createDoc, deleteDoc, getList } from "../helpers/frappe";
 
 const PROJECT_TITLE_PREFIX = "E2E Faculty Project";
-const SAMPLE_PROJECT = fs
-	.readFileSync("cs17_portal/public/scratch/sample.sb3")
-	.toString("base64");
+const SAMPLE_PROJECT = fs.readFileSync("cs17_portal/public/scratch/sample.sb3").toString("base64");
 
 interface CallResult {
 	ok: boolean;
@@ -25,16 +23,12 @@ interface CallResult {
 	body: { message?: any; exc_type?: string; _server_messages?: string };
 }
 
-async function callAsFaculty(
-	page: Page,
-	method: string,
-	body: unknown,
-): Promise<CallResult> {
+async function callAsFaculty(page: Page, method: string, body: unknown): Promise<CallResult> {
 	await page.waitForFunction(
 		() =>
 			(window as any).csrf_token !== undefined ||
 			(window as any).frappe?.csrf_token !== undefined,
-		{ timeout: 15000 },
+		{ timeout: 15000 }
 	);
 	return page.evaluate(
 		async ({ method, body }) => {
@@ -49,7 +43,7 @@ async function callAsFaculty(
 			});
 			return { ok: resp.ok, status: resp.status, body: await resp.json() };
 		},
-		{ method, body },
+		{ method, body }
 	);
 }
 
@@ -72,7 +66,7 @@ function spritesInEditor(page: Page): Promise<string[] | null> {
 		.contentFrame()
 		.locator("html")
 		.evaluate(() =>
-			(window as any).cs17vm?.runtime.targets.map((target: any) => target.getName()),
+			(window as any).cs17vm?.runtime.targets.map((target: any) => target.getName())
 		)
 		.catch(() => null);
 }
@@ -113,9 +107,7 @@ test.describe("Faculty Scratch projects", () => {
 		await deleteDoc(request, "CS17 Cohort", cohort.name);
 	});
 
-	test("shows Projects in the sidebar and opens the faculty projects page", async ({
-		page,
-	}) => {
+	test("shows Projects in the sidebar and opens the faculty projects page", async ({ page }) => {
 		await page.goto("/dashboard/faculty");
 		await page.getByRole("link", { name: "Projects", exact: true }).click();
 
@@ -178,7 +170,7 @@ test.describe("Faculty Scratch projects", () => {
 		await page.goto("/dashboard/faculty/projects");
 		const project = await createProjectAsFaculty(
 			page,
-			`${PROJECT_TITLE_PREFIX} NoSubmit ${Date.now()}`,
+			`${PROJECT_TITLE_PREFIX} NoSubmit ${Date.now()}`
 		);
 
 		await page.goto(`/dashboard/faculty/projects/${project}/edit`);
@@ -190,7 +182,7 @@ test.describe("Faculty Scratch projects", () => {
 		await page.goto("/dashboard/faculty/projects");
 		const project = await createProjectAsFaculty(
 			page,
-			`${PROJECT_TITLE_PREFIX} Zen ${Date.now()}`,
+			`${PROJECT_TITLE_PREFIX} Zen ${Date.now()}`
 		);
 		let saved = "";
 		await page.route("**/cs17_portal.api.save_project*", async (route) => {
@@ -217,7 +209,7 @@ test.describe("Faculty Scratch projects", () => {
 		await page.goto("/dashboard/faculty/projects");
 		const project = await createProjectAsFaculty(
 			page,
-			`${PROJECT_TITLE_PREFIX} Reload ${Date.now()}`,
+			`${PROJECT_TITLE_PREFIX} Reload ${Date.now()}`
 		);
 
 		await page.goto(`/dashboard/faculty/projects/${project}/edit`);
@@ -225,7 +217,7 @@ test.describe("Faculty Scratch projects", () => {
 
 		await page.getByRole("button", { name: "Exit zen mode" }).click();
 		const reloaded = page.waitForEvent("framenavigated", (frame) =>
-			frame.url().includes("scratch/editor.html"),
+			frame.url().includes("scratch/editor.html")
 		);
 		await page.setViewportSize({ width: 390, height: 844 });
 		await reloaded;
@@ -236,7 +228,7 @@ test.describe("Faculty Scratch projects", () => {
 		await page.goto("/dashboard/faculty/projects");
 		const project = await createProjectAsFaculty(
 			page,
-			`${PROJECT_TITLE_PREFIX} Unopened ${Date.now()}`,
+			`${PROJECT_TITLE_PREFIX} Unopened ${Date.now()}`
 		);
 		let saves = 0;
 		await page.route("**/cs17_portal.api.save_project*", async (route) => {
@@ -249,7 +241,7 @@ test.describe("Faculty Scratch projects", () => {
 		await page.getByRole("button", { name: "Save", exact: true }).click();
 
 		await expect(
-			page.getByText("The project is not loaded. Nothing was saved."),
+			page.getByText("The project is not loaded. Nothing was saved.")
 		).toBeVisible();
 		expect(saves).toBe(0);
 	});
@@ -258,7 +250,7 @@ test.describe("Faculty Scratch projects", () => {
 		await page.goto("/dashboard/faculty/projects");
 		const project = await createProjectAsFaculty(
 			page,
-			`${PROJECT_TITLE_PREFIX} Height ${Date.now()}`,
+			`${PROJECT_TITLE_PREFIX} Height ${Date.now()}`
 		);
 
 		await page.goto(`/dashboard/faculty/projects/${project}/edit`);
@@ -294,14 +286,13 @@ test.describe("Faculty Scratch projects", () => {
 		await page.goto("/dashboard/faculty/projects");
 		const project = await createProjectAsFaculty(
 			page,
-			`${PROJECT_TITLE_PREFIX} Submit ${Date.now()}`,
+			`${PROJECT_TITLE_PREFIX} Submit ${Date.now()}`
 		);
 
-		const submitted = await callAsFaculty(
-			page,
-			"cs17_portal.api.submit_scratch_project",
-			{ assignment: scratch.name, project },
-		);
+		const submitted = await callAsFaculty(page, "cs17_portal.api.submit_scratch_project", {
+			assignment: scratch.name,
+			project,
+		});
 		expect(submitted.ok).toBe(false);
 		expect(submitted.body.exc_type).toBe("PermissionError");
 	});

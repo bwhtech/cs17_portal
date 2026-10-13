@@ -36,9 +36,7 @@ test.describe("Theme persistence", () => {
 		await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 	});
 
-	test("applies dark before the app bundle runs, so there is no flash", async ({
-		page,
-	}) => {
+	test("applies dark before the app bundle runs, so there is no flash", async ({ page }) => {
 		await page.goto("/dashboard");
 		await openSettings(page);
 		await darkModeSwitch(page).click();

@@ -33,7 +33,7 @@ setup("authenticate", async ({ page }) => {
 			});
 			return { ok: resp.ok, status: resp.status };
 		},
-		{ usr, pwd },
+		{ usr, pwd }
 	);
 	expect(loginResult.ok).toBeTruthy();
 
@@ -52,17 +52,16 @@ setup("authenticate", async ({ page }) => {
 	await page
 		.waitForFunction(
 			() =>
-				(window as unknown as { frappe?: { csrf_token?: string } }).frappe
-					?.csrf_token !== undefined,
-			{ timeout: 15000 },
+				(window as unknown as { frappe?: { csrf_token?: string } }).frappe?.csrf_token !==
+				undefined,
+			{ timeout: 15000 }
 		)
 		.catch(() => {
 			console.warn("CSRF token not found, continuing without it");
 		});
 
 	const csrfToken = await page.evaluate(() => {
-		return (window as unknown as { frappe?: { csrf_token?: string } }).frappe
-			?.csrf_token;
+		return (window as unknown as { frappe?: { csrf_token?: string } }).frappe?.csrf_token;
 	});
 
 	if (csrfToken) {

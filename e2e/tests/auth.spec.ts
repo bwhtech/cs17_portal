@@ -64,7 +64,7 @@ test.describe("Dashboard access - unauthenticated", () => {
 		const loginPage = new LoginPage(page);
 		await loginPage.login(
 			process.env.FRAPPE_USER || "Administrator",
-			process.env.FRAPPE_PASSWORD || "admin",
+			process.env.FRAPPE_PASSWORD || "admin"
 		);
 
 		await expect(page).not.toHaveURL(/.*login.*/);
