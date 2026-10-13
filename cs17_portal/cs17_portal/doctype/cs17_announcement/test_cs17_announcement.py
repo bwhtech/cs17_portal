@@ -146,3 +146,38 @@ class IntegrationTestCS17Announcement(IntegrationTestCase):
 		)
 
 		self.assertIsNone(frappe.db.get_value("CS17 Announcement", announcement, "published_date"))
+
+	def test_announcement_published_in_desk_gets_todays_date(self):
+		announcement = create_announcement("Quiz moved to Monday", "Room 204", cohort=self.cohort)
+
+		doc = frappe.get_doc("CS17 Announcement", announcement)
+		doc.is_published = 1
+		doc.save(ignore_permissions=True)
+
+		self.assertEqual(
+			frappe.db.get_value("CS17 Announcement", announcement, "published_date"), frappe.utils.getdate()
+		)
+
+	def test_published_announcement_keeps_its_date_when_saved_again(self):
+		announcement = create_announcement(
+			"Quiz moved to Monday", "Room 204", cohort=self.cohort, publish="now"
+		)
+		frappe.db.set_value("CS17 Announcement", announcement, "published_date", "2026-09-01")
+
+		frappe.get_doc("CS17 Announcement", announcement).save(ignore_permissions=True)
+
+		self.assertEqual(
+			frappe.db.get_value("CS17 Announcement", announcement, "published_date"),
+			frappe.utils.getdate("2026-09-01"),
+		)
+
+	def test_unpublished_announcement_drops_its_published_date(self):
+		announcement = create_announcement(
+			"Quiz moved to Monday", "Room 204", cohort=self.cohort, publish="now"
+		)
+
+		doc = frappe.get_doc("CS17 Announcement", announcement)
+		doc.is_published = 0
+		doc.save(ignore_permissions=True)
+
+		self.assertIsNone(frappe.db.get_value("CS17 Announcement", announcement, "published_date"))
