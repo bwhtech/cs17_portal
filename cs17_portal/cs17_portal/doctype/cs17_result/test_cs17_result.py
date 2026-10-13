@@ -225,3 +225,19 @@ class IntegrationTestCS17Result(IntegrationTestCase):
 		row = self.get_assignment_row(assignment)
 
 		self.assertEqual((row.is_graded, row.marks_obtained), (1, 0))
+
+	def test_graded_marks_assignment_carries_its_letter(self):
+		assignment, submission = self.make_marks_submission()
+		grade = frappe.get_doc(
+			{
+				"doctype": "CS17 Assignment Grade",
+				"assignment": assignment,
+				"submission": submission,
+				"marks_obtained": 10,
+			}
+		).insert(ignore_permissions=True)
+		frappe.db.set_value("CS17 Assignment Grade", grade.name, "grade", "B")
+
+		row = self.get_assignment_row(assignment)
+
+		self.assertEqual(row.grade, "B")
