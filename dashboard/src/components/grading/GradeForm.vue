@@ -85,11 +85,7 @@ const props = defineProps<{
 	/** `CS17 Assignment Submission` name. */
 	submission: string
 	maxMarks: number
-	/**
-	 * The assignment's evaluation type. Unknown (`null`) leaves both fields
-	 * on, which is what a Not Graded assignment gets.
-	 */
-	evaluationType?: EvaluationType | null
+	evaluationType: EvaluationType
 }>()
 
 const emit = defineEmits<{ saved: [] }>()
@@ -179,9 +175,7 @@ const saveCall = useCall<
 function readMarks(): { value: number | null } | { error: string } {
 	const raw = marks.value.trim()
 	if (!showMarks.value) return { value: null }
-	if (raw === '') {
-		return props.evaluationType === 'Marks' ? { error: 'Enter the marks.' } : { value: null }
-	}
+	if (raw === '') return { error: 'Enter the marks.' }
 	const value = Number(raw)
 	if (Number.isNaN(value)) return { error: 'Marks must be a number.' }
 	if (value < 0) return { error: 'Marks cannot be negative.' }
