@@ -120,8 +120,6 @@ const existing = useCall<SubmissionGrade | null, { submission: string }>({
 
 const failed = useLoadFailed(existing)
 
-// The form is seeded from the saved grade rather than bound to it: a reload
-// after saving must not wipe what the grader is still typing.
 // `isFinished`, not `data`: an ungraded submission answers with `null`, which
 // never changes the data ref and so would never fire a watcher on it.
 watch(
@@ -207,7 +205,6 @@ async function save() {
 
 	graded.value = true
 	toast.success('Grade saved.')
-	existing.reload()
 	emit('saved')
 }
 </script>
