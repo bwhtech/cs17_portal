@@ -18,9 +18,6 @@
 					:tooltip="isDesktop ? undefined : 'Assign to'"
 					:loading="assign.loading"
 				/>
-				<template #item-prefix="{ item }">
-					<Avatar size="sm" :label="item.label" />
-				</template>
 			</Dropdown>
 
 			<Button
@@ -45,8 +42,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { Avatar, Button, Dropdown, dialog, toast, useCall } from 'frappe-ui'
+import { computed, h } from 'vue'
+import { Button, Dropdown, dialog, toast, useCall } from 'frappe-ui'
+import FacultyAvatar from '@/components/faculty/FacultyAvatar.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useFacultyMembers } from '@/composables/useFacultyMembers'
 import { frappeErrorMessage } from '@/lib/frappeError'
@@ -103,6 +101,7 @@ function confirmPublish() {
 const options = computed(() =>
 	(members.data ?? []).map((member) => ({
 		label: member.full_name,
+		slots: { prefix: () => h(FacultyAvatar, { member, size: 'sm' }) },
 		onClick: () => handleAssign(member),
 	})),
 )

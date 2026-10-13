@@ -403,6 +403,15 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 		self.assertLessEqual({self.faculty_27_user, "faculty52@cs17test.com"}, users)
 		self.assertNotIn(self.faculty_28_user, users)
 
+	def test_get_faculty_members_returns_profile_picture(self):
+		frappe.db.set_value(
+			"CS17 Profile", {"user": self.faculty_27_user}, "profile_picture", "/files/faculty-27.png"
+		)
+		frappe.set_user(self.faculty_27_user)
+		pictures = {member.user: member.profile_picture for member in api.get_faculty_members(self.cohort_27)}
+
+		self.assertEqual(pictures[self.faculty_27_user], "/files/faculty-27.png")
+
 	def test_assign_submission_blocks_student_assignee(self):
 		frappe.set_user(self.faculty_27_user)
 		self.assertRaises(

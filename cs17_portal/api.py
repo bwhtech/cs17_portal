@@ -1232,7 +1232,7 @@ def get_faculty_members(cohort: str | None = None) -> list:
 		"CS17 Profile",
 		filters={"profile_type": "Faculty", "user": ["is", "set"]},
 		or_filters=[["cohort", "=", cohort], ["cohort", "is", "not set"]] if cohort else [],
-		fields=["user", "full_name"],
+		fields=["user", "full_name", "profile_picture"],
 		order_by="full_name asc",
 	)
 
