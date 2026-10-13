@@ -50,3 +50,16 @@ class TestGradingMarksAssignment(FrappeTestCase):
 		api.publish_assignment(assignment)
 
 		self.assertIsNone(frappe.db.get_value("CS17 Assignment", assignment, "publish_on"))
+
+	def test_grade_submission_refuses_to_schedule_a_published_grade(self):
+		grade = api.grade_submission(self.submission, marks_obtained=15, publish="now")["name"]
+		self.addCleanup(frappe.delete_doc, "CS17 Assignment Grade", grade)
+
+		self.assertRaises(
+			frappe.ValidationError,
+			api.grade_submission,
+			self.submission,
+			marks_obtained=15,
+			publish="schedule",
+			publish_on=add_days(now(), 1),
+		)
