@@ -48,6 +48,7 @@ class CS17Assignment(Document):
 		self._validate_publishable()
 		self._validate_stays_published()
 		self._validate_evaluation_type_locked()
+		self._validate_max_marks_not_below_marks_given()
 
 	def _validate_publishable(self):
 		if not (self.is_published or self.publish_on):
@@ -74,6 +75,20 @@ class CS17Assignment(Document):
 			return
 		if frappe.db.exists("CS17 Assignment Grade", {"assignment": self.name, "marks_obtained": (">", 0)}):
 			frappe.throw(_("This assignment already has marks; its evaluation type cannot change."))
+
+	def _validate_max_marks_not_below_marks_given(self):
+		previous = self.get_doc_before_save()
+		max_marks = flt(self.max_marks)
+		if not previous or flt(previous.max_marks) == max_marks:
+			return
+		if frappe.db.exists(
+			"CS17 Assignment Grade", {"assignment": self.name, "marks_obtained": (">", max_marks)}
+		):
+			frappe.throw(
+				_("This assignment already has marks above {0}; its max marks cannot go below them.").format(
+					max_marks
+				)
+			)
 
 
 def get_quarter_assignments(quarter: str, cohort: str) -> list[dict]:

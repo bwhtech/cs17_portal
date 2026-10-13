@@ -187,6 +187,18 @@ class IntegrationTestCS17Assignment(IntegrationTestCase):
 
 		self.assertRaises(frappe.ValidationError, doc.save)
 
+	def test_max_marks_cannot_go_below_marks_already_given(self):
+		assignment = frappe.get_doc(
+			{"doctype": "CS17 Assignment", "title": "Desk Task 79", "remarks": "Marks", "max_marks": 20}
+		).insert()
+		frappe.get_doc(
+			{"doctype": "CS17 Assignment Grade", "assignment": assignment.name, "marks_obtained": 15}
+		).insert()
+
+		assignment.max_marks = 10
+
+		self.assertRaises(frappe.ValidationError, assignment.save)
+
 
 class TestQuarterAssignments(IntegrationTestCase):
 	def tearDown(self):
