@@ -349,6 +349,7 @@ function initialize() {
 	savedName.value = null
 	const stored = readJSON<Partial<StoredDraft>>(STORAGE_KEYS.newAssignmentDraft, {})
 	Object.assign(draft, emptyDraft(), stored.draft ?? {})
+	if (facultyCohort.value) draft.cohort = facultyCohort.value
 	publishMode.value = stored.publish ?? 'draft'
 	publishOn.value = stored.publishOn ?? ''
 }
@@ -383,7 +384,7 @@ function isDirty(): boolean {
 	return Boolean(
 		draft.title.trim() ||
 			draft.description.trim() ||
-			draft.cohort ||
+			(draft.cohort && !facultyCohort.value) ||
 			draft.quarter ||
 			draft.due_date ||
 			publishMode.value !== 'draft' ||
