@@ -43,18 +43,20 @@ Everyone shares the password `Cs17-Demo-Pass-123`.
 
 | Who | Sign in as | Sees |
 |---|---|---|
-| Student | `zoya@cs17.test` | 5 published assignments, a marked poster, two Scratch projects, 3 announcements, two published results |
+| Student | `zoya@cs17.test` | 4 published assignments, a marked poster, two Scratch projects, 3 announcements, two published results |
 | Student | `meera@cs17.test` | an `A` on the worksheet — the other evaluation type |
 | Student | `rohan@cs17.test` | one marked assignment and nothing else, for a quieter dashboard; his Q3 result reads `Fail` |
-| Faculty | `priya@cs17.test` | 7 assignments across both cohorts (published, scheduled, draft), 13 submissions, 5 announcements |
+| Faculty | `priya@cs17.test` | 6 assignments in `C7` (published, scheduled, draft), 13 submissions, 5 announcements |
 | Faculty | `arjun@cs17.test` | two submissions assigned to him, for "assigned to you" |
 
 What the seed covers, deliberately: every submission type (Scratch, PDF, URL, Image, ZIP,
 Any); an assignment in each publish state (published, scheduled, draft); grades on both
 evaluation types (marks out of 20 or 10, and the A–E scale); a published grade, an
 unpublished one, and submissions with no grade at all; announcements in all three
-variants, dismissible and not, cohort-scoped and all-cohorts; and a second cohort so the
-faculty cohort filter has two sides.
+variants, dismissible and not, cohort-scoped and all-cohorts; and a second cohort, `C6`,
+with one assignment. Both seeded faculty belong to `C7`, and a faculty with a cohort sees
+only that cohort, so neither of them sees it. The cohort filter appears only for a faculty
+with no cohort.
 
 Two exams as well — a Q3 assessment over three subjects (two split by a pattern, one marked as a
 single total, graded on two different scales) and a simpler Q2 one. Results are published for

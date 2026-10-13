@@ -23,7 +23,7 @@ This extends the existing assignment/submission/grading spine; it does not repla
 │  Projects grid   │  Editor page                         │  Faculty grading panel    │
 │  (shadcn cards)  │  ┌── toolbar (shadcn) ──────────────┐│  ┌── read-only player ──┐ │
 │                  │  │  Save / Submit / autosave state  ││  │  <iframe> TurboWarp   │ │
-│                  │  ├──────────────────────────────────┤│  │  ?readonly  loads .sb3│ │
+│                  │  ├──────────────────────────────────┤│  │  loads .sb3           │ │
 │                  │  │  <iframe> TurboWarp scratch-gui   ││  └───────────────────────┘ │
 │                  │  │  postMessage: load-project /      ││  marks + grade (shadcn)   │
 │                  │  │               request-sb3 / saved ││                           │
@@ -46,7 +46,7 @@ We fork TurboWarp/scratch-gui minimally to add a small bridge (a few lines wired
 | editor → host | `ready` | `{}` | editor booted; safe to `load-project` |
 | editor → host | `dirty` | `{}` | project changed since last save (drives autosave + unsaved-guard) |
 
-Read-only mode: same bundle loaded with `?readonly=1` hides the palette/editing and only allows green-flag/run — used in the faculty grading player.
+Read-only mode: same bundle, same URL, no parameter. The dashboard adds a stylesheet to the iframe document that hides the palette and the editing chrome and makes the blocks unclickable; the stage and green-flag/run stay — used in the faculty grading player. The bundle also has a player-only view at `?readonly=1`, which the dashboard does not load (see `docs/scratch-bundle/BUILD.md`).
 
 ## 4. Data model
 
@@ -100,7 +100,7 @@ File upload uses Frappe's file API (`frappe.client` / `upload_file`), not custom
 
 ## 7. Build & hosting of the Scratch bundle
 
-- Vendor a **built** TurboWarp/scratch-gui (with our bridge) into the app so day-to-day `bench build` doesn't need the heavy Scratch webpack toolchain. Serve from `cs17_portal/public/scratch/` → `/assets/cs17_portal/scratch/index.html`, embedded via iframe.
+- Vendor a **built** TurboWarp/scratch-gui (with our bridge) into the app so day-to-day `bench build` doesn't need the heavy Scratch webpack toolchain. Serve from `cs17_portal/public/scratch/` → `/assets/cs17_portal/scratch/editor.html`, embedded via iframe.
 - Keep the fork/build recipe documented so the bundle can be regenerated.
 - **This is the main risk/unknown** → tackled first as a spike (Phase 0).
 
