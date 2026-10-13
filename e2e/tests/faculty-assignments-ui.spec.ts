@@ -5,6 +5,7 @@ import {
 	CS17Cohort,
 	CS17Profile,
 	CS17Submission,
+	TEST_ANNOUNCEMENT_PREFIX,
 	TEST_ASSIGNMENT_PREFIX,
 	TestDefaultScale,
 	TestFaculty,
@@ -839,6 +840,148 @@ test.describe("Faculty assignment portal", () => {
 			await page.getByRole("button", { name: "Back", exact: true }).click();
 
 			await expect(page).toHaveURL(/\/dashboard\/faculty$/);
+		});
+	});
+
+	test('opens a grade whose scheduled time has passed on "Publish now"', async ({
+		page,
+		request,
+	}) => {
+		const assignment = await createTestAssignment(request, {
+			cohort: cohort.name,
+			assignmentType: "Graded",
+		});
+		const submission = await createTestSubmission(request, {
+			assignment: assignment.name,
+			student: student.name,
+		});
+		await createDoc(request, "CS17 Assignment Grade", {
+			assignment: assignment.name,
+			submission: submission.name,
+			grade: "B",
+			published_on: "2000-01-01 09:00:00",
+		});
+
+		await page.goto(`/dashboard/faculty/assignments/${assignment.name}`);
+		const row = page.locator(LIST_ROW, { hasText: student.full_name! });
+		await row.getByRole("button", { name: "Edit grade" }).click();
+
+		await expect(page.getByRole("combobox").filter({ hasText: "Publish now" })).toBeVisible();
+	});
+
+	test('offers no "Schedule" on a published grade', async ({ page, request }) => {
+		const assignment = await createTestAssignment(request, {
+			cohort: cohort.name,
+			assignmentType: "Graded",
+		});
+		const submission = await createTestSubmission(request, {
+			assignment: assignment.name,
+			student: student.name,
+		});
+		await callMethod(request, "cs17_portal.api.grade_submission", {
+			submission: submission.name,
+			grade: "B",
+			publish: "now",
+		});
+
+		await page.goto(`/dashboard/faculty/assignments/${assignment.name}`);
+		const row = page.locator(LIST_ROW, { hasText: student.full_name! });
+		await row.getByRole("button", { name: "Edit grade" }).click();
+		await page.getByRole("combobox").filter({ hasText: "Publish now" }).click();
+
+		await expect(page.getByRole("option", { name: "Save as draft" })).toBeVisible();
+		await expect(page.getByRole("option", { name: "Schedule" })).toHaveCount(0);
+	});
+
+	test("shows no form for a draft that went live at its scheduled time", async ({
+		page,
+		request,
+	}) => {
+		const draft = await createTestAssignment(request, {
+			cohort: cohort.name,
+			isPublished: false,
+		});
+
+		await page.goto("/dashboard/faculty/assignments");
+		await page.getByRole("button", { name: /^Drafts/ }).click();
+		await updateDoc(request, "CS17 Assignment", draft.name, {
+			publish_on: "2000-01-01 09:00:00",
+		});
+		await page.getByRole("button", { name: draft.title, exact: true }).click();
+
+		await expect(
+			page.getByText("A published assignment can no longer be edited")
+		).toBeVisible();
+		await expect(page.getByRole("button", { name: "Save Assignment" })).toHaveCount(0);
+	});
+
+	test("clears max marks on a switch from Marks to Grade", async ({ page }) => {
+		await page.goto("/dashboard/faculty/assignments");
+		await page.getByRole("button", { name: "New Assignment" }).click();
+
+		await page.getByRole("combobox").filter({ hasText: "Non-graded" }).click();
+		await page.getByRole("option", { name: "Marks", exact: true }).click();
+		await page.getByLabel("Max Marks").fill("20");
+		await page.getByRole("combobox").filter({ hasText: "Marks" }).click();
+		await page.getByRole("option", { name: "Grade", exact: true }).click();
+		await page.getByRole("combobox").filter({ hasText: "Grade" }).click();
+		await page.getByRole("option", { name: "Marks", exact: true }).click();
+
+		await expect(page.getByLabel("Max Marks")).toHaveValue("");
+	});
+
+	test("shows no form for an announcement whose scheduled time has passed", async ({ page }) => {
+		await page.route("**/cs17_portal.api.get_faculty_announcements*", (route) =>
+			route.fulfill({
+				json: {
+					data: [
+						{
+							name: TEST_ANNOUNCEMENT_PREFIX,
+							title: TEST_ANNOUNCEMENT_PREFIX,
+							content: "Please read the handbook.",
+							alert_variant: "info",
+							cohort: null,
+							is_dismissible: 1,
+							is_published: 0,
+							publish_on: "2000-01-01 09:00:00",
+							can_edit: true,
+						},
+					],
+				},
+			})
+		);
+
+		await page.goto("/dashboard/faculty/announcements");
+		await page.getByRole("button", { name: `Edit ${TEST_ANNOUNCEMENT_PREFIX}` }).click();
+
+		await expect(
+			page.getByText("A published announcement can no longer be edited")
+		).toBeVisible();
+		await expect(page.getByRole("button", { name: "Save changes" })).toHaveCount(0);
+	});
+
+	test.describe("a faculty bound to a cohort", () => {
+		let faculty: TestFaculty;
+
+		test.beforeAll(async ({ request }) => {
+			faculty = JSON.parse(fs.readFileSync("e2e/.auth/faculty-info.json", "utf-8"));
+			await updateDoc(request, "CS17 Profile", faculty.profileName, {
+				cohort: cohort.name,
+			});
+		});
+
+		test.afterAll(async ({ request }) => {
+			await updateDoc(request, "CS17 Profile", faculty.profileName, { cohort: null });
+		});
+
+		test("saves a new draft without picking a cohort", async ({ page }) => {
+			const title = `${TEST_ASSIGNMENT_PREFIX} Bound ${Date.now()}`;
+			await page.goto("/dashboard/faculty/assignments");
+			await page.getByRole("button", { name: "New Assignment" }).click();
+			await page.getByPlaceholder("Assignment title").fill(title);
+			await page.getByRole("button", { name: "Create Assignment" }).click();
+
+			await expect(page.getByText("Assignment created")).toBeVisible();
 		});
 	});
 });
