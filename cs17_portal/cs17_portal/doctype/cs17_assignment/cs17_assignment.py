@@ -47,6 +47,7 @@ class CS17Assignment(Document):
 		self.is_published = cint(self.is_published)
 		self._validate_publishable()
 		self._validate_stays_published()
+		self._validate_evaluation_type_locked()
 
 	def _validate_publishable(self):
 		if not (self.is_published or self.publish_on):
@@ -66,6 +67,13 @@ class CS17Assignment(Document):
 		previous = self.get_doc_before_save()
 		if previous and is_published_now(previous) and not is_published_now(self):
 			frappe.throw(_("A published assignment cannot be unpublished"))
+
+	def _validate_evaluation_type_locked(self):
+		previous = self.get_doc_before_save()
+		if not previous or previous.remarks == self.remarks:
+			return
+		if frappe.db.exists("CS17 Assignment Grade", {"assignment": self.name, "marks_obtained": (">", 0)}):
+			frappe.throw(_("This assignment already has marks; its evaluation type cannot change."))
 
 
 def get_quarter_assignments(quarter: str, cohort: str) -> list[dict]:

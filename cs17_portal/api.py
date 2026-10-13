@@ -372,9 +372,12 @@ def get_current_faculty() -> "frappe._dict":
 
 def require_faculty_for_assignment(assignment: str) -> None:
 	faculty = get_current_faculty()
-	assignment_cohort = frappe.db.get_value("CS17 Assignment", assignment, "cohort")
-	if faculty.cohort and faculty.cohort != assignment_cohort:
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	assignment_doc = frappe.db.get_value("CS17 Assignment", assignment, "cohort", as_dict=True)
+	if faculty.cohort:
+		if not assignment_doc:
+			frappe.throw(_("Assignment not found"), frappe.DoesNotExistError)
+		if faculty.cohort != assignment_doc.cohort:
+			frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 
 def require_faculty_for_submissions(submissions: list) -> None:
@@ -1073,7 +1076,7 @@ def update_assignment(
 		cohort,
 		due_date,
 		doc.submission_type if submission_type is None else submission_type,
-		description,
+		doc.description if description is None else description,
 		doc.assignment_type if assignment_type is None else assignment_type,
 		doc.max_marks if max_marks is None else max_marks,
 		doc.remarks if remarks is None else remarks,

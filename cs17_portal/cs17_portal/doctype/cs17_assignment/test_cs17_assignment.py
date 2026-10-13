@@ -161,6 +161,32 @@ class IntegrationTestCS17Assignment(IntegrationTestCase):
 			remarks="",
 		)
 
+	def test_evaluation_type_cannot_change_once_a_grade_holds_marks(self):
+		cohort = make_cohort("C70TEST")
+		faculty_user = make_user("faculty78@cs17test.com")
+		make_profile("Faculty", cohort, faculty_user, "Faculty 78")
+
+		frappe.set_user(faculty_user)
+		self.addCleanup(frappe.set_user, "Administrator")
+		assignment = create_assignment(
+			"PDF Task 78",
+			cohort,
+			"2030-01-01 00:00:00",
+			assignment_type="Graded",
+			max_marks=20,
+			remarks="Marks",
+			publish="now",
+		)
+		frappe.set_user("Administrator")
+		frappe.get_doc(
+			{"doctype": "CS17 Assignment Grade", "assignment": assignment, "marks_obtained": 15}
+		).insert()
+
+		doc = frappe.get_doc("CS17 Assignment", assignment)
+		doc.remarks = "Grade"
+
+		self.assertRaises(frappe.ValidationError, doc.save)
+
 
 class TestQuarterAssignments(IntegrationTestCase):
 	def tearDown(self):
