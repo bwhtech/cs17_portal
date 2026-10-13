@@ -830,5 +830,13 @@ test.describe("Faculty assignment portal", () => {
 
 			await expect(page).toHaveURL(new RegExp(`/faculty/submissions/${assigned.name}$`));
 		});
+
+		test("goes back to the dashboard from the grading page", async ({ page }) => {
+			await page.goto("/dashboard/faculty");
+			await page.getByRole("link", { name: "Grade", exact: true }).first().click();
+			await page.getByRole("button", { name: "Back", exact: true }).click();
+
+			await expect(page).toHaveURL(/\/dashboard\/faculty$/);
+		});
 	});
 });
