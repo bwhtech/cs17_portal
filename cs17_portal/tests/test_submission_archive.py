@@ -203,3 +203,31 @@ class TestSubmissionArchive(FrappeTestCase):
 		frappe.set_user(student_user)
 
 		self.assertRaises(frappe.PermissionError, submission_archive.get_submission_archive, student)
+
+	def test_text_file_named_as_a_zip_is_refused(self):
+		cohort = make_cohort("C56TEST")
+		faculty_user = make_user("faculty56@cs17test.com")
+		make_profile("Faculty", cohort, faculty_user, "Faculty 56")
+		frappe.set_user(faculty_user)
+		assignment = make_assignment(cohort, "Terminal Task 56", "ZIP", 20)
+
+		student_user = make_user("student56@cs17test.com")
+		make_profile("Student", cohort, student_user, "Student 56")
+		frappe.set_user(student_user)
+		file = frappe.get_doc(
+			{
+				"doctype": "File",
+				"file_name": "terminal-56.zip",
+				"is_private": 1,
+				"content": b"cat README.txt\n",
+			}
+		).save(ignore_permissions=True)
+		submission = submit_assignment(assignment, file.file_url)["name"]
+
+		frappe.set_user(faculty_user)
+		self.assertRaisesRegex(
+			frappe.ValidationError,
+			"This archive could not be read.",
+			submission_archive.get_submission_archive,
+			submission,
+		)
