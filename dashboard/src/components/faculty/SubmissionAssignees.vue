@@ -25,12 +25,12 @@
 			>
 				<span class="flex min-w-0 items-center gap-2">
 					<span class="flex shrink-0 items-center">
-						<Avatar
+						<FacultyAvatar
 							v-for="member in shownMembers.slice(0, 3)"
 							:key="member.user"
 							class="-ml-1.5 ring-2 ring-outline-base first:ml-0"
 							size="md"
-							:label="member.full_name"
+							:member="member"
 						/>
 					</span>
 					<span v-if="shownMembers.length === 1" class="truncate text-ink-gray-8">
@@ -43,17 +43,14 @@
 			</Button>
 		</template>
 
-		<template #item-prefix="{ item }">
-			<Avatar size="sm" :label="item.label" />
-		</template>
-
 		<template #footer />
 	</MultiSelect>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { Avatar, Button, MultiSelect, toast, useCall } from 'frappe-ui'
+import { computed, h, ref, watch } from 'vue'
+import { Button, MultiSelect, toast, useCall } from 'frappe-ui'
+import FacultyAvatar from '@/components/faculty/FacultyAvatar.vue'
 import { useFacultyMembers } from '@/composables/useFacultyMembers'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { trySubmit } from '@/lib/trySubmit'
@@ -87,7 +84,11 @@ const saving = ref(false)
 const shown = computed(() => pending.value ?? props.assignedTo)
 
 const options = computed(() =>
-	(members.data ?? []).map((member) => ({ label: member.full_name, value: member.user })),
+	(members.data ?? []).map((member) => ({
+		label: member.full_name,
+		value: member.user,
+		slots: { prefix: () => h(FacultyAvatar, { member, size: 'sm' }) },
+	})),
 )
 
 const shownMembers = computed<FacultyMember[]>(() =>
