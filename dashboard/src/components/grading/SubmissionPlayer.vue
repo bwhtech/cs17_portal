@@ -12,6 +12,7 @@
 				</p>
 				<LoadError
 					v-else
+					class="!py-0"
 					title="Could not load the submitted project"
 					:loading="project.loading"
 					@retry="project.reload()"

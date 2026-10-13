@@ -11,11 +11,20 @@
 			v-if="isScratch"
 			class="h-[70vh] overflow-hidden rounded-4 border border-outline-gray-1"
 		>
-			<p v-if="isRefusal(projectCall.error)" class="p-6 text-p-base text-ink-gray-5">
-				{{ frappeErrorMessage(projectCall.error, 'Could not load the submitted project.') }}
-			</p>
-			<div v-else-if="failed" class="flex h-full items-center justify-center p-6">
+			<div
+				v-if="failed || projectCall.error"
+				class="flex h-full items-center justify-center p-6 text-center"
+			>
+				<p v-if="isRefusal(projectCall.error)" class="text-p-base text-ink-gray-5">
+					{{
+						frappeErrorMessage(
+							projectCall.error,
+							'Could not load the submitted project.',
+						)
+					}}
+				</p>
 				<LoadError
+					v-else
 					class="!py-0"
 					title="Could not load the submitted project"
 					:loading="projectCall.loading"
@@ -100,7 +109,7 @@ const projectCall = useCall<{ filename: string; content: string }, { submission:
 	},
 })
 
-const failed = useLoadFailed(projectCall)
+const failed = useLoadFailed(projectCall, { except: isRefusal })
 
 // The project is a base64 payload of its own, so it is fetched when the dialog
 // actually opens rather than for every row of the table behind it.

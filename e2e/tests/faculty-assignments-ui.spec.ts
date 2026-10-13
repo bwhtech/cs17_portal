@@ -642,6 +642,28 @@ test.describe("Faculty assignment portal", () => {
 			await expect(page.getByRole("button", { name: "Save grade" })).toHaveCount(0);
 		});
 
+		test("shows no empty line while the submitted file is looked up", async ({ page }) => {
+			let release = () => {};
+			const held = new Promise<void>((resolve) => {
+				release = resolve;
+			});
+			await page.route(
+				(url) => url.href.includes("get_assignment_submissions"),
+				async (route) => {
+					await held;
+					await route.continue();
+				}
+			);
+			await page.goto(`/dashboard/faculty/submissions/${markedSubmission.name}`);
+
+			await expect(page.getByRole("button", { name: "Back", exact: true })).toBeVisible();
+			await expect(page.getByText("No submitted file.")).toHaveCount(0);
+
+			const answered = page.waitForResponse(/get_assignment_submissions/);
+			release();
+			await answered;
+		});
+
 		test("offers a retry when the submitted file cannot be read", async ({ page }) => {
 			await page.route(
 				(url) => url.href.includes("get_assignment_submissions"),
