@@ -51,6 +51,7 @@ let bootedDocument: Document | null = null
 let projectDocument: Document | null = null
 let loaded = false
 let exported: ArrayBuffer | null = null
+let pendingRequests = 0
 
 // The editor reads `tw:theme` and its addon settings out of localStorage as it
 // boots, so they have to be in place before the iframe is even created.
@@ -83,6 +84,7 @@ function loadProject() {
 function onEditorBooted() {
 	bootedDocument = frame.value?.contentDocument ?? null
 	loaded = false
+	pendingRequests = 0
 	loadProject()
 	if (props.blank && !loaded) projectDocument = bootedDocument
 	emit('ready')
@@ -112,6 +114,8 @@ function onMessage(event: MessageEvent) {
 		// swallowing it here keeps the parent's autosave from ever firing.
 		if (!props.readOnly) emit('dirty')
 	} else if (data.type === SCRATCH_MESSAGE.projectSb3) {
+		if (!pendingRequests) return
+		pendingRequests--
 		exported = data.sb3
 		emit('sb3', { sb3: data.sb3, thumbnail: data.thumbnail })
 	}
@@ -133,6 +137,7 @@ onBeforeUnmount(() => window.removeEventListener('message', onMessage))
 /** Ask the editor for the current project; the answer arrives as `sb3`. */
 function requestSb3(): boolean {
 	if (!isCurrent(projectDocument)) return false
+	pendingRequests++
 	post({ type: SCRATCH_MESSAGE.requestSb3 })
 	return true
 }

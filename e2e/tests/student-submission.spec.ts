@@ -369,11 +369,12 @@ test.describe("Student submission types", () => {
 		await expect(page.getByRole("dialog").getByText("Submit this project?")).toBeVisible();
 	});
 
-	test("saves a project only when the editor frame sends it", async ({ page }) => {
+	test("saves a project only when the page asked the editor for it", async ({ page }) => {
 		await page.goto("/dashboard/projects");
 		const created = await callAsStudent(page, "cs17_portal.api.create_project", {
 			project_title: `${TEST_ASSIGNMENT_PREFIX} Message ${Date.now()}`,
 		});
+		await saveProjectAsStudent(page, created.body.message.name);
 		const saved: string[] = [];
 		await page.route("**/cs17_portal.api.save_project*", async (route) => {
 			saved.push(atob(route.request().postDataJSON().content));
@@ -383,6 +384,16 @@ test.describe("Student submission types", () => {
 		await page.goto(`/dashboard/projects/${created.body.message.name}/edit`);
 		const editor = page.getByTitle("Scratch editor");
 		await expect(editor).toBeVisible();
+		await expect
+			.poll(() =>
+				editor
+					.contentFrame()
+					.locator("html")
+					.evaluate(() =>
+						(window as any).cs17vm?.runtime.targets.map((target: any) => target.getName())
+					)
+			)
+			.toEqual(["Stage"]);
 		await page.evaluate(() =>
 			window.postMessage(
 				{ type: "project-sb3", sb3: new TextEncoder().encode("from the page").buffer },
@@ -399,7 +410,9 @@ test.describe("Student submission types", () => {
 				),
 			);
 
-		await expect.poll(() => saved).toEqual(["from the editor"]);
+		await page.getByRole("button", { name: "Save", exact: true }).click();
+		await expect.poll(() => saved.some((bytes) => bytes.startsWith("PK"))).toBe(true);
+		expect(saved).toHaveLength(1);
 	});
 
 	test("cannot rename or delete a project submitted to an assignment", async ({ page }) => {

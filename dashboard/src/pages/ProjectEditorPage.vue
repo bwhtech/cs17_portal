@@ -1,11 +1,12 @@
 <template>
 	<!--
-		The page owns the whole height it is given. Zen mode (on from mount) hands
-		it the viewport; toggling zen off puts it back in the shell's scroll area,
-		where `min-h` keeps the stage usable instead of collapsing to nothing.
+		In zen mode, and at `md` and up, the page fills a box that does not scroll.
+		Below `md` with zen off it sits in the mobile shell's scroll area, where
+		`min-h` keeps the stage usable.
 	-->
 	<div
-		class="flex h-full min-h-[32rem] flex-col overflow-hidden bg-surface-base md:absolute md:inset-0"
+		class="flex h-full flex-col overflow-hidden bg-surface-base md:absolute md:inset-0"
+		:class="{ 'max-md:min-h-[32rem]': !isZen }"
 	>
 		<div
 			class="flex min-h-12 shrink-0 items-center gap-2 border-b border-outline-gray-1 px-3 sm:px-5"
