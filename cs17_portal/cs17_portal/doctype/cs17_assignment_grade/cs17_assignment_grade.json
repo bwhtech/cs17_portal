@@ -78,10 +78,11 @@
    "label": "Marks Obtained"
   },
   {
-   "depends_on": "eval:doc.evaluation_type==\"Grade\"",
+   "depends_on": "evaluation_type",
    "fieldname": "grade",
    "fieldtype": "Data",
-   "label": "Grade"
+   "label": "Grade",
+   "read_only_depends_on": "eval:doc.evaluation_type==\"Marks\""
   },
   {
    "fetch_from": "assignment.remarks",
@@ -120,7 +121,7 @@
  ],
  "grid_page_length": 50,
  "links": [],
- "modified": "2026-10-11 21:36:08.810608",
+ "modified": "2026-10-12 21:54:14.203951",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Grade",
