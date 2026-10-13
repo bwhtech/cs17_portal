@@ -250,9 +250,7 @@ async function onSb3(payload: { sb3: ArrayBuffer; thumbnail?: string }) {
 	const saved = await trySubmit(saveProject, params)
 	if (saveProject.error || !saved) {
 		status.value = 'error'
-		if (kind === 'manual') {
-			toast.error(frappeErrorMessage(saveProject.error, 'Could not save the project.'))
-		}
+		toast.error(frappeErrorMessage(saveProject.error, 'Could not save the project.'))
 		return
 	}
 
