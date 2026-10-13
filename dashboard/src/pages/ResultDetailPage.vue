@@ -232,8 +232,9 @@ function downloadPdf() {
 watch(
 	() => result.value?.exam_name,
 	(examName) => {
-		if (!examName) return
-		breadcrumbs.set([{ label: 'Results', route: '/results' }, { label: examName }])
+		breadcrumbs.set(
+			examName ? [{ label: 'Results', route: '/results' }, { label: examName }] : [],
+		)
 	},
 	{ immediate: true },
 )
