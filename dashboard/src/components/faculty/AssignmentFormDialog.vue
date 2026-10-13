@@ -6,13 +6,13 @@
 		:is="isDesktop ? Dialog : BottomSheet"
 		v-bind="isDesktop ? { size: '3xl' } : {}"
 		:open="open"
-		:title="draftName ? 'Continue Draft' : 'New Assignment'"
+		:title="scheduled ? 'Edit Assignment' : draftName ? 'Continue Draft' : 'New Assignment'"
 		@update:open="emit('update:open', $event)"
 	>
 		<LoadError
 			v-if="loadFailed"
 			:class="isDesktop ? undefined : 'px-4 pb-6'"
-			title="Could not load this draft"
+			:title="scheduled ? 'Could not load this assignment' : 'Could not load this draft'"
 			:loading="existingCall.loading"
 			@retry="draftName && loadExisting(draftName)"
 		/>
@@ -22,10 +22,17 @@
 			:class="isDesktop ? undefined : 'px-4 pb-6'"
 		/>
 
+		<EmptyState
+			v-else-if="published"
+			:class="isDesktop ? undefined : 'px-4 pb-6'"
+			icon="lucide-send"
+			title="A published assignment can no longer be edited"
+		/>
+
 		<div v-else :class="isDesktop ? undefined : 'px-4 pb-6'">
 			<p class="text-p-base text-ink-gray-5">
-				Fill in the details, then switch to Preview to see the student view. Closing keeps
-				your work as a draft.
+				Fill in the details, then switch to Preview to see the student view.
+				<template v-if="!scheduled">Closing keeps your work as a draft.</template>
 			</p>
 
 			<Tabs
@@ -170,13 +177,15 @@ import {
 	toast,
 	useCall,
 } from 'frappe-ui'
+import EmptyState from '@/components/common/EmptyState.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import PublishFields from '@/components/common/PublishFields.vue'
 import AssignmentPreview, { type AssignmentDraft } from '@/components/faculty/AssignmentPreview.vue'
 import DeleteAssignmentDialog from '@/components/faculty/DeleteAssignmentDialog.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
-import { toFrappeDatetime } from '@/lib/dates'
+import { useSession } from '@/composables/useSession'
+import { isPast, toFrappeDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { STORAGE_KEYS, readJSON, removeKey, writeJSON } from '@/lib/storage'
 import { trySubmit } from '@/lib/trySubmit'
@@ -192,8 +201,9 @@ const props = defineProps<{
 	/** Cohort names for the picker; the page already lists them for its filter. */
 	cohorts: string[]
 	quarters: string[]
-	/** An existing draft to continue. Unset for a brand-new assignment. */
+	/** An existing draft or scheduled assignment. Unset for a brand-new assignment. */
 	draftName?: string | null
+	scheduled?: boolean
 }>()
 
 const emit = defineEmits<{ 'update:open': [value: boolean]; saved: [] }>()
@@ -225,6 +235,7 @@ function emptyDraft(): AssignmentDraft {
 }
 
 const { isDesktop } = useBreakpoint()
+const { cohort: facultyCohort } = useSession()
 
 const draft = reactive<AssignmentDraft>(emptyDraft())
 const publishMode = ref<PublishMode>('draft')
@@ -234,6 +245,7 @@ const confirmDelete = ref(false)
 /** The assignment behind the form once it exists server-side — update, not create. */
 const savedName = ref<string | null>(null)
 const loadFailed = ref(false)
+const published = ref(false)
 
 const errors = reactive<
 	Record<'title' | 'cohort' | 'due_date' | 'max_marks' | 'publishOn' | 'form', string>
@@ -246,9 +258,10 @@ const errors = reactive<
 	form: '',
 })
 
-const cohortOptions = computed(() =>
-	props.cohorts.map((cohort) => ({ label: cohort, value: cohort })),
-)
+const cohortOptions = computed(() => [
+	...(facultyCohort.value ? [] : [{ label: 'No cohort', value: '' }]),
+	...props.cohorts.map((cohort) => ({ label: cohort, value: cohort })),
+])
 
 const quarterOptions = computed(() => [
 	{ label: 'No quarter', value: '' },
@@ -269,6 +282,7 @@ const evaluationType = computed({
 		} else {
 			draft.assignment_type = 'Graded'
 			draft.remarks = value as EvaluationType
+			if (value === 'Grade') draft.max_marks = ''
 		}
 	},
 })
@@ -324,6 +338,7 @@ function initialize() {
 	activeTab.value = 'edit'
 	clearErrors()
 	loadFailed.value = false
+	published.value = false
 
 	if (props.draftName) {
 		if (savedName.value === props.draftName) return
@@ -343,6 +358,11 @@ async function loadExisting(name: string) {
 	if (existingCall.loading || !props.open) return
 	loadFailed.value = !existing
 	if (!existing) return
+	published.value = Boolean(existing.is_published) || isPast(existing.publish_on)
+	if (published.value) {
+		emit('saved')
+		return
+	}
 	Object.assign(draft, {
 		title: existing.title ?? '',
 		cohort: existing.cohort ?? '',

@@ -207,7 +207,7 @@ test.describe("Faculty assignment portal", () => {
 		await page.getByRole("button", { name: "New Assignment" }).click();
 
 		await page.getByPlaceholder("Assignment title").fill(title);
-		await page.getByRole("combobox").filter({ hasText: "Select a cohort" }).click();
+		await page.getByRole("combobox").filter({ hasText: /Select a cohort|No cohort/ }).click();
 		await page.getByRole("listbox").waitFor();
 		await page.keyboard.type(cohort.name);
 		await page.keyboard.press("Enter");
@@ -228,7 +228,7 @@ test.describe("Faculty assignment portal", () => {
 		await page.getByRole("button", { name: "New Assignment" }).click();
 
 		await page.getByPlaceholder("Assignment title").fill(title);
-		await page.getByRole("combobox").filter({ hasText: "Select a cohort" }).click();
+		await page.getByRole("combobox").filter({ hasText: /Select a cohort|No cohort/ }).click();
 		await page.getByRole("listbox").waitFor();
 		await page.keyboard.type(cohort.name);
 		await page.keyboard.press("Enter");
@@ -281,7 +281,7 @@ test.describe("Faculty assignment portal", () => {
 		await page.getByRole("button", { name: "New Assignment" }).click();
 
 		await page.getByPlaceholder("Assignment title").fill(title);
-		await page.getByRole("combobox").filter({ hasText: "Select a cohort" }).click();
+		await page.getByRole("combobox").filter({ hasText: /Select a cohort|No cohort/ }).click();
 		await page.getByRole("listbox").waitFor();
 		await page.keyboard.type(cohort.name);
 		await page.keyboard.press("Enter");
@@ -349,6 +349,30 @@ test.describe("Faculty assignment portal", () => {
 			request,
 			"CS17 Assignment",
 			draft.name,
+		);
+		expect(saved.publish_on).toBe("2030-01-05 09:30:00");
+	});
+
+	test("keeps the schedule of an assignment edited from its row", async ({ page, request }) => {
+		const scheduled = await createTestAssignment(request, {
+			cohort: cohort.name,
+			isPublished: false,
+		});
+		await updateDoc(request, "CS17 Assignment", scheduled.name, {
+			publish_on: "2030-01-05 09:30:00",
+		});
+
+		await page.goto("/dashboard/faculty/assignments");
+		await page.getByRole("button", { name: `Edit ${scheduled.title}` }).click();
+		await page.getByPlaceholder("Assignment title").fill(`${scheduled.title} edited`);
+		await page.getByRole("button", { name: "Save Assignment" }).click();
+
+		const row = page.locator(LIST_ROW, { hasText: `${scheduled.title} edited` });
+		await expect(row.getByText("Scheduled", { exact: true })).toBeVisible();
+		const saved = await getDoc<{ publish_on: string | null }>(
+			request,
+			"CS17 Assignment",
+			scheduled.name,
 		);
 		expect(saved.publish_on).toBe("2030-01-05 09:30:00");
 	});
