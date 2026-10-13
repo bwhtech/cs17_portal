@@ -54,7 +54,7 @@ def get_submission_archive(submission: str) -> dict:
 
 	file = frappe.get_doc({"doctype": "File", **attached_file})
 	try:
-		content = file.get_content()
+		content = file.get_content(encodings=())
 	except FileNotFoundError:
 		frappe.throw(_("This submission's file is missing."), frappe.DoesNotExistError)
 
