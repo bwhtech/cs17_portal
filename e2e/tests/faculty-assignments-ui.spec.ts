@@ -207,7 +207,7 @@ test.describe("Faculty assignment portal", () => {
 		await page.getByRole("button", { name: "New Assignment" }).click();
 
 		await page.getByPlaceholder("Assignment title").fill(title);
-		await page.getByRole("combobox").filter({ hasText: "Select a cohort" }).click();
+		await page.getByRole("combobox").filter({ hasText: /Select a cohort|No cohort/ }).click();
 		await page.getByRole("listbox").waitFor();
 		await page.keyboard.type(cohort.name);
 		await page.keyboard.press("Enter");
@@ -228,7 +228,7 @@ test.describe("Faculty assignment portal", () => {
 		await page.getByRole("button", { name: "New Assignment" }).click();
 
 		await page.getByPlaceholder("Assignment title").fill(title);
-		await page.getByRole("combobox").filter({ hasText: "Select a cohort" }).click();
+		await page.getByRole("combobox").filter({ hasText: /Select a cohort|No cohort/ }).click();
 		await page.getByRole("listbox").waitFor();
 		await page.keyboard.type(cohort.name);
 		await page.keyboard.press("Enter");
@@ -281,7 +281,7 @@ test.describe("Faculty assignment portal", () => {
 		await page.getByRole("button", { name: "New Assignment" }).click();
 
 		await page.getByPlaceholder("Assignment title").fill(title);
-		await page.getByRole("combobox").filter({ hasText: "Select a cohort" }).click();
+		await page.getByRole("combobox").filter({ hasText: /Select a cohort|No cohort/ }).click();
 		await page.getByRole("listbox").waitFor();
 		await page.keyboard.type(cohort.name);
 		await page.keyboard.press("Enter");
