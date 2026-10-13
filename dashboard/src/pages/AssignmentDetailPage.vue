@@ -18,7 +18,7 @@
 		<p v-else-if="!assignment" class="text-p-base text-ink-gray-5">Assignment not found.</p>
 
 		<div v-else class="flex flex-col gap-6 md:flex-row">
-			<h1 class="order-first break-words text-2xl text-ink-gray-9 md:hidden">
+			<h1 class="order-first break-words text-2xl text-ink-gray-9 md:sr-only">
 				{{ assignment.title }}
 			</h1>
 			<div class="min-w-0 flex-1">
@@ -155,6 +155,7 @@ const scratch = useScratchAssignment()
 const assignmentCall = useCall<CS17Assignment, { assignment: string }>({
 	url: '/api/v2/method/cs17_portal.api.get_student_assignment',
 	params: () => ({ assignment: props.assignmentId }),
+	refetch: true,
 })
 
 const submissions = useList<CS17Submission>({
@@ -193,7 +194,7 @@ const isOverdue = computed(() => isPast(assignment.value?.due_date))
 /** `remarks` is the doctype's field for how a graded assignment is scored. */
 const evaluationType = computed(() =>
 	assignment.value?.assignment_type === 'Graded'
-		? (assignment.value.remarks ?? 'Graded')
+		? assignment.value.remarks || 'Graded'
 		: 'Non-graded',
 )
 
@@ -206,6 +207,7 @@ const myAnswers = useCall<
 >({
 	url: '/api/v2/method/cs17_portal.answer_sheet.get_my_answers',
 	params: () => ({ assignment: props.assignmentId }),
+	refetch: true,
 })
 
 function openSubmit() {

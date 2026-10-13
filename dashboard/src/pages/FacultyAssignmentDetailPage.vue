@@ -38,7 +38,7 @@
 		</EmptyState>
 
 		<div v-else class="space-y-6">
-			<h1 class="break-words text-2xl text-ink-gray-9 md:hidden">{{ assignment.title }}</h1>
+			<h1 class="break-words text-2xl text-ink-gray-9 md:sr-only">{{ assignment.title }}</h1>
 			<div class="flex flex-col gap-6 md:flex-row">
 				<div class="min-w-0 flex-1">
 					<MarkdownText :content="assignment.description" />
@@ -128,11 +128,7 @@
 							<span class="text-base font-medium text-ink-gray-8">{{
 								gradeValue(row.grade)
 							}}</span>
-							<Badge
-								:label="row.grade.is_published ? 'Published' : 'Draft'"
-								:theme="row.grade.is_published ? 'green' : 'amber'"
-								variant="subtle"
-							/>
+							<Badge v-bind="publishStatus(row.grade)" variant="subtle" />
 						</span>
 					</template>
 
@@ -153,7 +149,7 @@
 					</template>
 				</DataTable>
 
-				<BulkAssignBar
+				<SubmissionBulkActions
 					v-if="selection.length"
 					:submissions="selection"
 					:cohort="assignment.cohort"
@@ -213,9 +209,9 @@ import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import SubmissionPreviewDialog from '@/components/assignments/SubmissionPreviewDialog.vue'
 import AnswersDialog from '@/components/answers/AnswersDialog.vue'
 import AnswerSheetCard from '@/components/faculty/AnswerSheetCard.vue'
-import BulkAssignBar from '@/components/faculty/BulkAssignBar.vue'
 import GradeSubmissionDialog from '@/components/faculty/GradeSubmissionDialog.vue'
 import SubmissionAssignees from '@/components/faculty/SubmissionAssignees.vue'
+import SubmissionBulkActions from '@/components/faculty/SubmissionBulkActions.vue'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useLoadFailed } from '@/composables/useLoadFailed'
@@ -353,7 +349,7 @@ const metaRows = computed(() => {
 		{ label: 'Cohort', value: assignment.value?.cohort ?? '—' },
 		{
 			label: 'Evaluation Type',
-			value: isGraded.value ? (assignment.value?.remarks ?? '—') : 'Non-graded',
+			value: isGraded.value ? assignment.value?.remarks || '—' : 'Non-graded',
 		},
 	]
 	if (isGraded.value && assignment.value?.remarks === 'Marks') {
@@ -389,6 +385,18 @@ function gradeValue(grade: CS17Grade): string {
 		marksObtained: grade.marks_obtained,
 		maxMarks: assignment.value?.max_marks,
 	})
+}
+
+function publishStatus(grade: CS17Grade) {
+	if (grade.is_published) return { label: 'Published', theme: 'green' } as const
+	if (grade.published_on) {
+		return {
+			label: 'Scheduled',
+			theme: 'amber',
+			title: formatDateTime(grade.published_on),
+		} as const
+	}
+	return { label: 'Draft', theme: 'gray' } as const
 }
 
 const selectedDraftGrades = computed(
