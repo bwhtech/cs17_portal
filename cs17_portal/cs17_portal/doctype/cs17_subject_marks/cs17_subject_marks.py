@@ -117,19 +117,21 @@ class CS17SubjectMarks(Document):
 			row.max_marks = flt(flt(self.max_marks) * flt(row.weightage) / 100, 2)
 
 		largest = max(self.components, key=lambda row: flt(row.weightage))
+		# 9, not 2: what is left over carries every decimal the subject maximum has
 		largest.max_marks = flt(
-			largest.max_marks + flt(self.max_marks) - sum(row.max_marks for row in self.components), 2
+			largest.max_marks + flt(self.max_marks) - sum(row.max_marks for row in self.components), 9
 		)
 
 	def calculate(self):
 		for row in self.components:
-			marks = flt(row.marks_obtained)
+			# the column keeps 9 decimals, and the result grades what it reads back from it
+			marks = row.marks_obtained = flt(row.marks_obtained, 9)
 			if marks < 0 or marks > flt(row.max_marks):
 				frappe.throw(
 					_("{0}: marks must be between 0 and {1}.").format(row.component, flt(row.max_marks))
 				)
 
-		self.total_marks_obtained = sum(flt(row.marks_obtained) for row in self.components)
+		self.total_marks_obtained = flt(sum(flt(row.marks_obtained) for row in self.components), 9)
 		self.percentage = (
 			flt(self.total_marks_obtained * 100 / flt(self.max_marks), 2) if flt(self.max_marks) else 0
 		)
