@@ -13,6 +13,7 @@
 			v-if="mode === 'schedule'"
 			label="Publish on"
 			placeholder="Pick a date and time"
+			:min="now"
 			:model-value="publishOn"
 			@update:model-value="emit('update:publishOn', $event ?? '')"
 		/>
@@ -21,7 +22,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { DateTimePicker, FormControl } from 'frappe-ui'
+import { DateTimePicker, FormControl, dayjsLocal } from 'frappe-ui'
 import type { PublishMode } from '@/types'
 
 const props = withDefaults(
@@ -47,6 +48,8 @@ const ALL_MODES = [
 	{ value: 'now', label: 'Publish now' },
 	{ value: 'schedule', label: 'Schedule' },
 ]
+
+const now = dayjsLocal().format('YYYY-MM-DD HH:mm:ss')
 
 const modeOptions = computed(() =>
 	props.includeDraft ? ALL_MODES : ALL_MODES.filter((option) => option.value !== 'draft'),

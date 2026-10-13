@@ -104,7 +104,7 @@ export interface CS17Grade {
 	marks_obtained: number | null
 	grade: string | null
 	remarks?: string | null
-	evaluation_type?: string | null
+	evaluation_type?: EvaluationType | '' | null
 	full_name?: string
 	assignment_title?: string
 	is_published?: Bool

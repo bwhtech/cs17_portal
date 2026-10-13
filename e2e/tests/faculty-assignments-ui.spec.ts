@@ -583,7 +583,7 @@ test.describe("Faculty assignment portal", () => {
 		const row = page.locator(LIST_ROW, { hasText: student.full_name! });
 		await row.getByRole("button", { name: "Grade", exact: true }).click();
 
-		await page.getByRole("combobox").filter({ hasText: "Select a grade" }).click();
+		await page.getByRole("combobox").filter({ hasText: /Select a grade|No grade/ }).click();
 		await page.getByRole("option", { name: "A", exact: true }).click();
 		await page.getByRole("combobox").filter({ hasText: "Save as draft" }).click();
 		await page.getByRole("option", { name: "Publish now" }).click();
@@ -592,6 +592,27 @@ test.describe("Faculty assignment portal", () => {
 		const grade = row.locator(LIST_CELL, { hasText: "Published" });
 		await expect(grade).toBeVisible();
 		await expect(grade.getByText("A", { exact: true })).toBeVisible();
+	});
+
+	test("publishes a grade with no letter from the grade dialog", async ({ page, request }) => {
+		const assignment = await createTestAssignment(request, {
+			cohort: cohort.name,
+			assignmentType: "Graded",
+		});
+		await createTestSubmission(request, {
+			assignment: assignment.name,
+			student: student.name,
+		});
+		await page.goto(`/dashboard/faculty/assignments/${assignment.name}`);
+
+		const row = page.locator(LIST_ROW, { hasText: student.full_name! });
+		await row.getByRole("button", { name: "Grade", exact: true }).click();
+		await page.getByRole("combobox").filter({ hasText: "Save as draft" }).click();
+		await page.getByRole("option", { name: "Publish now" }).click();
+		await page.getByRole("button", { name: "Save grade" }).click();
+
+		const grade = row.locator(LIST_CELL, { hasText: "Published" });
+		await expect(grade.getByText("—", { exact: true })).toBeVisible();
 	});
 
 	test.describe("a marks assignment", () => {
@@ -675,7 +696,7 @@ test.describe("Faculty assignment portal", () => {
 			await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
 		});
 
-		test("keeps the update label when the reload after a save fails", async ({ page }) => {
+		test("shows the update label after a save without a second read", async ({ page }) => {
 			let reads = 0;
 			await page.route(
 				(url) => url.href.includes("get_submission_grade"),
@@ -689,8 +710,8 @@ test.describe("Faculty assignment portal", () => {
 			await page.getByLabel("Marks obtained").fill("15");
 			await page.getByRole("button", { name: "Save grade" }).click();
 
-			await expect.poll(() => reads).toBe(2);
 			await expect(page.getByRole("button", { name: "Update grade" })).toBeVisible();
+			expect(reads).toBe(1);
 		});
 	});
 
