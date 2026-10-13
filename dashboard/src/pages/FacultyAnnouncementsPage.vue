@@ -68,7 +68,7 @@
 						icon="lucide-eye"
 						:aria-label="`Preview ${row.title}`"
 						tooltip="Preview"
-						@click.stop="previewTarget = row"
+						@click.stop="openPreview(row)"
 					/>
 					<template v-if="row.can_edit && !row.is_published">
 						<Button
@@ -116,11 +116,7 @@
 		@deleted="listCall.reload()"
 	/>
 
-	<PreviewAnnouncementDialog
-		:open="Boolean(previewTarget)"
-		:announcement="previewTarget"
-		@update:open="(open: boolean) => open || (previewTarget = null)"
-	/>
+	<PreviewAnnouncementDialog v-model:open="previewOpen" :announcement="previewTarget" />
 </template>
 
 <script setup lang="ts">
@@ -170,6 +166,7 @@ const editTarget = ref<CS17Announcement | null>(null)
 const publishTarget = ref<CS17Announcement | null>(null)
 const deleteTarget = ref<CS17Announcement | null>(null)
 const previewTarget = ref<CS17Announcement | null>(null)
+const previewOpen = ref(false)
 
 function openNew() {
 	editTarget.value = null
@@ -179,6 +176,11 @@ function openNew() {
 function openEdit(announcement: CS17Announcement) {
 	editTarget.value = announcement
 	formOpen.value = true
+}
+
+function openPreview(announcement: CS17Announcement) {
+	previewTarget.value = announcement
+	previewOpen.value = true
 }
 
 function onFormOpen(open: boolean) {

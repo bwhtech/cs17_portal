@@ -1359,33 +1359,11 @@ def _apply_announcement_publish(doc: "Document", publish: str, publish_on: str |
 				_("The publish date must be in the future. Pick a later time, or choose Publish now")
 			)
 		doc.is_published = 0
+		doc.published_date = None
 		doc.publish_on = publish_on
 	else:
 		doc.is_published = 0
 		doc.publish_on = None
-
-
-@frappe.whitelist(methods=["GET"])
-def get_announcement(announcement: str) -> dict | None:
-	faculty = get_current_faculty()
-	doc = frappe.db.get_value(
-		"CS17 Announcement",
-		announcement,
-		[
-			"name",
-			"title",
-			"content",
-			"alert_variant",
-			"cohort",
-			"is_dismissible",
-			"is_published",
-			"publish_on",
-		],
-		as_dict=True,
-	)
-	if faculty.cohort and doc and doc.cohort and doc.cohort != faculty.cohort:
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	return doc
 
 
 @frappe.whitelist(methods=["POST"])
