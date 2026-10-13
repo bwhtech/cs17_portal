@@ -1,3 +1,4 @@
+import { formatGrade } from '@/lib/grades'
 import type { CS17ResultAssignmentScore, CS17ResultSummary } from '@/types'
 
 /**
@@ -27,7 +28,7 @@ export function passTheme(passed: boolean): 'green' | 'red' {
  * What an assignment row scored, in one string.
  *
  * The three evaluation types have nothing in common to average, so each is
- * shown as what it is: marks against their total, a letter on its own, and
+ * shown as what it is: a letter with its marks, a letter on its own, and
  * nothing at all for work that was never graded. Work that was never handed
  * in has no score to show — the submitted column beside it says why.
  */
@@ -36,7 +37,12 @@ export function assignmentScoreLabel(row: CS17ResultAssignmentScore): string {
 	if (row.evaluation_type === 'Grade') return row.grade || 'Not graded'
 	if (row.evaluation_type === 'Marks') {
 		if (!row.is_graded) return 'Not graded'
-		return formatMarks(row.marks_obtained, row.max_marks)
+		return formatGrade({
+			evaluationType: 'Marks',
+			grade: row.grade,
+			marksObtained: row.marks_obtained,
+			maxMarks: row.max_marks,
+		})
 	}
 	return 'Submitted'
 }
