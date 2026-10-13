@@ -93,8 +93,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { onBeforeRouteLeave, useRoute } from 'vue-router'
 import { Button, LoadingIndicator, toast, useCall } from 'frappe-ui'
 import EmptyState from '@/components/common/EmptyState.vue'
 import ScratchFrame from '@/components/scratch/ScratchFrame.vue'
@@ -250,6 +250,7 @@ function saveEnded() {
 
 /** False only when the editor holds a project and saving it failed. */
 async function saveNow() {
+	if (status.value === 'saving') await saveEnded()
 	if (!requestSave('auto')) return true
 	return saveEnded()
 }
@@ -286,8 +287,20 @@ async function onSb3(payload: { sb3: ArrayBuffer; thumbnail?: string }) {
 	if (kind === 'manual') project.reload()
 }
 
+function hasUnsavedEdits() {
+	return autosaveTimer !== null || status.value === 'saving'
+}
+
+onBeforeRouteLeave(() => !hasUnsavedEdits() || saveNow())
+
+function warnBeforeUnload(event: BeforeUnloadEvent) {
+	if (hasUnsavedEdits()) event.preventDefault()
+}
+
+onMounted(() => window.addEventListener('beforeunload', warnBeforeUnload))
 onBeforeUnmount(() => {
 	clearAutosave()
 	clearTimeout(answerTimer)
+	window.removeEventListener('beforeunload', warnBeforeUnload)
 })
 </script>
