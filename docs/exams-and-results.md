@@ -119,7 +119,7 @@ subject - the exam decides which subject uses which pattern.
 
 Component max marks are derived, never typed: `component max = subject max marks x weightage / 100`.
 So the same pattern works for a 100 mark paper and a 50 mark paper. Each maximum is rounded to two
-decimals, and the component with the largest weightage takes whatever the rounding leaves over, so
+decimals, except the one with the largest weightage, which takes whatever is left over, so
 the components always add up to the subject max marks.
 
 ### CS17 Subject Marks (+ CS17 Subject Marks Component)
