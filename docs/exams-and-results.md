@@ -103,6 +103,11 @@ A subject cannot be removed from the exam once marks are recorded for it, or onc
 it. The result keeps that row, and a row for a subject the exam no longer has stops the result from
 saving.
 
+Once a result lists a subject, draft or scheduled included, that subject's `max_marks` and
+`grading_scale` are frozen on the exam. The result keeps its own copy of both, so a change would
+leave it showing the old values until its next save. The pattern is not part of this lock; it stays
+open until the subject has marks.
+
 Once any result for the exam is published, the subject list, max marks and grading scales are
 frozen. Changing them would invalidate report cards already handed out.
 
