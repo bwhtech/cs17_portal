@@ -424,8 +424,11 @@ async function copySubmissionLink() {
 watch(
 	() => assignment.value?.title,
 	(title) => {
-		if (!title) return
-		breadcrumbs.set([{ label: 'Assignments', route: '/faculty/assignments' }, { label: title }])
+		breadcrumbs.set(
+			title
+				? [{ label: 'Assignments', route: '/faculty/assignments' }, { label: title }]
+				: [],
+		)
 	},
 	{ immediate: true },
 )

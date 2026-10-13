@@ -229,8 +229,9 @@ function onSubmitted() {
 watch(
 	() => assignment.value?.title,
 	(title) => {
-		if (!title) return
-		breadcrumbs.set([{ label: 'Assignments', route: '/assignments' }, { label: title }])
+		breadcrumbs.set(
+			title ? [{ label: 'Assignments', route: '/assignments' }, { label: title }] : [],
+		)
 	},
 	{ immediate: true },
 )
