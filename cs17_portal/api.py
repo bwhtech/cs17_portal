@@ -305,6 +305,8 @@ def grade_submission(
 			"remarks": remarks,
 		}
 	)
+	if publish == "schedule" and is_published_now(doc, "published_on"):
+		frappe.throw(_("A published grade can no longer be scheduled"))
 	_apply_publish_state(doc, publish, publish_on, "published_on")
 	doc.save(ignore_permissions=True)
 	return {"name": doc.name}
