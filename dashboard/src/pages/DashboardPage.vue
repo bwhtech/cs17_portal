@@ -32,7 +32,7 @@
 				:grade-map="gradeMap"
 				:loading="loading"
 				@submitted="reloadSubmissionsAndGrades"
-				@view-grade="gradeAssignment = $event"
+				@view-grade="openGrade"
 			/>
 			<p v-else class="text-p-xs text-ink-gray-5">
 				{{ cohort ? 'No upcoming assignments.' : 'You are not in a cohort yet.' }}
@@ -118,17 +118,15 @@ const loading = computed(() => assignmentsCall.loading && !assignmentsCall.data)
 const failed = useLoadFailed(assignmentsCall)
 
 const gradeAssignment = ref<string | null>(null)
+const gradeOpen = ref(false)
 const activeGrade = computed(() =>
 	gradeAssignment.value ? (gradeMap.value[gradeAssignment.value] ?? null) : null,
 )
-// Open is derived from "which assignment", so the dialog has exactly one
-// source of truth and closing cannot leave a stale grade behind it.
-const gradeOpen = computed({
-	get: () => Boolean(gradeAssignment.value),
-	set: (value: boolean) => {
-		if (!value) gradeAssignment.value = null
-	},
-})
+
+function openGrade(assignment: string) {
+	gradeAssignment.value = assignment
+	gradeOpen.value = true
+}
 
 function reloadSubmissionsAndGrades() {
 	assignmentsCall.reload()

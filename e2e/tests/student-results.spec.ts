@@ -136,4 +136,10 @@ test.describe("Student results", () => {
 		await expect(loadError).toBeVisible();
 		await expect(retry).toBeDisabled();
 	});
+
+	test("has the exam name as a heading at desktop width", async ({ page }) => {
+		await page.goto(`/dashboard/results/${own.result}`);
+
+		await expect(page.getByRole("heading", { level: 1, name: own.examName })).toHaveCount(1);
+	});
 });
