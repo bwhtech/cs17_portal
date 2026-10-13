@@ -209,6 +209,7 @@ export interface CohortSubmission {
 export interface FacultyMember {
 	user: string
 	full_name: string
+	profile_picture?: string | null
 }
 
 export interface GradeBand {

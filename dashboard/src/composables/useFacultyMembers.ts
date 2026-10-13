@@ -1,5 +1,6 @@
-import { effectScope } from 'vue'
+import { effectScope, watch } from 'vue'
 import { useCall } from 'frappe-ui'
+import { useSession } from '@/composables/useSession'
 import type { FacultyMember } from '@/types'
 
 function fetchFacultyMembers(cohort?: string) {
@@ -14,6 +15,14 @@ type FacultyMembersCall = ReturnType<typeof fetchFacultyMembers>
 
 const scope = effectScope(true)
 const callsByCohort = new Map<string, FacultyMembersCall>()
+
+const { profile } = useSession()
+scope.run(() =>
+	watch(
+		() => [profile.value?.full_name, profile.value?.profile_picture],
+		() => callsByCohort.forEach((members) => members.reload()),
+	),
+)
 
 export function useFacultyMembers(cohort?: string): FacultyMembersCall {
 	const key = cohort ?? ''
