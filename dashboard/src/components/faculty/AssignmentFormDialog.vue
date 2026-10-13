@@ -278,6 +278,7 @@ const evaluationType = computed({
 		} else {
 			draft.assignment_type = 'Graded'
 			draft.remarks = value as EvaluationType
+			if (value === 'Grade') draft.max_marks = ''
 		}
 	},
 })
