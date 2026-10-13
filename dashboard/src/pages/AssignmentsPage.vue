@@ -16,7 +16,7 @@
 			:grade-map="gradeMap"
 			:loading="loading"
 			@submitted="reloadPublished"
-			@view-grade="gradeAssignment = $event"
+			@view-grade="openGrade"
 		/>
 
 		<GradeDialog v-model:open="gradeOpen" :grade="activeGrade" />
@@ -76,20 +76,19 @@ usePublishTimer(
 )
 
 const gradeAssignment = ref<string | null>(null)
+const gradeOpen = ref(false)
 const activeGrade = computed(() =>
 	gradeAssignment.value ? (gradeMap.value[gradeAssignment.value] ?? null) : null,
 )
 
-const gradeOpen = computed({
-	get: () => Boolean(gradeAssignment.value),
-	set: (value: boolean) => {
-		if (!value) gradeAssignment.value = null
-	},
-})
+function openGrade(assignment: string) {
+	gradeAssignment.value = assignment
+	gradeOpen.value = true
+}
 
 // A grade that disappears (unpublished while the dialog is open) leaves the
 // dialog showing a stale score, so close it instead.
 watch(activeGrade, (grade) => {
-	if (gradeAssignment.value && !grade) gradeAssignment.value = null
+	if (!grade) gradeOpen.value = false
 })
 </script>
