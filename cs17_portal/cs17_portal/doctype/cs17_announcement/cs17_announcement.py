@@ -3,7 +3,7 @@
 
 import frappe
 from frappe.model.document import Document
-from frappe.utils import cint
+from frappe.utils import cint, today
 
 
 class CS17Announcement(Document):
@@ -28,11 +28,17 @@ class CS17Announcement(Document):
 	def validate(self):
 		self.is_published = cint(self.is_published)
 		self.clear_schedule_when_unpublished()
+		self.set_published_date()
 
 	def clear_schedule_when_unpublished(self):
 		unpublishing = not self.is_published and self.has_value_changed("is_published")
 		if unpublishing and not self.has_value_changed("publish_on"):
 			self.publish_on = None
+
+	def set_published_date(self):
+		date_given = self.published_date and self.has_value_changed("published_date")
+		if self.is_published and self.has_value_changed("is_published") and not date_given:
+			self.published_date = today()
 
 	def on_update(self):
 		if self.is_published and self.has_value_changed("is_published"):

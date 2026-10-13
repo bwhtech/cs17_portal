@@ -1387,7 +1387,6 @@ def _set_announcement_fields(
 def _apply_announcement_publish(doc: "Document", publish: str, publish_on: str | None = None) -> None:
 	if publish == "now":
 		doc.is_published = 1
-		doc.published_date = today()
 		doc.publish_on = None
 	elif publish == "schedule":
 		if not publish_on:
