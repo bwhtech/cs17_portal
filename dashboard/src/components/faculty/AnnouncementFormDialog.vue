@@ -6,7 +6,12 @@
 		@update:open="emit('update:open', $event)"
 	>
 		<template #default>
-			<div class="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+			<EmptyState
+				v-if="published"
+				icon="lucide-send"
+				title="A published announcement can no longer be edited"
+			/>
+			<div v-else class="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
 				<div class="space-y-4">
 					<FormControl
 						v-model="form.title"
@@ -74,6 +79,7 @@
 			<div class="flex justify-end gap-2">
 				<Button label="Cancel" @click="close" />
 				<Button
+					v-if="!published"
 					variant="solid"
 					theme="gray"
 					:loading="saving"
@@ -98,10 +104,11 @@ import {
 	Textarea,
 	useCall,
 } from 'frappe-ui'
+import EmptyState from '@/components/common/EmptyState.vue'
 import AnnouncementPreview from '@/components/faculty/AnnouncementPreview.vue'
 import PublishFields from '@/components/common/PublishFields.vue'
 import { useSession } from '@/composables/useSession'
-import { toFrappeDatetime } from '@/lib/dates'
+import { isPast, toFrappeDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { trySubmit } from '@/lib/trySubmit'
 import { ALERT_VARIANTS, type AlertVariant, type CS17Announcement, type PublishMode } from '@/types'
@@ -145,6 +152,7 @@ const form = reactive({
 
 const mode = ref<PublishMode>('draft')
 const publishOn = ref('')
+const published = ref(false)
 const formError = ref('')
 const fieldErrors = reactive({ title: '' })
 
@@ -197,6 +205,7 @@ watch(
 
 function reset() {
 	const row = props.announcement
+	published.value = isPast(row?.publish_on)
 	form.title = row?.title ?? ''
 	form.content = row?.content ?? ''
 	form.alert_variant = (row?.alert_variant ?? 'info') as AlertVariant
