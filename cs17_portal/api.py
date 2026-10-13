@@ -10,7 +10,7 @@ from frappe.core.doctype.file.utils import decode_file_content
 from frappe.query_builder import Order
 from frappe.query_builder.functions import Coalesce, Date
 from frappe.rate_limiter import rate_limit
-from frappe.utils import flt, get_datetime, getdate, now_datetime, today
+from frappe.utils import flt, get_datetime, getdate, now_datetime
 
 if TYPE_CHECKING:
 	from frappe.model.document import Document
@@ -1387,7 +1387,6 @@ def _set_announcement_fields(
 def _apply_announcement_publish(doc: "Document", publish: str, publish_on: str | None = None) -> None:
 	if publish == "now":
 		doc.is_published = 1
-		doc.published_date = today()
 		doc.publish_on = None
 	elif publish == "schedule":
 		if not publish_on:
@@ -1397,7 +1396,6 @@ def _apply_announcement_publish(doc: "Document", publish: str, publish_on: str |
 				_("The publish date must be in the future. Pick a later time, or choose Publish now")
 			)
 		doc.is_published = 0
-		doc.published_date = None
 		doc.publish_on = publish_on
 	else:
 		doc.is_published = 0
