@@ -128,6 +128,38 @@ class TestSubmissionArchive(FrappeTestCase):
 			submission,
 		)
 
+	def test_submission_with_its_file_gone_from_disk_is_reported_missing(self):
+		cohort = make_cohort("C49TEST")
+		faculty_user = make_user("faculty49@cs17test.com")
+		make_profile("Faculty", cohort, faculty_user, "Faculty 49")
+		frappe.set_user(faculty_user)
+		assignment = make_assignment(cohort, "Terminal Task 49", "ZIP", 20)
+
+		student_user = make_user("student49@cs17test.com")
+		make_profile("Student", cohort, student_user, "Student 49")
+		frappe.set_user(student_user)
+		file = frappe.get_doc(
+			{
+				"doctype": "File",
+				"file_name": "terminal-49.zip",
+				"is_private": 1,
+				"content": make_zip(FILES),
+			}
+		).save(ignore_permissions=True)
+		submission = submit_assignment(assignment, file.file_url)["name"]
+		frappe.db.set_value("File", {"attached_to_name": submission}, "file_url", "/private/files/gone.zip")
+		frappe.db.set_value(
+			"CS17 Assignment Submission", submission, "submission_document", "/private/files/gone.zip"
+		)
+
+		frappe.set_user(faculty_user)
+		self.assertRaisesRegex(
+			frappe.DoesNotExistError,
+			"This submission's file is missing.",
+			submission_archive.get_submission_archive,
+			submission,
+		)
+
 	def test_submission_that_does_not_exist_is_reported_missing(self):
 		faculty_user = make_user("faculty46@cs17test.com")
 		make_profile("Faculty", make_cohort("C46TEST"), faculty_user, "Faculty 46")

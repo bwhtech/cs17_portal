@@ -1,9 +1,12 @@
 import base64
 import functools
+import io
+import zipfile
 from typing import TYPE_CHECKING
 
 import frappe
 from frappe import _
+from frappe.core.doctype.file.utils import decode_file_content
 from frappe.query_builder import Order
 from frappe.query_builder.functions import Coalesce, Date
 from frappe.rate_limiter import rate_limit
@@ -541,6 +544,14 @@ def save_project(
 ) -> dict:
 	project_doc = require_owned_project(project)
 
+	try:
+		with zipfile.ZipFile(io.BytesIO(decode_file_content(content))) as archive:
+			names = archive.namelist()
+	except zipfile.BadZipFile:
+		names = []
+	if "project.json" not in names:
+		frappe.throw(_("This file is not a Scratch project."))
+
 	replace_project_file(project_doc, "sb3_file", filename, content)
 	if thumbnail_filename and thumbnail_content:
 		replace_project_file(project_doc, "thumbnail", thumbnail_filename, thumbnail_content)
@@ -654,7 +665,7 @@ def get_submission_project(submission: str) -> dict:
 	require_faculty_for_assignment(submission_doc.assignment)
 
 	if not submission_doc.submission_document:
-		frappe.throw(_("This submission has no project file."))
+		frappe.throw(_("This submission has no project file."), frappe.DoesNotExistError)
 
 	attached_file = frappe.db.get_value(
 		"File",
@@ -666,9 +677,14 @@ def get_submission_project(submission: str) -> dict:
 		frappe.throw(_("This submission's project file is missing."), frappe.DoesNotExistError)
 
 	snapshot_file = frappe.get_doc({"doctype": "File", **attached_file})
+	try:
+		content = snapshot_file.get_content()
+	except FileNotFoundError:
+		frappe.throw(_("This submission's project file is missing."), frappe.DoesNotExistError)
+
 	return {
 		"filename": snapshot_file.file_name,
-		"content": base64.b64encode(snapshot_file.get_content()).decode(),
+		"content": base64.b64encode(content).decode(),
 	}
 
 
