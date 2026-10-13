@@ -7,7 +7,7 @@ import { APIRequestContext, Page } from "@playwright/test";
 export async function loginViaAPI(
 	request: APIRequestContext,
 	email = "Administrator",
-	password = "admin",
+	password = "admin"
 ): Promise<void> {
 	const response = await request.post("/api/method/login", {
 		form: {
@@ -27,7 +27,7 @@ export async function loginViaAPI(
 export async function loginViaUI(
 	page: Page,
 	email = "Administrator",
-	password = "admin",
+	password = "admin"
 ): Promise<void> {
 	await page.goto("/login");
 	await page.waitForLoadState("networkidle");

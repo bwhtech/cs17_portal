@@ -46,7 +46,7 @@ function announcementTitle(): string {
 
 function createAnnouncement(
 	request: APIRequestContext,
-	overrides: Record<string, unknown> = {},
+	overrides: Record<string, unknown> = {}
 ): Promise<string> {
 	return callMethod<string>(request, CREATE, {
 		title: announcementTitle(),
@@ -154,9 +154,7 @@ test.describe("Faculty announcement management", () => {
 		expect(doc.is_published).toBe(0);
 		expect(doc.publish_on).toContain("2035-06-01");
 
-		await expect(
-			createAnnouncement(request, { publish: "schedule" }),
-		).rejects.toThrow();
+		await expect(createAnnouncement(request, { publish: "schedule" })).rejects.toThrow();
 	});
 
 	test("edits an unpublished announcement", async ({ request }) => {
@@ -181,7 +179,7 @@ test.describe("Faculty announcement management", () => {
 				title: "nope",
 				content: "nope",
 				publish: "draft",
-			}),
+			})
 		).rejects.toThrow();
 	});
 

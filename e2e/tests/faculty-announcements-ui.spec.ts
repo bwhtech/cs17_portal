@@ -41,7 +41,7 @@ test.describe("Faculty announcements", () => {
 			route.fulfill({
 				status: 403,
 				json: { errors: [{ type: "PermissionError", message: "Not permitted" }] },
-			}),
+			})
 		);
 
 		await page.goto("/dashboard/faculty/announcements");

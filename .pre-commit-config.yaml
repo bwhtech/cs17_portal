@@ -34,7 +34,7 @@ repos:
     rev: v2.7.1
     hooks:
       - id: prettier
-        types_or: [javascript, vue, scss]
+        types_or: [javascript, ts, vue, scss]
         # Ignore any files that might contain jinja / bundles, and the
         # dashboard, which is formatted by its own pinned Prettier 3 through
         # `yarn lint` — this hook is Prettier 2 and the two disagree.
@@ -61,7 +61,6 @@ repos:
             (?x)^(
                 cs17_portal/public/dist/.*|
                 cs17_portal/public/dashboard/.*|
-                cypress/.*|
                 .*node_modules.*|
                 .*boilerplate.*|
                 cs17_portal/templates/includes/.*|

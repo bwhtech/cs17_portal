@@ -39,7 +39,7 @@ export async function createTestProfile(
 		lastName?: string;
 		cohort?: string;
 		user?: string;
-	} = {},
+	} = {}
 ): Promise<CS17Profile> {
 	return createDoc<CS17Profile>(request, "CS17 Profile", {
 		profile_type: options.profileType ?? "Student",
@@ -50,15 +50,12 @@ export async function createTestProfile(
 	});
 }
 
-export async function deleteTestProfile(
-	request: APIRequestContext,
-	name: string,
-): Promise<void> {
+export async function deleteTestProfile(request: APIRequestContext, name: string): Promise<void> {
 	await deleteDoc(request, "CS17 Profile", name);
 }
 
 export async function createTestUser(
-	request: APIRequestContext,
+	request: APIRequestContext
 ): Promise<{ name: string; email: string }> {
 	const email = `e2e-${Date.now()}-${Math.random()
 		.toString(36)
@@ -74,16 +71,13 @@ export async function createTestUser(
 	return { name: user.name, email };
 }
 
-export async function deleteTestUser(
-	request: APIRequestContext,
-	name: string,
-): Promise<void> {
+export async function deleteTestUser(request: APIRequestContext, name: string): Promise<void> {
 	await deleteDoc(request, "User", name);
 }
 
 export async function getProfileForUser(
 	request: APIRequestContext,
-	user: string,
+	user: string
 ): Promise<CS17Profile | null> {
 	const profiles = await getList<CS17Profile>(request, "CS17 Profile", {
 		fields: ["name", "profile_type", "full_name"],
@@ -94,12 +88,9 @@ export async function getProfileForUser(
 }
 
 export async function getUserProfile(
-	request: APIRequestContext,
+	request: APIRequestContext
 ): Promise<UserProfileSummary | null> {
-	return callGetMethod<UserProfileSummary | null>(
-		request,
-		"cs17_portal.api.get_user_profile",
-	);
+	return callGetMethod<UserProfileSummary | null>(request, "cs17_portal.api.get_user_profile");
 }
 
 export interface CS17Cohort {
@@ -135,7 +126,7 @@ export function generateCohortCode(): string {
 
 export async function createTestCohort(
 	request: APIRequestContext,
-	options: { cohortCode?: string; startDate?: string } = {},
+	options: { cohortCode?: string; startDate?: string } = {}
 ): Promise<CS17Cohort> {
 	return createDoc<CS17Cohort>(request, "CS17 Cohort", {
 		cohort_code: options.cohortCode ?? generateCohortCode(),
@@ -153,13 +144,11 @@ export async function createTestAssignment(
 		assignmentType?: string;
 		dueDate?: string;
 		isPublished?: boolean;
-	},
+	}
 ): Promise<CS17Assignment> {
 	const submissionType = options.submissionType ?? "Any";
 	return createDoc<CS17Assignment>(request, "CS17 Assignment", {
-		title:
-			options.title ??
-			`${TEST_ASSIGNMENT_PREFIX} ${submissionType} ${Date.now()}`,
+		title: options.title ?? `${TEST_ASSIGNMENT_PREFIX} ${submissionType} ${Date.now()}`,
 		cohort: options.cohort,
 		submission_type: submissionType,
 		assignment_type: options.assignmentType ?? "Not Graded",
@@ -168,9 +157,7 @@ export async function createTestAssignment(
 	});
 }
 
-export async function cleanupTestAssignments(
-	request: APIRequestContext,
-): Promise<void> {
+export async function cleanupTestAssignments(request: APIRequestContext): Promise<void> {
 	const assignments = await getList<CS17Assignment>(request, "CS17 Assignment", {
 		fields: ["name"],
 		filters: { title: ["like", `${TEST_ASSIGNMENT_PREFIX}%`] },
@@ -196,7 +183,7 @@ export interface CS17Submission {
 
 export async function createTestSubmission(
 	request: APIRequestContext,
-	options: { assignment: string; student: string; fileUrl?: string },
+	options: { assignment: string; student: string; fileUrl?: string }
 ): Promise<CS17Submission> {
 	return createDoc<CS17Submission>(request, "CS17 Assignment Submission", {
 		assignment: options.assignment,
@@ -206,18 +193,12 @@ export async function createTestSubmission(
 	});
 }
 
-export async function cleanupTestSubmissions(
-	request: APIRequestContext,
-): Promise<void> {
-	const submissions = await getList<{ name: string }>(
-		request,
-		"CS17 Assignment Submission",
-		{
-			fields: ["name"],
-			filters: { full_name: ["like", `${TEST_FIRST_NAME} %`] },
-			limit: 500,
-		},
-	);
+export async function cleanupTestSubmissions(request: APIRequestContext): Promise<void> {
+	const submissions = await getList<{ name: string }>(request, "CS17 Assignment Submission", {
+		fields: ["name"],
+		filters: { full_name: ["like", `${TEST_FIRST_NAME} %`] },
+		limit: 500,
+	});
 	for (const submission of submissions) {
 		try {
 			await deleteDoc(request, "CS17 Assignment Submission", submission.name);
@@ -227,18 +208,12 @@ export async function cleanupTestSubmissions(
 	}
 }
 
-export async function cleanupTestGrades(
-	request: APIRequestContext,
-): Promise<void> {
-	const grades = await getList<{ name: string }>(
-		request,
-		"CS17 Assignment Grade",
-		{
-			fields: ["name"],
-			filters: { full_name: ["like", `${TEST_FIRST_NAME} %`] },
-			limit: 500,
-		},
-	);
+export async function cleanupTestGrades(request: APIRequestContext): Promise<void> {
+	const grades = await getList<{ name: string }>(request, "CS17 Assignment Grade", {
+		fields: ["name"],
+		filters: { full_name: ["like", `${TEST_FIRST_NAME} %`] },
+		limit: 500,
+	});
 	for (const grade of grades) {
 		try {
 			await deleteDoc(request, "CS17 Assignment Grade", grade.name);
@@ -262,18 +237,12 @@ export interface CS17Announcement {
 
 export const TEST_ANNOUNCEMENT_PREFIX = "E2E Announcement";
 
-export async function cleanupTestAnnouncements(
-	request: APIRequestContext,
-): Promise<void> {
-	const announcements = await getList<{ name: string }>(
-		request,
-		"CS17 Announcement",
-		{
-			fields: ["name"],
-			filters: { title: ["like", `${TEST_ANNOUNCEMENT_PREFIX}%`] },
-			limit: 200,
-		},
-	);
+export async function cleanupTestAnnouncements(request: APIRequestContext): Promise<void> {
+	const announcements = await getList<{ name: string }>(request, "CS17 Announcement", {
+		fields: ["name"],
+		filters: { title: ["like", `${TEST_ANNOUNCEMENT_PREFIX}%`] },
+		limit: 200,
+	});
 	for (const announcement of announcements) {
 		try {
 			await deleteDoc(request, "CS17 Announcement", announcement.name);
@@ -287,7 +256,7 @@ export async function cleanupTestAnnouncements(
 // Returns the created profile name, or null if one already existed.
 export async function ensureSessionFaculty(
 	request: APIRequestContext,
-	user = "Administrator",
+	user = "Administrator"
 ): Promise<string | null> {
 	const existing = await getProfileForUser(request, user);
 	if (existing) return null;
@@ -300,7 +269,7 @@ export async function ensureSessionFaculty(
 
 export async function createTestStudent(
 	request: APIRequestContext,
-	cohort: string,
+	cohort: string
 ): Promise<TestStudent> {
 	const suffix = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
 	const email = `e2e-student-${suffix}${TEST_USER_DOMAIN}`;
@@ -332,7 +301,7 @@ export interface TestFaculty {
 
 export async function createTestFaculty(
 	request: APIRequestContext,
-	roles: string[] = ["System Manager"],
+	roles: string[] = ["System Manager"]
 ): Promise<TestFaculty> {
 	const suffix = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
 	const email = `e2e-faculty-${suffix}${TEST_USER_DOMAIN}`;
@@ -380,7 +349,7 @@ export async function createTestResult(
 		student: string;
 		marksObtained?: number;
 		maxMarks?: number;
-	},
+	}
 ): Promise<TestResult> {
 	const suffix = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
 	const maxMarks = options.maxMarks ?? 100;
@@ -447,7 +416,7 @@ export async function createTestResult(
 /** Children before parents, or the exam refuses to go while marks point at it. */
 export async function cleanupTestResult(
 	request: APIRequestContext,
-	seeded: TestResult,
+	seeded: TestResult
 ): Promise<void> {
 	for (const [doctype, name] of [
 		["CS17 Result", seeded.result],
@@ -470,13 +439,13 @@ export interface TestDefaultScale {
 }
 
 export async function createTestDefaultScale(
-	request: APIRequestContext,
+	request: APIRequestContext
 ): Promise<TestDefaultScale> {
-	const [previousDefault] = await getList<{ name: string }>(
-		request,
-		"CS17 Grading Scale",
-		{ fields: ["name"], filters: { is_default: 1 }, limit: 1 },
-	);
+	const [previousDefault] = await getList<{ name: string }>(request, "CS17 Grading Scale", {
+		fields: ["name"],
+		filters: { is_default: 1 },
+		limit: 1,
+	});
 	const scale = await createDoc<{ name: string }>(request, "CS17 Grading Scale", {
 		scale_name: `E2E Scale ${Date.now()}`,
 		passing_percentage: 40,
@@ -494,7 +463,7 @@ export async function createTestDefaultScale(
 
 export async function cleanupTestDefaultScale(
 	request: APIRequestContext,
-	seeded: TestDefaultScale,
+	seeded: TestDefaultScale
 ): Promise<void> {
 	try {
 		if (seeded.previousDefault) {

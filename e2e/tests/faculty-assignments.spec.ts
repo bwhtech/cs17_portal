@@ -56,7 +56,7 @@ function assignmentTitle(): string {
 
 function createAssignment(
 	request: APIRequestContext,
-	overrides: Record<string, unknown> = {},
+	overrides: Record<string, unknown> = {}
 ): Promise<string> {
 	return callMethod<string>(request, CREATE, {
 		title: assignmentTitle(),
@@ -110,7 +110,7 @@ test.describe("Faculty assignment management", () => {
 		const doc = await getDoc<CS17Assignment & { publish_on: string }>(
 			request,
 			"CS17 Assignment",
-			name,
+			name
 		);
 		expect(doc.is_published).toBe(0);
 		expect(doc.publish_on).toContain("2030-06-01");
@@ -137,7 +137,7 @@ test.describe("Faculty assignment management", () => {
 		const doc = await getDoc<CS17Assignment & { publish_on: string }>(
 			request,
 			"CS17 Assignment",
-			name,
+			name
 		);
 		expect(doc.is_published).toBe(0);
 		expect(doc.publish_on).toContain("2030-07-01");
@@ -162,7 +162,7 @@ test.describe("Faculty assignment management", () => {
 			publish: "draft",
 		});
 		await expect(
-			callMethod(request, PUBLISH, { assignment: name, publish: "now" }),
+			callMethod(request, PUBLISH, { assignment: name, publish: "now" })
 		).rejects.toThrow();
 	});
 
@@ -200,7 +200,7 @@ test.describe("Faculty assignment management", () => {
 		const doc = await getDoc<CS17Assignment & { title: string }>(
 			request,
 			"CS17 Assignment",
-			name,
+			name
 		);
 		expect(doc.title).toBe(newTitle);
 		expect(doc.is_published).toBe(1);
@@ -228,7 +228,7 @@ test.describe("Faculty assignment management", () => {
 		const kept = await getDoc<{ assignment: string | null }>(
 			request,
 			"CS17 Project",
-			project.name,
+			project.name
 		);
 		expect(kept.assignment).toBeFalsy();
 		await deleteDoc(request, "CS17 Project", project.name);
@@ -238,9 +238,7 @@ test.describe("Faculty assignment management", () => {
 		const assignment = await createAssignment(request, { publish: "now" });
 		await createTestSubmission(request, { assignment, student: student.name });
 
-		await expect(
-			callMethod(request, DELETE, { assignment }),
-		).rejects.toThrow();
+		await expect(callMethod(request, DELETE, { assignment })).rejects.toThrow();
 		expect(await docExists(request, "CS17 Assignment", assignment)).toBe(true);
 	});
 

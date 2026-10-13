@@ -36,12 +36,11 @@ async function submitAsStudent(page: Page, assignment: string, fileUrl: string) 
 		() =>
 			(window as any).csrf_token !== undefined ||
 			(window as any).frappe?.csrf_token !== undefined,
-		{ timeout: 15000 },
+		{ timeout: 15000 }
 	);
 	return page.evaluate(
 		async ({ assignment, fileUrl, method }) => {
-			const token =
-				(window as any).csrf_token ?? (window as any).frappe?.csrf_token;
+			const token = (window as any).csrf_token ?? (window as any).frappe?.csrf_token;
 			const resp = await fetch(`/api/method/${method}`, {
 				method: "POST",
 				headers: {
@@ -52,13 +51,11 @@ async function submitAsStudent(page: Page, assignment: string, fileUrl: string) 
 			});
 			return { ok: resp.ok, status: resp.status };
 		},
-		{ assignment, fileUrl, method: SUBMIT_METHOD },
+		{ assignment, fileUrl, method: SUBMIT_METHOD }
 	);
 }
 
-const SAMPLE_PROJECT = fs
-	.readFileSync("cs17_portal/public/scratch/sample.sb3")
-	.toString("base64");
+const SAMPLE_PROJECT = fs.readFileSync("cs17_portal/public/scratch/sample.sb3").toString("base64");
 
 const BLANK_PDF =
 	"JVBERi0xLjQKMSAwIG9iago8PC9UeXBlL0NhdGFsb2cvUGFnZXMgMiAwIFI+PgplbmRvYmoKMiAwIG9iago8PC9UeXBlL1BhZ2VzL0tpZHNbMyAwIFJdL0NvdW50IDE+PgplbmRvYmoKMyAwIG9iago8PC9UeXBlL1BhZ2UvUGFyZW50IDIgMCBSL01lZGlhQm94WzAgMCAzIDNdPj4KZW5kb2JqCnhyZWYKMCA0CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAwOSAwMDAwMCBuIAowMDAwMDAwMDU0IDAwMDAwIG4gCjAwMDAwMDAxMDUgMDAwMDAgbiAKdHJhaWxlcgo8PC9TaXplIDQvUm9vdCAxIDAgUj4+CnN0YXJ0eHJlZgoxNjYKJSVFT0YK";
@@ -66,14 +63,14 @@ const BLANK_PDF =
 async function uploadAsStudent(
 	page: Page,
 	fileName: string,
-	base64Content = Buffer.from(`e2e ${fileName}`).toString("base64"),
+	base64Content = Buffer.from(`e2e ${fileName}`).toString("base64")
 ): Promise<string> {
 	await page.goto("/dashboard");
 	await page.waitForFunction(
 		() =>
 			(window as any).csrf_token !== undefined ||
 			(window as any).frappe?.csrf_token !== undefined,
-		{ timeout: 15000 },
+		{ timeout: 15000 }
 	);
 	return page.evaluate(
 		async ({ fileName, base64Content }) => {
@@ -89,7 +86,7 @@ async function uploadAsStudent(
 			});
 			return (await resp.json()).message.file_url as string;
 		},
-		{ fileName, base64Content },
+		{ fileName, base64Content }
 	);
 }
 
@@ -98,12 +95,11 @@ async function saveProjectAsStudent(page: Page, project: string) {
 		() =>
 			(window as any).csrf_token !== undefined ||
 			(window as any).frappe?.csrf_token !== undefined,
-		{ timeout: 15000 },
+		{ timeout: 15000 }
 	);
 	return page.evaluate(
 		async ({ project, content }) => {
-			const token =
-				(window as any).csrf_token ?? (window as any).frappe?.csrf_token;
+			const token = (window as any).csrf_token ?? (window as any).frappe?.csrf_token;
 			const resp = await fetch("/api/method/cs17_portal.api.save_project", {
 				method: "POST",
 				headers: {
@@ -118,15 +114,14 @@ async function saveProjectAsStudent(page: Page, project: string) {
 			});
 			return { ok: resp.ok, status: resp.status };
 		},
-		{ project, content: SAMPLE_PROJECT },
+		{ project, content: SAMPLE_PROJECT }
 	);
 }
 
 async function callAsStudent(page: Page, method: string, body: unknown) {
 	return page.evaluate(
 		async ({ method, body }) => {
-			const token =
-				(window as any).csrf_token ?? (window as any).frappe?.csrf_token;
+			const token = (window as any).csrf_token ?? (window as any).frappe?.csrf_token;
 			const resp = await fetch(`/api/method/${method}`, {
 				method: "POST",
 				headers: {
@@ -137,7 +132,7 @@ async function callAsStudent(page: Page, method: string, body: unknown) {
 			});
 			return { ok: resp.ok, body: await resp.json() };
 		},
-		{ method, body },
+		{ method, body }
 	);
 }
 
@@ -147,12 +142,11 @@ async function submitScratchAsStudent(page: Page, assignment: string, title: str
 		() =>
 			(window as any).csrf_token !== undefined ||
 			(window as any).frappe?.csrf_token !== undefined,
-		{ timeout: 15000 },
+		{ timeout: 15000 }
 	);
 	return page.evaluate(
 		async ({ assignment, title, content }) => {
-			const token =
-				(window as any).csrf_token ?? (window as any).frappe?.csrf_token;
+			const token = (window as any).csrf_token ?? (window as any).frappe?.csrf_token;
 			const call = async (method: string, body: unknown) => {
 				const resp = await fetch(`/api/method/${method}`, {
 					method: "POST",
@@ -175,7 +169,7 @@ async function submitScratchAsStudent(page: Page, assignment: string, title: str
 			await call("cs17_portal.api.submit_scratch_project", { assignment, project });
 			return project as string;
 		},
-		{ assignment, title, content: SAMPLE_PROJECT },
+		{ assignment, title, content: SAMPLE_PROJECT }
 	);
 }
 
@@ -190,7 +184,7 @@ test.describe("Student submission types", () => {
 
 	test.beforeAll(async ({ request }) => {
 		const studentInfo: StudentInfo = JSON.parse(
-			fs.readFileSync("e2e/.auth/student-info.json", "utf-8"),
+			fs.readFileSync("e2e/.auth/student-info.json", "utf-8")
 		);
 		await ensureSessionFaculty(request);
 		const cohort = studentInfo.cohort;
@@ -240,10 +234,18 @@ test.describe("Student submission types", () => {
 	});
 
 	test("rejects a non-PDF and accepts a PDF for a PDF assignment", async ({ page }) => {
-		const bad = await submitAsStudent(page, pdf.name, await uploadAsStudent(page, "report.txt"));
+		const bad = await submitAsStudent(
+			page,
+			pdf.name,
+			await uploadAsStudent(page, "report.txt")
+		);
 		expect(bad.ok).toBeFalsy();
 
-		const good = await submitAsStudent(page, pdf.name, await uploadAsStudent(page, "report.pdf", BLANK_PDF));
+		const good = await submitAsStudent(
+			page,
+			pdf.name,
+			await uploadAsStudent(page, "report.pdf", BLANK_PDF)
+		);
 		expect(good.ok).toBeTruthy();
 	});
 
@@ -290,7 +292,7 @@ test.describe("Student submission types", () => {
 				fields: ["name", "submission_document"],
 				filters: { assignment: anyType.name },
 				limit: 1,
-			},
+			}
 		);
 		expect(subs[0].submission_document).toBe(fileUrl);
 	});
@@ -306,7 +308,7 @@ test.describe("Student submission types", () => {
 			(url) =>
 				url.pathname.includes("/projects/") &&
 				url.pathname.endsWith("/edit") &&
-				url.searchParams.get("assignment") === scratch.name,
+				url.searchParams.get("assignment") === scratch.name
 		);
 
 		// The defaults are written as the editor frame mounts, which waits on the
@@ -315,8 +317,7 @@ test.describe("Student submission types", () => {
 
 		const editorDefaults = await page.evaluate(() => ({
 			theme: localStorage.getItem("tw:theme"),
-			pauseEnabled: JSON.parse(localStorage.getItem("tw:addons") ?? "{}").pause
-				?.enabled,
+			pauseEnabled: JSON.parse(localStorage.getItem("tw:addons") ?? "{}").pause?.enabled,
 		}));
 		expect(editorDefaults.theme).toBe("light");
 		expect(editorDefaults.pauseEnabled).toBe(false);
@@ -335,7 +336,7 @@ test.describe("Student submission types", () => {
 		// `route="/"` makes this frappe-ui Button render as a router link.
 		await dialog.getByRole("link", { name: "Go to Dashboard" }).click();
 		await page.waitForURL(
-			(url) => url.pathname === "/dashboard" || url.pathname === "/dashboard/",
+			(url) => url.pathname === "/dashboard" || url.pathname === "/dashboard/"
 		);
 	});
 
@@ -348,15 +349,11 @@ test.describe("Student submission types", () => {
 		const row = assignmentRow(page, scratch.title);
 		await row.getByRole("button", { name: "Preview" }).click();
 
-		await page.waitForURL(
-			(url) => url.pathname === `/dashboard/projects/${project}/edit`,
-		);
+		await page.waitForURL((url) => url.pathname === `/dashboard/projects/${project}/edit`);
 		await expect(page.getByTitle("Scratch editor")).toBeVisible();
 	});
 
-	test("reopening an assignment project submits to it without the picker", async ({
-		page,
-	}) => {
+	test("reopening an assignment project submits to it without the picker", async ({ page }) => {
 		await page.goto("/dashboard/projects");
 		const created = await callAsStudent(page, "cs17_portal.api.create_project", {
 			project_title: `${TEST_ASSIGNMENT_PREFIX} Reopen ${Date.now()}`,
@@ -390,24 +387,29 @@ test.describe("Student submission types", () => {
 					.contentFrame()
 					.locator("html")
 					.evaluate(() =>
-						(window as any).cs17vm?.runtime.targets.map((target: any) => target.getName())
+						(window as any).cs17vm?.runtime.targets.map((target: any) =>
+							target.getName()
+						)
 					)
 			)
 			.toEqual(["Stage"]);
 		await page.evaluate(() =>
 			window.postMessage(
 				{ type: "project-sb3", sb3: new TextEncoder().encode("from the page").buffer },
-				"*",
-			),
+				"*"
+			)
 		);
 		await editor
 			.contentFrame()
 			.locator("html")
 			.evaluate(() =>
 				window.parent.postMessage(
-					{ type: "project-sb3", sb3: new TextEncoder().encode("from the editor").buffer },
-					"*",
-				),
+					{
+						type: "project-sb3",
+						sb3: new TextEncoder().encode("from the editor").buffer,
+					},
+					"*"
+				)
 			);
 
 		await page.getByRole("button", { name: "Save", exact: true }).click();
@@ -443,12 +445,12 @@ test.describe("Student submission types", () => {
 		const project = await submitScratchAsStudent(
 			page,
 			scratchGraded.name,
-			scratchGraded.title,
+			scratchGraded.title
 		);
 		const [submission] = await getList<{ name: string }>(
 			request,
 			"CS17 Assignment Submission",
-			{ fields: ["name"], filters: { assignment: scratchGraded.name }, limit: 1 },
+			{ fields: ["name"], filters: { assignment: scratchGraded.name }, limit: 1 }
 		);
 		await createDoc(request, "CS17 Assignment Grade", {
 			assignment: scratchGraded.name,
@@ -461,39 +463,27 @@ test.describe("Student submission types", () => {
 		const row = assignmentRow(page, scratchGraded.title);
 		await row.getByRole("button", { name: "Preview" }).click();
 		await page.waitForURL(
-			(url) =>
-				url.pathname.endsWith("/edit") &&
-				url.searchParams.get("readonly") === "1",
+			(url) => url.pathname.endsWith("/edit") && url.searchParams.get("readonly") === "1"
 		);
 		// A read-only frame titles itself as the player, not the editor.
 		await expect(page.getByTitle("Scratch project player")).toBeVisible();
 
 		await expect(page.getByText("View only")).toBeVisible();
-		await expect(
-			page.getByRole("button", { name: "Submit", exact: true }),
-		).toHaveCount(0);
-		await expect(
-			page.getByRole("button", { name: "Save", exact: true }),
-		).toHaveCount(0);
+		await expect(page.getByRole("button", { name: "Submit", exact: true })).toHaveCount(0);
+		await expect(page.getByRole("button", { name: "Save", exact: true })).toHaveCount(0);
 
 		await expect(
 			page
 				.getByTitle("Scratch project player")
 				.contentFrame()
 				.locator(".blocklyBlockCanvas")
-				.first(),
+				.first()
 		).toHaveCSS("pointer-events", "none");
 
-		await page.goto(
-			`/dashboard/projects/${project}/edit?assignment=${scratchGraded.name}`,
-		);
+		await page.goto(`/dashboard/projects/${project}/edit?assignment=${scratchGraded.name}`);
 		await expect(page.getByText("View only")).toBeVisible();
-		await expect(
-			page.getByRole("button", { name: "Submit", exact: true }),
-		).toHaveCount(0);
-		await expect(
-			page.getByRole("button", { name: "Save", exact: true }),
-		).toHaveCount(0);
+		await expect(page.getByRole("button", { name: "Submit", exact: true })).toHaveCount(0);
+		await expect(page.getByRole("button", { name: "Save", exact: true })).toHaveCount(0);
 	});
 
 	test("submit dialog adapts to the assignment type", async ({ page }) => {
@@ -504,7 +494,7 @@ test.describe("Student submission types", () => {
 		await expect(page.getByText("Upload a PDF only")).toBeVisible();
 		await expect(page.locator('input[type="file"]')).toHaveAttribute(
 			"accept",
-			"application/pdf",
+			"application/pdf"
 		);
 		await page.keyboard.press("Escape");
 
@@ -536,7 +526,7 @@ test.describe("Student in another timezone", () => {
 
 	test("an assignment due in an hour of site time is still open", async ({ page, request }) => {
 		const studentInfo: StudentInfo = JSON.parse(
-			fs.readFileSync("e2e/.auth/student-info.json", "utf-8"),
+			fs.readFileSync("e2e/.auth/student-info.json", "utf-8")
 		);
 		await ensureSessionFaculty(request);
 		await page.goto("/dashboard/assignments");
@@ -550,7 +540,7 @@ test.describe("Student in another timezone", () => {
 
 		await page.reload();
 		await expect(
-			assignmentRow(page, assignment.title).getByRole("button", { name: "Submit" }),
+			assignmentRow(page, assignment.title).getByRole("button", { name: "Submit" })
 		).toBeVisible();
 	});
 });

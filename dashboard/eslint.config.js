@@ -19,9 +19,9 @@ export default tseslint.config(
 		},
 		rules: {
 			'vue/multi-word-component-names': 'off',
-			// Prettier formats .vue end to end (see .prettierrc.json, and the
-			// pre-commit hook). ESLint must not have an opinion on layout: the
-			// two disagree on `switch` bodies and fight over every fix.
+			// Prettier formats .vue end to end (see .prettierrc; `yarn lint`
+			// checks it). ESLint must not have an opinion on layout: the two
+			// disagree on `switch` bodies and fight over every fix.
 			'vue/html-indent': 'off',
 			'vue/script-indent': 'off',
 			'vue/html-self-closing': 'off',

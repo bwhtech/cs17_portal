@@ -5,11 +5,11 @@ const authFile = path.join(__dirname, "e2e", ".auth", "user.json");
 const studentAuthFile = path.join(__dirname, "e2e", ".auth", "student.json");
 const facultyAuthFile = path.join(__dirname, "e2e", ".auth", "faculty.json");
 const studentSpecs = /(student-submission|student-theme|student-results)\.spec\.ts/;
-const facultySpecs = /(faculty-announcements-ui|faculty-assignments-ui|faculty-profile-ui|faculty-projects)\.spec\.ts/;
+const facultySpecs =
+	/(faculty-announcements-ui|faculty-assignments-ui|faculty-profile-ui|faculty-projects)\.spec\.ts/;
 
 const SITE_HOST = process.env.SITE_HOST || "cs17.portal:8000";
 const SITE_DOMAIN = SITE_HOST.split(":")[0];
-const API_BASE = process.env.API_BASE || "http://127.0.0.1:8000";
 const PAGE_BASE = process.env.BASE_URL || `http://${SITE_HOST}`;
 
 export default defineConfig({

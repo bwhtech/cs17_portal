@@ -14,7 +14,7 @@ export class LoginPage {
 		// Frappe dropped the .btn-login class when the login page moved to the
 		// es-button design system, so target the submit button by role instead.
 		this.submitButton = page.locator(
-			"section.for-login form.form-login button[type='submit']",
+			"section.for-login form.form-login button[type='submit']"
 		);
 		this.errorMessage = page.locator(".msgprint, .alert-danger").first();
 	}
@@ -23,6 +23,9 @@ export class LoginPage {
 		await this.page.goto("/login");
 		await this.emailInput.waitFor({ state: "visible" });
 		await this.passwordInput.waitFor({ state: "visible" });
+		// Frappe drops `hide` from this form in the callback that binds the submit
+		// handler. A click before that is a plain form submit: /login reloads.
+		await expect(this.page.locator("form.form-forgot")).not.toHaveClass(/\bhide\b/);
 	}
 
 	async fillCredentials(email: string, password: string): Promise<void> {

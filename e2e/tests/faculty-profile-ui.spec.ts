@@ -38,7 +38,7 @@ test.describe("Faculty profile settings", () => {
 			mimeType: "image/png",
 			buffer: Buffer.from(
 				"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-				"base64",
+				"base64"
 			),
 		});
 		await expect(removePhotoButton(page)).toBeVisible();

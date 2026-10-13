@@ -32,9 +32,7 @@ test.describe("Student results", () => {
 	let otherStudent: { email: string; profileName: string };
 
 	test.beforeAll(async ({ request }) => {
-		student = JSON.parse(
-			fs.readFileSync("e2e/.auth/student-info.json", "utf-8"),
-		);
+		student = JSON.parse(fs.readFileSync("e2e/.auth/student-info.json", "utf-8"));
 
 		own = await createTestResult(request, {
 			cohort: student.cohort,
@@ -83,7 +81,7 @@ test.describe("Student results", () => {
 
 	test("refuses another student's result", async ({ page }) => {
 		const response = await page.request.get(
-			`/api/v2/method/cs17_portal.api.get_student_result?result=${other.result}`,
+			`/api/v2/method/cs17_portal.api.get_student_result?result=${other.result}`
 		);
 		expect(response.status()).toBe(403);
 

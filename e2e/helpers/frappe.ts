@@ -101,7 +101,7 @@ export async function uploadFile(
 		docname: string;
 		fieldname?: string;
 		isPrivate?: boolean;
-	},
+	}
 ): Promise<{ file_url: string; name: string }> {
 	const response = await request.post(`${API_BASE}/api/method/upload_file`, {
 		headers: apiHeaders(),
@@ -132,7 +132,7 @@ export async function uploadFile(
 export async function createDoc<T = Record<string, unknown>>(
 	request: APIRequestContext,
 	doctype: string,
-	doc: Record<string, unknown>,
+	doc: Record<string, unknown>
 ): Promise<T> {
 	const response = await request.post(`${API_BASE}/api/resource/${doctype}`, {
 		data: doc,
@@ -154,11 +154,11 @@ export async function createDoc<T = Record<string, unknown>>(
 export async function getDoc<T = Record<string, unknown>>(
 	request: APIRequestContext,
 	doctype: string,
-	name: string,
+	name: string
 ): Promise<T> {
 	const response = await request.get(
 		`${API_BASE}/api/resource/${doctype}/${encodeURIComponent(name)}`,
-		{ headers: apiHeaders() },
+		{ headers: apiHeaders() }
 	);
 
 	if (!response.ok()) {
@@ -177,14 +177,14 @@ export async function updateDoc<T = Record<string, unknown>>(
 	request: APIRequestContext,
 	doctype: string,
 	name: string,
-	updates: Record<string, unknown>,
+	updates: Record<string, unknown>
 ): Promise<T> {
 	const response = await request.put(
 		`${API_BASE}/api/resource/${doctype}/${encodeURIComponent(name)}`,
 		{
 			data: updates,
 			headers: apiHeaders({ "Content-Type": "application/json" }),
-		},
+		}
 	);
 
 	if (!response.ok()) {
@@ -202,11 +202,11 @@ export async function updateDoc<T = Record<string, unknown>>(
 export async function deleteDoc(
 	request: APIRequestContext,
 	doctype: string,
-	name: string,
+	name: string
 ): Promise<void> {
 	const response = await request.delete(
 		`${API_BASE}/api/resource/${doctype}/${encodeURIComponent(name)}`,
-		{ headers: apiHeaders() },
+		{ headers: apiHeaders() }
 	);
 
 	if (!response.ok()) {
@@ -221,7 +221,7 @@ export async function deleteDoc(
 export async function callMethod<T = unknown>(
 	request: APIRequestContext,
 	method: string,
-	args: Record<string, unknown> = {},
+	args: Record<string, unknown> = {}
 ): Promise<T> {
 	const response = await request.post(`${API_BASE}/api/method/${method}`, {
 		data: args,
@@ -243,7 +243,7 @@ export async function callMethod<T = unknown>(
 export async function callGetMethod<T = unknown>(
 	request: APIRequestContext,
 	method: string,
-	params: Record<string, string | number> = {},
+	params: Record<string, string | number> = {}
 ): Promise<T> {
 	const searchParams = new URLSearchParams();
 	for (const [key, value] of Object.entries(params)) {
@@ -252,7 +252,7 @@ export async function callGetMethod<T = unknown>(
 
 	const response = await request.get(
 		`${API_BASE}/api/method/${method}?${searchParams.toString()}`,
-		{ headers: apiHeaders() },
+		{ headers: apiHeaders() }
 	);
 
 	if (!response.ok()) {
@@ -275,7 +275,7 @@ export async function getList<T = Record<string, unknown>>(
 		filters?: Record<string, unknown>;
 		limit?: number;
 		orderBy?: string;
-	} = {},
+	} = {}
 ): Promise<T[]> {
 	const params = new URLSearchParams();
 
@@ -294,7 +294,7 @@ export async function getList<T = Record<string, unknown>>(
 
 	const response = await request.get(
 		`${API_BASE}/api/resource/${doctype}?${params.toString()}`,
-		{ headers: apiHeaders() },
+		{ headers: apiHeaders() }
 	);
 
 	if (!response.ok()) {
@@ -312,7 +312,7 @@ export async function getList<T = Record<string, unknown>>(
 export async function docExists(
 	request: APIRequestContext,
 	doctype: string,
-	name: string,
+	name: string
 ): Promise<boolean> {
 	try {
 		await getDoc(request, doctype, name);

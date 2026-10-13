@@ -30,9 +30,7 @@ test.describe("CS17 Profile", () => {
 		}
 	});
 
-	test("derives full_name and uses the student naming series", async ({
-		request,
-	}) => {
+	test("derives full_name and uses the student naming series", async ({ request }) => {
 		const profile = await createTestProfile(request, {
 			profileType: "Student",
 			firstName: "E2E",
@@ -44,9 +42,7 @@ test.describe("CS17 Profile", () => {
 		expect(profile.name).toMatch(/^CS17-STU-/);
 	});
 
-	test("uses the faculty naming series for faculty profiles", async ({
-		request,
-	}) => {
+	test("uses the faculty naming series for faculty profiles", async ({ request }) => {
 		const profile = await createTestProfile(request, {
 			profileType: "Faculty",
 		});
@@ -65,13 +61,11 @@ test.describe("CS17 Profile", () => {
 		createdProfiles.push(profile.name);
 
 		await expect(
-			createTestProfile(request, { profileType: "Faculty", user: user.name }),
+			createTestProfile(request, { profileType: "Faculty", user: user.name })
 		).rejects.toThrow();
 	});
 
-	test("get_user_profile returns the session user's profile", async ({
-		request,
-	}) => {
+	test("get_user_profile returns the session user's profile", async ({ request }) => {
 		// The API keys off frappe.session.user, so ensure that user has a profile.
 		const sessionUser = "Administrator";
 		const existing = await getProfileForUser(request, sessionUser);

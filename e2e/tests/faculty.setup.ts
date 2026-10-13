@@ -27,7 +27,7 @@ setup("seed and authenticate a faculty member", async ({ page, request }) => {
 			});
 			return { ok: resp.ok, status: resp.status };
 		},
-		{ usr: faculty.email, pwd: faculty.password },
+		{ usr: faculty.email, pwd: faculty.password }
 	);
 	expect(loginResult.ok).toBeTruthy();
 

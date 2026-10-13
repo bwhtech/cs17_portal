@@ -60,7 +60,9 @@ test.describe("Faculty profile editing", () => {
 
 	test("sets and clears the profile picture", async ({ request, page }) => {
 		await page.goto("/dashboard");
-		await page.waitForFunction(() => (window as any).csrf_token !== undefined, { timeout: 15000 });
+		await page.waitForFunction(() => (window as any).csrf_token !== undefined, {
+			timeout: 15000,
+		});
 		const avatar: string = await page.evaluate(async () => {
 			const form = new FormData();
 			form.append("file", new File(["e2e avatar"], "e2e-avatar.png"));
@@ -95,7 +97,7 @@ test.describe("Faculty profile editing", () => {
 			callMethod<UpdatedProfile>(request, UPDATE, {
 				first_name: "OnlyFirst",
 				last_name: "",
-			}),
+			})
 		).rejects.toThrow();
 	});
 });
