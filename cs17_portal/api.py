@@ -183,6 +183,8 @@ def _apply_publish_state(
 	doc: "Document", publish: str, publish_on: str | None, publish_on_field: str = "publish_on"
 ) -> None:
 	if publish == "now":
+		if not is_published_now(doc, publish_on_field):
+			doc.set(publish_on_field, None)
 		doc.is_published = 1
 	elif publish == "schedule":
 		if not publish_on:
@@ -303,8 +305,6 @@ def grade_submission(
 			"remarks": remarks,
 		}
 	)
-	if publish == "now" and not is_published_now(doc, "published_on"):
-		doc.published_on = None
 	_apply_publish_state(doc, publish, publish_on, "published_on")
 	doc.save(ignore_permissions=True)
 	return {"name": doc.name}
