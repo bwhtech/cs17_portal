@@ -12,6 +12,7 @@ function darkModeSwitch(page: Page) {
 async function openSettings(page: Page) {
 	await page.locator('[data-slot="sidebar"] button').last().click();
 	await page.getByRole("menuitem", { name: "Settings" }).click();
+	await page.getByRole("tab", { name: "Preferences" }).click();
 	await expect(darkModeSwitch(page)).toBeVisible();
 }
 

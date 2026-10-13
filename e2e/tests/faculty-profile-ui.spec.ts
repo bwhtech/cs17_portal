@@ -4,25 +4,27 @@ async function openSettings(page: Page) {
 	await page.goto("/dashboard");
 	await page.locator('[data-slot="sidebar"] button').last().click();
 	await page.getByRole("menuitem", { name: "Settings" }).click();
+	await page.getByRole("tab", { name: "Profile" }).click();
 	await expect(page.getByLabel("First name")).toBeVisible();
 }
 
-const saveButton = (page: Page) => page.getByRole("button", { name: "Save", exact: true });
-const removePhotoButton = (page: Page) => page.getByRole("button", { name: "Remove photo" });
+const uploadPhotoButton = (page: Page) =>
+	page.getByRole("button", { name: "Upload profile picture" });
+const photoEditor = (page: Page) => page.getByRole("dialog", { name: "Edit photo" });
 
 test.describe("Faculty profile settings", () => {
-	test("says which name is missing when saved without one", async ({ page }) => {
+	test("says which name is missing when a name is cleared", async ({ page }) => {
 		await openSettings(page);
 		await page.getByLabel("First name").fill("");
-		await saveButton(page).click();
+		await page.getByLabel("First name").blur();
 		await expect(page.getByText("Add your first name.")).toBeVisible();
 	});
 
 	test("keeps a new last name across a reload", async ({ page }) => {
 		await openSettings(page);
 		await page.getByLabel("Last name").fill("Renamed");
-		await saveButton(page).click();
-		await expect(page.getByText("Profile saved")).toBeVisible();
+		await page.getByLabel("Last name").blur();
+		await expect(page.getByText("Name saved")).toBeVisible();
 
 		await openSettings(page);
 		await expect(page.getByLabel("Last name")).toHaveValue("Renamed");
@@ -31,7 +33,7 @@ test.describe("Faculty profile settings", () => {
 	test("uploads and removes a profile photo", async ({ page }) => {
 		await openSettings(page);
 		const fileChooserPromise = page.waitForEvent("filechooser");
-		await page.getByRole("button", { name: "Change photo" }).click();
+		await uploadPhotoButton(page).click();
 		const fileChooser = await fileChooserPromise;
 		await fileChooser.setFiles({
 			name: "avatar.png",
@@ -41,16 +43,15 @@ test.describe("Faculty profile settings", () => {
 				"base64"
 			),
 		});
-		await expect(removePhotoButton(page)).toBeVisible();
-		await saveButton(page).click();
-		await expect(page.getByText("Profile saved")).toBeVisible();
+		await photoEditor(page).getByRole("button", { name: "Save" }).click();
+		await expect(photoEditor(page)).toBeHidden();
 
 		await openSettings(page);
-		await removePhotoButton(page).click();
-		await saveButton(page).click();
-		await expect(page.getByText("Profile saved")).toBeVisible();
+		await page.getByRole("button", { name: "Profile picture options" }).click();
+		await page.getByRole("menuitem", { name: "Remove photo" }).click();
+		await expect(uploadPhotoButton(page)).toBeVisible();
 
 		await openSettings(page);
-		await expect(removePhotoButton(page)).toBeHidden();
+		await expect(uploadPhotoButton(page)).toBeVisible();
 	});
 });
