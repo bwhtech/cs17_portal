@@ -309,6 +309,10 @@ const answerRemark = useCall<null, AnswerTarget & { remark: string }>({
 
 const sheet = computed(() => answerSheet.data?.sheet ?? null)
 
+watch(sheet, () => {
+	if (!sheet.value) answersTarget.value = null
+})
+
 function answersOf(row: CS17Submission) {
 	return sheet.value?.students.find((student) => student.student === row.student)
 }
