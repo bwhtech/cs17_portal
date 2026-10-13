@@ -6,13 +6,13 @@
 		:is="isDesktop ? Dialog : BottomSheet"
 		v-bind="isDesktop ? { size: '3xl' } : {}"
 		:open="open"
-		:title="draftName ? 'Continue Draft' : 'New Assignment'"
+		:title="scheduled ? 'Edit Assignment' : draftName ? 'Continue Draft' : 'New Assignment'"
 		@update:open="emit('update:open', $event)"
 	>
 		<LoadError
 			v-if="loadFailed"
 			:class="isDesktop ? undefined : 'px-4 pb-6'"
-			title="Could not load this draft"
+			:title="scheduled ? 'Could not load this assignment' : 'Could not load this draft'"
 			:loading="existingCall.loading"
 			@retry="draftName && loadExisting(draftName)"
 		/>
@@ -31,8 +31,8 @@
 
 		<div v-else :class="isDesktop ? undefined : 'px-4 pb-6'">
 			<p class="text-p-base text-ink-gray-5">
-				Fill in the details, then switch to Preview to see the student view. Closing keeps
-				your work as a draft.
+				Fill in the details, then switch to Preview to see the student view.
+				<template v-if="!scheduled">Closing keeps your work as a draft.</template>
 			</p>
 
 			<Tabs
@@ -201,8 +201,9 @@ const props = defineProps<{
 	/** Cohort names for the picker; the page already lists them for its filter. */
 	cohorts: string[]
 	quarters: string[]
-	/** An existing draft to continue. Unset for a brand-new assignment. */
+	/** An existing draft or scheduled assignment. Unset for a brand-new assignment. */
 	draftName?: string | null
+	scheduled?: boolean
 }>()
 
 const emit = defineEmits<{ 'update:open': [value: boolean]; saved: [] }>()

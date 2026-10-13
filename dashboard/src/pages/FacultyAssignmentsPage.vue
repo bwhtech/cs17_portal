@@ -97,7 +97,7 @@
 							icon="lucide-pencil"
 							:aria-label="`Edit ${row.title}`"
 							tooltip="Edit"
-							@click="openDraft(row.name)"
+							@click="openDraft(row.name, true)"
 						/>
 						<Button
 							v-if="!row.is_published"
@@ -124,6 +124,7 @@
 		:cohorts="cohorts"
 		:quarters="quarters"
 		:draft-name="editingDraft"
+		:scheduled="editingScheduled"
 		@saved="assignmentsCall.reload()"
 	/>
 
@@ -182,6 +183,7 @@ const draftsOpen = ref(false)
 const formOpen = ref(false)
 const formKey = ref(0)
 const editingDraft = ref<string | null>(null)
+const editingScheduled = ref(false)
 const publishTarget = ref<AssignmentRow | null>(null)
 const deleteTarget = ref<AssignmentRow | null>(null)
 
@@ -250,11 +252,13 @@ function status(assignment: CS17Assignment) {
 
 function openNew() {
 	editingDraft.value = null
+	editingScheduled.value = false
 	formOpen.value = true
 }
 
-function openDraft(name: string) {
+function openDraft(name: string, scheduled = false) {
 	editingDraft.value = name
+	editingScheduled.value = scheduled
 	formOpen.value = true
 }
 
