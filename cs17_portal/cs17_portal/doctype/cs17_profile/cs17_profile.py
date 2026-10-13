@@ -24,7 +24,7 @@ class CS17Profile(Document):
 		first_name: DF.Data
 		full_name: DF.Data | None
 		last_name: DF.Data
-		naming_series: DF.Literal["CS17-STU-{cohort}-.###", "CS17-FAC.###"]
+		naming_series: DF.Literal["CS17-STU-{cohort}-.###", "CS17-FAC-.###"]
 		primary_phone: DF.Data | None
 		profile_picture: DF.AttachImage | None
 		profile_type: DF.Literal["Student", "Faculty"]
