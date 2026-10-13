@@ -37,7 +37,9 @@ class CS17Announcement(Document):
 
 	def set_published_date(self):
 		date_given = self.published_date and self.has_value_changed("published_date")
-		if self.is_published and self.has_value_changed("is_published") and not date_given:
+		if not self.is_published:
+			self.published_date = None
+		elif self.has_value_changed("is_published") and not date_given:
 			self.published_date = today()
 
 	def on_update(self):

@@ -1396,7 +1396,6 @@ def _apply_announcement_publish(doc: "Document", publish: str, publish_on: str |
 				_("The publish date must be in the future. Pick a later time, or choose Publish now")
 			)
 		doc.is_published = 0
-		doc.published_date = None
 		doc.publish_on = publish_on
 	else:
 		doc.is_published = 0
