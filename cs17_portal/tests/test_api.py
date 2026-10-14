@@ -800,3 +800,13 @@ class TestUpdateMyProfile(FrappeTestCase):
 		self.assertEqual(
 			frappe.get_all("File", filters={"file_url": file.file_url}, pluck="name"), [file.name]
 		)
+
+	def test_omitted_profile_picture_keeps_the_saved_one(self):
+		frappe.db.set_value("CS17 Profile", self.faculty, "profile_picture", "/files/faculty-110.png")
+
+		frappe.set_user(self.faculty_user)
+		api.update_my_profile("Tejeshawari", "Mourya")
+
+		self.assertEqual(
+			frappe.db.get_value("CS17 Profile", self.faculty, "profile_picture"), "/files/faculty-110.png"
+		)

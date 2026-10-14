@@ -45,6 +45,7 @@
 			<Slider
 				v-model="zoomValue"
 				class="min-w-0 flex-1"
+				aria-label="Zoom"
 				:min="MIN_ZOOM"
 				:max="MAX_ZOOM"
 				:step="1"
@@ -61,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { Button, Slider } from 'frappe-ui'
 
 const OUTPUT_SIZE = 512
@@ -90,7 +91,10 @@ const zoomValue = ref([MIN_ZOOM])
 const dragState = ref<{ pointerId: number; start: Point; offset: Point } | null>(null)
 
 const zoom = computed(() => zoomValue.value[0] / 100)
-const frameSize = computed(() => frame.value?.clientWidth || 0)
+const frameSize = ref(0)
+const resizeObserver = new ResizeObserver(() => {
+	frameSize.value = frame.value?.clientWidth || 0
+})
 const rotatedSize = computed(() => {
 	if (!imageSize.value) return null
 	if (rotation.value % 180 === 0) return imageSize.value
@@ -140,8 +144,10 @@ watch(
 	{ immediate: true },
 )
 
-watch([zoomValue, rotation], constrainOffset)
+watch([zoomValue, rotation, frameSize], constrainOffset)
 
+onMounted(() => frame.value && resizeObserver.observe(frame.value))
+onBeforeUnmount(() => resizeObserver.disconnect())
 onBeforeUnmount(clearImageUrl)
 
 function resetCrop() {

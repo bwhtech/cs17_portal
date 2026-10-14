@@ -193,7 +193,7 @@ async function saveName() {
 
 	const failure = await save({ first_name: first, last_name: last }, 'Could not save your name.')
 	if (failure) toast.error(failure)
-	else toast.success('Name saved')
+	else toast.success('Name saved', { id: 'name-saved' })
 }
 
 function selectPhoto(event: Event) {

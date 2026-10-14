@@ -54,4 +54,20 @@ test.describe("Faculty profile settings", () => {
 		await openSettings(page);
 		await expect(uploadPhotoButton(page)).toBeVisible();
 	});
+
+	test("names the zoom slider in the crop step", async ({ page }) => {
+		await openSettings(page);
+		const fileChooserPromise = page.waitForEvent("filechooser");
+		await uploadPhotoButton(page).click();
+		const fileChooser = await fileChooserPromise;
+		await fileChooser.setFiles({
+			name: "avatar.png",
+			mimeType: "image/png",
+			buffer: Buffer.from(
+				"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+				"base64"
+			),
+		});
+		await expect(photoEditor(page).getByRole("slider", { name: "Zoom" })).toBeVisible();
+	});
 });
