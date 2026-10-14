@@ -394,6 +394,25 @@ class TestCS17Project(FrappeTestCase):
 			b64(make_zip({"notes.txt": b"ls -la\n"})),
 		)
 
+	def test_python_project_keeps_its_saved_code(self):
+		frappe.set_user(STUDENT1_USER)
+		project = api.create_project("Number Guesser", project_type="Python")["name"]
+		api.save_python_project(project, 'print("hello")\n')
+
+		self.assertEqual(api.get_project(project)["code"], 'print("hello")\n')
+
+	def test_python_code_is_not_saved_to_a_scratch_project(self):
+		frappe.set_user(STUDENT1_USER)
+		project = api.create_project("Student 1 Project")["name"]
+
+		self.assertRaisesRegex(
+			frappe.ValidationError,
+			"This is not a Python project.",
+			api.save_python_project,
+			project,
+			'print("hello")\n',
+		)
+
 	def test_first_submit_saves_the_submission_once(self):
 		project = self.make_saved_project()
 		submission = frappe.get_doc(
