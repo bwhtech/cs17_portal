@@ -43,7 +43,7 @@
 						@click="requestSave('manual')"
 					/>
 					<Button
-						v-if="isStudent"
+						v-if="isStudent && !failed"
 						variant="solid"
 						theme="gray"
 						:icon-left="isDesktop ? 'lucide-send' : undefined"
