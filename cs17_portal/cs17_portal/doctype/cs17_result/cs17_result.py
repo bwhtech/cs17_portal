@@ -138,7 +138,7 @@ class CS17Result(Document):
 		if not (self.quarter and self.cohort):
 			return
 
-		assignments = get_quarter_assignments(self.quarter, self.cohort)
+		assignments = get_quarter_assignments(self.quarter, self.cohort, self.student)
 		grades = get_student_grades(self.student, [row.name for row in assignments])
 		for assignment in assignments:
 			graded = assignment.assignment_type == "Graded"

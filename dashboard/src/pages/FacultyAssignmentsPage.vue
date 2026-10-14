@@ -52,11 +52,13 @@
 
 			<DataTable
 				v-else
+				v-model:selection="selection"
 				:columns="columns"
 				:rows="rows"
 				:row-key="(row: AssignmentRow) => row.name"
 				:loading="assignmentsCall.loading && !assignmentsCall.data"
 				:row-height="60"
+				selectable
 				empty="No assignments yet."
 			>
 				<template #cell-icon="{ row }">
@@ -66,12 +68,21 @@
 				<!-- Same two-line row as the student list: title over the
 				     cohort, what is expected, and when it is due. -->
 				<template #cell-title="{ row }">
-					<RowTitle :title="row.title" :to="`/faculty/assignments/${row.name}`">
-						<template v-if="row.due_date">
-							Due {{ formatDateTime(row.due_date) }} ·
-						</template>
-						{{ row.submission_type ?? 'Any' }} · {{ row.cohort }}
-					</RowTitle>
+					<div class="flex min-w-0 items-start gap-2">
+						<RowTitle :title="row.title" :to="`/faculty/assignments/${row.name}`">
+							<template v-if="row.due_date">
+								Due {{ formatDateTime(row.due_date) }} ·
+							</template>
+							{{ row.submission_type ?? 'Any' }} · {{ row.cohort }}
+						</RowTitle>
+						<Badge
+							v-if="row.student_count"
+							class="shrink-0"
+							:label="`${row.student_count} ${row.student_count === 1 ? 'student' : 'students'}`"
+							theme="blue"
+							variant="subtle"
+						/>
+					</div>
 				</template>
 
 				<template #cell-submission_count="{ row }">
@@ -116,6 +127,13 @@
 				</template>
 			</DataTable>
 		</div>
+
+		<AssignmentBulkActions
+			v-if="selection.length"
+			:assignments="selection"
+			@done="onBulkDone"
+			@clear="selection = []"
+		/>
 	</PageBody>
 
 	<AssignmentFormDialog
@@ -144,12 +162,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Badge, Button, Select, useCall } from 'frappe-ui'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
 import SubmissionTypeIcon from '@/components/common/SubmissionTypeIcon.vue'
+import AssignmentBulkActions from '@/components/faculty/AssignmentBulkActions.vue'
 import AssignmentFormDialog from '@/components/faculty/AssignmentFormDialog.vue'
 import DeleteAssignmentDialog from '@/components/faculty/DeleteAssignmentDialog.vue'
 import PublishAssignmentDialog from '@/components/faculty/PublishAssignmentDialog.vue'
@@ -186,6 +205,7 @@ const editingDraft = ref<string | null>(null)
 const editingScheduled = ref(false)
 const publishTarget = ref<AssignmentRow | null>(null)
 const deleteTarget = ref<AssignmentRow | null>(null)
+const selection = ref<string[]>([])
 
 const cohortsCall = useCall<string[]>({
 	url: '/api/v2/method/cs17_portal.api.get_cohorts',
@@ -219,6 +239,11 @@ const rows = computed<AssignmentRow[]>(() =>
 	(assignmentsCall.data ?? []).map((assignment) => ({ ...assignment, ...status(assignment) })),
 )
 
+watch(rows, () => {
+	const names = new Set(rows.value.map((row) => row.name))
+	selection.value = selection.value.filter((name) => names.has(name))
+})
+
 /** Neither published nor scheduled — the rows the Drafts row offers to reopen. */
 const drafts = computed(() => rows.value.filter((row) => row.statusLabel === 'Draft'))
 
@@ -234,6 +259,11 @@ function onPublished() {
 
 function onDeleteOpen(open: boolean) {
 	if (!open) deleteTarget.value = null
+}
+
+function onBulkDone() {
+	selection.value = []
+	assignmentsCall.reload()
 }
 
 function status(assignment: CS17Assignment) {

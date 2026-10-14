@@ -7,6 +7,15 @@
 			<Button
 				v-if="assignment"
 				:variant="isDesktop ? 'subtle' : 'ghost'"
+				:icon-left="isDesktop ? 'lucide-users' : undefined"
+				:icon="isDesktop ? undefined : 'lucide-users'"
+				:tooltip="isDesktop ? undefined : 'Students'"
+				label="Students"
+				@click="studentsOpen = true"
+			/>
+			<Button
+				v-if="assignment"
+				:variant="isDesktop ? 'subtle' : 'ghost'"
 				:icon-left="isDesktop ? 'lucide-link' : undefined"
 				:icon="isDesktop ? undefined : 'lucide-link'"
 				:tooltip="isDesktop ? undefined : 'Copy submission link'"
@@ -194,6 +203,15 @@
 		@update:open="gradeTarget = null"
 		@success="detail.reload()"
 	/>
+
+	<AssignmentStudentsDialog
+		v-if="studentsOpen && assignment"
+		v-model:open="studentsOpen"
+		:assignment="assignment.name"
+		:cohort="assignment.cohort ?? ''"
+		:students="assignment.students ?? []"
+		@saved="detail.reload()"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -210,6 +228,7 @@ import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import SubmissionPreviewDialog from '@/components/assignments/SubmissionPreviewDialog.vue'
 import AnswersDialog from '@/components/answers/AnswersDialog.vue'
 import AnswerSheetCard from '@/components/faculty/AnswerSheetCard.vue'
+import AssignmentStudentsDialog from '@/components/faculty/AssignmentStudentsDialog.vue'
 import GradeSubmissionDialog from '@/components/faculty/GradeSubmissionDialog.vue'
 import SubmissionAssignees from '@/components/faculty/SubmissionAssignees.vue'
 import SubmissionBulkActions from '@/components/faculty/SubmissionBulkActions.vue'
@@ -271,6 +290,7 @@ function isSubmitted(row: CS17Submission): boolean {
 const selection = ref<string[]>([])
 const previewTarget = ref<CS17Submission | null>(null)
 const gradeTarget = ref<CS17Submission | null>(null)
+const studentsOpen = ref(false)
 
 function openPreview(row: CS17Submission) {
 	const kind = previewKind(assignment.value?.submission_type, row.submission_document)
@@ -349,9 +369,16 @@ async function saveAnswer<Change extends object>(
 const isGraded = computed(() => assignment.value?.assignment_type === 'Graded')
 
 const metaRows = computed(() => {
+	const studentCount = assignment.value?.students?.length ?? 0
 	const rows = [
 		{ label: 'Due', value: formatDateTime(assignment.value?.due_date) },
 		{ label: 'Cohort', value: assignment.value?.cohort ?? '—' },
+		{
+			label: 'Students',
+			value: studentCount
+				? `${studentCount} ${studentCount === 1 ? 'student' : 'students'}`
+				: 'Whole cohort',
+		},
 		{
 			label: 'Evaluation Type',
 			value: isGraded.value ? assignment.value?.remarks || '—' : 'Non-graded',
