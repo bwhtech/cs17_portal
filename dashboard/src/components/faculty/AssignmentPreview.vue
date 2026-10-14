@@ -47,6 +47,7 @@ export interface AssignmentDraft {
 	description: string
 	starter_code: string
 	test_cases: PythonTestCase[]
+	watch_tab_switches: boolean
 }
 
 const props = defineProps<{ draft: AssignmentDraft }>()

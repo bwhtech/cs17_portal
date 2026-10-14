@@ -25,6 +25,7 @@
   "python_section",
   "starter_code",
   "test_cases",
+  "watch_tab_switches",
   "answer_sheet_section",
   "show_answers",
   "answer_sheet"
@@ -160,6 +161,13 @@
    "fieldtype": "Table",
    "label": "Test Cases",
    "options": "CS17 Python Test Case"
+  },
+  {
+   "default": "0",
+   "description": "Students are told. Each time a student leaves the editor's tab shows on the grading page.",
+   "fieldname": "watch_tab_switches",
+   "fieldtype": "Check",
+   "label": "Watch for Tab Switches"
   }
  ],
  "grid_page_length": 50,
@@ -173,7 +181,7 @@
    "link_fieldname": "assignment"
   }
  ],
- "modified": "2026-10-14 18:12:29.127055",
+ "modified": "2026-10-14 18:48:15.608169",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",

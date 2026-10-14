@@ -134,6 +134,7 @@ import PythonEditor from '@/components/python/PythonEditor.vue'
 import RunPanel from '@/components/python/RunPanel.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useProjectsPath } from '@/composables/useProjectsPath'
+import { useTabLeaveWatch } from '@/composables/useTabLeaveWatch'
 import { onBeforeLogout, useSession } from '@/composables/useSession'
 import { useZenMode, useZenOnMount } from '@/composables/useZenMode'
 import { frappeErrorMessage } from '@/lib/frappeError'
@@ -192,6 +193,11 @@ watch(
 const readOnly = computed(() => route.query.readonly === '1' || assignmentClosed.data === true)
 const canSubmit = computed(() => isStudent.value && Boolean(assignment.data) && !readOnly.value)
 const sampleTests = computed(() => assignment.data?.sample_tests ?? [])
+
+useTabLeaveWatch(
+	() => props.id,
+	() => Boolean(assignment.data?.watch_tab_switches) && canSubmit.value,
+)
 const submitOpen = ref(false)
 
 const saveCall = useCall<{ last_saved_at: string }, { project: string; code: string }>({

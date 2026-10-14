@@ -34,6 +34,11 @@
 				:running="testing"
 				idle-text="This assignment has no tests."
 			/>
+			<TabLeaves
+				v-if="assignment.data?.watch_tab_switches"
+				class="border-t border-outline-gray-1 pt-3"
+				:submission="submission"
+			/>
 		</div>
 	</div>
 </template>
@@ -43,6 +48,7 @@ import { computed, ref, watch } from 'vue'
 import { Button, Skeleton, useCall } from 'frappe-ui'
 import LoadError from '@/components/common/LoadError.vue'
 import PythonEditor from '@/components/python/PythonEditor.vue'
+import TabLeaves from '@/components/grading/TabLeaves.vue'
 import TestResults from '@/components/python/TestResults.vue'
 import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
 import { usePythonRunner } from '@/lib/python/runner'
