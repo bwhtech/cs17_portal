@@ -18,7 +18,10 @@ const CORRECT_PROGRAM = 'name = input()\nprint(f"Hello, {name}!")';
 
 let cohort: string;
 
-function createPythonAssignment(request: APIRequestContext): Promise<CS17Assignment> {
+function createPythonAssignment(
+	request: APIRequestContext,
+	watchTabSwitches = 0
+): Promise<CS17Assignment> {
 	return createDoc<CS17Assignment>(request, "CS17 Assignment", {
 		title: `${TEST_ASSIGNMENT_PREFIX} Python ${Date.now()}`,
 		cohort,
@@ -28,6 +31,7 @@ function createPythonAssignment(request: APIRequestContext): Promise<CS17Assignm
 		max_marks: 10,
 		due_date: "2030-01-01 00:00:00",
 		is_published: 1,
+		watch_tab_switches: watchTabSwitches,
 		starter_code: STARTER_CODE,
 		test_cases: [
 			{ input: "Asha\n", expected_output: "Hello, Asha!\n", is_hidden: 0 },
@@ -87,6 +91,14 @@ test.describe("Python assignments", () => {
 		});
 		for (const project of projects) {
 			await deleteDoc(request, "CS17 Project", project.name);
+		}
+		const leaves = await getList<{ name: string }>(request, "CS17 Tab Leave", {
+			fields: ["name"],
+			filters: { assignment: ["like", `%-${cohort}-%`] },
+			limit: 200,
+		});
+		for (const leave of leaves) {
+			await deleteDoc(request, "CS17 Tab Leave", leave.name);
 		}
 		await cleanupTestAssignments(request);
 		for (const faculty of faculties) {
@@ -182,6 +194,62 @@ test.describe("Python assignments", () => {
 
 		await expect(facultyPage.getByText("2 of 2 tests passed")).toBeVisible({ timeout: 60000 });
 		await expect(facultyPage.getByLabel("Marks obtained")).toHaveValue("10");
+		await context.close();
+	});
+
+	test("warns a student who leaves the tab on a watched assignment", async ({
+		page,
+		request,
+	}) => {
+		const assignment = await createPythonAssignment(request, 1);
+		await openEditor(page, assignment.name);
+		await expect(
+			page.getByText("Your teacher can see when you leave this tab.")
+		).toBeVisible();
+
+		await page.evaluate(() => {
+			for (const state of ["hidden", "visible"]) {
+				Object.defineProperty(document, "visibilityState", {
+					configurable: true,
+					get: () => state,
+				});
+				document.dispatchEvent(new Event("visibilitychange"));
+			}
+		});
+
+		await expect(
+			page.getByText("You left this tab. Your teacher can see this.")
+		).toBeVisible();
+	});
+
+	test("shows faculty how often the student left the tab", async ({
+		browser,
+		page,
+		request,
+	}) => {
+		const assignment = await createPythonAssignment(request, 1);
+		const project = await openEditor(page, assignment.name);
+		await callAsStudent(page, "cs17_portal.api.record_tab_leave", { project });
+		await callAsStudent(page, "cs17_portal.api.record_tab_return", { project });
+		await callAsStudent(page, "cs17_portal.api.save_python_project", {
+			project,
+			code: CORRECT_PROGRAM,
+		});
+		const submission = await callAsStudent(page, "cs17_portal.api.submit_python_project", {
+			assignment: assignment.name,
+			project,
+		});
+
+		const faculty = await createTestFaculty(request);
+		faculties.push(faculty);
+		const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+		await context.request.post("/api/method/login", {
+			form: { usr: faculty.email, pwd: faculty.password },
+		});
+		const facultyPage = await context.newPage();
+		await facultyPage.goto(`/dashboard/faculty/submissions/${submission.name}`);
+
+		await expect(facultyPage.getByText("Left the tab 1 time")).toBeVisible({ timeout: 60000 });
 		await context.close();
 	});
 });

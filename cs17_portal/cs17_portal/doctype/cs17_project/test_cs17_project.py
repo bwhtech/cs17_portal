@@ -142,11 +142,12 @@ class TestCS17Project(FrappeTestCase):
 		frappe.set_user("Administrator")
 		return assignment.name
 
-	def make_python_assignment(self) -> str:
+	def make_python_assignment(self, watch_tab_switches: int = 0) -> str:
 		assignment = frappe.get_doc(
 			"CS17 Assignment", self.make_assignment(self.cohort_in, submission_type="Python")
 		)
 		assignment.starter_code = "name = input()\n"
+		assignment.watch_tab_switches = watch_tab_switches
 		assignment.append("test_cases", {"input": "Asha\n", "expected_output": "Hello, Asha!\n"})
 		assignment.append(
 			"test_cases", {"input": "Ravi\n", "expected_output": "Hello, Ravi!\n", "is_hidden": 1}
@@ -479,6 +480,33 @@ class TestCS17Project(FrappeTestCase):
 		assignment.save(ignore_permissions=True)
 
 		self.assertEqual(assignment.test_cases, [])
+
+	def test_faculty_sees_a_tab_leave_and_its_return(self):
+		assignment = self.make_python_assignment(watch_tab_switches=1)
+		frappe.set_user(STUDENT1_USER)
+		project = api.start_python_assignment(assignment)["name"]
+		api.record_tab_leave(project)
+		api.record_tab_return(project)
+		api.save_python_project(project, 'print(f"Hello, {input()}!")\n')
+		submission = api.submit_python_project(assignment, project)["name"]
+
+		frappe.set_user(FACULTY_IN_USER)
+		leaves = api.get_tab_leaves(submission)
+
+		self.assertEqual(len(leaves), 1)
+		self.assertTrue(leaves[0]["left_at"] and leaves[0]["returned_at"])
+
+	def test_tab_leave_is_refused_when_the_assignment_does_not_watch(self):
+		assignment = self.make_python_assignment()
+		frappe.set_user(STUDENT1_USER)
+		project = api.start_python_assignment(assignment)["name"]
+
+		self.assertRaisesRegex(
+			frappe.ValidationError,
+			"This assignment does not watch tab switches.",
+			api.record_tab_leave,
+			project,
+		)
 
 	def test_first_submit_saves_the_submission_once(self):
 		project = self.make_saved_project()
