@@ -49,6 +49,11 @@ test.describe("Faculty grade states", () => {
 		await page.goto(`/dashboard/faculty/assignments/${ASSIGNMENT.name}`);
 
 		await expect(page.getByText("Published", { exact: true })).toBeVisible();
+		await page
+			.locator('[data-slot="list-row"]', { hasText: SUBMISSION.full_name })
+			.getByRole("checkbox")
+			.check();
+		await expect(page.getByRole("button", { name: "Publish 1 grade" })).toHaveCount(0);
 	});
 
 	test.describe("the grading page", () => {
