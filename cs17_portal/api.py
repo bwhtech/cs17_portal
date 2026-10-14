@@ -1073,7 +1073,11 @@ def update_assignment(
 	faculty = get_current_faculty()
 	if faculty.cohort and faculty.cohort != cohort:
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	doc = frappe.get_doc("CS17 Assignment", assignment)
+	try:
+		doc = frappe.get_doc("CS17 Assignment", assignment)
+	except frappe.DoesNotExistError:
+		frappe.clear_last_message()
+		frappe.throw(_("Assignment not found"), frappe.DoesNotExistError)
 	if is_published_now(doc):
 		frappe.throw(_("A published assignment can no longer be edited"))
 	_set_assignment_fields(
@@ -1160,7 +1164,11 @@ def delete_assignment(assignment: str) -> None:
 @frappe.whitelist(methods=["POST"])
 def publish_assignment(assignment: str, publish: str = "now", publish_on: str | None = None) -> None:
 	require_faculty_for_assignment(assignment)
-	doc = frappe.get_doc("CS17 Assignment", assignment)
+	try:
+		doc = frappe.get_doc("CS17 Assignment", assignment)
+	except frappe.DoesNotExistError:
+		frappe.clear_last_message()
+		frappe.throw(_("Assignment not found"), frappe.DoesNotExistError)
 	_apply_publish_state(doc, publish, publish_on)
 	doc.save(ignore_permissions=True)
 

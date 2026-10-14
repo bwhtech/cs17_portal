@@ -31,6 +31,30 @@ class TestAssignmentApi(FrappeTestCase):
 		frappe.set_user(faculty_user)
 		self.assertRaises(frappe.DoesNotExistError, api.delete_assignment, "missing-assignment")
 
+	def test_publish_assignment_reports_a_missing_assignment_to_faculty_without_a_cohort(self):
+		faculty_user = make_user("faculty193@cs17test.com")
+		make_profile("Faculty", None, faculty_user, "Faculty 193")
+
+		frappe.set_user(faculty_user)
+		self.assertRaisesRegex(
+			frappe.DoesNotExistError, "Assignment not found", api.publish_assignment, "missing-assignment"
+		)
+
+	def test_update_assignment_reports_a_missing_assignment_to_faculty_without_a_cohort(self):
+		faculty_user = make_user("faculty194@cs17test.com")
+		make_profile("Faculty", None, faculty_user, "Faculty 194")
+
+		frappe.set_user(faculty_user)
+		self.assertRaisesRegex(
+			frappe.DoesNotExistError,
+			"Assignment not found",
+			api.update_assignment,
+			"missing-assignment",
+			"PDF Task 194",
+			self.cohort,
+			"2030-01-01 00:00:00",
+		)
+
 	def test_update_assignment_keeps_the_description_the_caller_left_out(self):
 		frappe.set_user(self.faculty_user)
 		assignment = api.create_assignment(
