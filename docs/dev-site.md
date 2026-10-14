@@ -51,7 +51,7 @@ Everyone shares the password `Cs17-Demo-Pass-123`.
 
 What the seed covers, deliberately: every submission type (Scratch, PDF, URL, Image, ZIP,
 Any); an assignment in each publish state (published, scheduled, draft); grades on both
-evaluation types (marks out of 20 or 10, and the A–E scale); a published grade, an
+evaluation types (marks out of 10, and the A–E scale); a published grade, an
 unpublished one, and submissions with no grade at all; announcements in all three
 variants, dismissible and not, cohort-scoped and all-cohorts; and a second cohort, `C6`,
 with one assignment. Both seeded faculty belong to `C7`, and a faculty with a cohort sees
@@ -73,7 +73,7 @@ previews have something to show.
 
 ```bash
 cd dashboard
-yarn dev        # Vite on :8080, proxying to the bench on :8000
+yarn dev        # Vite on :8080, proxying to the bench's webserver_port
 yarn build      # writes cs17_portal/public/dashboard + www/dashboard.html
 yarn typecheck  # vue-tsc
 yarn lint       # eslint + prettier --check

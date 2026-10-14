@@ -18,7 +18,7 @@ committed, only the built output + this recipe + the bridge source.
 
 We add a single module, `src/playground/cs17-bridge.js` (a copy is kept next to this
 file as `cs17-bridge.js`), and import it from the editor playground entry so it is
-compiled into `editor.html`'s bundle. It wires the Scratch VM to the host React page
+compiled into `editor.html`'s bundle. It wires the Scratch VM to the host Vue page
 over `postMessage` — protocol in `docs/scratch-integration-spec.md` section 3.
 
 To wire it in, add this import near the top of the editor playground entry
@@ -99,9 +99,9 @@ rsync -a --delete --exclude='*.map' --exclude='harness.html' --exclude='sample.s
 cd <bench> && bench build --app cs17_portal
 ```
 
-`harness.html` (a bare postMessage test page) and `sample.sb3` (a sample project) are
-kept in the vendored dir as manual test aids; they are not produced by the build, so
-the `--exclude` flags protect them from `--delete`.
+`harness.html` (a bare postMessage test page, a manual aid) and `sample.sb3` (a sample
+project the e2e specs read) are kept in the vendored dir; they are not produced by the
+build, so the `--exclude` flags protect them from `--delete`.
 
 Then verify: `http://cs17.localhost:8000/assets/cs17_portal/scratch/editor.html` loads
 the full editor UI (no 404s in the network tab for `js/` or `static/`).

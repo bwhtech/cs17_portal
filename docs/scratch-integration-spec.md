@@ -1,6 +1,6 @@
 # CS17 Portal — Scratch Integration Spec
 
-Status: **Draft for approval** · Owner: Hussain · Date: 2026-07-07
+Status: **Built**, with a Vue 3 + frappe-ui dashboard in place of the React one described below · Owner: Hussain · Date: 2026-07-07
 
 ## 1. Goal
 
@@ -55,13 +55,13 @@ Read-only mode: same bundle, same URL, no parameter. The dashboard adds a styles
 | Field | Type | Notes |
 |---|---|---|
 | `project_title` | Data (reqd) | |
-| `student` | Link `CS17 Profile` (reqd) | owner; set from session, not user-editable |
+| `profile` | Link `CS17 Profile` (reqd) | owner; set from session, not user-editable |
 | `sb3_file` | Attach | private file, the live saved project |
 | `thumbnail` | Attach Image | stage snapshot for the grid (optional/nice-to-have) |
 | `last_saved_at` | Datetime | updated on every autosave/save |
 
-- **Permissions:** student reads/writes **only their own** (permission query condition: `student.user == frappe.session.user`). Faculty read projects within their cohort. No `ignore_permissions` in normal paths.
-- Naming: `PROJ-.{student}.-.####` (or a simple hash series).
+- **Permissions:** student reads/writes **only their own** (permission query condition: `profile.user == frappe.session.user`). ~~Faculty read projects within their cohort.~~ Faculty see only their own; they grade from the submission snapshot. No `ignore_permissions` in normal paths.
+- Naming: `PROJ-.{profile}.-.####`.
 
 ### 4.2 Extend `CS17 Assignment`
 
