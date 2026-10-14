@@ -142,4 +142,18 @@ test.describe("Student results", () => {
 
 		await expect(page.getByRole("heading", { level: 1, name: own.examName })).toHaveCount(1);
 	});
+
+	test("keeps the results on screen when a reload fails", async ({ page }) => {
+		const results = "**/cs17_portal.api.get_student_results*";
+		const row = listRow(page, own.examName);
+
+		await page.clock.install();
+		await page.goto("/dashboard/results");
+		await expect(row).toBeVisible();
+
+		await page.route(results, (route) => route.fulfill({ status: 500 }));
+		await page.clock.fastForward(45_000);
+		await expect(page.getByText("Could not refresh this page.")).toBeVisible();
+		await expect(row).toBeVisible();
+	});
 });
