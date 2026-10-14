@@ -12,7 +12,7 @@
 			class="h-[70vh] overflow-hidden rounded-4 border border-outline-gray-1"
 		>
 			<div
-				v-if="failed || projectCall.error"
+				v-if="!opening && (failed || projectCall.error)"
 				class="flex h-full items-center justify-center p-6 text-center"
 			>
 				<p v-if="isRefusal(projectCall.error)" class="text-p-base text-ink-gray-5">
@@ -111,6 +111,15 @@ const projectCall = useCall<{ filename: string; content: string }, { submission:
 
 const failed = useLoadFailed(projectCall, { except: isRefusal })
 
+const opening = ref(false)
+
+watch(
+	() => projectCall.loading,
+	(loading) => {
+		if (!loading) opening.value = false
+	},
+)
+
 // The project is a base64 payload of its own, so it is fetched when the dialog
 // actually opens rather than for every row of the table behind it.
 watch(
@@ -118,6 +127,7 @@ watch(
 	([isOpen]) => {
 		if (!isOpen || !isScratch.value) return
 		sb3.value = null
+		opening.value = true
 		projectCall.reload()
 	},
 	{ immediate: true },
