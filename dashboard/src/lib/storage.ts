@@ -10,7 +10,7 @@ export const STORAGE_KEYS = {
 	/** Announcement names the user has dismissed. */
 	dismissedAlerts: 'dismissed-alerts',
 	/** The in-progress new-assignment form, so a reload doesn't lose it. */
-	newAssignmentDraft: 'cs17-new-assignment-draft',
+	newAssignmentDraft: `cs17-new-assignment-draft:${window.current_user}`,
 	sidebarCollapsed: 'cs17-sidebar-collapsed',
 } as const
 

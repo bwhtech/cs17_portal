@@ -30,7 +30,9 @@ import {
 	uploadFile,
 } from "../helpers/frappe";
 
-const DRAFT_KEY = "cs17-new-assignment-draft";
+function draftKey(page: Page): Promise<string> {
+	return page.evaluate(() => `cs17-new-assignment-draft:${(window as any).current_user}`);
+}
 
 const TERMINAL_ASSIGNMENT_ZIP =
 	"UEsDBBQAAAAAAFJOTF1WucDaDwAAAA8AAAAfAAAAdGVybWluYWwtYXNzaWdubWVudC9oaXN0b3J5LnR4dGNhdCBSRUFETUUudHh0ClBLAQIUAxQAAAAAAFJOTF1WucDaDwAAAA8AAAAfAAAAAAAAAAAAAACAAQAAAAB0ZXJtaW5hbC1hc3NpZ25tZW50L2hpc3RvcnkudHh0UEsFBgAAAAABAAEATQAAAEwAAAAAAA==";
@@ -265,7 +267,7 @@ test.describe("Faculty assignment portal", () => {
 	test("keeps a closed draft in localStorage and restores it on reopen", async ({ page }) => {
 		const title = `${TEST_ASSIGNMENT_PREFIX} Draft ${Date.now()}`;
 		await page.goto("/dashboard/faculty/assignments");
-		await page.evaluate((key) => localStorage.removeItem(key), DRAFT_KEY);
+		await page.evaluate((key) => localStorage.removeItem(key), await draftKey(page));
 
 		await page.getByRole("button", { name: "New Assignment" }).click();
 		await page.getByPlaceholder("Assignment title").fill(title);
@@ -276,7 +278,7 @@ test.describe("Faculty assignment portal", () => {
 
 		const stored = await page.evaluate(
 			(key) => JSON.parse(localStorage.getItem(key) || "null"),
-			DRAFT_KEY
+			await draftKey(page)
 		);
 		expect(stored?.draft?.title).toBe(title);
 		expect(stored?.draft?.description).toBe("Draft body text");
@@ -287,7 +289,7 @@ test.describe("Faculty assignment portal", () => {
 			"Draft body text"
 		);
 
-		await page.evaluate((key) => localStorage.removeItem(key), DRAFT_KEY);
+		await page.evaluate((key) => localStorage.removeItem(key), await draftKey(page));
 	});
 
 	test("clears the localStorage draft after a successful create", async ({ page }) => {
@@ -309,7 +311,10 @@ test.describe("Faculty assignment portal", () => {
 		await page.getByRole("button", { name: "Create Assignment" }).click();
 
 		await expect(page.locator(LIST_ROW, { hasText: title })).toBeVisible();
-		const stored = await page.evaluate((key) => localStorage.getItem(key), DRAFT_KEY);
+		const stored = await page.evaluate(
+			(key) => localStorage.getItem(key),
+			await draftKey(page)
+		);
 		expect(stored).toBeNull();
 	});
 
@@ -425,7 +430,7 @@ test.describe("Faculty assignment portal", () => {
 		});
 
 		await page.goto("/dashboard/faculty/assignments");
-		await page.evaluate((key) => localStorage.removeItem(key), DRAFT_KEY);
+		await page.evaluate((key) => localStorage.removeItem(key), await draftKey(page));
 		await page.getByRole("button", { name: /^Drafts/ }).click();
 		await page.getByRole("button", { name: draft.title, exact: true }).click();
 		await expect(page.getByRole("dialog")).toBeVisible();
