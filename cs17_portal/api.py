@@ -592,6 +592,10 @@ def submit_scratch_project(assignment: str, project: str) -> dict:
 		frappe.throw(_("Save the project before submitting it."))
 
 	source_file = frappe.get_doc("File", {"file_url": project_doc.sb3_file, "attached_to_name": project})
+	try:
+		content = source_file.get_content(encodings=())
+	except FileNotFoundError:
+		frappe.throw(_("This project's file is missing."), frappe.DoesNotExistError)
 
 	if project_doc.assignment != assignment:
 		project_doc.db_set("assignment", assignment)
@@ -618,7 +622,7 @@ def submit_scratch_project(assignment: str, project: str) -> dict:
 		submission.name,
 		"submission_document",
 		f"{submission.name}.sb3",
-		source_file.get_content(),
+		content,
 	)
 	if is_first_submit:
 		submission.db_set("submission_document", snapshot.file_url, update_modified=False)
