@@ -215,7 +215,7 @@ import SubmissionBulkActions from '@/components/faculty/SubmissionBulkActions.vu
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useLoadFailed } from '@/composables/useLoadFailed'
-import { formatDateTime } from '@/lib/dates'
+import { formatDateTime, isPast } from '@/lib/dates'
 import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
 import { formatGrade } from '@/lib/grades'
 import { previewKind } from '@/lib/submissionTypes'
@@ -392,7 +392,9 @@ function gradeValue(grade: CS17Grade): string {
 }
 
 function publishStatus(grade: CS17Grade) {
-	if (grade.is_published) return { label: 'Published', theme: 'green' } as const
+	if (grade.is_published || isPast(grade.published_on)) {
+		return { label: 'Published', theme: 'green' } as const
+	}
 	if (grade.published_on) {
 		return {
 			label: 'Scheduled',
