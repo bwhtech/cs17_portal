@@ -25,6 +25,15 @@ erDiagram
     CS17_Quarter ||--o{ CS17_Result : "quarter"
     CS17_Result ||--o{ CS17_Result_Assignment_Score : "assignments"
     CS17_Assignment ||--o{ CS17_Result_Assignment_Score : "assignment"
+    CS17_Cohort ||--o{ CS17_Announcement : "cohort (empty = all)"
+    CS17_Subject_Pattern ||--o{ CS17_Subject_Pattern_Component : "components"
+    CS17_Subject_Pattern ||--o{ CS17_Exam_Subject : "subject_pattern"
+    CS17_Exam ||--o{ CS17_Subject_Marks : "exam"
+    CS17_Profile ||--o{ CS17_Subject_Marks : "student"
+    CS17_Subject ||--o{ CS17_Subject_Marks : "subject"
+    CS17_Subject_Pattern ||--o{ CS17_Subject_Marks : "subject_pattern"
+    CS17_Grading_Scale ||--o{ CS17_Subject_Marks : "grading_scale"
+    CS17_Subject_Marks ||--o{ CS17_Subject_Marks_Component : "components"
 
     CS17_Cohort {
         Data cohort_code PK
@@ -100,6 +109,7 @@ erDiagram
     CS17_Exam_Subject {
         Link subject FK "CS17 Subject"
         Float max_marks
+        Link subject_pattern FK "CS17 Subject Pattern"
         Link grading_scale FK "CS17 Grading Scale (overrides exam)"
         Link examiner FK "CS17 Profile (Faculty)"
     }
@@ -125,8 +135,43 @@ erDiagram
         Link subject FK "CS17 Subject"
         Float max_marks "from exam"
         Link grading_scale FK "CS17 Grading Scale (from exam)"
-        Float marks_obtained
+        Float marks_obtained "from CS17 Subject Marks"
         Float percentage "derived"
         Data grade "derived"
         Check is_pass "derived"
+    }
+    CS17_Announcement {
+        Data title
+        Link cohort FK "CS17 Cohort (empty = all)"
+        Select alert_variant "info | warning | error"
+        Check is_dismissible
+        Check is_published
+        Date published_date
+    }
+    CS17_Subject_Pattern {
+        Data pattern_name PK
+        Float total_weightage "derived"
+    }
+    CS17_Subject_Pattern_Component {
+        Data component
+        Float weightage
+    }
+    CS17_Subject_Marks {
+        Link exam FK "CS17 Exam"
+        Link student FK "CS17 Profile"
+        Link subject FK "CS17 Subject"
+        Link cohort FK "CS17 Cohort (fetched)"
+        Link subject_pattern FK "CS17 Subject Pattern (from exam)"
+        Float max_marks "from exam"
+        Link grading_scale FK "CS17 Grading Scale (from exam)"
+        Float total_marks_obtained "derived"
+        Float percentage "derived"
+        Data grade "derived"
+        Check is_pass "derived"
+    }
+    CS17_Subject_Marks_Component {
+        Data component "from pattern"
+        Float weightage "from pattern"
+        Float max_marks "derived"
+        Float marks_obtained
     }
