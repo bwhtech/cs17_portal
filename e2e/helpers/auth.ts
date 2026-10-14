@@ -22,24 +22,6 @@ export async function loginViaAPI(
 }
 
 /**
- * Login via UI (for testing the login flow itself).
- */
-export async function loginViaUI(
-	page: Page,
-	email = "Administrator",
-	password = "admin"
-): Promise<void> {
-	await page.goto("/login");
-	await page.waitForLoadState("networkidle");
-
-	await page.fill('input[data-fieldname="email"]', email);
-	await page.fill('input[data-fieldname="password"]', password);
-	await page.click('button[type="submit"]');
-
-	await page.waitForURL(/\/(app|desk)/, { timeout: 30000 });
-}
-
-/**
  * Logout the current user.
  */
 export async function logout(page: Page): Promise<void> {
