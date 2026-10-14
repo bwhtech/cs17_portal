@@ -29,7 +29,7 @@ def get_user_profile() -> dict | None:
 
 
 @frappe.whitelist(methods=["POST"])
-def update_my_profile(first_name: str, last_name: str, profile_picture: str = "") -> dict:
+def update_my_profile(first_name: str, last_name: str, profile_picture: str | None = None) -> dict:
 	profile = frappe.get_doc("CS17 Profile", validate_membership("Faculty"))
 	if (
 		profile_picture
@@ -51,7 +51,7 @@ def update_my_profile(first_name: str, last_name: str, profile_picture: str = ""
 		{
 			"first_name": first_name,
 			"last_name": last_name,
-			"profile_picture": profile_picture or None,
+			"profile_picture": previous_picture if profile_picture is None else (profile_picture or None),
 		}
 	)
 	profile.set_full_name()
