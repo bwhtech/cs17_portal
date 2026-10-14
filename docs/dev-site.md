@@ -73,7 +73,7 @@ previews have something to show.
 
 ```bash
 cd dashboard
-yarn dev        # Vite on :8000 (frappeProxy.port), proxying to the bench's webserver_port
+yarn dev        # Vite on :8080, proxying to the bench's webserver_port
 yarn build      # writes cs17_portal/public/dashboard + www/dashboard.html
 yarn typecheck  # vue-tsc
 yarn lint       # eslint + prettier --check
