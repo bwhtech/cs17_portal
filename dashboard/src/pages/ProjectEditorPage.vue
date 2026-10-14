@@ -102,7 +102,7 @@ import SubmitProjectDialog from '@/components/projects/SubmitProjectDialog.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useZenMode, useZenOnMount } from '@/composables/useZenMode'
 import { useProjectsPath } from '@/composables/useProjectsPath'
-import { useSession } from '@/composables/useSession'
+import { onBeforeLogout, useSession } from '@/composables/useSession'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { arrayBufferToBase64, dataUrlToBase64 } from '@/lib/scratch'
 import { trySubmit } from '@/lib/trySubmit'
@@ -292,6 +292,7 @@ function hasUnsavedEdits() {
 }
 
 onBeforeRouteLeave(() => !hasUnsavedEdits() || saveNow())
+onBeforeLogout(() => !hasUnsavedEdits() || saveNow())
 
 function warnBeforeUnload(event: BeforeUnloadEvent) {
 	if (hasUnsavedEdits()) event.preventDefault()

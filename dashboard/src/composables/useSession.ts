@@ -1,4 +1,4 @@
-import { computed, ref, type ComputedRef, type Ref } from 'vue'
+import { computed, onScopeDispose, ref, type ComputedRef, type Ref } from 'vue'
 import { call } from 'frappe-ui'
 import { clear as clearFrappeUICache } from 'idb-keyval'
 import { STORAGE_KEYS, removeKey } from '@/lib/storage'
@@ -22,7 +22,15 @@ const isFaculty = computed(() => profile.value?.profile_type === 'Faculty')
 const isStudent = computed(() => profile.value?.profile_type === 'Student')
 const cohort = computed(() => profile.value?.cohort ?? null)
 
+const logoutGuards = new Set<() => boolean | Promise<boolean>>()
+
+export function onBeforeLogout(guard: () => boolean | Promise<boolean>): void {
+	logoutGuards.add(guard)
+	onScopeDispose(() => logoutGuards.delete(guard))
+}
+
 async function logout(): Promise<void> {
+	for (const guard of logoutGuards) if (!(await guard())) return
 	try {
 		await call('logout')
 		removeKey(STORAGE_KEYS.newAssignmentDraft)
