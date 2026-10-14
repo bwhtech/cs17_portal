@@ -7,7 +7,7 @@ const facultyAuthFile = path.join(__dirname, "e2e", ".auth", "faculty.json");
 const studentSpecs =
 	/(student-submission|student-theme|student-results|python-assignments|python-time-limit)\.spec\.ts/;
 const facultySpecs =
-	/(faculty-announcements-ui|faculty-assignments-ui|faculty-profile-ui|faculty-projects)\.spec\.ts/;
+	/(faculty-announcements-ui|faculty-assignments-ui|faculty-profile-ui|faculty-projects|faculty-assignment-students)\.spec\.ts/;
 
 const SITE_HOST = process.env.SITE_HOST || "cs17.portal:8000";
 const SITE_DOMAIN = SITE_HOST.split(":")[0];

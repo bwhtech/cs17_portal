@@ -676,6 +676,7 @@ class TestAssignmentQuarter(FrappeTestCase):
 		cohort = make_cohort("C105TEST")
 		faculty_user = make_user("faculty105@cs17test.com")
 		make_profile("Faculty", cohort, faculty_user, "Faculty 105")
+		student = make_profile("Student", cohort, make_user("student105@cs17test.com"), "Student 105")
 		quarter = (
 			frappe.get_doc({"doctype": "CS17 Quarter", "quarter_name": "Quarter 105"})
 			.insert(ignore_permissions=True)
@@ -687,7 +688,9 @@ class TestAssignmentQuarter(FrappeTestCase):
 			"PDF Task 105", cohort, "2030-01-01 00:00:00", publish="now", quarter=quarter
 		)
 
-		self.assertEqual([row.name for row in get_quarter_assignments(quarter, cohort)], [assignment])
+		self.assertEqual(
+			[row.name for row in get_quarter_assignments(quarter, cohort, student)], [assignment]
+		)
 
 
 class TestUpdateMyProfile(FrappeTestCase):
