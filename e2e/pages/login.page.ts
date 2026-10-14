@@ -5,7 +5,6 @@ export class LoginPage {
 	private emailInput: Locator;
 	private passwordInput: Locator;
 	private submitButton: Locator;
-	private errorMessage: Locator;
 
 	constructor(page: Page) {
 		this.page = page;
@@ -16,7 +15,6 @@ export class LoginPage {
 		this.submitButton = page.locator(
 			"section.for-login form.form-login button[type='submit']"
 		);
-		this.errorMessage = page.locator(".msgprint, .alert-danger").first();
 	}
 
 	async goto(): Promise<void> {
@@ -42,13 +40,5 @@ export class LoginPage {
 		await this.fillCredentials(email, password);
 		await this.submit();
 		await this.page.waitForURL(/\/(app|desk|dashboard)/, { timeout: 30000 });
-	}
-
-	async expectLoginError(): Promise<void> {
-		await expect(this.errorMessage).toBeVisible();
-	}
-
-	async expectToBeOnLoginPage(): Promise<void> {
-		await expect(this.page).toHaveURL(/.*login.*/);
 	}
 }

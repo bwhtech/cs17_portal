@@ -74,8 +74,10 @@ test.describe("Dashboard access - unauthenticated", () => {
 		const loginPage = new LoginPage(page);
 		await loginPage.goto();
 		await loginPage.fillCredentials("invalid@example.com", "wrongpassword");
+		const loginResponse = page.waitForResponse("**/api/method/login");
 		await loginPage.submit();
 
-		await loginPage.expectToBeOnLoginPage();
+		expect((await loginResponse).status()).toBe(401);
+		await expect(page.getByRole("alert")).toHaveText("Invalid credentials, try again.");
 	});
 });
