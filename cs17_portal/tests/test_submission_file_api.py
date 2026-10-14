@@ -55,7 +55,7 @@ class TestSubmissionFileApi(FrappeTestCase):
 
 		self.assertRaisesRegex(
 			frappe.DoesNotExistError,
-			"This submission's project file is missing.",
+			"This project's file is missing.",
 			api.submit_scratch_project,
 			assignment,
 			project,

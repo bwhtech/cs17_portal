@@ -595,7 +595,7 @@ def submit_scratch_project(assignment: str, project: str) -> dict:
 	try:
 		content = source_file.get_content(encodings=())
 	except FileNotFoundError:
-		frappe.throw(_("This submission's project file is missing."), frappe.DoesNotExistError)
+		frappe.throw(_("This project's file is missing."), frappe.DoesNotExistError)
 
 	if project_doc.assignment != assignment:
 		project_doc.db_set("assignment", assignment)
