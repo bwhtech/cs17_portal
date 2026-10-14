@@ -70,8 +70,16 @@
 		</header>
 
 		<div :class="['min-h-0 bg-surface-gray-2', isZen ? 'flex-1' : 'h-[60vh] min-h-80']">
+			<div
+				v-if="isRefusal(detail.error) && submission.submission_type !== 'Scratch'"
+				class="flex h-full items-center justify-center p-6 text-center"
+			>
+				<p class="text-p-base text-ink-gray-5">
+					{{ frappeErrorMessage(detail.error, 'Could not load the submitted file.') }}
+				</p>
+			</div>
 			<LoadError
-				v-if="detailFailed && submission.submission_type !== 'Scratch'"
+				v-else-if="detailFailed && submission.submission_type !== 'Scratch'"
 				class="h-full"
 				title="Could not load the submitted file"
 				:loading="detail.loading"
@@ -121,6 +129,7 @@ import SubmissionPlayer from '@/components/grading/SubmissionPlayer.vue'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { useZenMode, useZenOnMount } from '@/composables/useZenMode'
+import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
 import type { CS17Assignment, CS17Submission, CohortSubmission } from '@/types'
 
 const props = defineProps<{ submissionId: string }>()
@@ -167,7 +176,7 @@ const detail = useCall<
 	immediate: false,
 })
 
-const detailFailed = useLoadFailed(detail)
+const detailFailed = useLoadFailed(detail, { except: isRefusal })
 
 watch(
 	() => submission.value?.assignment,
