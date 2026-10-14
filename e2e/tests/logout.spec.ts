@@ -39,4 +39,21 @@ test.describe("Logout", () => {
 
 		expect(await cachedKeys(page)).toHaveLength(0);
 	});
+
+	test("removes the unsaved new assignment draft", async ({ page, request }) => {
+		const user = process.env.FRAPPE_USER || "Administrator";
+		const draftKey = `cs17-new-assignment-draft:${user}`;
+		await ensureSessionFaculty(request);
+		await page.context().clearCookies();
+		await new LoginPage(page).login(user, process.env.FRAPPE_PASSWORD || "admin");
+		await page.goto("/dashboard/faculty");
+		await page.evaluate((key) => localStorage.setItem(key, "{}"), draftKey);
+
+		await page.locator('[data-slot="sidebar"] button').last().click();
+		await page.getByRole("menuitem", { name: "Log out" }).click();
+		await page.getByRole("button", { name: "Log out", exact: true }).click();
+		await page.waitForURL(/\/login/);
+
+		expect(await page.evaluate((key) => localStorage.getItem(key), draftKey)).toBeNull();
+	});
 });
