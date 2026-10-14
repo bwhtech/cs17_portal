@@ -471,10 +471,11 @@ def replace_project_file(
 
 
 @frappe.whitelist(methods=["POST"])
-def create_project(project_title: str, assignment: str | None = None) -> dict:
+def create_project(project_title: str, assignment: str | None = None, project_type: str = "Scratch") -> dict:
 	profile = require_current_profile()
 	project_doc = frappe.new_doc("CS17 Project")
 	project_doc.project_title = _validate_project_title(project_title)
+	project_doc.project_type = project_type
 	project_doc.profile = profile
 	project_doc.assignment = assignment
 	project_doc.insert(ignore_permissions=True)
@@ -487,9 +488,11 @@ def get_project(project: str) -> dict:
 	return {
 		"name": project_doc.name,
 		"project_title": project_doc.project_title,
+		"project_type": project_doc.project_type,
 		"assignment": project_doc.assignment,
 		"sb3_file": project_doc.sb3_file,
 		"thumbnail": project_doc.thumbnail,
+		"code": project_doc.code,
 		"last_saved_at": project_doc.last_saved_at,
 	}
 
@@ -500,7 +503,7 @@ def list_my_projects() -> list:
 	projects = frappe.get_all(
 		"CS17 Project",
 		filters={"profile": profile},
-		fields=["name", "project_title", "assignment", "thumbnail", "last_saved_at"],
+		fields=["name", "project_title", "project_type", "assignment", "thumbnail", "last_saved_at"],
 		order_by="creation desc",
 	)
 	_attach_submitted_flags(projects)
@@ -581,6 +584,18 @@ def save_project(
 		"thumbnail": project_doc.thumbnail,
 		"last_saved_at": project_doc.last_saved_at,
 	}
+
+
+@frappe.whitelist(methods=["POST"])
+@rate_limit(key="project", limit=120, seconds=60, methods=["POST"], ip_based=False)
+def save_python_project(project: str, code: str) -> dict:
+	project_doc = require_owned_project(project)
+	if project_doc.project_type != "Python":
+		frappe.throw(_("This is not a Python project."))
+	project_doc.code = code
+	project_doc.last_saved_at = now_datetime()
+	project_doc.save(ignore_permissions=True)
+	return {"name": project_doc.name, "last_saved_at": project_doc.last_saved_at}
 
 
 @frappe.whitelist(methods=["POST"])

@@ -120,6 +120,7 @@ test.describe("Faculty Scratch projects", () => {
 
 		await page.goto("/dashboard/faculty/projects");
 		await page.getByRole("button", { name: "New project" }).first().click();
+		await page.getByRole("menuitem", { name: "Scratch project" }).click();
 
 		const dialog = page.getByRole("dialog");
 		await dialog.getByLabel("Project name").fill(title);
@@ -321,5 +322,44 @@ test.describe("Faculty Scratch projects", () => {
 		});
 		expect(saved.ok).toBe(false);
 		expect(saved.body.exc_type).toBe("PermissionError");
+	});
+
+	test("runs a Python project and shows what it prints", async ({ page }) => {
+		await page.goto("/dashboard/faculty/projects");
+		await page.getByRole("button", { name: "New project" }).click();
+		await page.getByRole("menuitem", { name: "Python project" }).click();
+		const dialog = page.getByRole("dialog");
+		await dialog
+			.getByLabel("Project name")
+			.fill(`${PROJECT_TITLE_PREFIX} Python ${Date.now()}`);
+		await dialog.getByRole("button", { name: "Create" }).click();
+		await expect(page).toHaveURL(/\/dashboard\/faculty\/projects\/PROJ-.+\/code$/);
+
+		await page.locator(".cm-content").fill('name = input()\nprint(f"Hello, {name}!")');
+		await page.getByRole("tab", { name: "Input" }).click();
+		await page.getByLabel("Text your program reads").fill("Asha");
+		await page.getByRole("button", { name: "Run" }).click();
+
+		await expect(page.getByRole("tabpanel", { name: "Output" })).toContainText(
+			"Hello, Asha!",
+			{
+				timeout: 60000,
+			}
+		);
+	});
+
+	test("keeps a Python project's code after a reload", async ({ page }) => {
+		await page.goto("/dashboard/faculty/projects");
+		const created = await callAsFaculty(page, "cs17_portal.api.create_project", {
+			project_title: `${PROJECT_TITLE_PREFIX} Python Save ${Date.now()}`,
+			project_type: "Python",
+		});
+		await page.goto(`/dashboard/faculty/projects/${created.body.message.name}/code`);
+
+		await page.locator(".cm-content").fill('print("saved")');
+		await expect(page.getByText("Saved", { exact: true })).toBeVisible();
+		await page.reload();
+
+		await expect(page.locator(".cm-content")).toHaveText('print("saved")');
 	});
 });

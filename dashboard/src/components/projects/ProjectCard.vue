@@ -1,7 +1,7 @@
 <template>
 	<div class="relative">
 		<router-link
-			:to="`${projectsPath}/${project.name}/edit`"
+			:to="projectEditorPath(projectsPath, project)"
 			class="block overflow-hidden rounded-4 border border-outline-gray-1 bg-surface-base transition-colors hover:border-outline-gray-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
 		>
 			<div class="flex aspect-[4/3] items-center justify-center bg-surface-gray-2">
@@ -13,7 +13,14 @@
 					class="h-full w-full object-cover"
 					@error="thumbnailFailed = true"
 				/>
-				<span v-else class="lucide-blocks size-8 text-ink-gray-4" aria-hidden="true" />
+				<span
+					v-else
+					:class="[
+						project.project_type === 'Python' ? 'lucide-code' : 'lucide-blocks',
+						'size-8 text-ink-gray-4',
+					]"
+					aria-hidden="true"
+				/>
 			</div>
 			<div class="border-t border-outline-gray-1 p-3">
 				<p
@@ -47,7 +54,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Badge, Button, Dropdown } from 'frappe-ui'
-import { useProjectsPath } from '@/composables/useProjectsPath'
+import { projectEditorPath, useProjectsPath } from '@/composables/useProjectsPath'
 import { formatDateTime } from '@/lib/dates'
 import type { CS17Project } from '@/types'
 
