@@ -29,6 +29,7 @@ import { DesktopShell, MobileShell, useColorScheme, usePageMeta } from 'frappe-u
 import SettingsDialog from '@/components/settings/SettingsDialog.vue'
 import AppMobileNav from '@/components/shell/AppMobileNav.vue'
 import AppSidebar from '@/components/shell/AppSidebar.vue'
+import { beforeShellSwap } from '@/components/shell/shellSwap'
 import { provideAnnouncements } from '@/composables/useAnnouncements'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useZenMode } from '@/composables/useZenMode'
@@ -42,7 +43,9 @@ const { isDesktop } = useBreakpoint()
 const { isZen } = useZenMode()
 
 const desktopShell = ref(isDesktop.value)
-watch([isDesktop, isZen], () => {
+watch([isDesktop, isZen], async () => {
+	if (isZen.value || desktopShell.value === isDesktop.value) return
+	await beforeShellSwap()
 	if (!isZen.value) desktopShell.value = isDesktop.value
 })
 
