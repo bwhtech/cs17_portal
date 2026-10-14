@@ -28,7 +28,7 @@
 		<FormControl
 			v-if="showMarks"
 			v-model="marks"
-			:class="scoreFieldClass"
+			class="col-span-2 md:w-36"
 			type="number"
 			label="Marks obtained"
 			:placeholder="`0 – ${maxMarks}`"
@@ -42,7 +42,7 @@
 		<FormControl
 			v-if="showGrade"
 			v-model="gradeLetter"
-			:class="scoreFieldClass"
+			class="col-span-2 md:w-36"
 			type="select"
 			label="Grade"
 			:options="gradeOptions"
@@ -96,12 +96,6 @@ const emit = defineEmits<{ saved: [] }>()
 
 const showMarks = computed(() => props.evaluationType !== 'Grade')
 const showGrade = computed(() => props.evaluationType !== 'Marks')
-
-// Marks and grade share the phone's two columns; whichever one shows alone
-// takes the full width rather than leaving a hole beside it.
-const scoreFieldClass = computed(() =>
-	showMarks.value && showGrade.value ? 'md:w-36' : 'col-span-2 md:w-36',
-)
 
 const gradeOptions = [
 	{ label: 'No grade', value: '' },
