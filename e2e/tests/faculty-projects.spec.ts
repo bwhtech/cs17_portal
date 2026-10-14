@@ -120,6 +120,7 @@ test.describe("Faculty Scratch projects", () => {
 
 		await page.goto("/dashboard/faculty/projects");
 		await page.getByRole("button", { name: "New project" }).first().click();
+		await page.getByRole("menuitem", { name: "Scratch project" }).click();
 
 		const dialog = page.getByRole("dialog");
 		await dialog.getByLabel("Project name").fill(title);
