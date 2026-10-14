@@ -45,6 +45,7 @@
 			<Slider
 				v-model="zoomValue"
 				class="min-w-0 flex-1"
+				aria-label="Zoom"
 				:min="MIN_ZOOM"
 				:max="MAX_ZOOM"
 				:step="1"
