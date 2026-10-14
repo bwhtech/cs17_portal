@@ -16,6 +16,9 @@ class CS17Assignment(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
+		from cs17_portal.cs17_portal.doctype.cs17_assignment_student.cs17_assignment_student import (
+			CS17AssignmentStudent,
+		)
 		from cs17_portal.cs17_portal.doctype.cs17_python_test_case.cs17_python_test_case import (
 			CS17PythonTestCase,
 		)
@@ -33,6 +36,7 @@ class CS17Assignment(Document):
 		remarks: DF.Literal["Grade", "Marks"]
 		show_answers: DF.Check
 		starter_code: DF.Code | None
+		students: DF.Table[CS17AssignmentStudent]
 		submission_type: DF.Literal["Any", "PDF", "URL", "Image", "ZIP", "Scratch", "Python"]
 		test_cases: DF.Table[CS17PythonTestCase]
 		time_limit: DF.Int
