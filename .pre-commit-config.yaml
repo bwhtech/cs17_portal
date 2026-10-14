@@ -56,11 +56,13 @@ repos:
       - id: eslint
         types_or: [javascript]
         args: ['--quiet']
-        # Ignore any files that might contain jinja / bundles
+        # Ignore any files that might contain jinja / bundles, and the
+        # dashboard, which `yarn lint` checks with its own eslint config.
         exclude: |
             (?x)^(
                 cs17_portal/public/dist/.*|
                 cs17_portal/public/dashboard/.*|
+                dashboard/.*|
                 .*node_modules.*|
                 .*boilerplate.*|
                 cs17_portal/templates/includes/.*|
