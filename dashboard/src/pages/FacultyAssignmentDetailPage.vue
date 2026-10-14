@@ -408,7 +408,11 @@ function publishStatus(grade: CS17Grade) {
 const selectedDraftGrades = computed(
 	() =>
 		submissions.value.filter(
-			(row) => selection.value.includes(row.name) && row.grade && !row.grade.is_published,
+			(row) =>
+				selection.value.includes(row.name) &&
+				row.grade &&
+				!row.grade.is_published &&
+				!isPast(row.grade.published_on),
 		).length,
 )
 
