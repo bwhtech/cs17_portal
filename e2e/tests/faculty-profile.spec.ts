@@ -59,6 +59,7 @@ test.describe("Faculty profile editing", () => {
 	});
 
 	test("sets and clears the profile picture", async ({ request, page }) => {
+		test.skip(Boolean(original.profile_picture), "replacing a real picture deletes its file");
 		await page.goto("/dashboard");
 		await page.waitForFunction(() => (window as any).csrf_token !== undefined, {
 			timeout: 15000,
