@@ -1,5 +1,9 @@
 <template>
-	<div v-if="!seeded && !failed" class="flex gap-3">
+	<p v-if="!seeded && isRefusal(existing.error)" class="text-p-base text-ink-gray-5">
+		{{ frappeErrorMessage(existing.error, 'Could not load the grade.') }}
+	</p>
+
+	<div v-else-if="!seeded && !failed" class="flex gap-3">
 		<Skeleton class="h-8 w-36 rounded-2" />
 		<Skeleton class="h-8 flex-1 rounded-2" />
 		<Skeleton class="h-8 w-28 rounded-2" />
@@ -24,7 +28,7 @@
 		<FormControl
 			v-if="showMarks"
 			v-model="marks"
-			:class="scoreFieldClass"
+			class="col-span-2 md:w-36"
 			type="number"
 			label="Marks obtained"
 			:placeholder="`0 – ${maxMarks}`"
@@ -38,7 +42,7 @@
 		<FormControl
 			v-if="showGrade"
 			v-model="gradeLetter"
-			:class="scoreFieldClass"
+			class="col-span-2 md:w-36"
 			type="select"
 			label="Grade"
 			:options="gradeOptions"
@@ -69,7 +73,7 @@ import { computed, ref, watch } from 'vue'
 import { Button, FormControl, Skeleton, toast, useCall } from 'frappe-ui'
 import LoadError from '@/components/common/LoadError.vue'
 import { useLoadFailed } from '@/composables/useLoadFailed'
-import { frappeErrorMessage } from '@/lib/frappeError'
+import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
 import { gradeForMarks } from '@/lib/grades'
 import { trySubmit } from '@/lib/trySubmit'
 import { GRADE_SCALE, type EvaluationType, type GradeBand } from '@/types'
@@ -93,12 +97,6 @@ const emit = defineEmits<{ saved: [] }>()
 const showMarks = computed(() => props.evaluationType !== 'Grade')
 const showGrade = computed(() => props.evaluationType !== 'Marks')
 
-// Marks and grade share the phone's two columns; whichever one shows alone
-// takes the full width rather than leaving a hole beside it.
-const scoreFieldClass = computed(() =>
-	showMarks.value && showGrade.value ? 'md:w-36' : 'col-span-2 md:w-36',
-)
-
 const gradeOptions = [
 	{ label: 'No grade', value: '' },
 	...GRADE_SCALE.map((letter) => ({ label: letter, value: letter })),
@@ -118,7 +116,7 @@ const existing = useCall<SubmissionGrade | null, { submission: string }>({
 	refetch: true,
 })
 
-const failed = useLoadFailed(existing)
+const failed = useLoadFailed(existing, { except: isRefusal })
 
 // `isFinished`, not `data`: an ungraded submission answers with `null`, which
 // never changes the data ref and so would never fire a watcher on it.
