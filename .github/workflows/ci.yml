@@ -131,3 +131,30 @@ jobs:
           bench --site test_site run-tests --app cs17_portal
         env:
           TYPE: server
+
+  dashboard:
+    runs-on: ubuntu-latest
+    name: Dashboard Checks
+    defaults:
+      run:
+        working-directory: dashboard
+
+    steps:
+      - name: Clone
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: dashboard/yarn.lock
+
+      - name: Install
+        run: yarn install --frozen-lockfile
+
+      - name: Typecheck
+        run: yarn typecheck
+
+      - name: Lint
+        run: yarn lint
