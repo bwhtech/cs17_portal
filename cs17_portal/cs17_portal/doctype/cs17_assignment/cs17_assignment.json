@@ -27,6 +27,8 @@
   "test_cases",
   "watch_tab_switches",
   "time_limit",
+  "students_section",
+  "students",
   "answer_sheet_section",
   "show_answers",
   "answer_sheet"
@@ -175,6 +177,18 @@
    "fieldname": "time_limit",
    "fieldtype": "Int",
    "label": "Time Limit (Minutes)"
+  },
+  {
+   "fieldname": "students_section",
+   "fieldtype": "Section Break",
+   "label": "Students"
+  },
+  {
+   "description": "Leave empty for the whole cohort.",
+   "fieldname": "students",
+   "fieldtype": "Table",
+   "label": "Students",
+   "options": "CS17 Assignment Student"
   }
  ],
  "grid_page_length": 50,
@@ -188,7 +202,7 @@
    "link_fieldname": "assignment"
   }
  ],
- "modified": "2026-10-14 23:06:16.992664",
+ "modified": "2026-10-14 23:09:36.600171",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",

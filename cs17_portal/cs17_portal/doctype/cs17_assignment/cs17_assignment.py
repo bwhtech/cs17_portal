@@ -16,6 +16,9 @@ class CS17Assignment(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
+		from cs17_portal.cs17_portal.doctype.cs17_assignment_student.cs17_assignment_student import (
+			CS17AssignmentStudent,
+		)
 		from cs17_portal.cs17_portal.doctype.cs17_python_test_case.cs17_python_test_case import (
 			CS17PythonTestCase,
 		)
@@ -33,6 +36,7 @@ class CS17Assignment(Document):
 		remarks: DF.Literal["Grade", "Marks"]
 		show_answers: DF.Check
 		starter_code: DF.Code | None
+		students: DF.Table[CS17AssignmentStudent]
 		submission_type: DF.Literal["Any", "PDF", "URL", "Image", "ZIP", "Scratch", "Python"]
 		test_cases: DF.Table[CS17PythonTestCase]
 		time_limit: DF.Int
@@ -64,6 +68,7 @@ class CS17Assignment(Document):
 		self._validate_stays_published()
 		self._validate_evaluation_type_locked()
 		self._validate_max_marks_not_below_marks_given()
+		self._validate_students()
 
 	def _validate_publishable(self):
 		if not (self.is_published or self.publish_on):
@@ -105,14 +110,37 @@ class CS17Assignment(Document):
 				)
 			)
 
+	def _validate_students(self):
+		if not self.students:
+			return
+		students = [row.student for row in self.students]
+		in_cohort = frappe.get_all(
+			"CS17 Profile",
+			filters={"name": ["in", students], "profile_type": "Student", "cohort": self.cohort},
+			pluck="name",
+		)
+		for index, row in enumerate(self.students):
+			if row.student in students[:index]:
+				frappe.throw(_("{0} is listed more than once.").format(row.full_name))
+			if row.student not in in_cohort:
+				frappe.throw(_("{0} is not a student of this cohort.").format(row.full_name))
+		submitted = frappe.db.get_value(
+			"CS17 Assignment Submission",
+			{"assignment": self.name, "student": ["not in", students]},
+			"full_name",
+		)
+		if submitted:
+			frappe.throw(_("{0} has already submitted this assignment.").format(submitted))
 
-def get_quarter_assignments(quarter: str, cohort: str) -> list[dict]:
-	"""Published assignments of one quarter for one cohort, in the order they fell due."""
-	from cs17_portal.api import is_published_now
+
+def get_quarter_assignments(quarter: str, cohort: str, student: str) -> list[dict]:
+	"""Published assignments of one quarter given to one student, in the order they fell due."""
+	from cs17_portal.api import given_to, is_published_now
 
 	assignments = frappe.get_all(
 		"CS17 Assignment",
 		filters={"quarter": quarter, "cohort": cohort},
+		or_filters=given_to(student),
 		fields=[
 			"name",
 			"title",

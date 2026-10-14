@@ -1,6 +1,7 @@
 import base64
 import functools
 import io
+import random
 import zipfile
 from typing import TYPE_CHECKING
 
@@ -119,6 +120,7 @@ def get_faculty_assignments(cohort: str | None = None) -> list:
 		if not assignment["is_published"] and assignment["publish_on"] and assignment["publish_on"] <= now:
 			assignment["is_published"] = 1
 	_attach_submission_counts(assignments)
+	_attach_student_counts(assignments)
 	return assignments
 
 
@@ -135,6 +137,21 @@ def _attach_submission_counts(assignments: list) -> None:
 	counts = {row["assignment"]: row["count"] for row in rows}
 	for assignment in assignments:
 		assignment["submission_count"] = counts.get(assignment["name"], 0)
+
+
+def _attach_student_counts(assignments: list) -> None:
+	names = [assignment["name"] for assignment in assignments]
+	if not names:
+		return
+	rows = frappe.get_all(
+		"CS17 Assignment Student",
+		filters=[["parent", "in", names], ["parenttype", "=", "CS17 Assignment"]],
+		fields=["parent", {"COUNT": "name", "as": "count"}],
+		group_by="parent",
+	)
+	counts = {row["parent"]: row["count"] for row in rows}
+	for assignment in assignments:
+		assignment["student_count"] = counts.get(assignment["name"], 0)
 
 
 @frappe.whitelist(methods=["POST"])
@@ -213,6 +230,10 @@ def is_published_now(doc: "Document", publish_on_field: str = "publish_on") -> b
 	return bool(doc.is_published or (publish_on and publish_on <= now_datetime()))
 
 
+def given_to(student: str) -> list:
+	return [["students.student", "=", student], ["students.student", "is", "not set"]]
+
+
 @frappe.whitelist(methods=["GET"])
 def get_assignment_submissions(assignment: str) -> dict:
 	require_faculty_for_assignment(assignment)
@@ -234,6 +255,12 @@ def get_assignment_submissions(assignment: str) -> dict:
 	)
 	if not assignment_doc:
 		frappe.throw(_("Assignment not found"), frappe.DoesNotExistError)
+	assignment_doc.students = frappe.get_all(
+		"CS17 Assignment Student",
+		filters={"parent": assignment, "parenttype": "CS17 Assignment"},
+		pluck="student",
+		order_by="idx asc",
+	)
 	submissions = frappe.get_all(
 		"CS17 Assignment Submission",
 		filters={"assignment": assignment},
@@ -253,12 +280,13 @@ def get_assignment_submissions(assignment: str) -> dict:
 	_attach_grades(submissions)
 	not_submitted = frappe.get_all(
 		"CS17 Profile",
-		filters={
-			"profile_type": "Student",
-			"cohort": assignment_doc.cohort,
-			"name": ["not in", [submission["student"] for submission in submissions]],
-			"user": ["not in", frappe.get_all("User", filters={"enabled": 0}, pluck="name")],
-		},
+		filters=[
+			["profile_type", "=", "Student"],
+			["cohort", "=", assignment_doc.cohort],
+			["name", "not in", [submission["student"] for submission in submissions]],
+			["user", "not in", frappe.get_all("User", filters={"enabled": 0}, pluck="name")],
+			*([["name", "in", assignment_doc.students]] if assignment_doc.students else []),
+		],
 		fields=["name as student", "full_name"],
 		order_by="full_name asc",
 	)
@@ -942,6 +970,7 @@ def get_student_assignments() -> dict:
 	assignments = frappe.get_all(
 		"CS17 Assignment",
 		filters={"cohort": cohort},
+		or_filters=given_to(student),
 		fields=[
 			"name",
 			"title",
@@ -978,6 +1007,7 @@ def get_student_assignments() -> dict:
 	upcoming = frappe.get_all(
 		"CS17 Assignment",
 		filters=[["cohort", "=", cohort], ["is_published", "=", 0], ["publish_on", ">", now]],
+		or_filters=given_to(student),
 		fields=["publish_on"],
 		order_by="publish_on asc",
 		limit=1,
@@ -992,6 +1022,7 @@ def get_student_assignment(assignment: str) -> dict:
 	assignments = frappe.get_all(
 		"CS17 Assignment",
 		filters={"name": assignment, "cohort": cohort},
+		or_filters=given_to(student),
 		fields=[
 			"name",
 			"title",
@@ -1643,3 +1674,54 @@ def publish_announcement(announcement: str, publish: str = "now", publish_on: st
 def delete_announcement(announcement: str) -> None:
 	require_faculty_for_announcement_cohort(frappe.db.get_value("CS17 Announcement", announcement, "cohort"))
 	frappe.delete_doc("CS17 Announcement", announcement, ignore_permissions=True)
+
+
+@frappe.whitelist(methods=["GET"])
+def get_cohort_students(cohort: str) -> list:
+	faculty = get_current_faculty()
+	if faculty.cohort and faculty.cohort != cohort:
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	return frappe.get_all(
+		"CS17 Profile",
+		filters={
+			"profile_type": "Student",
+			"cohort": cohort,
+			"user": ["not in", frappe.get_all("User", filters={"enabled": 0}, pluck="name")],
+		},
+		fields=["name as student", "full_name"],
+		order_by="full_name asc",
+	)
+
+
+@frappe.whitelist(methods=["POST"])
+def set_assignment_students(assignment: str, students: list | str) -> None:
+	require_faculty_for_assignment(assignment)
+	doc = frappe.get_doc("CS17 Assignment", assignment)
+	doc.set("students", [{"student": student} for student in frappe.parse_json(students)])
+	doc.save(ignore_permissions=True)
+
+
+@frappe.whitelist(methods=["POST"])
+def distribute_assignments(assignments: list | str) -> None:
+	assignments = frappe.parse_json(assignments)
+	for assignment in assignments:
+		require_faculty_for_assignment(assignment)
+	if len(assignments) < 2:
+		frappe.throw(_("Pick at least two assignments to hand out."))
+	cohorts = set(frappe.get_all("CS17 Assignment", filters={"name": ["in", assignments]}, pluck="cohort"))
+	if len(cohorts) != 1:
+		frappe.throw(_("Pick assignments of one cohort."))
+	if frappe.db.exists(ASSIGNMENT_SUBMISSION, {"assignment": ["in", assignments]}):
+		frappe.throw(_("Hand these out before students submit."))
+	students = [row.student for row in get_cohort_students(cohorts.pop())]
+	if len(students) < len(assignments):
+		frappe.throw(_("Pick no more assignments than the cohort has students."))
+	random.shuffle(students)
+	for index, assignment in enumerate(assignments):
+		set_assignment_students(assignment, students[index :: len(assignments)])
+
+
+@frappe.whitelist(methods=["POST"])
+def open_assignments_to_cohort(assignments: list | str) -> None:
+	for assignment in frappe.parse_json(assignments):
+		set_assignment_students(assignment, [])

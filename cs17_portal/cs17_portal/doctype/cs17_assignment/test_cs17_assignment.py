@@ -208,6 +208,7 @@ class TestQuarterAssignments(IntegrationTestCase):
 		cohort = make_cohort("C60TEST")
 		faculty_user = make_user("faculty60@cs17test.com")
 		make_profile("Faculty", cohort, faculty_user, "Faculty 60")
+		student = make_profile("Student", cohort, make_user("student60@cs17test.com"), "Student 60")
 		quarter = (
 			frappe.get_doc({"doctype": "CS17 Quarter", "quarter_name": "Quarter 60"})
 			.insert(ignore_permissions=True)
@@ -222,4 +223,6 @@ class TestQuarterAssignments(IntegrationTestCase):
 			{"quarter": quarter, "is_published": 0, "publish_on": add_days(now_datetime(), -1)},
 		)
 
-		self.assertEqual([row.name for row in get_quarter_assignments(quarter, cohort)], [assignment])
+		self.assertEqual(
+			[row.name for row in get_quarter_assignments(quarter, cohort, student)], [assignment]
+		)

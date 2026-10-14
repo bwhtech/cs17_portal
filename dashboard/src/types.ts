@@ -28,6 +28,10 @@ export interface CS17Assignment {
 	/** Student lists only: this student's own submission. */
 	submission?: CS17Submission | null
 	description?: string | null
+	/** Empty means the whole cohort. */
+	students?: string[]
+	/** 0 means the whole cohort. */
+	student_count?: number
 	due_date: string
 	cohort?: string
 	quarter?: string | null

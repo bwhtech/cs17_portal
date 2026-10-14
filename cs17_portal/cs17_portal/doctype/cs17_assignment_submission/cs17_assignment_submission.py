@@ -7,7 +7,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
-from cs17_portal.api import get_attempt, is_published_now, require_current_student
+from cs17_portal.api import get_attempt, given_to, is_published_now, require_current_student
 from cs17_portal.cs17_portal.doctype.cs17_project.cs17_project import get_owner_profile
 
 AUTO_SUBMIT_GRACE_SECONDS = 30
@@ -62,10 +62,13 @@ class CS17AssignmentSubmission(Document):
 		student = frappe.db.get_value("CS17 Profile", self.student, ["user", "cohort"], as_dict=True)
 		if not student or frappe.session.user != student.user:
 			return
-		assignment = frappe.db.get_value(
-			"CS17 Assignment", self.assignment, ["cohort", "is_published", "publish_on"], as_dict=True
+		assignments = frappe.get_all(
+			"CS17 Assignment",
+			filters={"name": self.assignment, "cohort": student.cohort},
+			or_filters=given_to(self.student),
+			fields=["is_published", "publish_on"],
 		)
-		if not (assignment and is_published_now(assignment)) or assignment.cohort != student.cohort:
+		if not (assignments and is_published_now(assignments[0])):
 			frappe.throw(_("This assignment is not open for submission."))
 
 	def validate_deadline(self):
