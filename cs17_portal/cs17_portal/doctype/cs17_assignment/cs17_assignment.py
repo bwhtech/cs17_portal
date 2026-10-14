@@ -36,6 +36,7 @@ class CS17Assignment(Document):
 		submission_type: DF.Literal["Any", "PDF", "URL", "Image", "ZIP", "Scratch", "Python"]
 		test_cases: DF.Table[CS17PythonTestCase]
 		title: DF.Data
+		watch_tab_switches: DF.Check
 	# end: auto-generated types
 
 	def before_insert(self):
@@ -48,6 +49,7 @@ class CS17Assignment(Document):
 		if self.submission_type != "Python":
 			self.starter_code = None
 			self.test_cases = []
+			self.watch_tab_switches = 0
 		if self.assignment_type == "Not Graded":
 			self.max_marks = 0
 			self.remarks = ""

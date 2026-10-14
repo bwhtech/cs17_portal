@@ -1,0 +1,78 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "creation": "2026-10-14 18:48:46.388613",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "assignment",
+  "student",
+  "left_at",
+  "returned_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "left_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Left At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "returned_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Returned At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "assignment",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Assignment",
+   "options": "CS17 Assignment",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "student",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Student",
+   "options": "CS17 Profile",
+   "read_only": 1,
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "links": [],
+ "modified": "2026-10-14 18:54:43.990042",
+ "modified_by": "Administrator",
+ "module": "CS17 Portal",
+ "name": "CS17 Tab Leave",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

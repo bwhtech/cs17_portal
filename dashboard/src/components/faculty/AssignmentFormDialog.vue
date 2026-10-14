@@ -125,6 +125,11 @@
 							</p>
 						</div>
 						<TestCasesField v-model="draft.test_cases" />
+						<Checkbox
+							v-model="draft.watch_tab_switches"
+							label="Watch for tab switches"
+							description="Students are told. Each time a student leaves the editor's tab shows on the grading page."
+						/>
 					</template>
 
 					<div class="space-y-2">
@@ -179,6 +184,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import {
 	BottomSheet,
 	Button,
+	Checkbox,
 	DateTimePicker,
 	Dialog,
 	ErrorMessage,
@@ -249,6 +255,7 @@ function emptyDraft(): AssignmentDraft {
 		description: '',
 		starter_code: '',
 		test_cases: [],
+		watch_tab_switches: false,
 	}
 }
 
@@ -394,6 +401,7 @@ async function loadExisting(name: string) {
 		description: existing.description ?? '',
 		starter_code: existing.starter_code ?? '',
 		test_cases: existing.test_cases ?? [],
+		watch_tab_switches: Boolean(existing.watch_tab_switches),
 	} satisfies AssignmentDraft)
 	publishMode.value = existing.publish_on ? 'schedule' : 'draft'
 	publishOn.value = existing.publish_on ?? ''
@@ -406,6 +414,7 @@ function isDirty(): boolean {
 			draft.description.trim() ||
 			draft.starter_code.trim() ||
 			draft.test_cases.length ||
+			draft.watch_tab_switches ||
 			(draft.cohort && !facultyCohort.value) ||
 			draft.quarter ||
 			draft.due_date ||
@@ -474,6 +483,7 @@ async function handleSubmit() {
 		remarks: draft.remarks,
 		starter_code: draft.starter_code,
 		test_cases: draft.test_cases,
+		watch_tab_switches: draft.watch_tab_switches ? 1 : 0,
 		publish: publishMode.value,
 		publish_on: toFrappeDatetime(publishOn.value),
 	}

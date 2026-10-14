@@ -45,6 +45,7 @@ export interface CS17Assignment {
 	test_cases?: PythonTestCase[]
 	sample_tests?: PythonTestCase[]
 	hidden_test_count?: number
+	watch_tab_switches?: Bool
 }
 
 export interface PythonTestCase {

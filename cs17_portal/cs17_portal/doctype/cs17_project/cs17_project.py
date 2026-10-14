@@ -2,7 +2,9 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
+from frappe.utils import now_datetime
 
 
 class CS17Project(Document):
@@ -24,7 +26,33 @@ class CS17Project(Document):
 		thumbnail: DF.AttachImage | None
 	# end: auto-generated types
 
-	pass
+	def record_tab_leave(self):
+		self._require_watched_assignment()
+		frappe.get_doc(
+			{
+				"doctype": "CS17 Tab Leave",
+				"assignment": self.assignment,
+				"student": self.profile,
+				"left_at": now_datetime(),
+			}
+		).insert(ignore_permissions=True)
+
+	def record_tab_return(self):
+		self._require_watched_assignment()
+		leave = frappe.db.get_value(
+			"CS17 Tab Leave",
+			{"assignment": self.assignment, "student": self.profile, "returned_at": ("is", "not set")},
+			"name",
+			order_by="left_at desc",
+		)
+		if leave:
+			frappe.db.set_value("CS17 Tab Leave", leave, "returned_at", now_datetime())
+
+	def _require_watched_assignment(self):
+		if not (
+			self.assignment and frappe.db.get_value("CS17 Assignment", self.assignment, "watch_tab_switches")
+		):
+			frappe.throw(_("This assignment does not watch tab switches."))
 
 
 def get_owner_profile(user: str) -> frappe._dict | None:

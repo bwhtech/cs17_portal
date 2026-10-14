@@ -67,6 +67,7 @@ declare module 'vue' {
     SubmissionTypeIcon: typeof import('./src/components/common/SubmissionTypeIcon.vue')['default']
     SubmitAssignmentDialog: typeof import('./src/components/assignments/SubmitAssignmentDialog.vue')['default']
     SubmitProjectDialog: typeof import('./src/components/projects/SubmitProjectDialog.vue')['default']
+    TabLeaves: typeof import('./src/components/grading/TabLeaves.vue')['default']
     TestCasesField: typeof import('./src/components/faculty/TestCasesField.vue')['default']
     TestResults: typeof import('./src/components/python/TestResults.vue')['default']
     UnreadAnnouncements: typeof import('./src/components/announcements/UnreadAnnouncements.vue')['default']

@@ -152,6 +152,7 @@ def create_assignment(
 	quarter: str | None = None,
 	starter_code: str | None = None,
 	test_cases: list | str | None = None,
+	watch_tab_switches: int | None = None,
 ) -> str:
 	faculty = get_current_faculty()
 	if faculty.cohort and faculty.cohort != cohort:
@@ -170,6 +171,7 @@ def create_assignment(
 		quarter,
 		starter_code,
 		test_cases,
+		watch_tab_switches,
 	)
 	assignment.naming_series = _naming_series(assignment_type)
 	_apply_publish_state(assignment, publish, publish_on)
@@ -681,6 +683,34 @@ def get_submission_code(submission: str) -> str:
 	return submission_doc.code or ""
 
 
+@frappe.whitelist(methods=["POST"])
+@rate_limit(key="project", limit=120, seconds=60, methods=["POST"], ip_based=False)
+def record_tab_leave(project: str) -> None:
+	require_owned_project(project).record_tab_leave()
+
+
+@frappe.whitelist(methods=["POST"])
+@rate_limit(key="project", limit=120, seconds=60, methods=["POST"], ip_based=False)
+def record_tab_return(project: str) -> None:
+	require_owned_project(project).record_tab_return()
+
+
+@frappe.whitelist(methods=["GET"])
+def get_tab_leaves(submission: str) -> list:
+	submission_doc = frappe.db.get_value(
+		ASSIGNMENT_SUBMISSION, submission, ["assignment", "student"], as_dict=True
+	)
+	if not submission_doc:
+		frappe.throw(_("Submission not found"), frappe.DoesNotExistError)
+	require_faculty_for_assignment(submission_doc.assignment)
+	return frappe.get_all(
+		"CS17 Tab Leave",
+		filters={"assignment": submission_doc.assignment, "student": submission_doc.student},
+		fields=["left_at", "returned_at"],
+		order_by="left_at asc",
+	)
+
+
 def _get_or_new_submission(assignment: str, student: str) -> "frappe.model.document.Document":
 	name = frappe.db.get_value(
 		"CS17 Assignment Submission", {"assignment": assignment, "student": student}, "name"
@@ -939,6 +969,7 @@ def get_student_assignment(assignment: str) -> dict:
 			"remarks",
 			"is_published",
 			"publish_on",
+			"watch_tab_switches",
 		],
 		limit=1,
 	)
@@ -1156,6 +1187,7 @@ def update_assignment(
 	quarter: str | None = None,
 	starter_code: str | None = None,
 	test_cases: list | str | None = None,
+	watch_tab_switches: int | None = None,
 ) -> str:
 	require_faculty_for_assignment(assignment)
 	faculty = get_current_faculty()
@@ -1181,6 +1213,7 @@ def update_assignment(
 		quarter,
 		starter_code,
 		test_cases,
+		watch_tab_switches,
 	)
 	if publish is not None:
 		_apply_publish_state(doc, publish, publish_on)
@@ -1201,6 +1234,7 @@ def _set_assignment_fields(
 	quarter: str | None = None,
 	starter_code: str | None = None,
 	test_cases: list | str | None = None,
+	watch_tab_switches: int | None = None,
 ) -> None:
 	doc.update(
 		{
@@ -1216,6 +1250,8 @@ def _set_assignment_fields(
 		doc.quarter = quarter
 	if starter_code is not None:
 		doc.starter_code = starter_code
+	if watch_tab_switches is not None:
+		doc.watch_tab_switches = watch_tab_switches
 	if test_cases is not None:
 		doc.set(
 			"test_cases",
@@ -1253,6 +1289,7 @@ def get_assignment(assignment: str) -> dict | None:
 			"is_published",
 			"publish_on",
 			"starter_code",
+			"watch_tab_switches",
 		],
 		as_dict=True,
 	)
@@ -1276,6 +1313,7 @@ def delete_assignment(assignment: str) -> None:
 	if frappe.db.exists("CS17 Assignment Submission", {"assignment": assignment}):
 		frappe.throw(_("Cannot delete an assignment that already has submissions"))
 	frappe.db.set_value("CS17 Project", {"assignment": assignment}, "assignment", None, update_modified=False)
+	frappe.db.delete("CS17 Tab Leave", {"assignment": assignment})
 	if frappe.delete_doc("CS17 Assignment", assignment, ignore_permissions=True) is False:
 		frappe.throw(_("Assignment not found"), frappe.DoesNotExistError)
 
