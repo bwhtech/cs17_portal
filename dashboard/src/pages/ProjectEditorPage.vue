@@ -99,6 +99,7 @@ import { Button, LoadingIndicator, toast, useCall } from 'frappe-ui'
 import EmptyState from '@/components/common/EmptyState.vue'
 import ScratchFrame from '@/components/scratch/ScratchFrame.vue'
 import SubmitProjectDialog from '@/components/projects/SubmitProjectDialog.vue'
+import { onBeforeShellSwap } from '@/components/shell/shellSwap'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useZenMode, useZenOnMount } from '@/composables/useZenMode'
 import { useProjectsPath } from '@/composables/useProjectsPath'
@@ -293,6 +294,7 @@ function hasUnsavedEdits() {
 
 onBeforeRouteLeave(() => !hasUnsavedEdits() || saveNow())
 onBeforeLogout(() => !hasUnsavedEdits() || saveNow())
+onBeforeShellSwap(() => !hasUnsavedEdits() || saveNow())
 
 function warnBeforeUnload(event: BeforeUnloadEvent) {
 	if (hasUnsavedEdits()) event.preventDefault()

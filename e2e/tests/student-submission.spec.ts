@@ -594,6 +594,25 @@ test.describe("Student submission types", () => {
 
 		expect(saves).toBe(1);
 	});
+
+	test("crossing to phone width saves an unsaved edit before the editor reloads", async ({
+		page,
+	}) => {
+		await openProjectWithUnsavedEdit(page);
+		let saves = 0;
+		page.on("request", (request) => {
+			if (request.url().includes("cs17_portal.api.save_project")) saves += 1;
+		});
+		await page.getByRole("button", { name: "Exit zen mode" }).click();
+		const reloaded = page.waitForEvent("framenavigated", (frame) =>
+			frame.url().includes("scratch/editor.html")
+		);
+
+		await page.setViewportSize({ width: 390, height: 844 });
+		await reloaded;
+
+		expect(saves).toBe(1);
+	});
 });
 
 test.describe("Student in another timezone", () => {
