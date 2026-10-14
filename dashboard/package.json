@@ -12,6 +12,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@codemirror/lang-python": "^6.1.6",
+    "@codemirror/language": "^6.0.0",
     "dayjs": "^1.11.21",
     "dompurify": "^3.4.8",
     "frappe-ui": "1.0.0",

@@ -22,6 +22,12 @@ const routes: RouteRecordRaw[] = [
 		component: () => import('@/pages/ProjectEditorPage.vue'),
 		props: true,
 	},
+	{
+		path: '/projects/:id/code',
+		name: 'PythonEditor',
+		component: () => import('@/pages/PythonEditorPage.vue'),
+		props: true,
+	},
 	{ path: '/results', name: 'Results', component: () => import('@/pages/ResultsPage.vue') },
 	{
 		path: '/results/:resultId',
@@ -61,6 +67,12 @@ const routes: RouteRecordRaw[] = [
 		path: '/faculty/projects/:id/edit',
 		name: 'FacultyProjectEditor',
 		component: () => import('@/pages/ProjectEditorPage.vue'),
+		props: true,
+	},
+	{
+		path: '/faculty/projects/:id/code',
+		name: 'FacultyPythonEditor',
+		component: () => import('@/pages/PythonEditorPage.vue'),
 		props: true,
 	},
 	{

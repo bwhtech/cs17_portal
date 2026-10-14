@@ -125,13 +125,17 @@ export interface CS17Announcement {
 	can_edit?: boolean
 }
 
-/** `CS17 Project` — a saved Scratch project. */
+export type ProjectType = 'Scratch' | 'Python'
+
+/** `CS17 Project` — a saved Scratch project or Python program. */
 export interface CS17Project {
 	name: string
 	project_title: string
+	project_type: ProjectType
 	assignment?: string | null
 	sb3_file: string | null
 	thumbnail?: string | null
+	code?: string | null
 	last_saved_at: string | null
 	is_submitted?: boolean
 }

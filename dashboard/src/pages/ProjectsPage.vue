@@ -1,15 +1,16 @@
 <template>
 	<AppHeader title="Projects">
 		<template #actions>
-			<Button
-				variant="solid"
-				theme="gray"
-				:icon-left="isDesktop ? 'lucide-plus' : undefined"
-				:icon="isDesktop ? undefined : 'lucide-plus'"
-				label="New project"
-				:loading="createProject.loading"
-				@click="promptForNewProject"
-			/>
+			<Dropdown :options="newProjectOptions" align="end">
+				<Button
+					variant="solid"
+					theme="gray"
+					:icon-left="isDesktop ? 'lucide-plus' : undefined"
+					:icon="isDesktop ? undefined : 'lucide-plus'"
+					label="New project"
+					:loading="createProject.loading"
+				/>
+			</Dropdown>
 		</template>
 	</AppHeader>
 
@@ -32,7 +33,7 @@
 			v-else-if="!projects.length"
 			icon="lucide-blocks"
 			title="No projects yet"
-			description="Create your first Scratch project to get started."
+			description="Create your first project to get started."
 		/>
 
 		<div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -50,7 +51,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Button, Skeleton, dialog, toast, useCall } from 'frappe-ui'
+import { Button, Dropdown, Skeleton, dialog, toast, useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
@@ -58,10 +59,10 @@ import EmptyState from '@/components/common/EmptyState.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import ProjectCard from '@/components/projects/ProjectCard.vue'
 import { useLoadFailed } from '@/composables/useLoadFailed'
-import { useProjectsPath } from '@/composables/useProjectsPath'
+import { projectEditorPath, useProjectsPath } from '@/composables/useProjectsPath'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { trySubmit } from '@/lib/trySubmit'
-import type { CS17Project } from '@/types'
+import type { CS17Project, ProjectType } from '@/types'
 
 const PROJECT_NAME_LENGTH = 140
 
@@ -73,7 +74,10 @@ const projectList = useCall<CS17Project[]>({
 	url: '/api/v2/method/cs17_portal.api.list_my_projects',
 })
 
-const createProject = useCall<{ name: string }, { project_title: string }>({
+const createProject = useCall<
+	{ name: string },
+	{ project_title: string; project_type: ProjectType }
+>({
 	url: '/api/v2/method/cs17_portal.api.create_project',
 	method: 'POST',
 	immediate: false,
@@ -101,18 +105,31 @@ function projectNameError(value: string) {
 		: null
 }
 
+const newProjectOptions = [
+	{
+		label: 'Scratch project',
+		icon: 'lucide-blocks',
+		onClick: () => promptForNewProject('Scratch'),
+	},
+	{
+		label: 'Python project',
+		icon: 'lucide-code',
+		onClick: () => promptForNewProject('Python'),
+	},
+]
+
 /**
- * The name is asked for up front because a Scratch project is only ever
- * opened from this grid — an untitled card is unfindable a week later.
+ * The name is asked for up front because a project is only ever opened from
+ * this grid — an untitled card is unfindable a week later.
  */
-function promptForNewProject() {
+function promptForNewProject(projectType: ProjectType) {
 	dialog.prompt({
-		title: 'New project',
+		title: `New ${projectType} project`,
 		fields: [
 			{
 				name: 'project_title',
 				label: 'Project name',
-				placeholder: 'Maze game',
+				placeholder: projectType === 'Python' ? 'Number guessing game' : 'Maze game',
 				required: true,
 				validate: projectNameError,
 			},
@@ -122,7 +139,10 @@ function promptForNewProject() {
 			const title = String(values.project_title ?? '').trim()
 			if (!title) throw new Error('Give the project a name.')
 
-			const created = await trySubmit(createProject, { project_title: title })
+			const created = await trySubmit(createProject, {
+				project_title: title,
+				project_type: projectType,
+			})
 			if (createProject.error || !created) {
 				throw new Error(
 					frappeErrorMessage(createProject.error, 'Could not create the project.'),
@@ -131,7 +151,9 @@ function promptForNewProject() {
 
 			// The grid refreshes behind us; we leave for the editor either way.
 			projectList.reload()
-			router.push(`${projectsPath}/${created.name}/edit`)
+			router.push(
+				projectEditorPath(projectsPath, { name: created.name, project_type: projectType }),
+			)
 		},
 	})
 }

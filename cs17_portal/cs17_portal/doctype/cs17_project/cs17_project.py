@@ -15,9 +15,11 @@ class CS17Project(Document):
 		from frappe.types import DF
 
 		assignment: DF.Link | None
+		code: DF.Code | None
 		last_saved_at: DF.Datetime | None
 		profile: DF.Link
 		project_title: DF.Data
+		project_type: DF.Literal["Scratch", "Python"]
 		sb3_file: DF.Attach | None
 		thumbnail: DF.AttachImage | None
 	# end: auto-generated types

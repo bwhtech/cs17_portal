@@ -10,3 +10,7 @@ declare module '~icons/*' {
 	const component: FunctionalComponent<SVGAttributes>
 	export default component
 }
+
+// `frappe-ui/code-editor` imports every CodeMirror language it can load, and
+// they are optional peers; the app installs only `lang-python`.
+declare module '@codemirror/lang-*'
