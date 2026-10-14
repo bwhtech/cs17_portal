@@ -29,6 +29,7 @@ def run_program(code, stdin):
 	linecache.cache["main.py"] = (len(code), None, code.splitlines(keepends=True), "main.py")
 	error = None
 	try:
+		# nosemgrep: frappe-codeinjection-eval
 		exec(compile(code, "main.py", "exec"), {"__name__": "__main__"})
 	except SystemExit as exc:
 		if exc.code not in (None, 0):
