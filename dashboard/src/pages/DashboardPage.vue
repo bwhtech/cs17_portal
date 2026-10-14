@@ -46,14 +46,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { ErrorMessage, useCall } from 'frappe-ui'
+import { ErrorMessage } from 'frappe-ui'
 import AlertBanner from '@/components/announcements/AlertBanner.vue'
 import AssignmentTable from '@/components/assignments/AssignmentTable.vue'
 import GradeDialog from '@/components/assignments/GradeDialog.vue'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import { useLoadFailed } from '@/composables/useLoadFailed'
-import { usePolling, usePublishTimer } from '@/composables/usePolling'
+import { usePolledCall, usePolling, usePublishTimer } from '@/composables/usePolling'
 import { useSession } from '@/composables/useSession'
 import { dayjs, formatLongDate, isPast } from '@/lib/dates'
 import { gradesByAssignment, submissionsByAssignment } from '@/lib/status'
@@ -71,17 +71,17 @@ const { profile, cohort, isStudent } = useSession()
 const firstName = computed(() => profile.value?.first_name || 'Student')
 const today = formatLongDate()
 
-const announcementsCall = useCall<StudentAnnouncementsResponse>({
+const announcementsCall = usePolledCall<StudentAnnouncementsResponse>({
 	url: '/api/v2/method/cs17_portal.api.get_student_announcements',
 	immediate: isStudent.value,
 })
 
-const assignmentsCall = useCall<StudentAssignmentsResponse>({
+const assignmentsCall = usePolledCall<StudentAssignmentsResponse>({
 	url: '/api/v2/method/cs17_portal.api.get_student_assignments',
 	immediate: Boolean(cohort.value),
 })
 
-const gradesCall = useCall<StudentGradesResponse>({
+const gradesCall = usePolledCall<StudentGradesResponse>({
 	url: '/api/v2/method/cs17_portal.api.get_student_grades',
 	immediate: Boolean(profile.value?.name),
 })

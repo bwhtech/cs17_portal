@@ -60,7 +60,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Badge, useCall } from 'frappe-ui'
+import { Badge } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
@@ -68,14 +68,14 @@ import EmptyState from '@/components/common/EmptyState.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
 import { useLoadFailed } from '@/composables/useLoadFailed'
-import { usePolling } from '@/composables/usePolling'
+import { usePolledCall, usePolling } from '@/composables/usePolling'
 import { formatDate } from '@/lib/dates'
 import { formatMarks, formatPercent, passTheme } from '@/lib/results'
 import type { CS17ResultSummary } from '@/types'
 
 const router = useRouter()
 
-const resultsCall = useCall<CS17ResultSummary[]>({
+const resultsCall = usePolledCall<CS17ResultSummary[]>({
 	url: '/api/v2/method/cs17_portal.api.get_student_results',
 })
 

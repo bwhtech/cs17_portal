@@ -25,26 +25,25 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import AssignmentTable from '@/components/assignments/AssignmentTable.vue'
 import GradeDialog from '@/components/assignments/GradeDialog.vue'
 import { useLoadFailed } from '@/composables/useLoadFailed'
-import { usePolling, usePublishTimer } from '@/composables/usePolling'
+import { usePolledCall, usePolling, usePublishTimer } from '@/composables/usePolling'
 import { useSession } from '@/composables/useSession'
 import { gradesByAssignment, submissionsByAssignment } from '@/lib/status'
 import type { StudentAssignmentsResponse, StudentGradesResponse } from '@/types'
 
 const { cohort } = useSession()
 
-const assignmentsCall = useCall<StudentAssignmentsResponse>({
+const assignmentsCall = usePolledCall<StudentAssignmentsResponse>({
 	url: '/api/v2/method/cs17_portal.api.get_student_assignments',
 	immediate: Boolean(cohort.value),
 })
 
-const gradesCall = useCall<StudentGradesResponse>({
+const gradesCall = usePolledCall<StudentGradesResponse>({
 	url: '/api/v2/method/cs17_portal.api.get_student_grades',
 })
 
