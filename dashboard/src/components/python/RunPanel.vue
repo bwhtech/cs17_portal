@@ -38,7 +38,7 @@
 					v-text="`${result.stderr}${result.error ?? ''}`"
 				/>
 				<p v-if="asksForMoreInput" class="mt-2 text-p-sm text-ink-gray-5">
-					Your program asked for more lines than the Input tab has.
+					Your program wants input. Type it in the Input tab, then run again.
 				</p>
 				<p
 					v-if="!result.stdout && !result.stderr && !result.error"

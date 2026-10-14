@@ -259,6 +259,13 @@ async function saveLatest(): Promise<boolean> {
 
 const runner = usePythonRunner()
 const stdin = ref('')
+watch(
+	() => sampleTests.value[0]?.input,
+	(input) => {
+		if (input && !stdin.value) stdin.value = input
+	},
+	{ immediate: true },
+)
 const panelTab = ref('output')
 const result = ref<RunResult | null>(null)
 const running = ref(false)
