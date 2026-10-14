@@ -57,7 +57,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Dialog, useCall } from 'frappe-ui'
+import { Dialog } from 'frappe-ui'
 import AnnouncementCard from '@/components/announcements/AnnouncementCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadError from '@/components/common/LoadError.vue'
@@ -67,7 +67,7 @@ import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import { useAnnouncementDismissals } from '@/composables/useAnnouncementDismissals'
 import { useLoadFailed } from '@/composables/useLoadFailed'
-import { usePolling, usePublishTimer } from '@/composables/usePolling'
+import { usePolledCall, usePolling, usePublishTimer } from '@/composables/usePolling'
 import { useSession } from '@/composables/useSession'
 import { formatDate } from '@/lib/dates'
 import type { CS17Announcement, StudentAnnouncementsResponse } from '@/types'
@@ -83,7 +83,7 @@ function openAnnouncement(announcement: CS17Announcement) {
 	dialogOpen.value = true
 }
 
-const announcementsCall = useCall<StudentAnnouncementsResponse>({
+const announcementsCall = usePolledCall<StudentAnnouncementsResponse>({
 	url: '/api/v2/method/cs17_portal.api.get_student_announcements',
 	immediate: isStudent.value,
 })

@@ -1,5 +1,7 @@
-import { onMounted, onUnmounted, watch } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, toRefs, watch } from 'vue'
+import { toast, useCall, type UseCallOptions } from 'frappe-ui'
 import { parseDatetime } from '@/lib/dates'
+import { isRefusal } from '@/lib/frappeError'
 
 /** The interval the React app polled at, kept so behaviour doesn't shift. */
 export const DEFAULT_POLL_MS = 45_000
@@ -42,6 +44,18 @@ export function usePolling(reload: () => unknown, ms: number = DEFAULT_POLL_MS):
 		if (timer) clearInterval(timer)
 		document.removeEventListener('visibilitychange', onVisibilityChange)
 	})
+}
+
+export function usePolledCall<TResponse>(options: UseCallOptions<TResponse>) {
+	const call = useCall<TResponse>(options)
+	const data = computed<TResponse | null>((previous = null) => {
+		if (call.data != null || call.loading) return call.data ?? previous
+		return call.error && !isRefusal(call.error) ? previous : null
+	})
+	watch([data, () => call.error], ([rows, error]) => {
+		if (error && rows != null) toast.error('Could not refresh this page.', { id: 'reload-failed' })
+	})
+	return reactive({ ...toRefs(call), data })
 }
 
 /**
