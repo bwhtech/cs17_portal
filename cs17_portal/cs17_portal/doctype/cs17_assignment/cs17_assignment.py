@@ -51,6 +51,9 @@ class CS17Assignment(Document):
 			self.starter_code = None
 			self.test_cases = []
 			self.watch_tab_switches = 0
+			self.time_limit = 0
+		if cint(self.time_limit) < 0:
+			frappe.throw(_("The time limit cannot be negative."))
 		if self.assignment_type == "Not Graded":
 			self.max_marks = 0
 			self.remarks = ""

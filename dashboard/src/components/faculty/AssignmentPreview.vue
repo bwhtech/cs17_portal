@@ -48,6 +48,7 @@ export interface AssignmentDraft {
 	starter_code: string
 	test_cases: PythonTestCase[]
 	watch_tab_switches: boolean
+	time_limit: string
 }
 
 const props = defineProps<{ draft: AssignmentDraft }>()
@@ -63,6 +64,9 @@ const metaRows = computed(() => {
 	]
 	if (evaluationType.value === 'Marks') {
 		rows.push({ label: 'Max Marks', value: props.draft.max_marks || '—' })
+	}
+	if (props.draft.submission_type === 'Python' && Number(props.draft.time_limit) > 0) {
+		rows.push({ label: 'Time Limit', value: `${props.draft.time_limit} min` })
 	}
 	return rows
 })

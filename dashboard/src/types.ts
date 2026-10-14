@@ -46,6 +46,11 @@ export interface CS17Assignment {
 	sample_tests?: PythonTestCase[]
 	hidden_test_count?: number
 	watch_tab_switches?: Bool
+	time_limit?: number
+	started_at?: string
+	ends_at?: string
+	/** The server's clock, sent with a timed assignment. */
+	now?: string
 }
 
 export interface PythonTestCase {

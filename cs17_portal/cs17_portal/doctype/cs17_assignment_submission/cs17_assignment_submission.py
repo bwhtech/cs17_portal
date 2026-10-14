@@ -7,8 +7,10 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
-from cs17_portal.api import is_published_now, require_current_student
+from cs17_portal.api import get_attempt, is_published_now, require_current_student
 from cs17_portal.cs17_portal.doctype.cs17_project.cs17_project import get_owner_profile
+
+AUTO_SUBMIT_GRACE_SECONDS = 30
 
 
 class CS17AssignmentSubmission(Document):
@@ -37,6 +39,7 @@ class CS17AssignmentSubmission(Document):
 		self.validate_duplicate()
 		self.validate_open_to_student()
 		self.validate_deadline()
+		self.validate_time_limit()
 		self.validate_not_graded()
 		self.validate_project_acceptance()
 
@@ -66,11 +69,20 @@ class CS17AssignmentSubmission(Document):
 			frappe.throw(_("This assignment is not open for submission."))
 
 	def validate_deadline(self):
-		if not self._edited_by_owner():
+		if not self._edited_by_owner() or get_attempt(self.assignment, self.student):
 			return
 		due_date = frappe.db.get_value("CS17 Assignment", self.assignment, "due_date")
 		if due_date and frappe.utils.now_datetime() > due_date:
 			frappe.throw(_("The deadline for this assignment has passed."))
+
+	def validate_time_limit(self):
+		if not self._edited_by_owner():
+			return
+		attempt = get_attempt(self.assignment, self.student)
+		if attempt and frappe.utils.now_datetime() > frappe.utils.add_to_date(
+			attempt.ends_at, seconds=AUTO_SUBMIT_GRACE_SECONDS
+		):
+			frappe.throw(_("Your time for this assignment is up."))
 
 	def validate_not_graded(self):
 		if self.is_new() or not self._edited_by_owner():

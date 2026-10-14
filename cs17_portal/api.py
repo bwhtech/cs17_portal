@@ -10,7 +10,7 @@ from frappe.core.doctype.file.utils import decode_file_content
 from frappe.query_builder import Order
 from frappe.query_builder.functions import Coalesce, Date
 from frappe.rate_limiter import rate_limit
-from frappe.utils import flt, get_datetime, getdate, now_datetime
+from frappe.utils import add_to_date, flt, get_datetime, getdate, now_datetime
 
 if TYPE_CHECKING:
 	from frappe.model.document import Document
@@ -153,6 +153,7 @@ def create_assignment(
 	starter_code: str | None = None,
 	test_cases: list | str | None = None,
 	watch_tab_switches: int | None = None,
+	time_limit: int | None = None,
 ) -> str:
 	faculty = get_current_faculty()
 	if faculty.cohort and faculty.cohort != cohort:
@@ -172,6 +173,7 @@ def create_assignment(
 		starter_code,
 		test_cases,
 		watch_tab_switches,
+		time_limit,
 	)
 	assignment.naming_series = _naming_series(assignment_type)
 	_apply_publish_state(assignment, publish, publish_on)
@@ -711,6 +713,18 @@ def get_tab_leaves(submission: str) -> list:
 	)
 
 
+@frappe.whitelist(methods=["GET"])
+def get_assignment_attempt(submission: str) -> dict | None:
+	submission_doc = frappe.db.get_value(
+		ASSIGNMENT_SUBMISSION, submission, ["assignment", "student", "submitted_at"], as_dict=True
+	)
+	if not submission_doc:
+		frappe.throw(_("Submission not found"), frappe.DoesNotExistError)
+	require_faculty_for_assignment(submission_doc.assignment)
+	attempt = get_attempt(submission_doc.assignment, submission_doc.student)
+	return attempt and {"started_at": attempt.started_at, "submitted_at": submission_doc.submitted_at}
+
+
 def _get_or_new_submission(assignment: str, student: str) -> "frappe.model.document.Document":
 	name = frappe.db.get_value(
 		"CS17 Assignment Submission", {"assignment": assignment, "student": student}, "name"
@@ -726,9 +740,12 @@ def _get_or_new_submission(assignment: str, student: str) -> "frappe.model.docum
 @frappe.whitelist(methods=["GET"])
 @with_current_student
 def is_assignment_closed(assignment: str, student: str | None = None) -> bool:
-	"""True once the student can no longer revise: deadline passed or grade published."""
+	"""True once the student can no longer revise: deadline or time limit passed, or grade published."""
 	due_date = frappe.db.get_value("CS17 Assignment", assignment, "due_date")
 	if due_date and now_datetime() > due_date:
+		return True
+	attempt = get_attempt(assignment, student)
+	if attempt and now_datetime() > attempt.ends_at:
 		return True
 	submission = frappe.db.get_value(
 		ASSIGNMENT_SUBMISSION, {"assignment": assignment, "student": student}, "name"
@@ -741,6 +758,22 @@ def is_assignment_closed(assignment: str, student: str | None = None) -> bool:
 		fields=["is_published", "published_on"],
 	)
 	return any(is_published_now(grade, "published_on") for grade in grades)
+
+
+def get_attempt(assignment: str, student: str) -> frappe._dict | None:
+	attempt = frappe.db.get_value(
+		"CS17 Assignment Attempt",
+		{"assignment": assignment, "student": student},
+		["started_at", "assignment.time_limit as time_limit", "assignment.due_date as due_date"],
+		as_dict=True,
+	)
+	if not (attempt and attempt.time_limit):
+		return None
+	ends_at = add_to_date(attempt.started_at, minutes=attempt.time_limit)
+	return frappe._dict(
+		started_at=attempt.started_at,
+		ends_at=min(ends_at, attempt.due_date) if attempt.due_date else ends_at,
+	)
 
 
 @frappe.whitelist(methods=["GET"])
@@ -954,7 +987,8 @@ def get_student_assignments() -> dict:
 
 @frappe.whitelist(methods=["GET"])
 def get_student_assignment(assignment: str) -> dict:
-	cohort = frappe.db.get_value("CS17 Profile", require_current_student(), "cohort")
+	student = require_current_student()
+	cohort = frappe.db.get_value("CS17 Profile", student, "cohort")
 	assignments = frappe.get_all(
 		"CS17 Assignment",
 		filters={"name": assignment, "cohort": cohort},
@@ -970,12 +1004,20 @@ def get_student_assignment(assignment: str) -> dict:
 			"is_published",
 			"publish_on",
 			"watch_tab_switches",
+			"time_limit",
 		],
 		limit=1,
 	)
 	if not (assignments and is_published_now(assignments[0])):
 		frappe.throw(_("Assignment not found"), frappe.DoesNotExistError)
 	details = assignments[0]
+	if details.time_limit:
+		details.now = now_datetime()
+		attempt = get_attempt(assignment, student)
+		if not attempt:
+			details.description = None
+			return details
+		details.update(attempt)
 	if details.submission_type == "Python":
 		test_cases = get_test_cases(assignment)
 		details.sample_tests = [
@@ -1014,6 +1056,15 @@ def start_python_assignment(assignment: str) -> dict:
 		)
 		project_doc.insert(ignore_permissions=True)
 		project = project_doc.name
+	if details.time_limit and not details.get("started_at"):
+		frappe.get_doc(
+			{
+				"doctype": "CS17 Assignment Attempt",
+				"assignment": assignment,
+				"student": student,
+				"started_at": now_datetime(),
+			}
+		).insert(ignore_permissions=True)
 	return {"name": project}
 
 
@@ -1188,6 +1239,7 @@ def update_assignment(
 	starter_code: str | None = None,
 	test_cases: list | str | None = None,
 	watch_tab_switches: int | None = None,
+	time_limit: int | None = None,
 ) -> str:
 	require_faculty_for_assignment(assignment)
 	faculty = get_current_faculty()
@@ -1214,6 +1266,7 @@ def update_assignment(
 		starter_code,
 		test_cases,
 		watch_tab_switches,
+		time_limit,
 	)
 	if publish is not None:
 		_apply_publish_state(doc, publish, publish_on)
@@ -1235,6 +1288,7 @@ def _set_assignment_fields(
 	starter_code: str | None = None,
 	test_cases: list | str | None = None,
 	watch_tab_switches: int | None = None,
+	time_limit: int | None = None,
 ) -> None:
 	doc.update(
 		{
@@ -1252,6 +1306,8 @@ def _set_assignment_fields(
 		doc.starter_code = starter_code
 	if watch_tab_switches is not None:
 		doc.watch_tab_switches = watch_tab_switches
+	if time_limit is not None:
+		doc.time_limit = time_limit
 	if test_cases is not None:
 		doc.set(
 			"test_cases",
@@ -1290,6 +1346,7 @@ def get_assignment(assignment: str) -> dict | None:
 			"publish_on",
 			"starter_code",
 			"watch_tab_switches",
+			"time_limit",
 		],
 		as_dict=True,
 	)
@@ -1314,6 +1371,7 @@ def delete_assignment(assignment: str) -> None:
 		frappe.throw(_("Cannot delete an assignment that already has submissions"))
 	frappe.db.set_value("CS17 Project", {"assignment": assignment}, "assignment", None, update_modified=False)
 	frappe.db.delete("CS17 Tab Leave", {"assignment": assignment})
+	frappe.db.delete("CS17 Assignment Attempt", {"assignment": assignment})
 	if frappe.delete_doc("CS17 Assignment", assignment, ignore_permissions=True) is False:
 		frappe.throw(_("Assignment not found"), frappe.DoesNotExistError)
 

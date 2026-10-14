@@ -130,6 +130,14 @@
 							label="Watch for tab switches"
 							description="Students are told. Each time a student leaves the editor's tab shows on the grading page."
 						/>
+						<FormControl
+							v-model="draft.time_limit"
+							type="number"
+							label="Time limit (minutes)"
+							description="Leave empty for no limit. The clock starts when a student opens the question."
+							min="1"
+							step="1"
+						/>
 					</template>
 
 					<div class="space-y-2">
@@ -256,6 +264,7 @@ function emptyDraft(): AssignmentDraft {
 		starter_code: '',
 		test_cases: [],
 		watch_tab_switches: false,
+		time_limit: '',
 	}
 }
 
@@ -402,6 +411,7 @@ async function loadExisting(name: string) {
 		starter_code: existing.starter_code ?? '',
 		test_cases: existing.test_cases ?? [],
 		watch_tab_switches: Boolean(existing.watch_tab_switches),
+		time_limit: existing.time_limit ? String(existing.time_limit) : '',
 	} satisfies AssignmentDraft)
 	publishMode.value = existing.publish_on ? 'schedule' : 'draft'
 	publishOn.value = existing.publish_on ?? ''
@@ -415,6 +425,7 @@ function isDirty(): boolean {
 			draft.starter_code.trim() ||
 			draft.test_cases.length ||
 			draft.watch_tab_switches ||
+			draft.time_limit ||
 			(draft.cohort && !facultyCohort.value) ||
 			draft.quarter ||
 			draft.due_date ||
@@ -484,6 +495,7 @@ async function handleSubmit() {
 		starter_code: draft.starter_code,
 		test_cases: draft.test_cases,
 		watch_tab_switches: draft.watch_tab_switches ? 1 : 0,
+		time_limit: Number(draft.time_limit) || 0,
 		publish: publishMode.value,
 		publish_on: toFrappeDatetime(publishOn.value),
 	}
