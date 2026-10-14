@@ -88,3 +88,19 @@ class TestAssignmentApi(FrappeTestCase):
 			frappe.db.get_value("CS17 Assignment", assignment, ["title", "is_published", "publish_on"]),
 			("PDF Task 191 revised", 0, frappe.utils.get_datetime("2031-03-01 09:00:00")),
 		)
+
+	def test_create_assignment_keeps_the_test_cases_in_order(self):
+		frappe.set_user(self.faculty_user)
+		test_cases = [
+			{"input": "3\n", "expected_output": "9\n", "is_hidden": 0},
+			{"input": "12\n", "expected_output": "144\n", "is_hidden": 1},
+		]
+		assignment = api.create_assignment(
+			"Square a Number 195",
+			self.cohort,
+			"2030-01-01 00:00:00",
+			submission_type="Python",
+			test_cases=frappe.as_json(test_cases),
+		)
+
+		self.assertEqual(api.get_assignment(assignment).test_cases, test_cases)

@@ -167,6 +167,7 @@
 		:title="`Submission: ${previewTarget.full_name ?? previewTarget.student}`"
 		:submission-type="assignment?.submission_type"
 		:submission="previewTarget.name"
+		:assignment="assignmentId"
 		:file-url="previewTarget.submission_document || previewTarget.submission_url"
 		@update:open="previewTarget = null"
 	/>

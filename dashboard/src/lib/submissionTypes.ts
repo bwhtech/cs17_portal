@@ -45,6 +45,10 @@ const SUBMISSION_TYPE_CONFIG: Record<string, SubmissionTypeConfig> = {
 	},
 }
 
+export function isProjectSubmission(submissionType?: string | null): boolean {
+	return submissionType === 'Scratch' || submissionType === 'Python'
+}
+
 export function getSubmissionConfig(submissionType?: string): SubmissionTypeConfig {
 	return SUBMISSION_TYPE_CONFIG[submissionType ?? 'Any'] ?? SUBMISSION_TYPE_CONFIG.Any
 }

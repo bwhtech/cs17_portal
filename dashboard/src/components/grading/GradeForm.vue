@@ -90,6 +90,7 @@ const props = defineProps<{
 	submission: string
 	maxMarks: number
 	evaluationType: EvaluationType
+	suggestedMarks?: number | null
 }>()
 
 const emit = defineEmits<{ saved: [] }>()
@@ -130,6 +131,16 @@ watch(
 		remarks.value = grade?.remarks ?? ''
 		graded.value = grade != null
 		seeded.value = true
+	},
+	{ immediate: true },
+)
+
+watch(
+	() => [seeded.value, props.suggestedMarks] as const,
+	([isSeeded, suggested]) => {
+		if (isSeeded && !graded.value && marks.value === '' && suggested != null) {
+			marks.value = String(suggested)
+		}
 	},
 	{ immediate: true },
 )

@@ -26,7 +26,7 @@ import { computed } from 'vue'
 import { Button } from 'frappe-ui'
 import MarkdownText from '@/components/common/MarkdownText.vue'
 import { formatDateTime } from '@/lib/dates'
-import type { AssignmentType, EvaluationType, SubmissionType } from '@/types'
+import type { AssignmentType, EvaluationType, PythonTestCase, SubmissionType } from '@/types'
 
 /**
  * The authoring form's working copy of an assignment. Every field is a string
@@ -45,6 +45,8 @@ export interface AssignmentDraft {
 	/** A Frappe datetime, "YYYY-MM-DD HH:mm:ss". */
 	due_date: string
 	description: string
+	starter_code: string
+	test_cases: PythonTestCase[]
 }
 
 const props = defineProps<{ draft: AssignmentDraft }>()

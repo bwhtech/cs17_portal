@@ -15,14 +15,14 @@
 
 			<div v-else class="space-y-3">
 				<p class="text-p-base text-ink-gray-7">
-					Pick a Scratch assignment to submit this project to.
+					Pick a {{ projectType }} assignment to submit this project to.
 				</p>
 
 				<div v-if="assignments.loading" class="space-y-2">
 					<Skeleton v-for="n in 2" :key="n" class="h-7 rounded-4" />
 				</div>
 				<p v-else-if="!options.length" class="text-p-sm text-ink-gray-5">
-					No open Scratch assignments in your cohort.
+					No open {{ projectType }} assignments in your cohort.
 				</p>
 				<div v-else class="space-y-2">
 					<Button
@@ -80,17 +80,23 @@ import { useSession } from '@/composables/useSession'
 import { formatDateTime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { trySubmit } from '@/lib/trySubmit'
-import type { CS17Assignment, StudentAssignmentsResponse } from '@/types'
+import type { CS17Assignment, ProjectType, StudentAssignmentsResponse } from '@/types'
 
 const props = defineProps<{
 	open: boolean
 	/** The `CS17 Project` being submitted. */
 	project: string
+	projectType: ProjectType
 	/** From `?assignment=` — skips the picker when it names a listed assignment. */
 	presetAssignment?: string | null
 }>()
 
 const emit = defineEmits<{ 'update:open': [value: boolean] }>()
+
+const SUBMIT_METHODS: Record<ProjectType, string> = {
+	Scratch: 'submit_scratch_project',
+	Python: 'submit_python_project',
+}
 
 const { cohort } = useSession()
 
@@ -102,7 +108,7 @@ const assignments = useCall<StudentAssignmentsResponse>({
 })
 
 const submitProject = useCall<{ name: string }, { assignment: string; project: string }>({
-	url: '/api/v2/method/cs17_portal.api.submit_scratch_project',
+	url: `/api/v2/method/cs17_portal.api.${SUBMIT_METHODS[props.projectType]}`,
 	method: 'POST',
 	immediate: false,
 })
@@ -114,7 +120,7 @@ const submitting = computed(() => submitProject.loading)
 
 const options = computed(() =>
 	(assignments.data?.assignments ?? [])
-		.filter((assignment) => assignment.submission_type === 'Scratch')
+		.filter((assignment) => assignment.submission_type === props.projectType)
 		.reverse(),
 )
 

@@ -61,7 +61,9 @@
 					@click="emit('view-grade', row.name)"
 				/>
 				<Button
-					v-else-if="statusOf(row) === 'Submitted' && !isScratch(row)"
+					v-else-if="
+						statusOf(row) === 'Submitted' && !isProjectSubmission(row.submission_type)
+					"
 					label="Edit"
 					@click="openSubmit(row, submissionMap[row.name])"
 				/>
@@ -112,11 +114,13 @@ import RowTitle from '@/components/common/RowTitle.vue'
 import SubmissionTypeIcon from '@/components/common/SubmissionTypeIcon.vue'
 import SubmissionPreviewDialog from '@/components/assignments/SubmissionPreviewDialog.vue'
 import SubmitAssignmentDialog from '@/components/assignments/SubmitAssignmentDialog.vue'
+import { usePythonAssignment } from '@/components/assignments/pythonEditor'
 import { useScratchAssignment } from '@/components/assignments/scratchEditor'
 import { useSession } from '@/composables/useSession'
 import { formatDateTime, isPast } from '@/lib/dates'
 import { formatGrade } from '@/lib/grades'
 import { assignmentStatus, assignmentStatusTheme } from '@/lib/status'
+import { isProjectSubmission } from '@/lib/submissionTypes'
 import { trySubmit } from '@/lib/trySubmit'
 import type {
 	AnswerSummary,
@@ -153,6 +157,7 @@ const columns: Column[] = [
 const rowKey = (row: CS17Assignment) => row.name
 
 const scratch = useScratchAssignment()
+const python = usePythonAssignment()
 const { cohort } = useSession()
 
 const submitOpen = ref(false)
@@ -228,6 +233,10 @@ function openSubmit(assignment: CS17Assignment, existing: CS17Submission | null)
 		scratch.open(assignment, existing)
 		return
 	}
+	if (assignment.submission_type === 'Python') {
+		python.open(assignment)
+		return
+	}
 	submitAssignment.value = assignment
 	submitSubmission.value = existing
 	submitOpen.value = true
@@ -239,6 +248,10 @@ function openPreview(assignment: CS17Assignment, submission: CS17Submission) {
 		scratch.open(assignment, submission, {
 			readOnly: statusOf(assignment) === 'Closed',
 		})
+		return
+	}
+	if (assignment.submission_type === 'Python') {
+		python.open(assignment, { readOnly: statusOf(assignment) === 'Closed' })
 		return
 	}
 	previewAssignment.value = assignment

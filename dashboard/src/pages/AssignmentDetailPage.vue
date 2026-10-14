@@ -131,6 +131,7 @@ import MarkdownText from '@/components/common/MarkdownText.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import AnswersDialog from '@/components/answers/AnswersDialog.vue'
 import SubmitAssignmentDialog from '@/components/assignments/SubmitAssignmentDialog.vue'
+import { usePythonAssignment } from '@/components/assignments/pythonEditor'
 import { useScratchAssignment } from '@/components/assignments/scratchEditor'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
 import { useLoadFailed } from '@/composables/useLoadFailed'
@@ -151,6 +152,7 @@ const props = defineProps<{ assignmentId: string }>()
 const { profile } = useSession()
 const breadcrumbs = useBreadcrumbs()
 const scratch = useScratchAssignment()
+const python = usePythonAssignment()
 
 const assignmentCall = useCall<CS17Assignment, { assignment: string }>({
 	url: '/api/v2/method/cs17_portal.api.get_student_assignment',
@@ -215,6 +217,10 @@ function openSubmit() {
 	// Scratch work is done in the editor, so this row jumps there instead.
 	if (assignment.value.submission_type === 'Scratch') {
 		scratch.open(assignment.value, submission.value)
+		return
+	}
+	if (assignment.value.submission_type === 'Python') {
+		python.open(assignment.value)
 		return
 	}
 	submitOpen.value = true

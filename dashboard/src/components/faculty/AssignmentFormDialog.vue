@@ -114,6 +114,19 @@
 						:placeholder="DESCRIPTION_PLACEHOLDER"
 					/>
 
+					<template v-if="draft.submission_type === 'Python'">
+						<div class="space-y-1.5">
+							<FormLabel label="Starter code" />
+							<div class="h-40 overflow-hidden rounded-3">
+								<PythonEditor v-model="draft.starter_code" />
+							</div>
+							<p class="text-p-sm text-ink-gray-5">
+								Each student's program starts from this code.
+							</p>
+						</div>
+						<TestCasesField v-model="draft.test_cases" />
+					</template>
+
 					<div class="space-y-2">
 						<PublishFields
 							v-model:mode="publishMode"
@@ -170,6 +183,7 @@ import {
 	Dialog,
 	ErrorMessage,
 	FormControl,
+	FormLabel,
 	TabList,
 	TabPanel,
 	TabTrigger,
@@ -183,6 +197,8 @@ import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import PublishFields from '@/components/common/PublishFields.vue'
 import AssignmentPreview, { type AssignmentDraft } from '@/components/faculty/AssignmentPreview.vue'
 import DeleteAssignmentDialog from '@/components/faculty/DeleteAssignmentDialog.vue'
+import TestCasesField from '@/components/faculty/TestCasesField.vue'
+import PythonEditor from '@/components/python/PythonEditor.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useSession } from '@/composables/useSession'
 import { isPast, toFrappeDatetime } from '@/lib/dates'
@@ -231,6 +247,8 @@ function emptyDraft(): AssignmentDraft {
 		remarks: 'Grade',
 		due_date: '',
 		description: '',
+		starter_code: '',
+		test_cases: [],
 	}
 }
 
@@ -374,6 +392,8 @@ async function loadExisting(name: string) {
 		remarks: existing.remarks || 'Grade',
 		due_date: existing.due_date ?? '',
 		description: existing.description ?? '',
+		starter_code: existing.starter_code ?? '',
+		test_cases: existing.test_cases ?? [],
 	} satisfies AssignmentDraft)
 	publishMode.value = existing.publish_on ? 'schedule' : 'draft'
 	publishOn.value = existing.publish_on ?? ''
@@ -384,6 +404,8 @@ function isDirty(): boolean {
 	return Boolean(
 		draft.title.trim() ||
 			draft.description.trim() ||
+			draft.starter_code.trim() ||
+			draft.test_cases.length ||
 			(draft.cohort && !facultyCohort.value) ||
 			draft.quarter ||
 			draft.due_date ||
@@ -450,6 +472,8 @@ async function handleSubmit() {
 		assignment_type: draft.assignment_type,
 		max_marks: Number(draft.max_marks) || 0,
 		remarks: draft.remarks,
+		starter_code: draft.starter_code,
+		test_cases: draft.test_cases,
 		publish: publishMode.value,
 		publish_on: toFrappeDatetime(publishOn.value),
 	}

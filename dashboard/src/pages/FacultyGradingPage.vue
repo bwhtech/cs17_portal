@@ -71,7 +71,7 @@
 
 		<div :class="['min-h-0 bg-surface-gray-2', isZen ? 'flex-1' : 'h-[60vh] min-h-80']">
 			<div
-				v-if="isRefusal(detail.error) && submission.submission_type !== 'Scratch'"
+				v-if="isRefusal(detail.error) && !isProjectSubmission(submission.submission_type)"
 				class="flex h-full items-center justify-center p-6 text-center"
 			>
 				<p class="text-p-base text-ink-gray-5">
@@ -79,14 +79,14 @@
 				</p>
 			</div>
 			<LoadError
-				v-else-if="detailFailed && submission.submission_type !== 'Scratch'"
+				v-else-if="detailFailed && !isProjectSubmission(submission.submission_type)"
 				class="h-full"
 				title="Could not load the submitted file"
 				:loading="detail.loading"
 				@retry="detail.reload()"
 			/>
 			<div
-				v-else-if="detailLoading && submission.submission_type !== 'Scratch'"
+				v-else-if="detailLoading && !isProjectSubmission(submission.submission_type)"
 				class="cs17-delay-in h-full p-4"
 			>
 				<Skeleton class="h-full w-full" />
@@ -98,6 +98,8 @@
 				:submission-type="submission.submission_type"
 				:file-url="fileUrl"
 				:student-name="submission.full_name"
+				:assignment="submission.assignment"
+				@score="testScore = $event"
 			/>
 		</div>
 
@@ -110,6 +112,7 @@
 				:submission="submission.name"
 				:max-marks="submission.max_marks"
 				:evaluation-type="submission.evaluation_type"
+				:suggested-marks="suggestedMarks"
 				@saved="submissions.reload()"
 			/>
 		</div>
@@ -117,7 +120,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Button, Skeleton, useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
@@ -130,6 +133,7 @@ import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { useZenMode, useZenOnMount } from '@/composables/useZenMode'
 import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
+import { isProjectSubmission } from '@/lib/submissionTypes'
 import type { CS17Assignment, CS17Submission, CohortSubmission } from '@/types'
 
 const props = defineProps<{ submissionId: string }>()
@@ -191,6 +195,20 @@ const detailRow = computed(
 )
 
 const detailLoading = computed(() => !detail.isFinished && !detailRow.value)
+
+const testScore = ref<{ passed: number; total: number } | null>(null)
+watch(
+	() => props.submissionId,
+	() => {
+		testScore.value = null
+	},
+)
+
+const suggestedMarks = computed(() => {
+	if (!testScore.value || submission.value?.evaluation_type !== 'Marks') return null
+	const { passed, total } = testScore.value
+	return Math.round((passed / total) * submission.value.max_marks * 100) / 100
+})
 
 const fileUrl = computed(
 	() => detailRow.value?.submission_document || detailRow.value?.submission_url || null,

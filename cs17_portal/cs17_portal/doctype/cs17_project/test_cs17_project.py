@@ -142,6 +142,18 @@ class TestCS17Project(FrappeTestCase):
 		frappe.set_user("Administrator")
 		return assignment.name
 
+	def make_python_assignment(self) -> str:
+		assignment = frappe.get_doc(
+			"CS17 Assignment", self.make_assignment(self.cohort_in, submission_type="Python")
+		)
+		assignment.starter_code = "name = input()\n"
+		assignment.append("test_cases", {"input": "Asha\n", "expected_output": "Hello, Asha!\n"})
+		assignment.append(
+			"test_cases", {"input": "Ravi\n", "expected_output": "Hello, Ravi!\n", "is_hidden": 1}
+		)
+		assignment.save(ignore_permissions=True)
+		return assignment.name
+
 	def make_saved_project(self, content: bytes = SAMPLE_PROJECT) -> str:
 		frappe.set_user(STUDENT1_USER)
 		project = api.create_project("Student 1 Project")["name"]
@@ -412,6 +424,61 @@ class TestCS17Project(FrappeTestCase):
 			project,
 			'print("hello")\n',
 		)
+
+	def test_student_sees_sample_tests_but_not_hidden_ones(self):
+		assignment = self.make_python_assignment()
+
+		frappe.set_user(STUDENT1_USER)
+		details = api.get_student_assignment(assignment)
+
+		self.assertEqual(details.sample_tests, [{"input": "Asha\n", "expected_output": "Hello, Asha!\n"}])
+		self.assertEqual(details.hidden_test_count, 1)
+
+	def test_python_assignment_starts_from_the_starter_code(self):
+		assignment = self.make_python_assignment()
+
+		frappe.set_user(STUDENT1_USER)
+		project = api.start_python_assignment(assignment)["name"]
+
+		self.assertEqual(api.get_project(project)["code"], "name = input()\n")
+
+	def test_python_assignment_reopens_the_same_project(self):
+		assignment = self.make_python_assignment()
+
+		frappe.set_user(STUDENT1_USER)
+		project = api.start_python_assignment(assignment)["name"]
+
+		self.assertEqual(api.start_python_assignment(assignment)["name"], project)
+
+	def test_python_submission_keeps_a_copy_of_the_code(self):
+		assignment = self.make_python_assignment()
+		frappe.set_user(STUDENT1_USER)
+		project = api.start_python_assignment(assignment)["name"]
+		api.save_python_project(project, 'print(f"Hello, {input()}!")\n')
+		submission = api.submit_python_project(assignment, project)["name"]
+
+		frappe.set_user(FACULTY_IN_USER)
+		self.assertEqual(api.get_submission_code(submission), 'print(f"Hello, {input()}!")\n')
+
+	def test_scratch_assignment_refuses_a_python_project(self):
+		frappe.set_user(STUDENT1_USER)
+		project = api.create_project("Student 1 Program", project_type="Python")["name"]
+		api.save_python_project(project, 'print("hello")\n')
+
+		self.assertRaisesRegex(
+			frappe.ValidationError,
+			"This assignment does not accept Python projects.",
+			api.submit_python_project,
+			self.assignment,
+			project,
+		)
+
+	def test_test_cases_are_dropped_when_the_assignment_is_not_python(self):
+		assignment = frappe.get_doc("CS17 Assignment", self.make_python_assignment())
+		assignment.submission_type = "PDF"
+		assignment.save(ignore_permissions=True)
+
+		self.assertEqual(assignment.test_cases, [])
 
 	def test_first_submit_saves_the_submission_once(self):
 		project = self.make_saved_project()

@@ -87,6 +87,7 @@
 			v-if="isStudent"
 			v-model:open="submitOpen"
 			:project="id"
+			project-type="Scratch"
 			:preset-assignment="presetAssignment ?? project.data?.assignment ?? null"
 		/>
 	</div>
