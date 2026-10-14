@@ -95,9 +95,17 @@ class IntegrationTestCS17Result(IntegrationTestCase):
 		frappe.delete_doc("CS17 Subject Marks", self.marks)
 
 		auto_publish_results()
-		with patch.object(frappe.db, "exists", return_value=True):
+		with patch.object(frappe.db, "exists", return_value=True) as exists:
 			auto_publish_results()
 
+		exists.assert_any_call(
+			"Error Log",
+			{
+				"method": "Scheduled result not published",
+				"reference_doctype": "CS17 Result",
+				"reference_name": self.result,
+			},
+		)
 		logged = [call.kwargs["reference_name"] for call in self.log_error.call_args_list]
 		self.assertEqual(logged.count(self.result), 1)
 
