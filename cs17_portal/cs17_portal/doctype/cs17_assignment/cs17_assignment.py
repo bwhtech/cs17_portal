@@ -35,6 +35,7 @@ class CS17Assignment(Document):
 		starter_code: DF.Code | None
 		submission_type: DF.Literal["Any", "PDF", "URL", "Image", "ZIP", "Scratch", "Python"]
 		test_cases: DF.Table[CS17PythonTestCase]
+		time_limit: DF.Int
 		title: DF.Data
 		watch_tab_switches: DF.Check
 	# end: auto-generated types
