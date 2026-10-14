@@ -23,6 +23,12 @@
 			</span>
 
 			<div class="ml-auto flex shrink-0 items-center gap-2">
+				<TimeLeft
+					v-if="assignment.data?.ends_at && assignment.data.now && canSubmit"
+					:ends-at="assignment.data.ends_at"
+					:now="assignment.data.now"
+					@end="submitWhenTimeIsUp"
+				/>
 				<Button
 					:icon="isZen ? 'lucide-minimize-2' : 'lucide-maximize-2'"
 					:aria-label="isZen ? 'Exit zen mode' : 'Enter zen mode'"
@@ -132,6 +138,7 @@ import SubmitProjectDialog from '@/components/projects/SubmitProjectDialog.vue'
 import ProblemPanel from '@/components/python/ProblemPanel.vue'
 import PythonEditor from '@/components/python/PythonEditor.vue'
 import RunPanel from '@/components/python/RunPanel.vue'
+import TimeLeft from '@/components/python/TimeLeft.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useProjectsPath } from '@/composables/useProjectsPath'
 import { useTabLeaveWatch } from '@/composables/useTabLeaveWatch'
@@ -190,7 +197,10 @@ watch(
 	{ immediate: true },
 )
 
-const readOnly = computed(() => route.query.readonly === '1' || assignmentClosed.data === true)
+const timeIsUp = ref(false)
+const readOnly = computed(
+	() => route.query.readonly === '1' || assignmentClosed.data === true || timeIsUp.value,
+)
 const canSubmit = computed(() => isStudent.value && Boolean(assignment.data) && !readOnly.value)
 const sampleTests = computed(() => assignment.data?.sample_tests ?? [])
 
@@ -298,6 +308,27 @@ async function runSampleTests() {
 
 async function openSubmit() {
 	if (await save()) submitOpen.value = true
+}
+
+const submitCall = useCall<{ name: string }, { assignment: string; project: string }>({
+	url: '/api/v2/method/cs17_portal.api.submit_python_project',
+	method: 'POST',
+	immediate: false,
+})
+
+async function submitWhenTimeIsUp() {
+	timeIsUp.value = true
+	if (!code.value.trim() || !assignmentName.value) {
+		toast.info('Time is up.')
+		return
+	}
+	if (!(await save())) return
+	await trySubmit(submitCall, { assignment: assignmentName.value, project: props.id })
+	if (submitCall.error) {
+		toast.error(frappeErrorMessage(submitCall.error, 'Could not submit your code.'))
+		return
+	}
+	toast.success('Time is up. Your code was submitted.')
 }
 
 onBeforeRouteLeave(() => !hasUnsavedEdits() || save())

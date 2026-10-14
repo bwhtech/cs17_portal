@@ -34,6 +34,12 @@
 				:running="testing"
 				idle-text="This assignment has no tests."
 			/>
+			<TimeTaken
+				v-if="assignment.data?.time_limit"
+				class="border-t border-outline-gray-1 pt-3"
+				:submission="submission"
+				:time-limit="assignment.data.time_limit"
+			/>
 			<TabLeaves
 				v-if="assignment.data?.watch_tab_switches"
 				class="border-t border-outline-gray-1 pt-3"
@@ -49,6 +55,7 @@ import { Button, Skeleton, useCall } from 'frappe-ui'
 import LoadError from '@/components/common/LoadError.vue'
 import PythonEditor from '@/components/python/PythonEditor.vue'
 import TabLeaves from '@/components/grading/TabLeaves.vue'
+import TimeTaken from '@/components/grading/TimeTaken.vue'
 import TestResults from '@/components/python/TestResults.vue'
 import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
 import { usePythonRunner } from '@/lib/python/runner'

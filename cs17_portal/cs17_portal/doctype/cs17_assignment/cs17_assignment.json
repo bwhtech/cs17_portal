@@ -26,6 +26,7 @@
   "starter_code",
   "test_cases",
   "watch_tab_switches",
+  "time_limit",
   "answer_sheet_section",
   "show_answers",
   "answer_sheet"
@@ -168,6 +169,12 @@
    "fieldname": "watch_tab_switches",
    "fieldtype": "Check",
    "label": "Watch for Tab Switches"
+  },
+  {
+   "description": "Leave empty for no limit.",
+   "fieldname": "time_limit",
+   "fieldtype": "Int",
+   "label": "Time Limit (Minutes)"
   }
  ],
  "grid_page_length": 50,
@@ -181,7 +188,7 @@
    "link_fieldname": "assignment"
   }
  ],
- "modified": "2026-10-14 18:48:15.608169",
+ "modified": "2026-10-14 23:06:16.992664",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",

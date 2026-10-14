@@ -22,7 +22,14 @@
 				{{ assignment.title }}
 			</h1>
 			<div class="min-w-0 flex-1">
-				<MarkdownText :content="assignment.description" />
+				<MarkdownText
+					:content="assignment.description"
+					:fallback="
+						assignment.time_limit && !assignment.started_at
+							? 'You will see the question when you start.'
+							: undefined
+					"
+				/>
 			</div>
 
 			<!-- The meta panel: everything about the assignment that is a value
@@ -51,6 +58,11 @@
 					<p class="text-base text-ink-gray-8">{{ assignment.max_marks }}</p>
 				</div>
 
+				<div v-if="assignment.time_limit">
+					<p class="text-xs text-ink-gray-5">Time Limit</p>
+					<p class="text-base text-ink-gray-8">{{ assignment.time_limit }} min</p>
+				</div>
+
 				<template v-if="submission">
 					<div>
 						<p class="text-xs text-ink-gray-5">Submitted</p>
@@ -60,7 +72,7 @@
 					</div>
 
 					<Button
-						v-if="!isOverdue && !grade"
+						v-if="!isClosed && !grade"
 						class="w-full"
 						label="Edit Submission"
 						@click="openSubmit"
@@ -84,7 +96,9 @@
 					</template>
 				</template>
 
-				<p v-else-if="isOverdue" class="text-sm text-ink-gray-5">Deadline passed</p>
+				<p v-else-if="isClosed" class="text-sm text-ink-gray-5">
+					{{ isOverdue ? 'Deadline passed' : 'Time is up' }}
+				</p>
 				<Button v-else class="w-full" label="Submit Assignment" @click="openSubmit" />
 
 				<div v-if="myAnswers.data" class="space-y-2 border-t border-outline-gray-1 pt-3">
@@ -192,6 +206,7 @@ const score = computed(() => {
 })
 
 const isOverdue = computed(() => isPast(assignment.value?.due_date))
+const isClosed = computed(() => isOverdue.value || isPast(assignment.value?.ends_at))
 
 /** `remarks` is the doctype's field for how a graded assignment is scored. */
 const evaluationType = computed(() =>

@@ -70,6 +70,8 @@ declare module 'vue' {
     TabLeaves: typeof import('./src/components/grading/TabLeaves.vue')['default']
     TestCasesField: typeof import('./src/components/faculty/TestCasesField.vue')['default']
     TestResults: typeof import('./src/components/python/TestResults.vue')['default']
+    TimeLeft: typeof import('./src/components/python/TimeLeft.vue')['default']
+    TimeTaken: typeof import('./src/components/grading/TimeTaken.vue')['default']
     UnreadAnnouncements: typeof import('./src/components/announcements/UnreadAnnouncements.vue')['default']
   }
 }

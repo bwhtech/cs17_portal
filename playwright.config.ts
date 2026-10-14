@@ -5,7 +5,7 @@ const authFile = path.join(__dirname, "e2e", ".auth", "user.json");
 const studentAuthFile = path.join(__dirname, "e2e", ".auth", "student.json");
 const facultyAuthFile = path.join(__dirname, "e2e", ".auth", "faculty.json");
 const studentSpecs =
-	/(student-submission|student-theme|student-results|python-assignments)\.spec\.ts/;
+	/(student-submission|student-theme|student-results|python-assignments|python-time-limit)\.spec\.ts/;
 const facultySpecs =
 	/(faculty-announcements-ui|faculty-assignments-ui|faculty-profile-ui|faculty-projects)\.spec\.ts/;
 

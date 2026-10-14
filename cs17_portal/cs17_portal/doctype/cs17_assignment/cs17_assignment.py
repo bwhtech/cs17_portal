@@ -35,6 +35,7 @@ class CS17Assignment(Document):
 		starter_code: DF.Code | None
 		submission_type: DF.Literal["Any", "PDF", "URL", "Image", "ZIP", "Scratch", "Python"]
 		test_cases: DF.Table[CS17PythonTestCase]
+		time_limit: DF.Int
 		title: DF.Data
 		watch_tab_switches: DF.Check
 	# end: auto-generated types
@@ -50,6 +51,9 @@ class CS17Assignment(Document):
 			self.starter_code = None
 			self.test_cases = []
 			self.watch_tab_switches = 0
+			self.time_limit = 0
+		if cint(self.time_limit) < 0:
+			frappe.throw(_("The time limit cannot be negative."))
 		if self.assignment_type == "Not Graded":
 			self.max_marks = 0
 			self.remarks = ""
