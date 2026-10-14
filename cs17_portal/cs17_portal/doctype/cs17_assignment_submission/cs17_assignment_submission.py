@@ -23,6 +23,7 @@ class CS17AssignmentSubmission(Document):
 		amended_from: DF.Link | None
 		assignment: DF.Link
 		assignment_title: DF.Data | None
+		code: DF.Code | None
 		full_name: DF.Data | None
 		naming_series: DF.Literal["SUB.-.{assignment}.-.###"]
 		project: DF.Link | None
@@ -37,7 +38,7 @@ class CS17AssignmentSubmission(Document):
 		self.validate_open_to_student()
 		self.validate_deadline()
 		self.validate_not_graded()
-		self.validate_scratch_acceptance()
+		self.validate_project_acceptance()
 
 	def validate_duplicate(self):
 		duplicate = frappe.db.exists(
@@ -86,7 +87,7 @@ class CS17AssignmentSubmission(Document):
 		student_user = frappe.db.get_value("CS17 Profile", self.student, "user")
 		return frappe.session.user == student_user
 
-	def validate_scratch_acceptance(self):
+	def validate_project_acceptance(self):
 		if not self.project:
 			return
 		assignment = frappe.db.get_value(
@@ -95,8 +96,9 @@ class CS17AssignmentSubmission(Document):
 			["submission_type", "is_published", "publish_on"],
 			as_dict=True,
 		)
-		if not assignment or assignment.submission_type != "Scratch":
-			frappe.throw(_("This assignment does not accept Scratch projects."))
+		project_type = frappe.db.get_value("CS17 Project", self.project, "project_type")
+		if not assignment or assignment.submission_type != project_type:
+			frappe.throw(_("This assignment does not accept {0} projects.").format(project_type))
 		if not is_published_now(assignment):
 			frappe.throw(_("This assignment is not open for submission."))
 
@@ -135,8 +137,8 @@ def validate_submission_value(submission_type: str | None, file_url: str) -> Non
 		if not is_valid_url(file_url):
 			frappe.throw(_("This assignment requires a valid URL (http:// or https://)."))
 		return
-	if submission_type == "Scratch":
-		frappe.throw(_("Scratch assignments are submitted from the project editor."))
+	if submission_type in ("Scratch", "Python"):
+		frappe.throw(_("{0} assignments are submitted from the project editor.").format(submission_type))
 	if not file_url.lower().endswith(SUBMISSION_EXTENSIONS[submission_type]):
 		frappe.throw(_("This assignment only accepts {0} files.").format(submission_type))
 

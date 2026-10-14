@@ -1,0 +1,50 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "creation": "2026-10-14 18:12:28.821689",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "input",
+  "expected_output",
+  "is_hidden"
+ ],
+ "fields": [
+  {
+   "fieldname": "input",
+   "fieldtype": "Long Text",
+   "in_list_view": 1,
+   "label": "Input"
+  },
+  {
+   "fieldname": "expected_output",
+   "fieldtype": "Long Text",
+   "in_list_view": 1,
+   "label": "Expected Output"
+  },
+  {
+   "default": "0",
+   "description": "Students do not see this test. It runs when the submission is graded.",
+   "fieldname": "is_hidden",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Hidden"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-14 18:12:28.821689",
+ "modified_by": "Administrator",
+ "module": "CS17 Portal",
+ "name": "CS17 Python Test Case",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

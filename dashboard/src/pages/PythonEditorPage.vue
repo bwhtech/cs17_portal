@@ -31,6 +31,7 @@
 				/>
 				<template v-if="project.data">
 					<Button
+						v-if="!readOnly"
 						:icon-left="isDesktop ? 'lucide-save' : undefined"
 						:icon="isDesktop ? undefined : 'lucide-save'"
 						label="Save"
@@ -38,7 +39,15 @@
 						@click="save"
 					/>
 					<Button
-						variant="solid"
+						v-if="sampleTests.length"
+						:icon-left="isDesktop ? 'lucide-list-checks' : undefined"
+						:icon="isDesktop ? undefined : 'lucide-list-checks'"
+						label="Run tests"
+						:loading="testing"
+						@click="runSampleTests"
+					/>
+					<Button
+						:variant="canSubmit ? 'subtle' : 'solid'"
 						theme="gray"
 						:icon-left="isDesktop ? 'lucide-play' : undefined"
 						:icon="isDesktop ? undefined : 'lucide-play'"
@@ -46,6 +55,16 @@
 						tooltip="Run (Ctrl+Enter)"
 						:loading="running"
 						@click="run"
+					/>
+					<Button
+						v-if="canSubmit"
+						variant="solid"
+						theme="gray"
+						:icon-left="isDesktop ? 'lucide-send' : undefined"
+						:icon="isDesktop ? undefined : 'lucide-send'"
+						label="Submit"
+						:loading="status === 'saving'"
+						@click="openSubmit"
 					/>
 				</template>
 			</div>
@@ -67,35 +86,61 @@
 				<LoadingIndicator class="size-6 text-ink-gray-5" />
 			</div>
 
-			<div v-else class="flex h-full flex-col">
-				<PythonEditor v-model="code" class="min-h-0 flex-1" @run="run" />
-				<RunPanel
-					v-model:stdin="stdin"
-					v-model:tab="panelTab"
-					class="h-64 shrink-0 border-t border-outline-gray-1"
-					:result="result"
-					:running="running"
+			<div v-else class="flex h-full flex-col max-lg:overflow-y-auto lg:flex-row">
+				<ProblemPanel
+					v-if="assignment.data"
+					class="shrink-0 border-outline-gray-1 px-3 py-4 max-lg:border-b sm:px-5 lg:w-[38%] lg:overflow-y-auto lg:border-r"
+					:assignment="assignment.data"
 				/>
+				<div class="flex min-h-0 flex-1 flex-col max-lg:min-h-[36rem]">
+					<PythonEditor
+						v-model="code"
+						class="min-h-0 flex-1"
+						:read-only="readOnly"
+						@run="run"
+					/>
+					<RunPanel
+						v-model:stdin="stdin"
+						v-model:tab="panelTab"
+						class="h-64 shrink-0 border-t border-outline-gray-1"
+						:result="result"
+						:running="running"
+						:show-tests="sampleTests.length > 0"
+						:test-runs="testRuns"
+						:testing="testing"
+					/>
+				</div>
 			</div>
 		</div>
+
+		<SubmitProjectDialog
+			v-if="canSubmit"
+			v-model:open="submitOpen"
+			:project="id"
+			project-type="Python"
+			:preset-assignment="assignmentName"
+		/>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { onBeforeRouteLeave } from 'vue-router'
+import { onBeforeRouteLeave, useRoute } from 'vue-router'
 import { Button, LoadingIndicator, toast, useCall } from 'frappe-ui'
 import EmptyState from '@/components/common/EmptyState.vue'
+import SubmitProjectDialog from '@/components/projects/SubmitProjectDialog.vue'
+import ProblemPanel from '@/components/python/ProblemPanel.vue'
 import PythonEditor from '@/components/python/PythonEditor.vue'
 import RunPanel from '@/components/python/RunPanel.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useProjectsPath } from '@/composables/useProjectsPath'
-import { onBeforeLogout } from '@/composables/useSession'
+import { onBeforeLogout, useSession } from '@/composables/useSession'
 import { useZenMode, useZenOnMount } from '@/composables/useZenMode'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { usePythonRunner, type RunResult } from '@/lib/python/runner'
+import { runTests, type TestRun } from '@/lib/python/tests'
 import { trySubmit } from '@/lib/trySubmit'
-import type { CS17Project } from '@/types'
+import type { CS17Assignment, CS17Project } from '@/types'
 
 const AUTOSAVE_IDLE_MS = 2000
 
@@ -103,7 +148,9 @@ type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 const props = defineProps<{ id: string }>()
 
+const route = useRoute()
 const projectsPath = useProjectsPath()
+const { isStudent } = useSession()
 const { isDesktop } = useBreakpoint()
 const { isZen, toggle } = useZenMode()
 useZenOnMount()
@@ -115,6 +162,37 @@ const project = useCall<CS17Project, { project: string }>({
 })
 const failed = computed(() => Boolean(project.error) && !project.data)
 const title = computed(() => project.data?.project_title ?? 'Project')
+
+const assignmentName = computed(
+	() => (route.query.assignment as string) || project.data?.assignment || null,
+)
+
+const assignment = useCall<CS17Assignment, { assignment: string }>({
+	url: '/api/v2/method/cs17_portal.api.get_student_assignment',
+	params: () => ({ assignment: assignmentName.value ?? '' }),
+	immediate: false,
+})
+
+const assignmentClosed = useCall<boolean, { assignment: string }>({
+	url: '/api/v2/method/cs17_portal.api.is_assignment_closed',
+	params: () => ({ assignment: assignmentName.value ?? '' }),
+	immediate: false,
+})
+
+watch(
+	assignmentName,
+	(name) => {
+		if (!name || !isStudent.value) return
+		assignment.reload()
+		assignmentClosed.reload()
+	},
+	{ immediate: true },
+)
+
+const readOnly = computed(() => route.query.readonly === '1' || assignmentClosed.data === true)
+const canSubmit = computed(() => isStudent.value && Boolean(assignment.data) && !readOnly.value)
+const sampleTests = computed(() => assignment.data?.sample_tests ?? [])
+const submitOpen = ref(false)
 
 const saveCall = useCall<{ last_saved_at: string }, { project: string; code: string }>({
 	url: '/api/v2/method/cs17_portal.api.save_python_project',
@@ -149,7 +227,7 @@ watch(
 
 watch(code, (value) => {
 	clearTimeout(autosaveTimer)
-	if (value === savedCode.value) return
+	if (value === savedCode.value || readOnly.value) return
 	status.value = 'idle'
 	autosaveTimer = setTimeout(save, AUTOSAVE_IDLE_MS)
 })
@@ -185,12 +263,28 @@ const panelTab = ref('output')
 const result = ref<RunResult | null>(null)
 const running = ref(false)
 
+const testRuns = ref<TestRun[] | null>(null)
+const testing = ref(false)
+
 async function run() {
-	if (running.value) return
+	if (running.value || testing.value) return
 	running.value = true
 	panelTab.value = 'output'
 	result.value = await runner.run(code.value, stdin.value)
 	running.value = false
+}
+
+async function runSampleTests() {
+	if (running.value || testing.value) return
+	testing.value = true
+	panelTab.value = 'tests'
+	testRuns.value = null
+	testRuns.value = await runTests(runner, code.value, sampleTests.value)
+	testing.value = false
+}
+
+async function openSubmit() {
+	if (await save()) submitOpen.value = true
 }
 
 onBeforeRouteLeave(() => !hasUnsavedEdits() || save())

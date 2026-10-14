@@ -25,6 +25,13 @@
 			</template>
 		</template>
 
+		<PythonSubmissionView
+			v-else-if="submissionType === 'Python' && assignment"
+			:submission="submission"
+			:assignment="assignment"
+			@score="emit('score', $event)"
+		/>
+
 		<div
 			v-else-if="fileMissing"
 			class="flex h-full items-center justify-center p-6 text-center"
@@ -73,6 +80,7 @@ import { computed, ref, shallowRef, watch, type ShallowRef } from 'vue'
 import { Button, Skeleton, useCall } from 'frappe-ui'
 import LoadError from '@/components/common/LoadError.vue'
 import ArchiveViewer from '@/components/grading/ArchiveViewer.vue'
+import PythonSubmissionView from '@/components/grading/PythonSubmissionView.vue'
 import ScratchFrame from '@/components/scratch/ScratchFrame.vue'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
@@ -88,7 +96,10 @@ const props = defineProps<{
 	fileUrl?: string | null
 	/** Only for the image's alt text. */
 	studentName: string
+	assignment?: string
 }>()
+
+const emit = defineEmits<{ score: [score: { passed: number; total: number }] }>()
 
 const isScratch = computed(() => props.submissionType === 'Scratch')
 const kind = computed(() => previewKind(props.submissionType ?? undefined, props.fileUrl))

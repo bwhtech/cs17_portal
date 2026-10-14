@@ -22,6 +22,9 @@
   "publish_on",
   "due_date",
   "description",
+  "python_section",
+  "starter_code",
+  "test_cases",
   "answer_sheet_section",
   "show_answers",
   "answer_sheet"
@@ -65,7 +68,7 @@
    "fieldname": "submission_type",
    "fieldtype": "Select",
    "label": "Submission Type",
-   "options": "Any\nPDF\nURL\nImage\nZIP\nScratch",
+   "options": "Any\nPDF\nURL\nImage\nZIP\nScratch\nPython",
    "reqd": 1
   },
   {
@@ -138,6 +141,25 @@
    "fieldtype": "JSON",
    "label": "Answer Sheet",
    "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.submission_type == 'Python'",
+   "fieldname": "python_section",
+   "fieldtype": "Section Break",
+   "label": "Python"
+  },
+  {
+   "description": "The code a student's program starts with.",
+   "fieldname": "starter_code",
+   "fieldtype": "Code",
+   "label": "Starter Code",
+   "options": "Python"
+  },
+  {
+   "fieldname": "test_cases",
+   "fieldtype": "Table",
+   "label": "Test Cases",
+   "options": "CS17 Python Test Case"
   }
  ],
  "grid_page_length": 50,
@@ -151,7 +173,7 @@
    "link_fieldname": "assignment"
   }
  ],
- "modified": "2026-10-11 20:47:02.562900",
+ "modified": "2026-10-14 18:12:29.127055",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",

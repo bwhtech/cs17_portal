@@ -2,7 +2,7 @@
 	<Dialog
 		:open="open"
 		:title="title"
-		:size="isScratch || isArchive ? '6xl' : '2xl'"
+		:size="isScratch || isPython || isArchive ? '6xl' : '2xl'"
 		@update:open="emit('update:open', $event)"
 	>
 		<!-- A Scratch submission is a project, not a file: it plays in the
@@ -33,6 +33,13 @@
 			</div>
 			<Skeleton v-else-if="!sb3" class="h-full w-full" />
 			<ScratchFrame v-else :sb3="sb3" read-only />
+		</div>
+
+		<div
+			v-else-if="isPython && assignment"
+			class="h-[70vh] overflow-hidden rounded-4 border border-outline-gray-1"
+		>
+			<PythonSubmissionView :submission="submission ?? ''" :assignment="assignment" />
 		</div>
 
 		<p v-else-if="!fileUrl" class="text-p-base text-ink-gray-5">No submission found.</p>
@@ -77,6 +84,7 @@ import { computed, ref, watch } from 'vue'
 import { Button, Dialog, Skeleton, useCall } from 'frappe-ui'
 import LoadError from '@/components/common/LoadError.vue'
 import ArchiveViewer from '@/components/grading/ArchiveViewer.vue'
+import PythonSubmissionView from '@/components/grading/PythonSubmissionView.vue'
 import ScratchFrame from '@/components/scratch/ScratchFrame.vue'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
@@ -90,11 +98,13 @@ const props = defineProps<{
 	/** The stored file, or the submitted link for a URL assignment. */
 	fileUrl?: string | null
 	submission?: string | null
+	assignment?: string
 }>()
 
 const emit = defineEmits<{ 'update:open': [value: boolean] }>()
 
 const isScratch = computed(() => props.submissionType === 'Scratch' && Boolean(props.submission))
+const isPython = computed(() => props.submissionType === 'Python' && Boolean(props.submission))
 const kind = computed(() => previewKind(props.submissionType, props.fileUrl))
 const isArchive = computed(() => kind.value === 'archive' && Boolean(props.submission))
 

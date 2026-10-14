@@ -16,6 +16,10 @@ class CS17Assignment(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
+		from cs17_portal.cs17_portal.doctype.cs17_python_test_case.cs17_python_test_case import (
+			CS17PythonTestCase,
+		)
+
 		answer_sheet: DF.JSON | None
 		assignment_type: DF.Literal["Graded", "Not Graded"]
 		cohort: DF.Link | None
@@ -28,7 +32,9 @@ class CS17Assignment(Document):
 		quarter: DF.Link | None
 		remarks: DF.Literal["Grade", "Marks"]
 		show_answers: DF.Check
-		submission_type: DF.Literal["Any", "PDF", "URL", "Image", "ZIP", "Scratch"]
+		starter_code: DF.Code | None
+		submission_type: DF.Literal["Any", "PDF", "URL", "Image", "ZIP", "Scratch", "Python"]
+		test_cases: DF.Table[CS17PythonTestCase]
 		title: DF.Data
 	# end: auto-generated types
 
@@ -39,6 +45,9 @@ class CS17Assignment(Document):
 			validate_membership("Faculty")
 
 	def validate(self):
+		if self.submission_type != "Python":
+			self.starter_code = None
+			self.test_cases = []
 		if self.assignment_type == "Not Graded":
 			self.max_marks = 0
 			self.remarks = ""

@@ -21,6 +21,7 @@ const TYPES: Record<SubmissionType, { icon: string; theme: AvatarTheme }> = {
 	Image: { icon: 'lucide-image', theme: 'violet' },
 	ZIP: { icon: 'lucide-file-archive', theme: 'amber' },
 	Scratch: { icon: 'lucide-blocks', theme: 'green' },
+	Python: { icon: 'lucide-code', theme: 'blue' },
 	Any: { icon: 'lucide-file', theme: 'gray' },
 }
 

@@ -19,6 +19,7 @@
   "submission_document",
   "submission_url",
   "project",
+  "code",
   "submitted_at"
  ],
  "fields": [
@@ -100,11 +101,20 @@
    "read_only": 1
   },
   {
-   "description": "Scratch project this submission was created from. The immutable .sb3 snapshot lives in Submission Document.",
+   "description": "Project this submission was created from. A Scratch project's .sb3 snapshot lives in Submission Document.",
    "fieldname": "project",
    "fieldtype": "Link",
    "label": "Project",
    "options": "CS17 Project",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.code",
+   "description": "A copy of the Python project's code, taken when it was submitted.",
+   "fieldname": "code",
+   "fieldtype": "Code",
+   "label": "Code",
+   "options": "Python",
    "read_only": 1
   }
  ],
@@ -116,7 +126,7 @@
    "link_fieldname": "submission"
   }
  ],
- "modified": "2026-10-12 09:15:55.954317",
+ "modified": "2026-10-14 18:25:13.330650",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Submission",

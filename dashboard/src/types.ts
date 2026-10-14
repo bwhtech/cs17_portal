@@ -41,6 +41,16 @@ export interface CS17Assignment {
 	modified?: string
 	/** Only on the faculty list. */
 	submission_count?: number
+	starter_code?: string | null
+	test_cases?: PythonTestCase[]
+	sample_tests?: PythonTestCase[]
+	hidden_test_count?: number
+}
+
+export interface PythonTestCase {
+	input: string
+	expected_output: string
+	is_hidden?: Bool
 }
 
 /** `CS17 Assignment Submission`. */
@@ -246,7 +256,7 @@ export interface StudentAnnouncementsResponse {
 // Enums, kept as const arrays so a Select can render the same list it validates
 // ---------------------------------------------------------------------------
 
-export const SUBMISSION_TYPES = ['Any', 'PDF', 'URL', 'Image', 'ZIP', 'Scratch'] as const
+export const SUBMISSION_TYPES = ['Any', 'PDF', 'URL', 'Image', 'ZIP', 'Scratch', 'Python'] as const
 export type SubmissionType = (typeof SUBMISSION_TYPES)[number]
 
 export const ASSIGNMENT_TYPES = ['Graded', 'Not Graded'] as const

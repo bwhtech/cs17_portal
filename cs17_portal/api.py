@@ -150,6 +150,8 @@ def create_assignment(
 	publish: str = "draft",
 	publish_on: str | None = None,
 	quarter: str | None = None,
+	starter_code: str | None = None,
+	test_cases: list | str | None = None,
 ) -> str:
 	faculty = get_current_faculty()
 	if faculty.cohort and faculty.cohort != cohort:
@@ -166,6 +168,8 @@ def create_assignment(
 		max_marks,
 		remarks,
 		quarter,
+		starter_code,
+		test_cases,
 	)
 	assignment.naming_series = _naming_series(assignment_type)
 	_apply_publish_state(assignment, publish, publish_on)
@@ -649,6 +653,34 @@ def submit_scratch_project(assignment: str, project: str) -> dict:
 	return {"name": submission.name, "submission_document": submission.submission_document}
 
 
+@frappe.whitelist(methods=["POST"])
+@rate_limit(key="project", limit=30, seconds=60, methods=["POST"], ip_based=False)
+def submit_python_project(assignment: str, project: str) -> dict:
+	student = require_current_student()
+	project_doc = require_owned_project(project)
+	if not (project_doc.code or "").strip():
+		frappe.throw(_("Write some code before submitting."))
+	if project_doc.assignment != assignment:
+		project_doc.db_set("assignment", assignment)
+
+	submission = _get_or_new_submission(assignment, student)
+	submission.flags.ignore_permissions = True
+	submission.update({"project": project, "code": project_doc.code, "submitted_at": now_datetime()})
+	submission.save()
+	return {"name": submission.name}
+
+
+@frappe.whitelist(methods=["GET"])
+def get_submission_code(submission: str) -> str:
+	submission_doc = frappe.db.get_value(
+		ASSIGNMENT_SUBMISSION, submission, ["assignment", "code"], as_dict=True
+	)
+	if not submission_doc:
+		frappe.throw(_("Submission not found"), frappe.DoesNotExistError)
+	require_faculty_for_assignment(submission_doc.assignment)
+	return submission_doc.code or ""
+
+
 def _get_or_new_submission(assignment: str, student: str) -> "frappe.model.document.Document":
 	name = frappe.db.get_value(
 		"CS17 Assignment Submission", {"assignment": assignment, "student": student}, "name"
@@ -912,7 +944,46 @@ def get_student_assignment(assignment: str) -> dict:
 	)
 	if not (assignments and is_published_now(assignments[0])):
 		frappe.throw(_("Assignment not found"), frappe.DoesNotExistError)
-	return assignments[0]
+	details = assignments[0]
+	if details.submission_type == "Python":
+		test_cases = get_test_cases(assignment)
+		details.sample_tests = [
+			{"input": test_case.input, "expected_output": test_case.expected_output}
+			for test_case in test_cases
+			if not test_case.is_hidden
+		]
+		details.hidden_test_count = len(test_cases) - len(details.sample_tests)
+	return details
+
+
+@frappe.whitelist(methods=["POST"])
+def start_python_assignment(assignment: str) -> dict:
+	details = get_student_assignment(assignment)
+	if details.submission_type != "Python":
+		frappe.throw(_("This assignment does not accept Python projects."))
+	student = require_current_student()
+	project = frappe.db.get_value(
+		ASSIGNMENT_SUBMISSION, {"assignment": assignment, "student": student}, "project"
+	) or frappe.db.get_value(
+		"CS17 Project",
+		{"profile": student, "assignment": assignment, "project_type": "Python"},
+		"name",
+		order_by="creation desc",
+	)
+	if not project:
+		project_doc = frappe.new_doc("CS17 Project")
+		project_doc.update(
+			{
+				"project_title": details.title,
+				"project_type": "Python",
+				"profile": student,
+				"assignment": assignment,
+				"code": frappe.db.get_value("CS17 Assignment", assignment, "starter_code"),
+			}
+		)
+		project_doc.insert(ignore_permissions=True)
+		project = project_doc.name
+	return {"name": project}
 
 
 @frappe.whitelist(methods=["GET"])
@@ -1083,6 +1154,8 @@ def update_assignment(
 	publish: str | None = None,
 	publish_on: str | None = None,
 	quarter: str | None = None,
+	starter_code: str | None = None,
+	test_cases: list | str | None = None,
 ) -> str:
 	require_faculty_for_assignment(assignment)
 	faculty = get_current_faculty()
@@ -1106,6 +1179,8 @@ def update_assignment(
 		doc.max_marks if max_marks is None else max_marks,
 		doc.remarks if remarks is None else remarks,
 		quarter,
+		starter_code,
+		test_cases,
 	)
 	if publish is not None:
 		_apply_publish_state(doc, publish, publish_on)
@@ -1124,6 +1199,8 @@ def _set_assignment_fields(
 	max_marks: float,
 	remarks: str,
 	quarter: str | None = None,
+	starter_code: str | None = None,
+	test_cases: list | str | None = None,
 ) -> None:
 	doc.update(
 		{
@@ -1137,6 +1214,20 @@ def _set_assignment_fields(
 	)
 	if quarter is not None:
 		doc.quarter = quarter
+	if starter_code is not None:
+		doc.starter_code = starter_code
+	if test_cases is not None:
+		doc.set(
+			"test_cases",
+			[
+				{
+					"input": test_case.get("input"),
+					"expected_output": test_case.get("expected_output"),
+					"is_hidden": test_case.get("is_hidden"),
+				}
+				for test_case in frappe.parse_json(test_cases)
+			],
+		)
 	if assignment_type == "Graded":
 		doc.max_marks = max_marks
 		doc.remarks = remarks
@@ -1145,7 +1236,7 @@ def _set_assignment_fields(
 @frappe.whitelist(methods=["GET"])
 def get_assignment(assignment: str) -> dict | None:
 	require_faculty_for_assignment(assignment)
-	return frappe.db.get_value(
+	assignment_doc = frappe.db.get_value(
 		"CS17 Assignment",
 		assignment,
 		[
@@ -1161,8 +1252,21 @@ def get_assignment(assignment: str) -> dict | None:
 			"remarks",
 			"is_published",
 			"publish_on",
+			"starter_code",
 		],
 		as_dict=True,
+	)
+	if assignment_doc:
+		assignment_doc.test_cases = get_test_cases(assignment)
+	return assignment_doc
+
+
+def get_test_cases(assignment: str) -> list:
+	return frappe.get_all(
+		"CS17 Python Test Case",
+		filters={"parent": assignment, "parenttype": "CS17 Assignment", "parentfield": "test_cases"},
+		fields=["input", "expected_output", "is_hidden"],
+		order_by="idx asc",
 	)
 
 

@@ -4,6 +4,7 @@
 			<TabList variant="underline">
 				<TabTrigger value="input" label="Input" />
 				<TabTrigger value="output" label="Output" />
+				<TabTrigger v-if="showTests" value="tests" label="Tests" />
 			</TabList>
 			<span class="ml-auto truncate text-sm text-ink-gray-5" aria-live="polite">
 				{{ statusLine }}
@@ -54,17 +55,33 @@
 				Could not start Python. Check your internet connection and run again.
 			</p>
 		</TabPanel>
+		<TabPanel
+			v-if="showTests"
+			value="tests"
+			class="min-h-0 flex-1 overflow-auto px-3 py-3 sm:px-5"
+		>
+			<TestResults
+				:runs="testRuns ?? null"
+				:running="testing"
+				idle-text="Run the tests to check your program against the examples."
+			/>
+		</TabPanel>
 	</Tabs>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import { TabList, TabPanel, TabTrigger, Tabs, Textarea } from 'frappe-ui'
+import TestResults from '@/components/python/TestResults.vue'
 import type { RunResult } from '@/lib/python/runner'
+import type { TestRun } from '@/lib/python/tests'
 
 const props = defineProps<{
 	result: RunResult | null
 	running: boolean
+	showTests?: boolean
+	testRuns?: TestRun[] | null
+	testing?: boolean
 }>()
 
 const stdin = defineModel<string>('stdin', { required: true })
@@ -76,6 +93,7 @@ const asksForMoreInput = computed(
 
 const statusLine = computed(() => {
 	if (props.running) return 'Running…'
+	if (props.testing) return 'Running tests…'
 	if (props.result?.status === 'finished')
 		return props.result.error ? 'Ended with an error' : 'Finished'
 	return ''
