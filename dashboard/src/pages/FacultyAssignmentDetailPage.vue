@@ -16,6 +16,15 @@
 			<Button
 				v-if="assignment"
 				:variant="isDesktop ? 'subtle' : 'ghost'"
+				:icon-left="isDesktop ? 'lucide-clock' : undefined"
+				:icon="isDesktop ? undefined : 'lucide-clock'"
+				:tooltip="isDesktop ? undefined : 'Timing'"
+				label="Timing"
+				@click="timingOpen = true"
+			/>
+			<Button
+				v-if="assignment"
+				:variant="isDesktop ? 'subtle' : 'ghost'"
 				:icon-left="isDesktop ? 'lucide-link' : undefined"
 				:icon="isDesktop ? undefined : 'lucide-link'"
 				:tooltip="isDesktop ? undefined : 'Copy submission link'"
@@ -212,6 +221,13 @@
 		:students="assignment.students ?? []"
 		@saved="detail.reload()"
 	/>
+
+	<AssignmentTimingDialog
+		v-if="timingOpen && assignment"
+		v-model:open="timingOpen"
+		:assignment="assignment"
+		@saved="detail.reload()"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -229,6 +245,7 @@ import SubmissionPreviewDialog from '@/components/assignments/SubmissionPreviewD
 import AnswersDialog from '@/components/answers/AnswersDialog.vue'
 import AnswerSheetCard from '@/components/faculty/AnswerSheetCard.vue'
 import AssignmentStudentsDialog from '@/components/faculty/AssignmentStudentsDialog.vue'
+import AssignmentTimingDialog from '@/components/faculty/AssignmentTimingDialog.vue'
 import GradeSubmissionDialog from '@/components/faculty/GradeSubmissionDialog.vue'
 import SubmissionAssignees from '@/components/faculty/SubmissionAssignees.vue'
 import SubmissionBulkActions from '@/components/faculty/SubmissionBulkActions.vue'
@@ -291,6 +308,7 @@ const selection = ref<string[]>([])
 const previewTarget = ref<CS17Submission | null>(null)
 const gradeTarget = ref<CS17Submission | null>(null)
 const studentsOpen = ref(false)
+const timingOpen = ref(false)
 
 function openPreview(row: CS17Submission) {
 	const kind = previewKind(assignment.value?.submission_type, row.submission_document)
@@ -370,8 +388,19 @@ const isGraded = computed(() => assignment.value?.assignment_type === 'Graded')
 
 const metaRows = computed(() => {
 	const studentCount = assignment.value?.students?.length ?? 0
+	const timeLimit = assignment.value?.time_limit
 	const rows = [
 		{ label: 'Due', value: formatDateTime(assignment.value?.due_date) },
+		...(assignment.value?.submission_type === 'Python'
+			? [
+					{
+						label: 'Time Limit',
+						value: timeLimit
+							? `${timeLimit} ${timeLimit === 1 ? 'minute' : 'minutes'}`
+							: 'No limit',
+					},
+				]
+			: []),
 		{ label: 'Cohort', value: assignment.value?.cohort ?? '—' },
 		{
 			label: 'Students',

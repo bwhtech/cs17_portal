@@ -250,6 +250,7 @@ def get_assignment_submissions(assignment: str) -> dict:
 			"assignment_type",
 			"max_marks",
 			"remarks",
+			"time_limit",
 		],
 		as_dict=True,
 	)
@@ -1698,6 +1699,15 @@ def set_assignment_students(assignment: str, students: list | str) -> None:
 	require_faculty_for_assignment(assignment)
 	doc = frappe.get_doc("CS17 Assignment", assignment)
 	doc.set("students", [{"student": student} for student in frappe.parse_json(students)])
+	doc.save(ignore_permissions=True)
+
+
+@frappe.whitelist(methods=["POST"])
+def set_assignment_timing(assignment: str, due_date: str, time_limit: int) -> None:
+	require_faculty_for_assignment(assignment)
+	doc = frappe.get_doc("CS17 Assignment", assignment)
+	doc.due_date = due_date
+	doc.time_limit = time_limit
 	doc.save(ignore_permissions=True)
 
 
