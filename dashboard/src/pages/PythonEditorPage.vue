@@ -54,7 +54,7 @@
 						@click="runSampleTests"
 					/>
 					<Button
-						:variant="canSubmit ? 'subtle' : 'solid'"
+						:variant="canSubmit || canReattempt ? 'subtle' : 'solid'"
 						theme="gray"
 						:icon-left="isDesktop ? 'lucide-play' : undefined"
 						:icon="isDesktop ? undefined : 'lucide-play'"
@@ -62,6 +62,15 @@
 						tooltip="Run (Ctrl+Enter)"
 						:loading="running"
 						@click="run"
+					/>
+					<Button
+						v-if="canReattempt && timing.data"
+						variant="solid"
+						theme="gray"
+						:icon-left="isDesktop ? 'lucide-rotate-ccw' : undefined"
+						:icon="isDesktop ? undefined : 'lucide-rotate-ccw'"
+						label="Reattempt"
+						@click="python.reattempt(timing.data, timing.reload)"
 					/>
 					<Button
 						v-if="canSubmit"
@@ -140,6 +149,7 @@ import ProblemPanel from '@/components/python/ProblemPanel.vue'
 import PythonEditor from '@/components/python/PythonEditor.vue'
 import RunPanel from '@/components/python/RunPanel.vue'
 import TimeLeft from '@/components/python/TimeLeft.vue'
+import { usePythonAssignment } from '@/components/assignments/pythonEditor'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { usePolling } from '@/composables/usePolling'
 import { useProjectsPath } from '@/composables/useProjectsPath'
@@ -226,6 +236,10 @@ const readOnly = computed(
 	() => route.query.readonly === '1' || assignmentClosed.data === true || timeIsUp.value,
 )
 const canSubmit = computed(() => isStudent.value && Boolean(assignment.data) && !readOnly.value)
+const canReattempt = computed(
+	() => isStudent.value && readOnly.value && Boolean(timing.data?.next_attempt),
+)
+const python = usePythonAssignment()
 const sampleTests = computed(() => assignment.data?.sample_tests ?? [])
 
 useTabLeaveWatch(
@@ -344,6 +358,7 @@ async function submitWhenTimeIsUp() {
 	timeIsUp.value = true
 	if (!code.value.trim() || !assignmentName.value) {
 		toast.info('Time is up.')
+		timing.reload()
 		return
 	}
 	if (!(await save())) return
@@ -353,6 +368,7 @@ async function submitWhenTimeIsUp() {
 		return
 	}
 	toast.success('Time is up. Your code was submitted.')
+	timing.reload()
 }
 
 onBeforeRouteLeave(() => !hasUnsavedEdits() || save())

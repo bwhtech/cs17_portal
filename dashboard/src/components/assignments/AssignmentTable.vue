@@ -68,6 +68,13 @@
 					@click="openSubmit(row, submissionMap[row.name])"
 				/>
 				<Button
+					v-else-if="row.next_attempt"
+					variant="solid"
+					theme="gray"
+					label="Reattempt"
+					@click="python.reattempt(row)"
+				/>
+				<Button
 					v-else-if="statusOf(row) === 'Pending'"
 					variant="solid"
 					theme="gray"

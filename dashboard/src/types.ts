@@ -51,6 +51,8 @@ export interface CS17Assignment {
 	hidden_test_count?: number
 	watch_tab_switches?: Bool
 	time_limit?: number
+	attempts_allowed?: number
+	next_attempt?: number | null
 	started_at?: string
 	ends_at?: string
 	/** The server's clock, sent with a timed assignment. */

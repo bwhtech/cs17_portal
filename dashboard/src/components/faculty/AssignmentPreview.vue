@@ -49,6 +49,7 @@ export interface AssignmentDraft {
 	test_cases: PythonTestCase[]
 	watch_tab_switches: boolean
 	time_limit: string
+	attempts_allowed: string
 }
 
 const props = defineProps<{ draft: AssignmentDraft }>()
@@ -67,6 +68,7 @@ const metaRows = computed(() => {
 	}
 	if (props.draft.submission_type === 'Python' && Number(props.draft.time_limit) > 0) {
 		rows.push({ label: 'Time Limit', value: `${props.draft.time_limit} min` })
+		rows.push({ label: 'Attempts', value: props.draft.attempts_allowed || '1' })
 	}
 	return rows
 })

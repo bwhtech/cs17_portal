@@ -11,7 +11,7 @@ from frappe.core.doctype.file.utils import decode_file_content
 from frappe.query_builder import Order
 from frappe.query_builder.functions import Coalesce, Date
 from frappe.rate_limiter import rate_limit
-from frappe.utils import add_to_date, flt, get_datetime, getdate, now_datetime
+from frappe.utils import add_to_date, cint, flt, get_datetime, getdate, now_datetime
 
 if TYPE_CHECKING:
 	from frappe.model.document import Document
@@ -171,6 +171,7 @@ def create_assignment(
 	test_cases: list | str | None = None,
 	watch_tab_switches: int | None = None,
 	time_limit: int | None = None,
+	attempts_allowed: int | None = None,
 ) -> str:
 	faculty = get_current_faculty()
 	if faculty.cohort and faculty.cohort != cohort:
@@ -191,6 +192,7 @@ def create_assignment(
 		test_cases,
 		watch_tab_switches,
 		time_limit,
+		attempts_allowed,
 	)
 	assignment.naming_series = _naming_series(assignment_type)
 	_apply_publish_state(assignment, publish, publish_on)
@@ -251,6 +253,7 @@ def get_assignment_submissions(assignment: str) -> dict:
 			"max_marks",
 			"remarks",
 			"time_limit",
+			"attempts_allowed",
 		],
 		as_dict=True,
 	)
@@ -795,6 +798,7 @@ def get_attempt(assignment: str, student: str) -> frappe._dict | None:
 		{"assignment": assignment, "student": student},
 		["started_at", "assignment.time_limit as time_limit", "assignment.due_date as due_date"],
 		as_dict=True,
+		order_by="started_at desc",
 	)
 	if not (attempt and attempt.time_limit):
 		return None
@@ -803,6 +807,49 @@ def get_attempt(assignment: str, student: str) -> frappe._dict | None:
 		started_at=attempt.started_at,
 		ends_at=min(ends_at, attempt.due_date) if attempt.due_date else ends_at,
 	)
+
+
+def get_next_attempts(assignments: list, student: str) -> dict[str, int]:
+	now = now_datetime()
+	timed = [
+		assignment.name
+		for assignment in assignments
+		if assignment.time_limit and not (assignment.due_date and now > assignment.due_date)
+	]
+	if not timed:
+		return {}
+	starts = frappe.get_all(
+		"CS17 Assignment Attempt",
+		filters={"student": student, "assignment": ["in", timed]},
+		fields=["assignment", "started_at"],
+		order_by="started_at desc",
+	)
+	submissions = frappe.get_all(
+		ASSIGNMENT_SUBMISSION,
+		filters={"student": student, "assignment": ["in", timed]},
+		fields=["name", "assignment", "submitted_at"],
+	)
+	grades = frappe.get_all(
+		"CS17 Assignment Grade",
+		filters={"submission": ["in", [submission.name for submission in submissions]]},
+		fields=["submission", "is_published", "published_on"],
+	)
+	graded = {grade.submission for grade in grades if is_published_now(grade, "published_on")}
+	submission_by_assignment = {submission.assignment: submission for submission in submissions}
+	next_attempts = {}
+	for assignment in assignments:
+		started = [start.started_at for start in starts if start.assignment == assignment.name]
+		submission = submission_by_assignment.get(assignment.name)
+		if (
+			not started
+			or len(started) >= max(cint(assignment.attempts_allowed), 1)
+			or (submission and submission.name in graded)
+		):
+			continue
+		time_is_up = now > add_to_date(started[0], minutes=assignment.time_limit)
+		if time_is_up or (submission and submission.submitted_at >= started[0]):
+			next_attempts[assignment.name] = len(started) + 1
+	return next_attempts
 
 
 @frappe.whitelist(methods=["GET"])
@@ -983,10 +1030,13 @@ def get_student_assignments() -> dict:
 			"is_published",
 			"publish_on",
 			"show_answers",
+			"time_limit",
+			"attempts_allowed",
 		],
 		order_by="due_date desc",
 	)
 	assignments = [assignment for assignment in assignments if is_published_now(assignment)]
+	next_attempts = get_next_attempts(assignments, student)
 	submissions = frappe.get_all(
 		ASSIGNMENT_SUBMISSION,
 		filters={"student": student, "assignment": ["in", [assignment.name for assignment in assignments]]},
@@ -1005,6 +1055,7 @@ def get_student_assignments() -> dict:
 		shown = assignment.pop("show_answers")
 		assignment.has_answers = bool(shown and get_answers_for(assignment.name, student))
 		assignment.submission = submission_by_assignment.get(assignment.name)
+		assignment.next_attempt = next_attempts.get(assignment.name)
 	upcoming = frappe.get_all(
 		"CS17 Assignment",
 		filters=[["cohort", "=", cohort], ["is_published", "=", 0], ["publish_on", ">", now]],
@@ -1037,6 +1088,7 @@ def get_student_assignment(assignment: str) -> dict:
 			"publish_on",
 			"watch_tab_switches",
 			"time_limit",
+			"attempts_allowed",
 		],
 		limit=1,
 	)
@@ -1050,6 +1102,7 @@ def get_student_assignment(assignment: str) -> dict:
 			details.description = None
 			return details
 		details.update(attempt)
+		details.next_attempt = get_next_attempts([details], student).get(assignment)
 	if details.submission_type == "Python":
 		test_cases = get_test_cases(assignment)
 		details.sample_tests = [
@@ -1098,6 +1151,21 @@ def start_python_assignment(assignment: str) -> dict:
 			}
 		).insert(ignore_permissions=True)
 	return {"name": project}
+
+
+@frappe.whitelist(methods=["POST"])
+def reattempt_python_assignment(assignment: str) -> dict:
+	if not get_student_assignment(assignment).next_attempt:
+		frappe.throw(_("This assignment cannot be attempted again."))
+	frappe.get_doc(
+		{
+			"doctype": "CS17 Assignment Attempt",
+			"assignment": assignment,
+			"student": require_current_student(),
+			"started_at": now_datetime(),
+		}
+	).insert(ignore_permissions=True)
+	return start_python_assignment(assignment)
 
 
 @frappe.whitelist(methods=["GET"])
@@ -1272,6 +1340,7 @@ def update_assignment(
 	test_cases: list | str | None = None,
 	watch_tab_switches: int | None = None,
 	time_limit: int | None = None,
+	attempts_allowed: int | None = None,
 ) -> str:
 	require_faculty_for_assignment(assignment)
 	faculty = get_current_faculty()
@@ -1299,6 +1368,7 @@ def update_assignment(
 		test_cases,
 		watch_tab_switches,
 		time_limit,
+		attempts_allowed,
 	)
 	if publish is not None:
 		_apply_publish_state(doc, publish, publish_on)
@@ -1321,6 +1391,7 @@ def _set_assignment_fields(
 	test_cases: list | str | None = None,
 	watch_tab_switches: int | None = None,
 	time_limit: int | None = None,
+	attempts_allowed: int | None = None,
 ) -> None:
 	doc.update(
 		{
@@ -1340,6 +1411,8 @@ def _set_assignment_fields(
 		doc.watch_tab_switches = watch_tab_switches
 	if time_limit is not None:
 		doc.time_limit = time_limit
+	if attempts_allowed is not None:
+		doc.attempts_allowed = attempts_allowed
 	if test_cases is not None:
 		doc.set(
 			"test_cases",
@@ -1379,6 +1452,7 @@ def get_assignment(assignment: str) -> dict | None:
 			"starter_code",
 			"watch_tab_switches",
 			"time_limit",
+			"attempts_allowed",
 		],
 		as_dict=True,
 	)
@@ -1703,11 +1777,15 @@ def set_assignment_students(assignment: str, students: list | str) -> None:
 
 
 @frappe.whitelist(methods=["POST"])
-def set_assignment_timing(assignment: str, due_date: str, time_limit: int) -> None:
+def set_assignment_timing(
+	assignment: str, due_date: str, time_limit: int, attempts_allowed: int | None = None
+) -> None:
 	require_faculty_for_assignment(assignment)
 	doc = frappe.get_doc("CS17 Assignment", assignment)
 	doc.due_date = due_date
 	doc.time_limit = time_limit
+	if attempts_allowed is not None:
+		doc.attempts_allowed = attempts_allowed
 	doc.save(ignore_permissions=True)
 
 

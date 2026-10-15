@@ -138,6 +138,15 @@
 							min="1"
 							step="1"
 						/>
+						<FormControl
+							v-if="draft.time_limit"
+							v-model="draft.attempts_allowed"
+							type="number"
+							label="Attempts allowed"
+							description="How many times a student can start the clock. Leave empty for one."
+							min="1"
+							step="1"
+						/>
 					</template>
 
 					<div class="space-y-2">
@@ -265,6 +274,7 @@ function emptyDraft(): AssignmentDraft {
 		test_cases: [],
 		watch_tab_switches: false,
 		time_limit: '',
+		attempts_allowed: '',
 	}
 }
 
@@ -412,6 +422,7 @@ async function loadExisting(name: string) {
 		test_cases: existing.test_cases ?? [],
 		watch_tab_switches: Boolean(existing.watch_tab_switches),
 		time_limit: existing.time_limit ? String(existing.time_limit) : '',
+		attempts_allowed: existing.attempts_allowed ? String(existing.attempts_allowed) : '',
 	} satisfies AssignmentDraft)
 	publishMode.value = existing.publish_on ? 'schedule' : 'draft'
 	publishOn.value = existing.publish_on ?? ''
@@ -496,6 +507,7 @@ async function handleSubmit() {
 		test_cases: draft.test_cases,
 		watch_tab_switches: draft.watch_tab_switches ? 1 : 0,
 		time_limit: Number(draft.time_limit) || 0,
+		attempts_allowed: Number(draft.attempts_allowed) || 0,
 		publish: publishMode.value,
 		publish_on: toFrappeDatetime(publishOn.value),
 	}
