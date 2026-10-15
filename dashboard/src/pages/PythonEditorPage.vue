@@ -24,9 +24,10 @@
 
 			<div class="ml-auto flex shrink-0 items-center gap-2">
 				<TimeLeft
-					v-if="assignment.data?.ends_at && assignment.data.now && canSubmit"
-					:ends-at="assignment.data.ends_at"
-					:now="assignment.data.now"
+					v-if="timing.data?.ends_at && timing.data.now && canSubmit"
+					:key="timing.data.ends_at"
+					:ends-at="timing.data.ends_at"
+					:now="timing.data.now"
 					@end="submitWhenTimeIsUp"
 				/>
 				<Button
@@ -140,10 +141,12 @@ import PythonEditor from '@/components/python/PythonEditor.vue'
 import RunPanel from '@/components/python/RunPanel.vue'
 import TimeLeft from '@/components/python/TimeLeft.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
+import { usePolling } from '@/composables/usePolling'
 import { useProjectsPath } from '@/composables/useProjectsPath'
 import { useTabLeaveWatch } from '@/composables/useTabLeaveWatch'
 import { onBeforeLogout, useSession } from '@/composables/useSession'
 import { useZenMode, useZenOnMount } from '@/composables/useZenMode'
+import { parseDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { usePythonRunner, type RunResult } from '@/lib/python/runner'
 import { runTests, type TestRun } from '@/lib/python/tests'
@@ -181,6 +184,12 @@ const assignment = useCall<CS17Assignment, { assignment: string }>({
 	immediate: false,
 })
 
+const timing = useCall<CS17Assignment, { assignment: string }>({
+	url: '/api/v2/method/cs17_portal.api.get_student_assignment',
+	params: () => ({ assignment: assignmentName.value ?? '' }),
+	immediate: false,
+})
+
 const assignmentClosed = useCall<boolean, { assignment: string }>({
 	url: '/api/v2/method/cs17_portal.api.is_assignment_closed',
 	params: () => ({ assignment: assignmentName.value ?? '' }),
@@ -192,12 +201,27 @@ watch(
 	(name) => {
 		if (!name || !isStudent.value) return
 		assignment.reload()
+		timing.reload()
 		assignmentClosed.reload()
 	},
 	{ immediate: true },
 )
 
+usePolling(() => {
+	if (assignment.data?.time_limit) timing.reload()
+})
+
 const timeIsUp = ref(false)
+
+watch(
+	() => timing.data?.ends_at,
+	(endsAt, previous) => {
+		const now = timing.data?.now
+		if (!endsAt || !previous || !now || parseDatetime(endsAt) <= parseDatetime(now)) return
+		timeIsUp.value = false
+		assignmentClosed.reload()
+	},
+)
 const readOnly = computed(
 	() => route.query.readonly === '1' || assignmentClosed.data === true || timeIsUp.value,
 )
