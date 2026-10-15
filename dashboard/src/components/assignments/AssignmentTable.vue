@@ -71,7 +71,7 @@
 					v-else-if="statusOf(row) === 'Pending'"
 					variant="solid"
 					theme="gray"
-					label="Submit"
+					:label="isProjectSubmission(row.submission_type) ? 'Start' : 'Submit'"
 					@click="openSubmit(row, null)"
 				/>
 			</div>
