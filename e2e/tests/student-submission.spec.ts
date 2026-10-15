@@ -329,7 +329,7 @@ test.describe("Student submission types", () => {
 	}) => {
 		await page.goto("/dashboard/assignments");
 		const row = assignmentRow(page, scratch.title);
-		await row.getByRole("button", { name: "Submit" }).click();
+		await row.getByRole("button", { name: "Start" }).click();
 
 		await page.waitForURL(
 			(url) =>
