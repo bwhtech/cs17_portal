@@ -20,7 +20,8 @@ let cohort: string;
 
 function createTimedAssignment(
 	request: APIRequestContext,
-	timeLimit = 30
+	timeLimit = 30,
+	attemptsAllowed = 0
 ): Promise<CS17Assignment> {
 	return createDoc<CS17Assignment>(request, "CS17 Assignment", {
 		title: `${TEST_ASSIGNMENT_PREFIX} Timed ${Date.now()}`,
@@ -34,6 +35,7 @@ function createTimedAssignment(
 		description: QUESTION,
 		starter_code: STARTER_CODE,
 		time_limit: timeLimit,
+		attempts_allowed: attemptsAllowed,
 	});
 }
 
@@ -150,6 +152,31 @@ test.describe("Python assignment time limit", () => {
 			{ fields: ["code"], filters: { assignment: assignment.name }, limit: 1 }
 		);
 		expect(submissions[0]?.code).toBe(STARTER_CODE);
+	});
+
+	test("lets a student reattempt once time is up", async ({ page, request }) => {
+		const assignment = await createTimedAssignment(request, 30, 2);
+		await page.goto("/dashboard");
+		await callAsStudent(page, "cs17_portal.api.start_python_assignment", {
+			assignment: assignment.name,
+		});
+		const [attempt] = await getList<{ name: string; started_at: string }>(
+			request,
+			"CS17 Assignment Attempt",
+			{ fields: ["name", "started_at"], filters: { assignment: assignment.name }, limit: 1 }
+		);
+		await updateDoc(request, "CS17 Assignment Attempt", attempt.name, {
+			started_at: secondsEarlier(attempt.started_at, 31 * 60),
+		});
+
+		await page.goto(`/dashboard/assignments/${assignment.name}/submission`);
+		await page.getByRole("button", { name: "Reattempt" }).click();
+		const dialog = page.getByRole("dialog");
+		await expect(dialog.getByText("This is attempt 2 of 2.")).toBeVisible();
+		await dialog.getByRole("button", { name: "Start", exact: true }).click();
+
+		await expect(page).toHaveURL(/\/dashboard\/projects\/PROJ-.+\/code\?assignment=/);
+		await expect(page.getByRole("timer", { name: "Time left" })).toBeVisible();
 	});
 
 	test("shows faculty how long the student took", async ({ browser, page, request }) => {
