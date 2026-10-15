@@ -90,6 +90,24 @@ class TestAssignmentTimeLimit(FrappeTestCase):
 
 		self.assertEqual(api.get_student_assignment(assignment).started_at, started_at)
 
+	def test_raising_the_time_limit_moves_the_end_of_a_started_attempt(self):
+		assignment = self.make_timed_assignment()
+		api.start_python_assignment(assignment)
+		frappe.set_user(self.faculty_user)
+
+		api.set_assignment_timing(assignment, "2030-01-01 00:00:00", 45)
+
+		frappe.set_user(self.student_user)
+		details = api.get_student_assignment(assignment)
+		self.assertEqual(details.ends_at, add_to_date(details.started_at, minutes=45))
+
+	def test_a_student_cannot_change_the_timing(self):
+		assignment = self.make_timed_assignment()
+
+		self.assertRaises(
+			frappe.PermissionError, api.set_assignment_timing, assignment, "2030-01-01 00:00:00", 45
+		)
+
 	def test_assignment_closes_when_time_is_up(self):
 		assignment = self.make_timed_assignment()
 		api.start_python_assignment(assignment)

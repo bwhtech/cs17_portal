@@ -175,4 +175,24 @@ test.describe("Python assignment time limit", () => {
 		await expect(facultyPage.getByText(/took \d+ of 30 min/)).toBeVisible({ timeout: 60000 });
 		await context.close();
 	});
+
+	test("lets faculty raise the time limit", async ({ browser, request }) => {
+		const assignment = await createTimedAssignment(request);
+		const faculty = await createTestFaculty(request);
+		faculties.push(faculty);
+		const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+		await context.request.post("/api/method/login", {
+			form: { usr: faculty.email, pwd: faculty.password },
+		});
+		const facultyPage = await context.newPage();
+		await facultyPage.goto(`/dashboard/faculty/assignments/${assignment.name}`);
+
+		await facultyPage.getByRole("button", { name: "Timing", exact: true }).click();
+		const dialog = facultyPage.getByRole("dialog");
+		await dialog.getByLabel("Time limit (minutes)").fill("45");
+		await dialog.getByRole("button", { name: "Save" }).click();
+
+		await expect(facultyPage.getByText("45 minutes")).toBeVisible();
+		await context.close();
+	});
 });
