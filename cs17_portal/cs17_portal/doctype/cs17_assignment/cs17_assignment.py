@@ -25,6 +25,7 @@ class CS17Assignment(Document):
 
 		answer_sheet: DF.JSON | None
 		assignment_type: DF.Literal["Graded", "Not Graded"]
+		attempts_allowed: DF.Int
 		cohort: DF.Link | None
 		description: DF.TextEditor | None
 		due_date: DF.Datetime | None
@@ -56,8 +57,11 @@ class CS17Assignment(Document):
 			self.test_cases = []
 			self.watch_tab_switches = 0
 			self.time_limit = 0
+			self.attempts_allowed = 0
 		if cint(self.time_limit) < 0:
 			frappe.throw(_("The time limit cannot be negative."))
+		if cint(self.attempts_allowed) < 0:
+			frappe.throw(_("The number of attempts cannot be negative."))
 		if self.assignment_type == "Not Graded":
 			self.max_marks = 0
 			self.remarks = ""

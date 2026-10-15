@@ -25,7 +25,7 @@ class TestAssignmentTimeLimit(FrappeTestCase):
 	def tearDown(self):
 		frappe.set_user("Administrator")
 
-	def make_timed_assignment(self, due_date: str = "2030-01-01 00:00:00") -> str:
+	def make_timed_assignment(self, due_date: str = "2030-01-01 00:00:00", attempts_allowed: int = 0) -> str:
 		frappe.set_user(self.faculty_user)
 		assignment = api.create_assignment(
 			"Greet a Friend 210",
@@ -38,6 +38,7 @@ class TestAssignmentTimeLimit(FrappeTestCase):
 				[{"input": "Asha\n", "expected_output": "Hello, Asha!\n", "is_hidden": 0}]
 			),
 			time_limit=30,
+			attempts_allowed=attempts_allowed,
 		)
 		frappe.set_user(self.student_user)
 		return assignment
@@ -106,6 +107,38 @@ class TestAssignmentTimeLimit(FrappeTestCase):
 
 		self.assertRaises(
 			frappe.PermissionError, api.set_assignment_timing, assignment, "2030-01-01 00:00:00", 45
+		)
+
+	def test_reattempt_starts_a_new_clock(self):
+		assignment = self.make_timed_assignment(attempts_allowed=2)
+		api.start_python_assignment(assignment)
+		self.start_minutes_ago(assignment, 31)
+
+		api.reattempt_python_assignment(assignment)
+
+		self.assertFalse(api.is_assignment_closed(assignment))
+
+	def test_reattempt_is_refused_once_the_attempts_are_used(self):
+		assignment = self.make_timed_assignment()
+		api.start_python_assignment(assignment)
+		self.start_minutes_ago(assignment, 31)
+
+		self.assertRaisesRegex(
+			frappe.ValidationError,
+			"This assignment cannot be attempted again.",
+			api.reattempt_python_assignment,
+			assignment,
+		)
+
+	def test_reattempt_is_refused_while_the_clock_runs(self):
+		assignment = self.make_timed_assignment(attempts_allowed=2)
+		api.start_python_assignment(assignment)
+
+		self.assertRaisesRegex(
+			frappe.ValidationError,
+			"This assignment cannot be attempted again.",
+			api.reattempt_python_assignment,
+			assignment,
 		)
 
 	def test_assignment_closes_when_time_is_up(self):

@@ -101,6 +101,13 @@
 				</p>
 				<Button v-else class="w-full" label="Submit Assignment" @click="openSubmit" />
 
+				<Button
+					v-if="isClosed && assignment.next_attempt"
+					class="w-full"
+					label="Reattempt"
+					@click="python.reattempt(assignment)"
+				/>
+
 				<div v-if="myAnswers.data" class="space-y-2 border-t border-outline-gray-1 pt-3">
 					<div>
 						<p class="text-xs text-ink-gray-5">Answers</p>

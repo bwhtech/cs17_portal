@@ -16,6 +16,15 @@
 				min="1"
 				step="1"
 			/>
+			<FormControl
+				v-if="assignment.submission_type === 'Python' && timeLimit"
+				v-model="attemptsAllowed"
+				type="number"
+				label="Attempts allowed"
+				description="How many times a student can start the clock. Leave empty for one."
+				min="1"
+				step="1"
+			/>
 			<ErrorMessage :message="error" />
 		</div>
 
@@ -54,15 +63,21 @@ const emit = defineEmits<{ 'update:open': [value: boolean]; saved: [] }>()
 
 const dueDate = ref(props.assignment.due_date ?? '')
 const timeLimit = ref(props.assignment.time_limit ? String(props.assignment.time_limit) : '')
+const attemptsAllowed = ref(
+	props.assignment.attempts_allowed ? String(props.assignment.attempts_allowed) : '',
+)
 const error = ref('')
 
-const save = useCall<null, { assignment: string; due_date: string; time_limit: number }>({
+const save = useCall<
+	null,
+	{ assignment: string; due_date: string; time_limit: number; attempts_allowed: number }
+>({
 	url: '/api/v2/method/cs17_portal.api.set_assignment_timing',
 	method: 'POST',
 	immediate: false,
 })
 
-watch([dueDate, timeLimit], () => {
+watch([dueDate, timeLimit, attemptsAllowed], () => {
 	error.value = ''
 })
 
@@ -71,6 +86,7 @@ async function handleSave() {
 		assignment: props.assignment.name,
 		due_date: toFrappeDatetime(dueDate.value),
 		time_limit: Number(timeLimit.value) || 0,
+		attempts_allowed: Number(attemptsAllowed.value) || 0,
 	})
 	if (save.error) {
 		error.value = frappeErrorMessage(save.error, 'Could not save the timing.')

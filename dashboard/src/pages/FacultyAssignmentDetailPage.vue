@@ -401,6 +401,9 @@ const metaRows = computed(() => {
 					},
 				]
 			: []),
+		...(timeLimit
+			? [{ label: 'Attempts', value: String(assignment.value?.attempts_allowed || 1) }]
+			: []),
 		{ label: 'Cohort', value: assignment.value?.cohort ?? '—' },
 		{
 			label: 'Students',

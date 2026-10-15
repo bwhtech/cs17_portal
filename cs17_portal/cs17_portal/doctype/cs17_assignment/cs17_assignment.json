@@ -27,6 +27,7 @@
   "test_cases",
   "watch_tab_switches",
   "time_limit",
+  "attempts_allowed",
   "students_section",
   "students",
   "answer_sheet_section",
@@ -189,6 +190,13 @@
    "fieldtype": "Table",
    "label": "Students",
    "options": "CS17 Assignment Student"
+  },
+  {
+   "depends_on": "eval:doc.time_limit",
+   "description": "How many times a student can start the clock. Leave empty for one.",
+   "fieldname": "attempts_allowed",
+   "fieldtype": "Int",
+   "label": "Attempts Allowed"
   }
  ],
  "grid_page_length": 50,
@@ -202,7 +210,7 @@
    "link_fieldname": "assignment"
   }
  ],
- "modified": "2026-10-14 23:09:36.600171",
+ "modified": "2026-10-15 20:05:30.843261",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",
