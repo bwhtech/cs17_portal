@@ -532,7 +532,15 @@ def create_project(project_title: str, assignment: str | None = None, project_ty
 	project_doc.project_type = project_type
 	project_doc.profile = profile
 	project_doc.assignment = assignment
-	project_doc.insert(ignore_permissions=True)
+	project_doc.insert(
+		ignore_permissions=True,
+		ignore_if_duplicate=bool(assignment),
+		set_name=f"PROJ-{profile}-{assignment}-{project_type}" if assignment else None,
+	)
+	if assignment and frappe.db.exists(
+		"CS17 Project", {"name": project_doc.name, "assignment": ("is", "not set")}
+	):
+		project_doc = frappe.copy_doc(project_doc).insert(ignore_permissions=True)
 	return {"name": project_doc.name, "project_title": project_doc.project_title}
 
 
@@ -1153,7 +1161,11 @@ def start_python_assignment(assignment: str) -> dict:
 				"code": frappe.db.get_value("CS17 Assignment", assignment, "starter_code"),
 			}
 		)
-		project_doc.insert(ignore_permissions=True)
+		project_doc.insert(
+			ignore_permissions=True, ignore_if_duplicate=True, set_name=f"PROJ-{student}-{assignment}-Python"
+		)
+		if frappe.db.exists("CS17 Project", {"name": project_doc.name, "assignment": ("is", "not set")}):
+			project_doc = frappe.copy_doc(project_doc).insert(ignore_permissions=True)
 		project = project_doc.name
 	if details.time_limit and not details.get("started_at"):
 		frappe.get_doc(

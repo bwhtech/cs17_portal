@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import base64
+from unittest.mock import patch
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
@@ -451,6 +452,33 @@ class TestCS17Project(FrappeTestCase):
 
 		self.assertEqual(api.start_python_assignment(assignment)["name"], project)
 
+	def test_two_first_starts_at_the_same_moment_make_one_project(self):
+		assignment = self.make_python_assignment()
+		get_value = frappe.db.get_value
+
+		def without_projects(doctype, *args, **kwargs):
+			return None if doctype == "CS17 Project" else get_value(doctype, *args, **kwargs)
+
+		frappe.set_user(STUDENT1_USER)
+		with patch.object(frappe.db, "get_value", side_effect=without_projects):
+			api.start_python_assignment(assignment)
+			api.start_python_assignment(assignment)
+
+		self.assertEqual(frappe.db.count("CS17 Project", {"assignment": assignment}), 1)
+
+	def test_python_assignment_made_again_after_a_delete_starts_a_new_project(self):
+		assignment = self.make_python_assignment()
+		frappe.set_user(STUDENT1_USER)
+		api.start_python_assignment(assignment)
+		frappe.set_user(FACULTY_IN_USER)
+		api.delete_assignment(assignment)
+		assignment = self.make_python_assignment()
+		frappe.set_user(STUDENT1_USER)
+
+		project = api.start_python_assignment(assignment)["name"]
+
+		self.assertEqual(api.get_project(project)["assignment"], assignment)
+
 	def test_python_submission_keeps_a_copy_of_the_code(self):
 		assignment = self.make_python_assignment()
 		frappe.set_user(STUDENT1_USER)
@@ -586,6 +614,19 @@ class TestCS17Project(FrappeTestCase):
 		project = api.create_project("Scratch Test Assignment", self.assignment)["name"]
 
 		self.assertEqual(api.create_project("Scratch Test Assignment", self.assignment)["name"], project)
+
+	def test_two_first_opens_of_a_scratch_assignment_at_the_same_moment_make_one_project(self):
+		get_value = frappe.db.get_value
+
+		def without_projects(doctype, *args, **kwargs):
+			return None if doctype == "CS17 Project" else get_value(doctype, *args, **kwargs)
+
+		frappe.set_user(STUDENT1_USER)
+		with patch.object(frappe.db, "get_value", side_effect=without_projects):
+			api.create_project("Scratch Test Assignment", self.assignment)
+			api.create_project("Scratch Test Assignment", self.assignment)
+
+		self.assertEqual(frappe.db.count("CS17 Project", {"assignment": self.assignment}), 1)
 
 	def test_project_cannot_start_from_an_unpublished_assignment(self):
 		unpublished = self.make_assignment(self.cohort_in, is_published=0)
