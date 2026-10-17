@@ -295,3 +295,23 @@ class TestGradePastItsPublishTime(FrappeTestCase):
 
 	def test_assignment_is_closed(self):
 		self.assertTrue(is_assignment_closed(self.assignment))
+
+
+class TestPythonSubmissionCode(FrappeTestCase):
+	def test_code_that_does_not_compile_is_saved(self):
+		cohort = make_cohort("C290TEST")
+		student = make_profile("Student", cohort, make_user("student290@cs17test.com"), "Student 290")
+		assignment = make_assignment(cohort, "Python Task 290", "Python", 20)
+
+		submission = frappe.get_doc(
+			{
+				"doctype": "CS17 Assignment Submission",
+				"assignment": assignment,
+				"student": student,
+				"code": "def f(:\n",
+			}
+		).insert(ignore_permissions=True)
+
+		self.assertEqual(
+			frappe.db.get_value("CS17 Assignment Submission", submission.name, "code"), "def f(:\n"
+		)
