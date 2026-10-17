@@ -580,3 +580,21 @@ class TestCS17Project(FrappeTestCase):
 		frappe.set_user(STUDENT1_USER)
 		api.save_project(project, "project.sb3", b64(make_zip({"project.json": b"v2"})))
 		self.assertRaises(frappe.ValidationError, api.submit_scratch_project, self.assignment, project)
+
+	def test_scratch_assignment_reopens_the_same_project(self):
+		frappe.set_user(STUDENT1_USER)
+		project = api.create_project("Scratch Test Assignment", self.assignment)["name"]
+
+		self.assertEqual(api.create_project("Scratch Test Assignment", self.assignment)["name"], project)
+
+	def test_project_cannot_start_from_an_unpublished_assignment(self):
+		unpublished = self.make_assignment(self.cohort_in, is_published=0)
+		frappe.set_user(STUDENT1_USER)
+
+		self.assertRaisesRegex(
+			frappe.ValidationError,
+			"This assignment is not open for submission.",
+			api.create_project,
+			"Scratch Test Assignment",
+			unpublished,
+		)
