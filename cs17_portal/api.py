@@ -532,7 +532,11 @@ def create_project(project_title: str, assignment: str | None = None, project_ty
 	project_doc.project_type = project_type
 	project_doc.profile = profile
 	project_doc.assignment = assignment
-	project_doc.insert(ignore_permissions=True)
+	project_doc.insert(
+		ignore_permissions=True,
+		ignore_if_duplicate=bool(assignment),
+		set_name=f"PROJ-{profile}-{assignment}-{project_type}" if assignment else None,
+	)
 	return {"name": project_doc.name, "project_title": project_doc.project_title}
 
 
@@ -1154,7 +1158,7 @@ def start_python_assignment(assignment: str) -> dict:
 			}
 		)
 		project_doc.insert(
-			ignore_permissions=True, ignore_if_duplicate=True, set_name=f"PROJ-{student}-{assignment}"
+			ignore_permissions=True, ignore_if_duplicate=True, set_name=f"PROJ-{student}-{assignment}-Python"
 		)
 		project = project_doc.name
 	if details.time_limit and not details.get("started_at"):
