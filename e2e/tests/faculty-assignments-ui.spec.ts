@@ -1001,4 +1001,25 @@ test.describe("Faculty assignment portal", () => {
 
 		await expect(page.getByPlaceholder("Assignment title")).toHaveValue(draft.title);
 	});
+
+	test("shows the stored title when a draft is opened again", async ({ page, request }) => {
+		const draft = await createTestAssignment(request, {
+			cohort: cohort.name,
+			isPublished: false,
+		});
+
+		await page.goto("/dashboard/faculty/assignments");
+		await page.getByRole("button", { name: `Edit ${draft.title}` }).click();
+		await expect(page.getByPlaceholder("Assignment title")).toHaveValue(draft.title);
+		await page.keyboard.press("Escape");
+		await expect(page.getByRole("dialog")).toBeHidden();
+		await updateDoc(request, "CS17 Assignment", draft.name, {
+			title: `${draft.title} renamed`,
+		});
+		await page.getByRole("button", { name: `Edit ${draft.title}` }).click();
+
+		await expect(page.getByPlaceholder("Assignment title")).toHaveValue(
+			`${draft.title} renamed`
+		);
+	});
 });
