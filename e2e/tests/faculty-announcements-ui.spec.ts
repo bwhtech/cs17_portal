@@ -50,4 +50,51 @@ test.describe("Faculty announcements", () => {
 
 		await expect(page.getByRole("alert")).toHaveText("Not permitted");
 	});
+
+	test("reloads the list when an announcement went live before its edit", async ({ page }) => {
+		let isPublished = 0;
+		await page.route("**/cs17_portal.api.get_faculty_announcements*", (route) =>
+			route.fulfill({
+				json: {
+					data: [
+						{
+							name: TEST_ANNOUNCEMENT_PREFIX,
+							title: TEST_ANNOUNCEMENT_PREFIX,
+							content: "Please read the handbook.",
+							alert_variant: "info",
+							cohort: null,
+							is_dismissible: 1,
+							is_published: isPublished,
+							publish_on: "2000-01-01 09:00:00",
+							can_edit: true,
+						},
+					],
+				},
+			})
+		);
+		const edit = page.getByRole("button", { name: `Edit ${TEST_ANNOUNCEMENT_PREFIX}` });
+
+		await page.goto("/dashboard/faculty/announcements");
+		await expect(edit).toBeVisible();
+		isPublished = 1;
+		await edit.click();
+		await page.getByRole("button", { name: "Cancel" }).click();
+
+		await expect(edit).toHaveCount(0);
+	});
+
+	test("says Announcement published when the form publishes now", async ({ page }) => {
+		await page.route("**/cs17_portal.api.create_announcement*", (route) =>
+			route.fulfill({ json: { data: TEST_ANNOUNCEMENT_PREFIX } })
+		);
+
+		await page.goto("/dashboard/faculty/announcements");
+		await page.getByRole("button", { name: "New announcement" }).click();
+		await page.getByPlaceholder("Announcement title").fill(TEST_ANNOUNCEMENT_PREFIX);
+		await page.getByRole("combobox").filter({ hasText: "Save as draft" }).click();
+		await page.getByRole("option", { name: "Publish now" }).click();
+		await page.getByRole("button", { name: "Save", exact: true }).click();
+
+		await expect(page.getByText("Announcement published")).toBeVisible();
+	});
 });
