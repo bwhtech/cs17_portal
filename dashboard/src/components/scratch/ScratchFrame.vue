@@ -151,7 +151,10 @@ watch(
 )
 
 onMounted(() => window.addEventListener('message', onMessage))
-onBeforeUnmount(() => window.removeEventListener('message', onMessage))
+onBeforeUnmount(() => {
+	window.removeEventListener('message', onMessage)
+	clearTimeout(loadTimer)
+})
 
 /** Ask the editor for the current project; the answer arrives as `sb3`. */
 function requestSb3(): boolean {
