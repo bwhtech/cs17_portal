@@ -602,6 +602,19 @@ class TestCS17Project(FrappeTestCase):
 
 		self.assertEqual(api.create_project("Scratch Test Assignment", self.assignment)["name"], project)
 
+	def test_two_first_opens_of_a_scratch_assignment_at_the_same_moment_make_one_project(self):
+		get_value = frappe.db.get_value
+
+		def without_projects(doctype, *args, **kwargs):
+			return None if doctype == "CS17 Project" else get_value(doctype, *args, **kwargs)
+
+		frappe.set_user(STUDENT1_USER)
+		with patch.object(frappe.db, "get_value", side_effect=without_projects):
+			api.create_project("Scratch Test Assignment", self.assignment)
+			api.create_project("Scratch Test Assignment", self.assignment)
+
+		self.assertEqual(frappe.db.count("CS17 Project", {"assignment": self.assignment}), 1)
+
 	def test_project_cannot_start_from_an_unpublished_assignment(self):
 		unpublished = self.make_assignment(self.cohort_in, is_published=0)
 		frappe.set_user(STUDENT1_USER)
