@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import base64
+from unittest.mock import patch
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
@@ -450,6 +451,20 @@ class TestCS17Project(FrappeTestCase):
 		project = api.start_python_assignment(assignment)["name"]
 
 		self.assertEqual(api.start_python_assignment(assignment)["name"], project)
+
+	def test_two_first_starts_at_the_same_moment_make_one_project(self):
+		assignment = self.make_python_assignment()
+		get_value = frappe.db.get_value
+
+		def without_projects(doctype, *args, **kwargs):
+			return None if doctype == "CS17 Project" else get_value(doctype, *args, **kwargs)
+
+		frappe.set_user(STUDENT1_USER)
+		with patch.object(frappe.db, "get_value", side_effect=without_projects):
+			api.start_python_assignment(assignment)
+			api.start_python_assignment(assignment)
+
+		self.assertEqual(frappe.db.count("CS17 Project", {"assignment": assignment}), 1)
 
 	def test_python_submission_keeps_a_copy_of_the_code(self):
 		assignment = self.make_python_assignment()
