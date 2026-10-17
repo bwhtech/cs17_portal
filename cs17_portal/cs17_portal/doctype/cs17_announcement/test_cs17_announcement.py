@@ -201,6 +201,17 @@ class IntegrationTestCS17Announcement(IntegrationTestCase):
 		sendmail.assert_not_called()
 		enqueue.assert_called_once_with(announcement.send_announcement_email, enqueue_after_commit=True)
 
+	def test_announcement_email_that_fails_is_logged(self):
+		announcement = create_announcement("Quiz moved to Monday", "Room 204", cohort=self.cohort)
+
+		with (
+			patch.object(frappe, "sendmail", side_effect=frappe.OutgoingEmailError),
+			patch.object(frappe, "log_error") as log_error,
+		):
+			frappe.get_doc("CS17 Announcement", announcement).send_announcement_email()
+
+		log_error.assert_called_once_with(title=f"Announcement email failed: {announcement}")
+
 	def test_announcement_failing_after_its_save_stays_a_draft(self):
 		announcement = create_announcement(
 			"Quiz moved to Monday",
