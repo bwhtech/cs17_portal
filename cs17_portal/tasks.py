@@ -1,5 +1,6 @@
 import frappe
 from frappe.utils import getdate, now_datetime
+from frappe.utils.background_jobs import defer_enqueue_after_commit
 
 
 def auto_publish_assignments():
@@ -38,13 +39,16 @@ def auto_publish_announcements():
 		pluck="name",
 	)
 	for name in names:
+		frappe.db.savepoint("publish_announcement")
 		try:
 			doc = frappe.get_doc("CS17 Announcement", name)
 			doc.is_published = 1
 			doc.published_date = getdate(doc.publish_on)
 			doc.publish_on = None
-			doc.save(ignore_permissions=True)
+			with defer_enqueue_after_commit():
+				doc.save(ignore_permissions=True)
 		except Exception:
+			frappe.db.rollback(save_point="publish_announcement")
 			title = "Scheduled announcement not published"
 			if not frappe.db.exists(
 				"Error Log",
