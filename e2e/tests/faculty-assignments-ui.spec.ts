@@ -989,4 +989,16 @@ test.describe("Faculty assignment portal", () => {
 			await expect(page.getByText("Assignment created")).toBeVisible();
 		});
 	});
+
+	test("opens a draft from its row", async ({ page, request }) => {
+		const draft = await createTestAssignment(request, {
+			cohort: cohort.name,
+			isPublished: false,
+		});
+
+		await page.goto("/dashboard/faculty/assignments");
+		await page.getByRole("button", { name: `Edit ${draft.title}` }).click();
+
+		await expect(page.getByPlaceholder("Assignment title")).toHaveValue(draft.title);
+	});
 });

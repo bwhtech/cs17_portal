@@ -103,12 +103,12 @@
 				<template #cell-actions="{ row }">
 					<div class="flex items-center justify-end gap-2">
 						<Button
-							v-if="row.statusLabel === 'Scheduled'"
+							v-if="row.statusLabel !== 'Published'"
 							variant="ghost"
 							icon="lucide-pencil"
 							:aria-label="`Edit ${row.title}`"
 							tooltip="Edit"
-							@click="openDraft(row.name, true)"
+							@click="openDraft(row.name, row.statusLabel === 'Scheduled')"
 						/>
 						<Button
 							v-if="!row.is_published"
