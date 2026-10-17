@@ -325,7 +325,7 @@ def grade_submission(
 	grade: str | None = None,
 	marks_obtained: float | None = None,
 	remarks: str | None = None,
-	publish: str = "draft",
+	publish: str | None = None,
 	publish_on: str | None = None,
 ) -> dict:
 	get_current_faculty()
@@ -347,7 +347,8 @@ def grade_submission(
 	)
 	if publish == "schedule" and is_published_now(doc, "published_on"):
 		frappe.throw(_("A published grade can no longer be scheduled"))
-	_apply_publish_state(doc, publish, publish_on, "published_on")
+	if publish is not None:
+		_apply_publish_state(doc, publish, publish_on, "published_on")
 	doc.save(ignore_permissions=True)
 	return {"name": doc.name}
 
