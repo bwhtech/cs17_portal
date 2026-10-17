@@ -513,6 +513,19 @@ def replace_project_file(
 @frappe.whitelist(methods=["POST"])
 def create_project(project_title: str, assignment: str | None = None, project_type: str = "Scratch") -> dict:
 	profile = require_current_profile()
+	if assignment:
+		frappe.get_doc(
+			{"doctype": ASSIGNMENT_SUBMISSION, "assignment": assignment, "student": profile}
+		).validate_open_to_student()
+		project = frappe.db.get_value(
+			"CS17 Project",
+			{"profile": profile, "assignment": assignment, "project_type": project_type},
+			["name", "project_title"],
+			as_dict=True,
+			order_by="creation desc",
+		)
+		if project:
+			return project
 	project_doc = frappe.new_doc("CS17 Project")
 	project_doc.project_title = _validate_project_title(project_title)
 	project_doc.project_type = project_type
