@@ -1153,7 +1153,9 @@ def start_python_assignment(assignment: str) -> dict:
 				"code": frappe.db.get_value("CS17 Assignment", assignment, "starter_code"),
 			}
 		)
-		project_doc.insert(ignore_permissions=True)
+		project_doc.insert(
+			ignore_permissions=True, ignore_if_duplicate=True, set_name=f"PROJ-{student}-{assignment}"
+		)
 		project = project_doc.name
 	if details.time_limit and not details.get("started_at"):
 		frappe.get_doc(
