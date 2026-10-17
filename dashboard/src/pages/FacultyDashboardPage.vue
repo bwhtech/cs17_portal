@@ -82,12 +82,12 @@ const { profile } = useSession()
 const firstName = computed(() => profile.value?.full_name?.split(' ')[0] ?? 'Faculty')
 const today = formatLongDate()
 
-const assignedCall = useCall<CS17Submission[], { limit: number }>({
-	url: '/api/v2/method/cs17_portal.api.get_assigned_submissions',
-	params: { limit: 0 },
+const assignedCall = useCall<{ submissions: CS17Submission[]; total: number }, { limit: number }>({
+	url: '/api/v2/method/cs17_portal.api.get_assigned_submission_summary',
+	params: { limit: 5 },
 })
 
-const total = computed(() => assignedCall.data?.length ?? 0)
-const assigned = computed(() => (assignedCall.data ?? []).slice(0, 5))
+const total = computed(() => assignedCall.data?.total ?? 0)
+const assigned = computed(() => assignedCall.data?.submissions ?? [])
 const failed = computed(() => Boolean(assignedCall.error) && !assignedCall.data)
 </script>
