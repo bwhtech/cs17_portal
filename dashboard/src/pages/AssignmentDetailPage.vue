@@ -99,7 +99,16 @@
 				<p v-else-if="isClosed" class="text-sm text-ink-gray-5">
 					{{ isOverdue ? 'Deadline passed' : 'Time is up' }}
 				</p>
-				<Button v-else class="w-full" label="Submit Assignment" @click="openSubmit" />
+				<Button
+					v-else
+					class="w-full"
+					:label="
+						isProjectSubmission(assignment.submission_type)
+							? 'Start'
+							: 'Submit Assignment'
+					"
+					@click="openSubmit"
+				/>
 
 				<Button
 					v-if="isClosed && assignment.next_attempt"
@@ -160,6 +169,7 @@ import { useSession } from '@/composables/useSession'
 import { answerCounts } from '@/lib/answers'
 import { formatDateTime, isPast } from '@/lib/dates'
 import { isRefusal } from '@/lib/frappeError'
+import { isProjectSubmission } from '@/lib/submissionTypes'
 import type {
 	AnswerSummary,
 	CS17Assignment,

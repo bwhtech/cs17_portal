@@ -172,6 +172,7 @@ let pendingKind: SaveKind | null = null
 let autosaveTimer: ReturnType<typeof setTimeout> | null = null
 let answerTimer: ReturnType<typeof setTimeout> | undefined
 let opened = false
+let saveBeforeLeaveFailed = false
 
 const statusLabel = computed(() => {
 	if (readOnly.value) return 'View only'
@@ -216,6 +217,7 @@ function clearAutosave() {
 
 function onDirty() {
 	if (readOnly.value) return
+	saveBeforeLeaveFailed = false
 	clearAutosave()
 	autosaveTimer = setTimeout(() => requestSave('auto'), AUTOSAVE_IDLE_MS)
 }
@@ -290,11 +292,17 @@ async function onSb3(payload: { sb3: ArrayBuffer; thumbnail?: string }) {
 }
 
 function hasUnsavedEdits() {
-	return autosaveTimer !== null || status.value === 'saving'
+	return autosaveTimer !== null || status.value === 'saving' || status.value === 'error'
 }
 
-onBeforeRouteLeave(() => !hasUnsavedEdits() || saveNow())
-onBeforeLogout(() => !hasUnsavedEdits() || saveNow())
+async function saveBeforeLeave() {
+	if (!hasUnsavedEdits() || saveBeforeLeaveFailed) return true
+	saveBeforeLeaveFailed = !(await saveNow())
+	return !saveBeforeLeaveFailed
+}
+
+onBeforeRouteLeave(saveBeforeLeave)
+onBeforeLogout(saveBeforeLeave)
 onBeforeShellSwap(() => !hasUnsavedEdits() || saveNow())
 
 function warnBeforeUnload(event: BeforeUnloadEvent) {

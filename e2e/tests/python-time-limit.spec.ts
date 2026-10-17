@@ -115,7 +115,7 @@ test.describe("Python assignment time limit", () => {
 
 		await page.goto(`/dashboard/assignments/${assignment.name}/submission`);
 		await expect(page.getByText("You will see the question when you start.")).toBeVisible();
-		await page.getByRole("button", { name: "Submit Assignment" }).click();
+		await page.getByRole("button", { name: "Start", exact: true }).click();
 		const dialog = page.getByRole("dialog");
 		await expect(dialog.getByText("You will have 30 minutes.")).toBeVisible();
 		await dialog.getByRole("button", { name: "Start", exact: true }).click();

@@ -63,3 +63,11 @@ class TestGradingMarksAssignment(FrappeTestCase):
 			publish="schedule",
 			publish_on=add_days(now(), 1),
 		)
+
+	def test_grade_submission_keeps_the_publish_state_the_caller_left_out(self):
+		grade = api.grade_submission(self.submission, marks_obtained=15, publish="now")["name"]
+		self.addCleanup(frappe.delete_doc, "CS17 Assignment Grade", grade)
+
+		api.grade_submission(self.submission, marks_obtained=15)
+
+		self.assertEqual(frappe.db.get_value("CS17 Assignment Grade", grade, "is_published"), 1)

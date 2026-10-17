@@ -5,16 +5,23 @@
 			:src="SCRATCH_EDITOR_URL"
 			:title="readOnly ? 'Scratch project player' : 'Scratch editor'"
 			class="h-full w-full border-0"
-			:class="{ invisible: readOnly && !frameLoaded }"
+			:class="{ invisible: projectStatus !== 'loaded' }"
 			@load="onLoad"
 		/>
-		<Skeleton v-if="readOnly && !frameLoaded" class="absolute inset-0" />
+		<EmptyState
+			v-if="projectStatus === 'failed'"
+			class="absolute inset-0"
+			icon="lucide-triangle-alert"
+			title="Could not open this project"
+		/>
+		<Skeleton v-else-if="projectStatus === 'loading'" class="absolute inset-0" />
 	</div>
 </template>
 
 <script setup lang="ts">
 import { onBeforeMount, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { Skeleton } from 'frappe-ui'
+import EmptyState from '@/components/common/EmptyState.vue'
 import {
 	SCRATCH_EDITOR_URL,
 	SCRATCH_MESSAGE,
@@ -23,6 +30,8 @@ import {
 	applyScratchReadOnly,
 	scratchRuntime,
 } from '@/lib/scratch'
+
+const PROJECT_LOAD_TIMEOUT_MS = 15000
 
 const props = defineProps<{
 	/**
@@ -46,12 +55,14 @@ const emit = defineEmits<{
 
 const frame = useTemplateRef<HTMLIFrameElement>('frame')
 const frameLoaded = ref(false)
+const projectStatus = ref<'loading' | 'loaded' | 'failed'>('loading')
 
 let bootedDocument: Document | null = null
 let projectDocument: Document | null = null
 let loaded = false
 let exported: ArrayBuffer | null = null
 let pendingRequests = 0
+let loadTimer: ReturnType<typeof setTimeout> | undefined
 
 // The editor reads `tw:theme` and its addon settings out of localStorage as it
 // boots, so they have to be in place before the iframe is even created.
@@ -75,8 +86,11 @@ function loadProject() {
 	if (loaded || !isCurrent(bootedDocument) || !project) return
 	const sb3 = project.slice(0)
 	loaded = true
+	loadTimer = setTimeout(() => (projectStatus.value = 'failed'), PROJECT_LOAD_TIMEOUT_MS)
 	scratchRuntime(frame.value)?.once('PROJECT_LOADED', () => {
+		clearTimeout(loadTimer)
 		projectDocument = bootedDocument
+		projectStatus.value = 'loaded'
 	})
 	post({ type: SCRATCH_MESSAGE.loadProject, sb3 }, [sb3])
 }
@@ -86,7 +100,10 @@ function onEditorBooted() {
 	loaded = false
 	pendingRequests = 0
 	loadProject()
-	if (props.blank && !loaded) projectDocument = bootedDocument
+	if (props.blank && !loaded) {
+		projectDocument = bootedDocument
+		projectStatus.value = 'loaded'
+	}
 	emit('ready')
 }
 
@@ -97,6 +114,8 @@ function onLoad() {
 	frameLoaded.value = true
 	frame.value?.contentDocument?.defaultView?.addEventListener('pagehide', () => {
 		frameLoaded.value = false
+		projectStatus.value = 'loading'
+		clearTimeout(loadTimer)
 	})
 }
 
@@ -132,7 +151,10 @@ watch(
 )
 
 onMounted(() => window.addEventListener('message', onMessage))
-onBeforeUnmount(() => window.removeEventListener('message', onMessage))
+onBeforeUnmount(() => {
+	window.removeEventListener('message', onMessage)
+	clearTimeout(loadTimer)
+})
 
 /** Ask the editor for the current project; the answer arrives as `sb3`. */
 function requestSb3(): boolean {
