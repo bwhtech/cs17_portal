@@ -288,6 +288,7 @@ const activeTab = ref('edit')
 const confirmDelete = ref(false)
 /** The assignment behind the form once it exists server-side — update, not create. */
 const savedName = ref<string | null>(null)
+const loadedForm = ref('')
 const loadFailed = ref(false)
 const published = ref(false)
 
@@ -385,7 +386,7 @@ function initialize() {
 	published.value = false
 
 	if (props.draftName) {
-		if (savedName.value === props.draftName) return
+		if (savedName.value === props.draftName && currentForm() !== loadedForm.value) return
 		loadExisting(props.draftName)
 		return
 	}
@@ -427,6 +428,11 @@ async function loadExisting(name: string) {
 	publishMode.value = existing.publish_on ? 'schedule' : 'draft'
 	publishOn.value = existing.publish_on ?? ''
 	savedName.value = name
+	loadedForm.value = currentForm()
+}
+
+function currentForm(): string {
+	return JSON.stringify([draft, publishMode.value, publishOn.value])
 }
 
 function isDirty(): boolean {
