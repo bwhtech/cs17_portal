@@ -252,4 +252,26 @@ test.describe("Python assignments", () => {
 		await expect(facultyPage.getByText("Left the tab 1 time")).toBeVisible({ timeout: 60000 });
 		await context.close();
 	});
+
+	test("submits a program that does not compile yet", async ({ page, request }) => {
+		const assignment = await createPythonAssignment(request);
+		await openEditor(page, assignment.name);
+
+		await page.locator(".cm-content").fill("name = input(");
+		await page.getByRole("button", { name: "Submit", exact: true }).click();
+		const dialog = page.getByRole("dialog");
+		await dialog.getByRole("button", { name: "Submit", exact: true }).click();
+		await expect(dialog.getByText("Your project was submitted to")).toBeVisible();
+
+		const submissions = await getList<{ code: string | null }>(
+			request,
+			"CS17 Assignment Submission",
+			{
+				fields: ["code"],
+				filters: { assignment: assignment.name },
+				limit: 1,
+			}
+		);
+		expect(submissions[0]?.code).toBe("name = input(");
+	});
 });
