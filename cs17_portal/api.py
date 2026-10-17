@@ -1162,22 +1162,26 @@ def start_python_assignment(assignment: str) -> dict:
 				"student": student,
 				"started_at": now_datetime(),
 			}
-		).insert(ignore_permissions=True)
+		).insert(ignore_permissions=True, ignore_if_duplicate=True, set_name=f"{assignment}-{student}-1")
 	return {"name": project}
 
 
 @frappe.whitelist(methods=["POST"])
 def reattempt_python_assignment(assignment: str) -> dict:
-	if not get_student_assignment(assignment).next_attempt:
+	next_attempt = get_student_assignment(assignment).next_attempt
+	if not next_attempt:
 		frappe.throw(_("This assignment cannot be attempted again."))
+	student = require_current_student()
 	frappe.get_doc(
 		{
 			"doctype": "CS17 Assignment Attempt",
 			"assignment": assignment,
-			"student": require_current_student(),
+			"student": student,
 			"started_at": now_datetime(),
 		}
-	).insert(ignore_permissions=True)
+	).insert(
+		ignore_permissions=True, ignore_if_duplicate=True, set_name=f"{assignment}-{student}-{next_attempt}"
+	)
 	return start_python_assignment(assignment)
 
 
