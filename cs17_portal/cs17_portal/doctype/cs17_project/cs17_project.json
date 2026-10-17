@@ -83,12 +83,12 @@
    "fieldname": "code",
    "fieldtype": "Code",
    "label": "Code",
-   "options": "Python"
+   "options": "Py"
   }
  ],
  "grid_page_length": 50,
  "links": [],
- "modified": "2026-10-14 17:55:42.030144",
+ "modified": "2026-10-18 00:16:29.042672",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Project",

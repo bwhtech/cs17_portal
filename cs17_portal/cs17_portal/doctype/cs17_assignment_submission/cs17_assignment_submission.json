@@ -114,7 +114,7 @@
    "fieldname": "code",
    "fieldtype": "Code",
    "label": "Code",
-   "options": "Python",
+   "options": "Py",
    "read_only": 1
   }
  ],
@@ -126,7 +126,7 @@
    "link_fieldname": "submission"
   }
  ],
- "modified": "2026-10-14 18:25:13.330650",
+ "modified": "2026-10-18 00:16:29.460103",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Submission",
