@@ -70,4 +70,14 @@ test.describe("Faculty profile settings", () => {
 		});
 		await expect(photoEditor(page).getByRole("slider", { name: "Zoom" })).toBeVisible();
 	});
+
+	test("shows a failed name save on the field", async ({ page }) => {
+		await openSettings(page);
+		await page.route("**/cs17_portal.api.update_my_profile*", (route) => route.abort());
+		await page.getByLabel("Last name").fill("Faculty");
+		await page.getByLabel("Last name").blur();
+		await expect(page.getByLabel("Last name")).toHaveAccessibleErrorMessage(
+			"Could not save your name."
+		);
+	});
 });
