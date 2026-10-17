@@ -513,6 +513,19 @@ def replace_project_file(
 @frappe.whitelist(methods=["POST"])
 def create_project(project_title: str, assignment: str | None = None, project_type: str = "Scratch") -> dict:
 	profile = require_current_profile()
+	if assignment:
+		frappe.get_doc(
+			{"doctype": ASSIGNMENT_SUBMISSION, "assignment": assignment, "student": profile}
+		).validate_open_to_student()
+		project = frappe.db.get_value(
+			"CS17 Project",
+			{"profile": profile, "assignment": assignment, "project_type": project_type},
+			["name", "project_title"],
+			as_dict=True,
+			order_by="creation desc",
+		)
+		if project:
+			return project
 	project_doc = frappe.new_doc("CS17 Project")
 	project_doc.project_title = _validate_project_title(project_title)
 	project_doc.project_type = project_type
@@ -1149,22 +1162,26 @@ def start_python_assignment(assignment: str) -> dict:
 				"student": student,
 				"started_at": now_datetime(),
 			}
-		).insert(ignore_permissions=True)
+		).insert(ignore_permissions=True, ignore_if_duplicate=True, set_name=f"{assignment}-{student}-1")
 	return {"name": project}
 
 
 @frappe.whitelist(methods=["POST"])
 def reattempt_python_assignment(assignment: str) -> dict:
-	if not get_student_assignment(assignment).next_attempt:
+	next_attempt = get_student_assignment(assignment).next_attempt
+	if not next_attempt:
 		frappe.throw(_("This assignment cannot be attempted again."))
+	student = require_current_student()
 	frappe.get_doc(
 		{
 			"doctype": "CS17 Assignment Attempt",
 			"assignment": assignment,
-			"student": require_current_student(),
+			"student": student,
 			"started_at": now_datetime(),
 		}
-	).insert(ignore_permissions=True)
+	).insert(
+		ignore_permissions=True, ignore_if_duplicate=True, set_name=f"{assignment}-{student}-{next_attempt}"
+	)
 	return start_python_assignment(assignment)
 
 

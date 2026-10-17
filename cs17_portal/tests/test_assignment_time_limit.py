@@ -1,6 +1,8 @@
 # Copyright (c) 2026, developers@bwh.tech and Contributors
 # See license.txt
 
+from unittest.mock import patch
+
 import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_to_date, now_datetime
@@ -91,6 +93,15 @@ class TestAssignmentTimeLimit(FrappeTestCase):
 
 		self.assertEqual(api.get_student_assignment(assignment).started_at, started_at)
 
+	def test_two_starts_at_the_same_moment_add_one_attempt(self):
+		assignment = self.make_timed_assignment()
+
+		with patch.object(api, "get_attempt", return_value=None):
+			api.start_python_assignment(assignment)
+			api.start_python_assignment(assignment)
+
+		self.assertEqual(frappe.db.count("CS17 Assignment Attempt", {"assignment": assignment}), 1)
+
 	def test_raising_the_time_limit_moves_the_end_of_a_started_attempt(self):
 		assignment = self.make_timed_assignment()
 		api.start_python_assignment(assignment)
@@ -140,6 +151,17 @@ class TestAssignmentTimeLimit(FrappeTestCase):
 			api.reattempt_python_assignment,
 			assignment,
 		)
+
+	def test_two_reattempts_at_the_same_moment_use_one_attempt(self):
+		assignment = self.make_timed_assignment(attempts_allowed=2)
+		api.start_python_assignment(assignment)
+		self.start_minutes_ago(assignment, 31)
+
+		with patch.object(api, "get_next_attempts", return_value={assignment: 2}):
+			api.reattempt_python_assignment(assignment)
+			api.reattempt_python_assignment(assignment)
+
+		self.assertEqual(frappe.db.count("CS17 Assignment Attempt", {"assignment": assignment}), 2)
 
 	def test_assignment_closes_when_time_is_up(self):
 		assignment = self.make_timed_assignment()
