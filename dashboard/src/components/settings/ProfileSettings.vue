@@ -189,11 +189,16 @@ async function saveName() {
 	firstNameError.value = first ? '' : 'Add your first name.'
 	lastNameError.value = last ? '' : 'Add your last name.'
 	if (!first || !last) return
-	if (first === profile.value?.first_name && last === profile.value?.last_name) return
+	const unchanged = first === profile.value?.first_name && last === profile.value?.last_name
+	if (unchanged && !saveCall.loading) return
 
 	const failure = await save({ first_name: first, last_name: last }, 'Could not save your name.')
-	if (failure) toast.error(failure)
-	else toast.success('Name saved', { id: 'name-saved' })
+	if (!failure) {
+		toast.success('Name saved', { id: 'name-saved' })
+		return
+	}
+	if (firstName.value.trim() !== profile.value?.first_name) firstNameError.value = failure
+	if (lastName.value.trim() !== profile.value?.last_name) lastNameError.value = failure
 }
 
 function selectPhoto(event: Event) {
