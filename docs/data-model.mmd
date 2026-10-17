@@ -7,8 +7,8 @@ erDiagram
     CS17_Profile ||--o{ CS17_Assignment_Submission : "student"
     CS17_Assignment ||--o{ CS17_Assignment_Submission : "assignment"
     CS17_Assignment ||--o{ CS17_Assignment_Grade : "assignment"
-    CS17_Project ||--o{ CS17_Assignment_Submission : "project (Scratch only)"
-    CS17_Assignment_Submission ||--|| CS17_Assignment_Grade : "submission"
+    CS17_Project ||--o{ CS17_Assignment_Submission : "project (Scratch or Python)"
+    CS17_Assignment_Submission ||--o| CS17_Assignment_Grade : "submission"
     CS17_Cohort ||--o{ CS17_Exam : "cohort"
     CS17_Grading_Scale ||--o{ CS17_Grade_Band : "bands"
     CS17_Grading_Scale ||--o{ CS17_Exam : "grading_scale (default)"
@@ -34,6 +34,14 @@ erDiagram
     CS17_Subject_Pattern ||--o{ CS17_Subject_Marks : "subject_pattern"
     CS17_Grading_Scale ||--o{ CS17_Subject_Marks : "grading_scale"
     CS17_Subject_Marks ||--o{ CS17_Subject_Marks_Component : "components"
+    CS17_Assignment ||--o{ CS17_Project : "assignment"
+    CS17_Assignment ||--o{ CS17_Python_Test_Case : "test_cases (Python only)"
+    CS17_Assignment ||--o{ CS17_Assignment_Student : "students (empty = whole cohort)"
+    CS17_Profile ||--o{ CS17_Assignment_Student : "student"
+    CS17_Assignment ||--o{ CS17_Assignment_Attempt : "assignment (time_limit set)"
+    CS17_Profile ||--o{ CS17_Assignment_Attempt : "student"
+    CS17_Assignment ||--o{ CS17_Tab_Leave : "assignment (watch_tab_switches on)"
+    CS17_Profile ||--o{ CS17_Tab_Leave : "student"
 
     CS17_Cohort {
         Data cohort_code PK
@@ -55,22 +63,26 @@ erDiagram
         Link cohort FK "CS17 Cohort"
         Link quarter FK "CS17 Quarter"
         Select assignment_type "Graded | Not Graded"
-        Select submission_type "Any|PDF|URL|Image|ZIP|Scratch"
+        Select submission_type "Any|PDF|URL|Image|ZIP|Scratch|Python"
         Float max_marks
         Check is_published
     }
     CS17_Project {
         Data project_title
         Link profile FK "CS17 Profile"
+        Link assignment FK "CS17 Assignment"
+        Select project_type "Scratch | Python"
         Attach sb3_file "live .sb3"
         AttachImage thumbnail
+        Code code "live Python code"
         Datetime last_saved_at
     }
     CS17_Assignment_Submission {
         Link assignment FK "CS17 Assignment"
         Link student FK "CS17 Profile"
-        Link project FK "CS17 Project (Scratch)"
+        Link project FK "CS17 Project (Scratch or Python)"
         Attach submission_document ".sb3 snapshot / file"
+        Code code "Python code snapshot"
         Data submission_url
         Datetime submitted_at
     }
@@ -78,7 +90,7 @@ erDiagram
         Link assignment FK "CS17 Assignment"
         Link submission FK "CS17 Assignment Submission"
         Float marks_obtained
-        Select grade "A..E"
+        Data grade "A..E, or derived from marks"
         Link graded_by FK "User"
         Check is_published
     }
@@ -118,6 +130,7 @@ erDiagram
         Link quarter FK "CS17 Quarter (defaults from exam)"
         Link student FK "CS17 Profile"
         Link cohort FK "CS17 Cohort (fetched)"
+        Link grading_scale FK "CS17 Grading Scale (from exam)"
         Float percentage "derived, exam only"
         Data overall_grade "derived"
         Select result_status "Pass | Fail"
@@ -174,4 +187,23 @@ erDiagram
         Float weightage "from pattern"
         Float max_marks "derived"
         Float marks_obtained
+    }
+    CS17_Python_Test_Case {
+        LongText input
+        LongText expected_output
+        Check is_hidden
+    }
+    CS17_Assignment_Student {
+        Link student FK "CS17 Profile"
+    }
+    CS17_Assignment_Attempt {
+        Link assignment FK "CS17 Assignment"
+        Link student FK "CS17 Profile"
+        Datetime started_at
+    }
+    CS17_Tab_Leave {
+        Link assignment FK "CS17 Assignment"
+        Link student FK "CS17 Profile"
+        Datetime left_at
+        Datetime returned_at
     }
