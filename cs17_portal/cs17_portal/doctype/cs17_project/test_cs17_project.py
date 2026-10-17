@@ -466,6 +466,19 @@ class TestCS17Project(FrappeTestCase):
 
 		self.assertEqual(frappe.db.count("CS17 Project", {"assignment": assignment}), 1)
 
+	def test_python_assignment_made_again_after_a_delete_starts_a_new_project(self):
+		assignment = self.make_python_assignment()
+		frappe.set_user(STUDENT1_USER)
+		api.start_python_assignment(assignment)
+		frappe.set_user(FACULTY_IN_USER)
+		api.delete_assignment(assignment)
+		assignment = self.make_python_assignment()
+		frappe.set_user(STUDENT1_USER)
+
+		project = api.start_python_assignment(assignment)["name"]
+
+		self.assertEqual(api.get_project(project)["assignment"], assignment)
+
 	def test_python_submission_keeps_a_copy_of_the_code(self):
 		assignment = self.make_python_assignment()
 		frappe.set_user(STUDENT1_USER)
