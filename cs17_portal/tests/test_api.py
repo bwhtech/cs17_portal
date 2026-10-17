@@ -486,6 +486,13 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 		self.assertEqual(len(summary["submissions"]), 1)
 		self.assertEqual(summary["total"], 2)
 
+	def test_assigned_submissions_limit_skips_a_newer_one_from_another_cohort(self):
+		frappe.set_user(self.faculty_27_user)
+		api.assign_submission(self.submission_27, self.faculty_27_user)
+		api._assign_submission_to(self.submission_28, self.faculty_27_user)
+
+		self.assertEqual([row.name for row in api.get_assigned_submissions(limit=1)], [self.submission_27])
+
 
 def make_announcement(title: str, cohort: str | None) -> str:
 	return (
