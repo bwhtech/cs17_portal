@@ -476,6 +476,23 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 		frappe.set_user(self.student_user)
 		self.assertRaises(frappe.DoesNotExistError, get_student_assignment, self.assignment_28)
 
+	def test_assigned_submission_summary_counts_past_the_limit(self):
+		make_profile("Faculty", None, make_user("faculty54@cs17test.com"), "Faculty 54")
+		frappe.set_user("faculty54@cs17test.com")
+		api.assign_submissions([self.submission_27, self.submission_28], "faculty54@cs17test.com")
+
+		summary = api.get_assigned_submission_summary(limit=1)
+
+		self.assertEqual(len(summary["submissions"]), 1)
+		self.assertEqual(summary["total"], 2)
+
+	def test_assigned_submissions_limit_skips_a_newer_one_from_another_cohort(self):
+		frappe.set_user(self.faculty_27_user)
+		api.assign_submission(self.submission_27, self.faculty_27_user)
+		api._assign_submission_to(self.submission_28, self.faculty_27_user)
+
+		self.assertEqual([row.name for row in api.get_assigned_submissions(limit=1)], [self.submission_27])
+
 
 def make_announcement(title: str, cohort: str | None) -> str:
 	return (

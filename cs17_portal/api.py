@@ -1515,7 +1515,7 @@ def publish_assignment(assignment: str, publish: str = "now", publish_on: str | 
 @frappe.whitelist(methods=["GET"])
 def get_assigned_submissions(limit: int = 10) -> list:
 	cohort = get_current_faculty().cohort
-	names = _assigned_submission_names(frappe.session.user, limit)
+	names = _assigned_submission_names(frappe.session.user)
 	if not names:
 		return []
 	submissions = frappe.get_all(
@@ -1524,19 +1524,25 @@ def get_assigned_submissions(limit: int = 10) -> list:
 		fields=["name", "student", "full_name", "assignment", "assignment_title", "submitted_at"],
 		ignore_permissions=True,
 	)
+	submissions = _order_by_names(submissions, names)[: limit or None]
 	_attach_grades(submissions)
-	return _order_by_names(submissions, names)
+	return submissions
 
 
-def _assigned_submission_names(user: str, limit: int) -> list:
+def _assigned_submission_names(user: str) -> list:
 	todos = frappe.get_all(
 		"ToDo",
 		filters={"reference_type": ASSIGNMENT_SUBMISSION, "allocated_to": user, "status": "Open"},
 		fields=["reference_name"],
 		order_by="creation desc",
-		limit=limit,
 	)
 	return [todo["reference_name"] for todo in todos]
+
+
+@frappe.whitelist(methods=["GET"])
+def get_assigned_submission_summary(limit: int = 5) -> dict:
+	submissions = get_assigned_submissions(limit=0)
+	return {"submissions": submissions[:limit], "total": len(submissions)}
 
 
 def _order_by_names(rows: list, ordered_names: list) -> list:
