@@ -94,7 +94,10 @@
 				<template #cell-status="{ row }">
 					<div class="min-w-0 leading-tight">
 						<Badge :label="row.statusLabel" :theme="row.statusTheme" variant="subtle" />
-						<div v-if="row.scheduledAt" class="mt-1.5 truncate text-sm text-ink-gray-5">
+						<div
+							v-if="row.scheduledAt"
+							class="mt-1.5 text-balance text-sm leading-tight text-ink-gray-5"
+						>
 							{{ row.scheduledAt }}
 						</div>
 					</div>
