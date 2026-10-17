@@ -79,10 +79,10 @@ Read-only mode: same bundle, same URL, no parameter. The dashboard adds a styles
 
 ## 5. Backend API (`cs17_portal/api.py`, all whitelisted, ORM-only)
 
-- `create_project(project_title) -> dict` — new `CS17 Project` for the current student.
+- `create_project(project_title, assignment, project_type) -> dict` — new `CS17 Project` for the current student. For an assignment, the student's latest project for it is returned if there is one.
 - `list_my_projects() -> list` — current student's projects (title, thumbnail, last_saved_at).
 - `save_project(project, file) -> dict` — attach uploaded `.sb3` (+ optional thumbnail) to the project, update `last_saved_at`. Ownership enforced.
-- `submit_scratch_project(assignment, project) -> dict` — validate ownership + assignment is Scratch-type + open/published; snapshot `.sb3` into a new `CS17 Assignment Submission`; submit it.
+- `submit_scratch_project(assignment, project) -> dict` — validate ownership + assignment is Scratch-type + open/published; snapshot `.sb3` into the student's `CS17 Assignment Submission` for that assignment, made on the first submit.
 - `get_submission_project(submission) -> {sb3_url}` — faculty fetch the snapshot for the read-only player (permission-checked: grader in cohort).
 
 File upload uses Frappe's file API (`frappe.client` / `upload_file`), not custom handlers.
