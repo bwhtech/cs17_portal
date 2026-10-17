@@ -13,8 +13,6 @@
 	</AppHeader>
 
 	<PageBody class="space-y-5">
-		<!-- Drafts are invisible to students, so they sit above the table as a
-		     collapsed row rather than competing with published work in it. -->
 		<div v-if="drafts.length">
 			<Button
 				:label="`Drafts (${drafts.length})`"
