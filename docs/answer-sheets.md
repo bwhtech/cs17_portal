@@ -66,7 +66,7 @@ column per student after `Scored`.
 
 ## For students
 
-Once the sheet is shown, every student of the cohort gets an **Answers** button on their
+Once the sheet is shown, every student given the assignment gets an **Answers** button on their
 assignment list and a **View answers** button on the assignment page. They see the tasks,
 the expected answers, their own marks and notes, and a count of correct, half and incorrect
 once something is marked. They never see another student's marks.

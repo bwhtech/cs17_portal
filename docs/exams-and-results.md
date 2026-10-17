@@ -179,7 +179,8 @@ exam does not belong to.
 ### CS17 Result Assignment Score
 The assignment half of a result, filled by the same pull-don't-type rule as the subject scores.
 Setting `quarter` on a result rebuilds the table on every save from every **published** assignment
-of that quarter in the result's cohort, ordered by due date:
+of that quarter in the result's cohort, ordered by due date. An assignment handed out to some
+students is listed only on their results:
 
 ```
 CS17 Assignment          quarter = Q1, cohort = 2026A, published

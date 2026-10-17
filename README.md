@@ -19,7 +19,7 @@ The student and faculty dashboard is a Vue 3 app in `dashboard/`, built with [fr
 ```bash
 cd apps/cs17_portal/dashboard
 yarn install
-yarn dev        # dev server; API calls are proxied to the bench on port 8000
+yarn dev        # dev server on port 8080; API calls are proxied to the bench on port 8000
 yarn build      # writes cs17_portal/public/dashboard and cs17_portal/www/dashboard.html
 yarn typecheck
 yarn lint
