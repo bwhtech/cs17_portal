@@ -30,8 +30,8 @@ codes, then seeds again.
 The clearing goes by those tags, not by who created the record. Every run deletes, for
 good:
 
-- every user whose email ends in `@cs17.test`, with their profile, their submissions and
-  their Scratch and Python projects;
+- every user whose email ends in `@cs17.test`, with their profile, their submissions,
+  their Scratch and Python projects, and their timed attempts and tab leaves;
 - the `C6` and `C7` cohorts, with their assignments, the grades on those assignments,
   their exams, and the subject marks and results of those exams;
 - every announcement for `C6` or `C7`, and every announcement with no cohort.
