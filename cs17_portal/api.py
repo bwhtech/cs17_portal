@@ -1539,6 +1539,12 @@ def _assigned_submission_names(user: str, limit: int) -> list:
 	return [todo["reference_name"] for todo in todos]
 
 
+@frappe.whitelist(methods=["GET"])
+def get_assigned_submission_summary(limit: int = 5) -> dict:
+	submissions = get_assigned_submissions(limit=0)
+	return {"submissions": submissions[:limit], "total": len(submissions)}
+
+
 def _order_by_names(rows: list, ordered_names: list) -> list:
 	by_name = {row["name"]: row for row in rows}
 	return [by_name[name] for name in ordered_names if name in by_name]
