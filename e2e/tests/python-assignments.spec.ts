@@ -120,7 +120,7 @@ test.describe("Python assignments", () => {
 
 		await page.goto(`/dashboard/assignments/${assignment.name}/submission`);
 		expect(await (await details).text()).not.toContain("Ravi");
-		await page.getByRole("button", { name: "Submit Assignment" }).click();
+		await page.getByRole("button", { name: "Start", exact: true }).click();
 
 		await expect(page).toHaveURL(/\/dashboard\/projects\/PROJ-.+\/code\?assignment=/);
 		await expect(page.locator(".cm-content")).toHaveText(STARTER_CODE);
