@@ -45,7 +45,7 @@ class CS17Announcement(Document):
 	def on_update(self):
 		if self.is_published and self.has_value_changed("is_published"):
 			try:
-				self.send_announcement_email()
+				frappe.enqueue(self.send_announcement_email, enqueue_after_commit=True)
 			except Exception:
 				frappe.log_error(title=f"Announcement email failed: {self.name}")
 
