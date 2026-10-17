@@ -31,7 +31,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { Button, Dialog, ErrorMessage, useCall } from 'frappe-ui'
+import { Button, Dialog, ErrorMessage, toast, useCall } from 'frappe-ui'
 import PublishFields from '@/components/common/PublishFields.vue'
 import { toFrappeDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
@@ -91,6 +91,7 @@ async function publish() {
 	})
 	if (publishCall.error) return
 
+	toast.success(mode.value === 'schedule' ? 'Announcement scheduled' : 'Announcement published')
 	emit('published')
 	emit('update:open', false)
 }
