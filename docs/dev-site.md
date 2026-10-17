@@ -31,7 +31,7 @@ The clearing goes by those tags, not by who created the record. Every run delete
 good:
 
 - every user whose email ends in `@cs17.test`, with their profile, their submissions and
-  their Scratch projects;
+  their Scratch and Python projects;
 - the `C6` and `C7` cohorts, with their assignments, the grades on those assignments,
   their exams, and the subject marks and results of those exams;
 - every announcement for `C6` or `C7`, and every announcement with no cohort.
@@ -49,9 +49,9 @@ Everyone shares the password `Cs17-Demo-Pass-123`.
 | Faculty | `priya@cs17.test` | 6 assignments in `C7` (published, scheduled, draft), 13 submissions, 5 announcements |
 | Faculty | `arjun@cs17.test` | two submissions assigned to him, for "assigned to you" |
 
-What the seed covers, deliberately: every submission type (Scratch, PDF, URL, Image, ZIP,
-Any); an assignment in each publish state (published, scheduled, draft); grades on both
-evaluation types (marks out of 10, and the A–E scale); a published grade, an
+What the seed covers, deliberately: every submission type but Python (Scratch, PDF, URL,
+Image, ZIP, Any); an assignment in each publish state (published, scheduled, draft);
+grades on both evaluation types (marks out of 10, and the A–E scale); a published grade, an
 unpublished one, and submissions with no grade at all; announcements in all three
 variants, dismissible and not, cohort-scoped and all-cohorts; and a second cohort, `C6`,
 with one assignment. Both seeded faculty belong to `C7`, and a faculty with a cohort sees
