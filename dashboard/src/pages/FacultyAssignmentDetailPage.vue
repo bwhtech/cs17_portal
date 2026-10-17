@@ -322,6 +322,10 @@ const gradeTarget = ref<CS17Submission | null>(null)
 const studentsOpen = ref(false)
 const timingOpen = ref(false)
 
+watch(assignmentId, () => {
+	selection.value = []
+})
+
 function openPreview(row: CS17Submission) {
 	const kind = previewKind(assignment.value?.submission_type, row.submission_document)
 	if (kind === 'archive') router.push(`/faculty/submissions/${row.name}`)
@@ -358,7 +362,17 @@ const answerRemark = useCall<null, AnswerTarget & { remark: string }>({
 	immediate: false,
 })
 
-const sheet = computed(() => answerSheet.data?.sheet ?? null)
+const sheetLoadedId = ref('')
+watch(
+	() => answerSheet.data,
+	() => {
+		sheetLoadedId.value = assignmentId.value
+	},
+)
+
+const sheet = computed(() =>
+	sheetLoadedId.value === assignmentId.value ? (answerSheet.data?.sheet ?? null) : null,
+)
 
 watch(sheet, () => {
 	if (!sheet.value) answersTarget.value = null

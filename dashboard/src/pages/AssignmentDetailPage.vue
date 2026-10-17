@@ -218,7 +218,17 @@ const loading = computed(() => assignmentCall.loading && !assignment.value)
 const failed = useLoadFailed(reactive({ ...toRefs(assignmentCall), data: assignment }), {
 	except: isRefusal,
 })
-const submission = computed(() => submissions.data?.[0] ?? null)
+const submissionsLoadedId = ref('')
+watch(
+	() => submissions.data,
+	() => {
+		submissionsLoadedId.value = props.assignmentId
+	},
+)
+
+const submission = computed(() =>
+	submissionsLoadedId.value === props.assignmentId ? (submissions.data?.[0] ?? null) : null,
+)
 
 /**
  * Only the grade written against this student's own submission counts — the
