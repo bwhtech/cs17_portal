@@ -61,8 +61,11 @@ def _publish_due(doctype: str, publish_on_field: str) -> None:
 	"""Publish records whose scheduled publish time has passed."""
 	table = frappe.qb.DocType(doctype)
 	publish_on = table[publish_on_field]
+	now = now_datetime()
 	(
 		frappe.qb.update(table)
 		.set(table.is_published, 1)
-		.where((table.is_published == 0) & publish_on.notnull() & (publish_on <= now_datetime()))
+		.set(table.modified, now)
+		.set(table.modified_by, frappe.session.user)
+		.where((table.is_published == 0) & publish_on.notnull() & (publish_on <= now))
 	).run()
