@@ -44,10 +44,7 @@ class CS17Announcement(Document):
 
 	def on_update(self):
 		if self.is_published and self.has_value_changed("is_published"):
-			try:
-				frappe.enqueue(self.send_announcement_email, enqueue_after_commit=True)
-			except Exception:
-				frappe.log_error(title=f"Announcement email failed: {self.name}")
+			frappe.enqueue(self.send_announcement_email, enqueue_after_commit=True)
 
 	def send_announcement_email(self):
 		filters = {"user": ["is", "set"], "profile_type": "Student"}
@@ -67,8 +64,11 @@ class CS17Announcement(Document):
 		if not recipients:
 			return
 
-		frappe.sendmail(
-			recipients=recipients,
-			subject=self.title,
-			message=frappe.utils.md_to_html(self.content or ""),
-		)
+		try:
+			frappe.sendmail(
+				recipients=recipients,
+				subject=self.title,
+				message=frappe.utils.md_to_html(self.content or ""),
+			)
+		except Exception:
+			frappe.log_error(title=f"Announcement email failed: {self.name}")
