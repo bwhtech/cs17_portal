@@ -15,7 +15,13 @@
 					<p class="text-xs text-ink-gray-5">{{ row.label }}</p>
 					<p class="text-base font-medium text-ink-gray-8">{{ row.value }}</p>
 				</div>
-				<Button class="w-full" label="Submit Assignment" disabled />
+				<Button
+					class="w-full"
+					:label="
+						isProjectSubmission(draft.submission_type) ? 'Start' : 'Submit Assignment'
+					"
+					disabled
+				/>
 			</div>
 		</div>
 	</div>
@@ -26,6 +32,7 @@ import { computed } from 'vue'
 import { Button } from 'frappe-ui'
 import MarkdownText from '@/components/common/MarkdownText.vue'
 import { formatDateTime } from '@/lib/dates'
+import { isProjectSubmission } from '@/lib/submissionTypes'
 import type { AssignmentType, EvaluationType, PythonTestCase, SubmissionType } from '@/types'
 
 /**
