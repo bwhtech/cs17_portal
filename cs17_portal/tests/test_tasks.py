@@ -3,6 +3,7 @@
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
+from frappe.utils import get_datetime
 
 from cs17_portal.tasks import auto_publish_assignments, auto_publish_grades
 from cs17_portal.tests.test_api import make_assignment, make_cohort
@@ -53,4 +54,20 @@ class TestPublishJobs(FrappeTestCase):
 				for grade in (due, later)
 			],
 			[1, 0],
+		)
+
+	def test_assignment_published_on_schedule_gets_a_new_modified_time(self):
+		assignment = make_assignment(self.cohort, "PDF Task 203", "PDF", 20)
+		frappe.db.set_value(
+			"CS17 Assignment",
+			assignment,
+			{"is_published": 0, "publish_on": "2000-01-01 00:00:00"},
+			modified="2000-01-01 00:00:00",
+		)
+
+		auto_publish_assignments()
+
+		self.assertGreater(
+			frappe.db.get_value("CS17 Assignment", assignment, "modified"),
+			get_datetime("2000-01-01 00:00:00"),
 		)
