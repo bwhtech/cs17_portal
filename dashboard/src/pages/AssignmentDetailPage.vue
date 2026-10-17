@@ -152,7 +152,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, reactive, ref, toRefs, watch } from 'vue'
 import { Button, PageHeaderBackButton, useCall, useList } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
@@ -203,10 +203,32 @@ const gradesCall = useCall<StudentGradesResponse>({
 	url: '/api/v2/method/cs17_portal.api.get_student_grades',
 })
 
-const assignment = computed(() => assignmentCall.data ?? null)
-const loading = computed(() => assignmentCall.loading && !assignmentCall.data)
-const failed = useLoadFailed(assignmentCall, { except: isRefusal })
-const submission = computed(() => submissions.data?.[0] ?? null)
+const loadedId = ref('')
+watch(
+	() => assignmentCall.data,
+	() => {
+		loadedId.value = props.assignmentId
+	},
+)
+
+const assignment = computed(() =>
+	loadedId.value === props.assignmentId ? assignmentCall.data : null,
+)
+const loading = computed(() => assignmentCall.loading && !assignment.value)
+const failed = useLoadFailed(reactive({ ...toRefs(assignmentCall), data: assignment }), {
+	except: isRefusal,
+})
+const submissionsLoadedId = ref('')
+watch(
+	() => submissions.data,
+	() => {
+		submissionsLoadedId.value = props.assignmentId
+	},
+)
+
+const submission = computed(() =>
+	submissionsLoadedId.value === props.assignmentId ? (submissions.data?.[0] ?? null) : null,
+)
 
 /**
  * Only the grade written against this student's own submission counts — the
