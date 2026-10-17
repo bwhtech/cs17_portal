@@ -514,6 +514,9 @@ def replace_project_file(
 def create_project(project_title: str, assignment: str | None = None, project_type: str = "Scratch") -> dict:
 	profile = require_current_profile()
 	if assignment:
+		frappe.get_doc(
+			{"doctype": ASSIGNMENT_SUBMISSION, "assignment": assignment, "student": profile}
+		).validate_open_to_student()
 		project = frappe.db.get_value(
 			"CS17 Project",
 			{"profile": profile, "assignment": assignment, "project_type": project_type},
