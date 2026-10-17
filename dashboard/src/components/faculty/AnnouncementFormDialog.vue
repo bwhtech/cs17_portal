@@ -244,11 +244,13 @@ async function save() {
 	if (call.error) return
 
 	toast.success(
-		mode.value === 'now'
-			? 'Announcement published'
-			: props.announcement
+		mode.value === 'draft'
+			? props.announcement
 				? 'Announcement updated'
-				: 'Announcement created',
+				: 'Announcement created'
+			: mode.value === 'schedule'
+				? 'Announcement scheduled'
+				: 'Announcement published',
 	)
 	emit('saved')
 	emit('update:open', false)

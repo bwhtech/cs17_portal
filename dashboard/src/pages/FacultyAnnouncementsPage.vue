@@ -106,7 +106,7 @@
 		:open="Boolean(publishTarget)"
 		:announcement="publishTarget"
 		@update:open="(open: boolean) => open || (publishTarget = null)"
-		@published="onPublished"
+		@published="listCall.reload()"
 	/>
 
 	<DeleteAnnouncementDialog
@@ -121,7 +121,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Badge, Button, toast, useCall } from 'frappe-ui'
+import { Badge, Button, useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
@@ -187,11 +187,6 @@ function onFormOpen(open: boolean) {
 	formOpen.value = open
 	// Clearing on close, not on open: `openEdit` sets the target first.
 	if (!open) editTarget.value = null
-}
-
-function onPublished() {
-	toast.success('Announcement published')
-	listCall.reload()
 }
 
 /**
