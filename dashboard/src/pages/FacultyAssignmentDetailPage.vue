@@ -42,7 +42,7 @@
 			@retry="detail.reload()"
 		/>
 
-		<PageSkeleton v-else-if="detail.loading && !detail.data" />
+		<PageSkeleton v-else-if="detail.loading && !assignment" />
 
 		<EmptyState
 			v-else-if="!assignment"
@@ -231,7 +231,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, reactive, ref, toRefs, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Badge, Button, PageHeaderBackButton, toast, useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
@@ -282,8 +282,20 @@ const detail = useCall<
 	refetch: true,
 })
 
-const assignment = computed(() => detail.data?.assignment ?? null)
-const failed = useLoadFailed(detail, { except: isRefusal })
+const loadedId = ref('')
+watch(
+	() => detail.data,
+	() => {
+		loadedId.value = assignmentId.value
+	},
+)
+
+const assignment = computed(() =>
+	loadedId.value === assignmentId.value ? (detail.data?.assignment ?? null) : null,
+)
+const failed = useLoadFailed(reactive({ ...toRefs(detail), data: assignment }), {
+	except: isRefusal,
+})
 const submissions = computed(() => detail.data?.submissions ?? [])
 
 /** Every student of the cohort: those who submitted first, then a bare row for each who has not. */
