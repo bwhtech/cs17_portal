@@ -102,6 +102,7 @@ import {
 	Select,
 	Switch,
 	Textarea,
+	toast,
 	useCall,
 } from 'frappe-ui'
 import EmptyState from '@/components/common/EmptyState.vue'
@@ -206,6 +207,7 @@ watch(
 function reset() {
 	const row = props.announcement
 	published.value = isPast(row?.publish_on)
+	if (published.value) emit('saved')
 	form.title = row?.title ?? ''
 	form.content = row?.content ?? ''
 	form.alert_variant = (row?.alert_variant ?? 'info') as AlertVariant
@@ -241,6 +243,13 @@ async function save() {
 	)
 	if (call.error) return
 
+	toast.success(
+		mode.value === 'now'
+			? 'Announcement published'
+			: props.announcement
+				? 'Announcement updated'
+				: 'Announcement created',
+	)
 	emit('saved')
 	emit('update:open', false)
 }

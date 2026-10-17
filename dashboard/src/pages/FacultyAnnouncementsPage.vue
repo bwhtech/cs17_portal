@@ -99,7 +99,7 @@
 		:announcement="editTarget"
 		:cohorts="cohorts"
 		@update:open="onFormOpen"
-		@saved="onSaved"
+		@saved="listCall.reload()"
 	/>
 
 	<PublishAnnouncementDialog
@@ -187,11 +187,6 @@ function onFormOpen(open: boolean) {
 	formOpen.value = open
 	// Clearing on close, not on open: `openEdit` sets the target first.
 	if (!open) editTarget.value = null
-}
-
-function onSaved() {
-	toast.success(editTarget.value ? 'Announcement updated' : 'Announcement created')
-	listCall.reload()
 }
 
 function onPublished() {
