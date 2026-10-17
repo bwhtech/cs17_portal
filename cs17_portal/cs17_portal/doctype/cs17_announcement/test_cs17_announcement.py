@@ -1,10 +1,11 @@
 # Copyright (c) 2026, developers@bwh.tech and Contributors
 # See license.txt
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import frappe
 from frappe.tests import IntegrationTestCase
+from frappe.utils import CallbackManager
 
 from cs17_portal.api import (
 	create_announcement,
@@ -12,6 +13,7 @@ from cs17_portal.api import (
 	publish_announcement,
 	update_announcement,
 )
+from cs17_portal.cs17_portal.doctype.cs17_announcement.cs17_announcement import CS17Announcement
 from cs17_portal.tasks import auto_publish_announcements
 from cs17_portal.tests.test_api import make_cohort, make_profile, make_user
 
@@ -88,10 +90,10 @@ class IntegrationTestCS17Announcement(IntegrationTestCase):
 			}
 		)
 
-		with patch.object(announcement, "send_announcement_email") as send_announcement_email:
+		with patch.object(frappe, "enqueue") as enqueue:
 			announcement.insert(ignore_permissions=True)
 
-		send_announcement_email.assert_not_called()
+		enqueue.assert_not_called()
 
 	def test_due_announcement_is_published_when_another_one_fails(self):
 		failing = create_announcement(
@@ -181,3 +183,60 @@ class IntegrationTestCS17Announcement(IntegrationTestCase):
 		doc.save(ignore_permissions=True)
 
 		self.assertIsNone(frappe.db.get_value("CS17 Announcement", announcement, "published_date"))
+
+	def test_announcement_email_waits_for_the_commit(self):
+		announcement = frappe.get_doc(
+			{
+				"doctype": "CS17 Announcement",
+				"title": "Lab moved to Friday",
+				"content": "Room 204",
+				"cohort": self.cohort,
+				"is_published": 1,
+			}
+		)
+
+		with patch.object(frappe, "enqueue") as enqueue, patch.object(frappe, "sendmail") as sendmail:
+			announcement.insert(ignore_permissions=True)
+
+		sendmail.assert_not_called()
+		enqueue.assert_called_once_with(announcement.send_announcement_email, enqueue_after_commit=True)
+
+	def test_announcement_failing_after_its_save_stays_a_draft(self):
+		announcement = create_announcement(
+			"Quiz moved to Monday",
+			"Room 204",
+			cohort=self.cohort,
+			publish="schedule",
+			publish_on=frappe.utils.add_days(frappe.utils.now(), 1),
+		)
+		frappe.db.set_value("CS17 Announcement", announcement, "publish_on", "2000-01-01 00:00:00")
+
+		with (
+			patch.object(CS17Announcement, "on_change", side_effect=frappe.ValidationError, create=True),
+			patch.object(frappe, "log_error"),
+		):
+			auto_publish_announcements()
+
+		self.assertEqual(frappe.db.get_value("CS17 Announcement", announcement, "is_published"), 0)
+
+	def test_announcement_failing_after_its_save_queues_no_email(self):
+		announcement = create_announcement(
+			"Quiz moved to Monday",
+			"Room 204",
+			cohort=self.cohort,
+			publish="schedule",
+			publish_on=frappe.utils.add_days(frappe.utils.now(), 1),
+		)
+		frappe.db.set_value("CS17 Announcement", announcement, "publish_on", "2000-01-01 00:00:00")
+		queue = MagicMock(count=0)
+
+		with (
+			patch.object(CS17Announcement, "on_change", side_effect=frappe.ValidationError, create=True),
+			patch.object(frappe, "log_error"),
+			patch.object(frappe.db, "after_commit", CallbackManager()) as after_commit,
+			patch("frappe.utils.background_jobs.get_queue", return_value=queue),
+		):
+			auto_publish_announcements()
+			after_commit.run()
+
+		queue.enqueue_call.assert_not_called()
