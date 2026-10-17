@@ -260,6 +260,7 @@ const status = ref<SaveStatus>('idle')
 let opened = false
 let autosaveTimer: ReturnType<typeof setTimeout> | undefined
 let saving: Promise<boolean> = Promise.resolve(true)
+let saveBeforeLeaveFailed = false
 
 const statusLabel = computed(
 	() => ({ idle: '', saving: 'Saving…', saved: 'Saved', error: 'Save failed' })[status.value],
@@ -282,6 +283,7 @@ watch(
 watch(code, (value) => {
 	clearTimeout(autosaveTimer)
 	if (value === savedCode.value || readOnly.value) return
+	saveBeforeLeaveFailed = false
 	status.value = 'idle'
 	autosaveTimer = setTimeout(save, AUTOSAVE_IDLE_MS)
 })
@@ -371,8 +373,14 @@ async function submitWhenTimeIsUp() {
 	timing.reload()
 }
 
-onBeforeRouteLeave(() => !hasUnsavedEdits() || save())
-onBeforeLogout(() => !hasUnsavedEdits() || save())
+async function saveBeforeLeave() {
+	if (!hasUnsavedEdits() || saveBeforeLeaveFailed) return true
+	saveBeforeLeaveFailed = !(await save())
+	return !saveBeforeLeaveFailed
+}
+
+onBeforeRouteLeave(saveBeforeLeave)
+onBeforeLogout(saveBeforeLeave)
 
 function warnBeforeUnload(event: BeforeUnloadEvent) {
 	if (hasUnsavedEdits()) event.preventDefault()
