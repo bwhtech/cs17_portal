@@ -115,6 +115,7 @@
 			<div class="h-[420px] overflow-hidden rounded-4 border border-outline-gray-1">
 				<ScratchFrame
 					read-only
+					blank
 					@ready="frameLog.push('ready')"
 					@dirty="frameLog.push('dirty')"
 				/>
