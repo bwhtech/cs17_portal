@@ -158,7 +158,7 @@
    "fieldname": "starter_code",
    "fieldtype": "Code",
    "label": "Starter Code",
-   "options": "Python"
+   "options": "Py"
   },
   {
    "fieldname": "test_cases",
@@ -210,7 +210,7 @@
    "link_fieldname": "assignment"
   }
  ],
- "modified": "2026-10-15 20:05:30.843261",
+ "modified": "2026-10-18 00:16:29.588252",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",
