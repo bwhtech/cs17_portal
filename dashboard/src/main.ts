@@ -27,7 +27,7 @@ async function loadDevBootData() {
 
 async function start() {
 	await loadDevBootData()
-	removeStorageOfOtherUsers()
+	removeStorageOfOtherUsers().catch(() => null)
 	// Frappe stores datetimes in the site's timezone, not the browser's.
 	setConfig('systemTimezone', window.system_timezone ?? null)
 
