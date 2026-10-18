@@ -232,7 +232,8 @@ be deleted. The result has to be unpublished first, so a report card a student c
 a subject.
 
 `auto_publish_results` checks the marks again at the scheduled time. A due result with marks
-missing stays unpublished and is logged once in the Error Log as `Scheduled result not published`.
+missing stays unpublished and is logged once in the Error Log as `Scheduled result not published`,
+and again after each change to the result.
 It stays scheduled, and is published on the first run after its marks are complete.
 
 Students only ever see published results — `get_permission_query_conditions` filters to
