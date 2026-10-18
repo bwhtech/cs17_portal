@@ -93,11 +93,6 @@ test.describe("Faculty grade states", () => {
 		});
 
 		test("says why the grade is refused, with no retry", async ({ page }) => {
-			await page.route("**/cs17_portal.api.get_assignment_submissions*", (route) =>
-				route.fulfill({
-					json: { data: { assignment: ASSIGNMENT, submissions: [], not_submitted: [] } },
-				})
-			);
 			await page.route("**/cs17_portal.api.get_submission_grade*", (route) =>
 				route.fulfill({ status: 403, json: REFUSED })
 			);
