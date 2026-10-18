@@ -1371,6 +1371,7 @@ def update_assignment(
 	watch_tab_switches: int | None = None,
 	time_limit: int | None = None,
 	attempts_allowed: int | None = None,
+	modified: str | None = None,
 ) -> str:
 	require_faculty_for_assignment(assignment)
 	faculty = get_current_faculty()
@@ -1402,6 +1403,8 @@ def update_assignment(
 	)
 	if publish is not None:
 		_apply_publish_state(doc, publish, publish_on)
+	if modified is not None:
+		doc.modified = modified
 	doc.save(ignore_permissions=True)
 	return doc.name
 
@@ -1483,6 +1486,7 @@ def get_assignment(assignment: str) -> dict | None:
 			"watch_tab_switches",
 			"time_limit",
 			"attempts_allowed",
+			"modified",
 		],
 		as_dict=True,
 	)
