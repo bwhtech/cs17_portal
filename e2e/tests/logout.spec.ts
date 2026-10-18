@@ -56,4 +56,47 @@ test.describe("Logout", () => {
 
 		expect(await page.evaluate((key) => localStorage.getItem(key), draftKey)).toBeNull();
 	});
+
+	test("removes what another user left in the browser when the next session starts", async ({
+		page,
+		request,
+	}) => {
+		const user = process.env.FRAPPE_USER || "Administrator";
+		const ownCacheKey = `ns:${encodeURIComponent(user)}:["useCall:v2","cohort-submissions"]`;
+		const otherCacheKey = 'ns:faculty2%40cs17.test:["useCall:v2","cohort-submissions"]';
+		const draftKeys = [
+			`cs17-new-assignment-draft:${user}`,
+			"cs17-new-assignment-draft:faculty2@cs17.test",
+			"cs17-new-assignment-draft",
+		];
+		await ensureSessionFaculty(request);
+		await page.context().clearCookies();
+		await new LoginPage(page).login(user, process.env.FRAPPE_PASSWORD || "admin");
+		await page.goto("/dashboard/faculty");
+		await page.evaluate(
+			({ draftKeys, cacheKeys }) => {
+				for (const key of draftKeys) localStorage.setItem(key, "{}");
+				return new Promise<void>((resolve, reject) => {
+					const open = indexedDB.open("keyval-store");
+					open.onupgradeneeded = () => open.result.createObjectStore("keyval");
+					open.onerror = () => reject(open.error);
+					open.onsuccess = () => {
+						const tx = open.result.transaction("keyval", "readwrite");
+						for (const key of cacheKeys) tx.objectStore("keyval").put("[]", key);
+						tx.oncomplete = () => resolve();
+						tx.onerror = () => reject(tx.error);
+					};
+				});
+			},
+			{ draftKeys, cacheKeys: [ownCacheKey, otherCacheKey] }
+		);
+
+		await page.reload();
+
+		await expect.poll(() => cachedKeys(page)).not.toContain(otherCacheKey);
+		expect(await cachedKeys(page)).toContain(ownCacheKey);
+		expect(
+			await page.evaluate((keys) => keys.map((key) => localStorage.getItem(key)), draftKeys)
+		).toEqual(["{}", null, null]);
+	});
 });
