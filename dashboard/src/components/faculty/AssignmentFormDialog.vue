@@ -289,6 +289,7 @@ const confirmDelete = ref(false)
 /** The assignment behind the form once it exists server-side — update, not create. */
 const savedName = ref<string | null>(null)
 const loadedForm = ref('')
+const loadedModified = ref<string>()
 const loadFailed = ref(false)
 const published = ref(false)
 
@@ -429,6 +430,7 @@ async function loadExisting(name: string) {
 	publishOn.value = existing.publish_on ?? ''
 	savedName.value = name
 	loadedForm.value = currentForm()
+	loadedModified.value = existing.modified
 }
 
 function currentForm(): string {
@@ -519,7 +521,12 @@ async function handleSubmit() {
 	}
 
 	const call = savedName.value ? updateCall : createCall
-	await trySubmit(call, savedName.value ? { assignment: savedName.value, ...payload } : payload)
+	await trySubmit(
+		call,
+		savedName.value
+			? { assignment: savedName.value, modified: loadedModified.value, ...payload }
+			: payload,
+	)
 	if (call.error) {
 		errors.form = frappeErrorMessage(call.error, 'Could not save the assignment.')
 		return

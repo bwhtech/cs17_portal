@@ -104,3 +104,19 @@ class TestAssignmentApi(FrappeTestCase):
 		)
 
 		self.assertEqual(api.get_assignment(assignment).test_cases, test_cases)
+
+	def test_update_assignment_refuses_a_save_from_an_older_copy(self):
+		frappe.set_user(self.faculty_user)
+		assignment = api.create_assignment("PDF Task 196", self.cohort, "2030-01-01 00:00:00")
+		opened = str(frappe.db.get_value("CS17 Assignment", assignment, "modified"))
+		api.update_assignment(assignment, "PDF Task 196 revised", self.cohort, "2030-01-01 00:00:00")
+
+		self.assertRaises(
+			frappe.TimestampMismatchError,
+			api.update_assignment,
+			assignment,
+			"PDF Task 196 retitled",
+			self.cohort,
+			"2030-01-01 00:00:00",
+			modified=opened,
+		)
