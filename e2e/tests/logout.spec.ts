@@ -100,4 +100,25 @@ test.describe("Logout", () => {
 			await page.evaluate((keys) => keys.map((key) => localStorage.getItem(key)), draftKeys)
 		).toEqual(["{}", null, null]);
 	});
+
+	test("stays on the page when the logout call does not reach the server", async ({
+		page,
+		request,
+	}) => {
+		await ensureSessionFaculty(request);
+		await page.context().clearCookies();
+		await new LoginPage(page).login(
+			process.env.FRAPPE_USER || "Administrator",
+			process.env.FRAPPE_PASSWORD || "admin"
+		);
+		await page.goto("/dashboard/faculty");
+		await page.route("**/api/method/logout", (route) => route.abort());
+
+		await page.locator('[data-slot="sidebar"] button').last().click();
+		await page.getByRole("menuitem", { name: "Log out" }).click();
+		await page.getByRole("button", { name: "Log out", exact: true }).click();
+
+		await expect(page.getByText("Could not log out.")).toBeVisible();
+		await expect(page).toHaveURL(/\/dashboard\/faculty$/);
+	});
 });
