@@ -105,7 +105,7 @@
 				:max-marks="submission.max_marks"
 				:evaluation-type="submission.evaluation_type"
 				:suggested-marks="suggestedMarks"
-				@saved="detail.reload()"
+				@saved="onSaved"
 			/>
 		</div>
 	</div>
@@ -175,6 +175,11 @@ const loading = computed(() => !detail.isFinished && !submission.value)
 const failed = useLoadFailed(detail, { except: isRefusal })
 
 const detailLoading = computed(() => !detail.isFinished && !detailRow.value)
+
+function onSaved() {
+	detail.reload()
+	cohortSubmissions.reload()
+}
 
 const testScore = ref<{ passed: number; total: number } | null>(null)
 watch(
