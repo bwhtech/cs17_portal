@@ -2,7 +2,7 @@ import { createApp } from 'vue'
 import { FrappeUI, call, setConfig } from 'frappe-ui'
 import App from './App.vue'
 import router from './router'
-import { refreshSessionFromBoot } from '@/composables/useSession'
+import { refreshSessionFromBoot, removeStorageOfOtherUsers } from '@/composables/useSession'
 import './style.css'
 
 /**
@@ -27,6 +27,7 @@ async function loadDevBootData() {
 
 async function start() {
 	await loadDevBootData()
+	removeStorageOfOtherUsers()
 	// Frappe stores datetimes in the site's timezone, not the browser's.
 	setConfig('systemTimezone', window.system_timezone ?? null)
 

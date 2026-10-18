@@ -1,7 +1,7 @@
 import { computed, onScopeDispose, ref, type ComputedRef, type Ref } from 'vue'
 import { call } from 'frappe-ui'
-import { clear as clearFrappeUICache } from 'idb-keyval'
-import { STORAGE_KEYS, removeKey } from '@/lib/storage'
+import { clear as clearFrappeUICache, delMany, keys } from 'idb-keyval'
+import { STORAGE_KEYS, removeDraftsOfOtherUsers, removeKey } from '@/lib/storage'
 import type { CS17Profile } from '@/types'
 
 /**
@@ -38,6 +38,16 @@ async function logout(): Promise<void> {
 	} finally {
 		window.location.href = '/login'
 	}
+}
+
+export async function removeStorageOfOtherUsers(): Promise<void> {
+	if (!user.value) return
+	removeDraftsOfOtherUsers()
+	const ownNamespace = `ns:${encodeURIComponent(user.value)}:`
+	const otherUsersCache = (await keys()).filter(
+		(key) => typeof key === 'string' && key.startsWith('ns:') && !key.startsWith(ownNamespace),
+	)
+	await delMany(otherUsersCache)
 }
 
 export function useSession(): {

@@ -38,3 +38,13 @@ export function removeKey(key: string): void {
 		// As above.
 	}
 }
+
+export function removeDraftsOfOtherUsers(): void {
+	try {
+		for (const key of Object.keys(localStorage))
+			if (key.startsWith('cs17-new-assignment-draft') && key !== STORAGE_KEYS.newAssignmentDraft)
+				localStorage.removeItem(key)
+	} catch {
+		// As above.
+	}
+}
