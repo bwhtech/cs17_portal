@@ -58,22 +58,20 @@ test.describe("Faculty grade states", () => {
 
 	test.describe("the grading page", () => {
 		test.beforeEach(async ({ page }) => {
-			await page.route("**/cs17_portal.api.list_cohort_submissions*", (route) =>
+			await page.route(/cs17_portal\.api\.get_submission\?/, (route) =>
 				route.fulfill({
 					json: {
-						data: [
-							{
-								...SUBMISSION,
-								assignment: ASSIGNMENT.name,
-								assignment_title: ASSIGNMENT.title,
-								submission_type: "PDF",
-								max_marks: 0,
-								evaluation_type: "Grade",
-								marks_obtained: null,
-								grade: null,
-								graded: false,
-							},
-						],
+						data: {
+							...SUBMISSION,
+							assignment: ASSIGNMENT.name,
+							assignment_title: ASSIGNMENT.title,
+							submission_type: "PDF",
+							max_marks: 0,
+							evaluation_type: "Grade",
+							marks_obtained: null,
+							grade: null,
+							graded: false,
+						},
 					},
 				})
 			);
@@ -83,21 +81,18 @@ test.describe("Faculty grade states", () => {
 			await page.route("**/cs17_portal.api.get_submission_grade*", (route) =>
 				route.fulfill({ json: { data: null } })
 			);
-			await page.route("**/cs17_portal.api.get_assignment_submissions*", (route) =>
+			await page.route(/cs17_portal\.api\.get_submission\?/, (route) =>
 				route.fulfill({ status: 403, json: REFUSED })
 			);
 			await page.goto(`/dashboard/faculty/submissions/${SUBMISSION.name}`);
 
-			await expect(page.getByText("Not permitted")).toBeVisible();
+			await expect(
+				page.getByText("This submission is not available in your cohort.")
+			).toBeVisible();
 			await expect(page.getByRole("button", { name: "Try again" })).toHaveCount(0);
 		});
 
 		test("says why the grade is refused, with no retry", async ({ page }) => {
-			await page.route("**/cs17_portal.api.get_assignment_submissions*", (route) =>
-				route.fulfill({
-					json: { data: { assignment: ASSIGNMENT, submissions: [], not_submitted: [] } },
-				})
-			);
 			await page.route("**/cs17_portal.api.get_submission_grade*", (route) =>
 				route.fulfill({ status: 403, json: REFUSED })
 			);

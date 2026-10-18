@@ -297,6 +297,43 @@ def get_assignment_submissions(assignment: str) -> dict:
 	return {"assignment": assignment_doc, "submissions": submissions, "not_submitted": not_submitted}
 
 
+@frappe.whitelist(methods=["GET"])
+def get_submission(submission: str) -> dict:
+	get_current_faculty()
+	row = frappe.db.get_value(
+		ASSIGNMENT_SUBMISSION,
+		submission,
+		[
+			"name",
+			"student",
+			"full_name",
+			"assignment",
+			"assignment_title",
+			"submitted_at",
+			"submission_document",
+			"submission_url",
+		],
+		as_dict=True,
+	)
+	if not row:
+		frappe.throw(_("Submission not found"), frappe.DoesNotExistError)
+
+	require_faculty_for_assignment(row.assignment)
+	assignment = frappe.db.get_value(
+		"CS17 Assignment", row.assignment, ["submission_type", "max_marks", "remarks"], as_dict=True
+	)
+	grade = frappe.db.get_value(
+		"CS17 Assignment Grade", {"submission": submission}, ["marks_obtained", "grade"], as_dict=True
+	)
+	row.submission_type = assignment.submission_type
+	row.max_marks = assignment.max_marks
+	row.evaluation_type = assignment.remarks
+	row.marks_obtained = grade.marks_obtained if grade else None
+	row.grade = grade.grade if grade else None
+	row.graded = bool(grade)
+	return row
+
+
 def _attach_grades(submissions: list) -> None:
 	names = [submission["name"] for submission in submissions]
 	if not names:
