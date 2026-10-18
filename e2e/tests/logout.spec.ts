@@ -7,6 +7,7 @@ function cachedKeys(page: Page): Promise<IDBValidKey[]> {
 		() =>
 			new Promise<IDBValidKey[]>((resolve, reject) => {
 				const open = indexedDB.open("keyval-store");
+				open.onupgradeneeded = () => open.result.createObjectStore("keyval");
 				open.onerror = () => reject(open.error);
 				open.onsuccess = () => {
 					const keys = open.result
