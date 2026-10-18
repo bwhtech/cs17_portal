@@ -61,7 +61,7 @@ Read-only mode: same bundle, same URL, no parameter. The dashboard adds a styles
 | `last_saved_at` | Datetime | updated on every autosave/save |
 
 - **Permissions:** student reads/writes **only their own** (permission query condition: `profile.user == frappe.session.user`). ~~Faculty read projects within their cohort.~~ Faculty see only their own; they grade from the submission snapshot. No `ignore_permissions` in normal paths.
-- Naming: `PROJ-.{profile}.-.####`.
+- Naming: `PROJ-.{profile}.-.####`. A project made for an assignment is `PROJ-{profile}-{assignment}-{project_type}` when that name is free.
 
 ### 4.2 Extend `CS17 Assignment`
 
