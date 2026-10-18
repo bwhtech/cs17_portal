@@ -121,4 +121,22 @@ test.describe("Logout", () => {
 		await expect(page.getByText("Could not log out.")).toBeVisible();
 		await expect(page).toHaveURL(/\/dashboard\/faculty$/);
 	});
+
+	test("stays on the page when the server refuses the logout", async ({ page, request }) => {
+		await ensureSessionFaculty(request);
+		await page.context().clearCookies();
+		await new LoginPage(page).login(
+			process.env.FRAPPE_USER || "Administrator",
+			process.env.FRAPPE_PASSWORD || "admin"
+		);
+		await page.goto("/dashboard/faculty");
+		await page.route("**/api/method/logout", (route) => route.fulfill({ status: 400 }));
+
+		await page.locator('[data-slot="sidebar"] button').last().click();
+		await page.getByRole("menuitem", { name: "Log out" }).click();
+		await page.getByRole("button", { name: "Log out", exact: true }).click();
+
+		await expect(page.getByText("Could not log out.")).toBeVisible();
+		await expect(page).toHaveURL(/\/dashboard\/faculty$/);
+	});
 });
