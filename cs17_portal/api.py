@@ -870,13 +870,16 @@ def get_next_attempts(assignments: list, student: str) -> dict[str, int]:
 			continue
 		time_is_up = now > add_to_date(started[0], minutes=assignment.time_limit)
 		if time_is_up or (submission and submission.submitted_at >= started[0]):
+			next_attempts[assignment.name] = len(started) + 1
 			name_prefix = f"{assignment.name}-{student}-"
-			attempt_numbers = [
-				cint(start.name.removeprefix(name_prefix))
-				for start in starts
-				if start.name.startswith(name_prefix)
-			]
-			next_attempts[assignment.name] = max([len(started), *attempt_numbers]) + 1
+			assignment.highest_attempt_number = max(
+				[
+					cint(start.name.removeprefix(name_prefix))
+					for start in starts
+					if start.name.startswith(name_prefix)
+				],
+				default=0,
+			)
 	return next_attempts
 
 
@@ -1187,10 +1190,11 @@ def start_python_assignment(assignment: str) -> dict:
 
 @frappe.whitelist(methods=["POST"])
 def reattempt_python_assignment(assignment: str) -> dict:
-	next_attempt = get_student_assignment(assignment).next_attempt
-	if not next_attempt:
+	details = get_student_assignment(assignment)
+	if not details.next_attempt:
 		frappe.throw(_("This assignment cannot be attempted again."))
 	student = require_current_student()
+	attempt_number = max(details.next_attempt, cint(details.highest_attempt_number) + 1)
 	frappe.get_doc(
 		{
 			"doctype": "CS17 Assignment Attempt",
@@ -1199,7 +1203,7 @@ def reattempt_python_assignment(assignment: str) -> dict:
 			"started_at": now_datetime(),
 		}
 	).insert(
-		ignore_permissions=True, ignore_if_duplicate=True, set_name=f"{assignment}-{student}-{next_attempt}"
+		ignore_permissions=True, ignore_if_duplicate=True, set_name=f"{assignment}-{student}-{attempt_number}"
 	)
 	return start_python_assignment(assignment)
 
