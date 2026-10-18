@@ -7,7 +7,6 @@ from frappe.model.document import Document
 from frappe.query_builder.functions import Count
 from frappe.utils import flt
 
-from cs17_portal.cs17_portal.doctype.cs17_exam.cs17_exam import get_subject_rows
 from cs17_portal.cs17_portal.doctype.cs17_subject_pattern.cs17_subject_pattern import get_component_rows
 
 WHOLE_SUBJECT = "Total"
@@ -52,13 +51,14 @@ class CS17SubjectMarks(Document):
 
 	def set_exam_subject_context(self):
 		"""The exam's subject row owns the max marks, the pattern and the grading scale."""
-		exam_row = next((row for row in get_subject_rows(self.exam) if row.subject == self.subject), None)
+		exam_subjects = frappe.get_cached_value("CS17 Exam", self.exam, "subjects") or []
+		exam_row = next((row for row in exam_subjects if row.subject == self.subject), None)
 		if not exam_row:
 			frappe.throw(_("Subject {0} is not part of exam {1}.").format(self.subject, self.exam))
 
 		self.max_marks = exam_row.max_marks
 		self.subject_pattern = exam_row.subject_pattern
-		self.grading_scale = exam_row.grading_scale or frappe.db.get_value(
+		self.grading_scale = exam_row.grading_scale or frappe.get_cached_value(
 			"CS17 Exam", self.exam, "grading_scale"
 		)
 
@@ -67,7 +67,7 @@ class CS17SubjectMarks(Document):
 		if not profile or profile.profile_type != "Student":
 			frappe.throw(_("{0} is not a student profile.").format(self.student))
 
-		exam_cohort = frappe.db.get_value("CS17 Exam", self.exam, "cohort")
+		exam_cohort = frappe.get_cached_value("CS17 Exam", self.exam, "cohort")
 		if profile.cohort != exam_cohort:
 			frappe.throw(_("{0} does not belong to the cohort of this exam.").format(self.student))
 		self.cohort = profile.cohort

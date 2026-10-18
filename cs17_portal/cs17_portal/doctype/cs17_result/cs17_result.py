@@ -61,7 +61,7 @@ class CS17Result(Document):
 		self.validate_publishable()
 
 	def set_exam_context(self):
-		exam = frappe.db.get_value("CS17 Exam", self.exam, ["grading_scale", "quarter"], as_dict=True)
+		exam = frappe.get_cached_value("CS17 Exam", self.exam, ["grading_scale", "quarter"], as_dict=True)
 		self.grading_scale = exam.grading_scale if exam else None
 		if not self.grading_scale:
 			frappe.throw(_("Exam {0} has no grading scale.").format(self.exam))
@@ -74,7 +74,7 @@ class CS17Result(Document):
 		if not profile or profile.profile_type != "Student":
 			frappe.throw(_("{0} is not a student profile.").format(self.student))
 
-		exam_cohort = frappe.db.get_value("CS17 Exam", self.exam, "cohort")
+		exam_cohort = frappe.get_cached_value("CS17 Exam", self.exam, "cohort")
 		if profile.cohort != exam_cohort:
 			frappe.throw(_("{0} does not belong to the cohort of this exam.").format(self.student))
 		self.cohort = profile.cohort
@@ -89,7 +89,7 @@ class CS17Result(Document):
 
 	def sync_scores_with_exam(self):
 		"""The exam owns the subject list and the max marks; the result only holds the marks scored."""
-		exam_subjects = get_subject_rows(self.exam)
+		exam_subjects = frappe.get_cached_value("CS17 Exam", self.exam, "subjects")
 		if not exam_subjects:
 			frappe.throw(_("Exam {0} has no subjects.").format(self.exam))
 
