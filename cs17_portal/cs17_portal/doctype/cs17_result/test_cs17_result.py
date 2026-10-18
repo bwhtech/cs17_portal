@@ -93,21 +93,20 @@ class IntegrationTestCS17Result(IntegrationTestCase):
 
 	def test_due_result_with_marks_missing_is_logged_once(self):
 		frappe.delete_doc("CS17 Subject Marks", self.marks)
-
-		auto_publish_results()
-		with patch.object(frappe.db, "exists", return_value=True) as exists:
-			auto_publish_results()
-
-		exists.assert_any_call(
-			"Error Log",
+		log = frappe.get_doc(
 			{
+				"doctype": "Error Log",
 				"method": "Scheduled result not published",
 				"reference_doctype": "CS17 Result",
 				"reference_name": self.result,
-			},
-		)
+			}
+		).insert(ignore_permissions=True)
+		self.addCleanup(log.delete)
+
+		auto_publish_results()
+
 		logged = [call.kwargs["reference_name"] for call in self.log_error.call_args_list]
-		self.assertEqual(logged.count(self.result), 1)
+		self.assertNotIn(self.result, logged)
 
 	def test_due_result_with_all_marks_is_published(self):
 		auto_publish_results()

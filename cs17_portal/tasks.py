@@ -12,33 +12,42 @@ def auto_publish_grades():
 
 
 def auto_publish_results():
-	names = frappe.get_all(
+	results = frappe.get_all(
 		"CS17 Result",
 		filters=[
 			["is_published", "=", 0],
 			["published_on", "is", "set"],
 			["published_on", "<=", now_datetime()],
 		],
-		pluck="name",
+		fields=["name", "modified"],
+		as_list=True,
 	)
-	for name in names:
+	for name, modified in results:
 		try:
 			frappe.get_lazy_doc("CS17 Result", name).publish()
 		except Exception:
 			title = "Scheduled result not published"
-			if not frappe.db.exists(
-				"Error Log", {"method": title, "reference_doctype": "CS17 Result", "reference_name": name}
+			if not frappe.get_all(
+				"Error Log",
+				filters={
+					"method": title,
+					"reference_doctype": "CS17 Result",
+					"reference_name": name,
+					"creation": (">", modified),
+				},
+				limit=1,
 			):
 				frappe.log_error(title=title, reference_doctype="CS17 Result", reference_name=name)
 
 
 def auto_publish_announcements():
-	names = frappe.get_all(
+	announcements = frappe.get_all(
 		"CS17 Announcement",
 		filters=[["is_published", "=", 0], ["publish_on", "is", "set"], ["publish_on", "<=", now_datetime()]],
-		pluck="name",
+		fields=["name", "modified"],
+		as_list=True,
 	)
-	for name in names:
+	for name, modified in announcements:
 		frappe.db.savepoint("publish_announcement")
 		try:
 			doc = frappe.get_doc("CS17 Announcement", name)
@@ -50,9 +59,15 @@ def auto_publish_announcements():
 		except Exception:
 			frappe.db.rollback(save_point="publish_announcement")
 			title = "Scheduled announcement not published"
-			if not frappe.db.exists(
+			if not frappe.get_all(
 				"Error Log",
-				{"method": title, "reference_doctype": "CS17 Announcement", "reference_name": name},
+				filters={
+					"method": title,
+					"reference_doctype": "CS17 Announcement",
+					"reference_name": name,
+					"creation": (">", modified),
+				},
+				limit=1,
 			):
 				frappe.log_error(title=title, reference_doctype="CS17 Announcement", reference_name=name)
 

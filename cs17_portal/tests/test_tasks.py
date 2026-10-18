@@ -1,11 +1,13 @@
 # Copyright (c) 2026, developers@bwh.tech and Contributors
 # See license.txt
 
+from unittest.mock import patch
+
 import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import get_datetime
 
-from cs17_portal.tasks import auto_publish_assignments, auto_publish_grades
+from cs17_portal.tasks import auto_publish_announcements, auto_publish_assignments, auto_publish_grades
 from cs17_portal.tests.test_api import make_assignment, make_cohort
 
 
@@ -70,4 +72,35 @@ class TestPublishJobs(FrappeTestCase):
 		self.assertGreater(
 			frappe.db.get_value("CS17 Assignment", assignment, "modified"),
 			get_datetime("2000-01-01 00:00:00"),
+		)
+
+	def test_announcement_failing_again_after_a_change_is_logged_again(self):
+		announcement = frappe.get_doc(
+			{
+				"doctype": "CS17 Announcement",
+				"title": "Lab moved to Friday",
+				"content": "Room 204",
+				"cohort": self.cohort,
+			}
+		).insert(ignore_permissions=True)
+		log = frappe.get_doc(
+			{
+				"doctype": "Error Log",
+				"method": "Scheduled announcement not published",
+				"reference_doctype": "CS17 Announcement",
+				"reference_name": announcement.name,
+			}
+		).insert(ignore_permissions=True)
+		self.addCleanup(log.delete)
+		frappe.db.set_value(
+			"CS17 Announcement", announcement.name, {"title": "", "publish_on": "2000-01-01 00:00:00"}
+		)
+
+		with patch.object(frappe, "log_error") as log_error:
+			auto_publish_announcements()
+
+		log_error.assert_called_once_with(
+			title="Scheduled announcement not published",
+			reference_doctype="CS17 Announcement",
+			reference_name=announcement.name,
 		)
