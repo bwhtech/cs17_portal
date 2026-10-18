@@ -67,7 +67,8 @@
    "label": "Profile",
    "options": "CS17 Profile",
    "read_only": 1,
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "default": "Scratch",
@@ -88,7 +89,7 @@
  ],
  "grid_page_length": 50,
  "links": [],
- "modified": "2026-10-18 00:16:29.042672",
+ "modified": "2026-10-18 21:15:23.737598",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Project",

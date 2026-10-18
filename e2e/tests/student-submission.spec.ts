@@ -10,6 +10,12 @@ import {
 	ensureSessionFaculty,
 } from "../helpers/cs17";
 import { createDoc, deleteDoc, getList } from "../helpers/frappe";
+import {
+	SAMPLE_PROJECT,
+	callAsStudent,
+	openProjectWithUnsavedEdit,
+	saveProjectAsStudent,
+} from "../helpers/student";
 
 interface StudentInfo {
 	email: string;
@@ -55,8 +61,6 @@ async function submitAsStudent(page: Page, assignment: string, fileUrl: string) 
 	);
 }
 
-const SAMPLE_PROJECT = fs.readFileSync("cs17_portal/public/scratch/sample.sb3").toString("base64");
-
 const BLANK_PDF =
 	"JVBERi0xLjQKMSAwIG9iago8PC9UeXBlL0NhdGFsb2cvUGFnZXMgMiAwIFI+PgplbmRvYmoKMiAwIG9iago8PC9UeXBlL1BhZ2VzL0tpZHNbMyAwIFJdL0NvdW50IDE+PgplbmRvYmoKMyAwIG9iago8PC9UeXBlL1BhZ2UvUGFyZW50IDIgMCBSL01lZGlhQm94WzAgMCAzIDNdPj4KZW5kb2JqCnhyZWYKMCA0CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAwOSAwMDAwMCBuIAowMDAwMDAwMDU0IDAwMDAwIG4gCjAwMDAwMDAxMDUgMDAwMDAgbiAKdHJhaWxlcgo8PC9TaXplIDQvUm9vdCAxIDAgUj4+CnN0YXJ0eHJlZgoxNjYKJSVFT0YK";
 
@@ -87,52 +91,6 @@ async function uploadAsStudent(
 			return (await resp.json()).message.file_url as string;
 		},
 		{ fileName, base64Content }
-	);
-}
-
-async function saveProjectAsStudent(page: Page, project: string) {
-	await page.waitForFunction(
-		() =>
-			(window as any).csrf_token !== undefined ||
-			(window as any).frappe?.csrf_token !== undefined,
-		{ timeout: 15000 }
-	);
-	return page.evaluate(
-		async ({ project, content }) => {
-			const token = (window as any).csrf_token ?? (window as any).frappe?.csrf_token;
-			const resp = await fetch("/api/method/cs17_portal.api.save_project", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					"X-Frappe-CSRF-Token": token,
-				},
-				body: JSON.stringify({
-					project,
-					filename: "project.sb3",
-					content,
-				}),
-			});
-			return { ok: resp.ok, status: resp.status };
-		},
-		{ project, content: SAMPLE_PROJECT }
-	);
-}
-
-async function callAsStudent(page: Page, method: string, body: unknown) {
-	return page.evaluate(
-		async ({ method, body }) => {
-			const token = (window as any).csrf_token ?? (window as any).frappe?.csrf_token;
-			const resp = await fetch(`/api/method/${method}`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					"X-Frappe-CSRF-Token": token,
-				},
-				body: JSON.stringify(body),
-			});
-			return { ok: resp.ok, body: await resp.json() };
-		},
-		{ method, body }
 	);
 }
 
@@ -171,33 +129,6 @@ async function submitScratchAsStudent(page: Page, assignment: string, title: str
 		},
 		{ assignment, title, content: SAMPLE_PROJECT }
 	);
-}
-
-async function openProjectWithUnsavedEdit(page: Page, assignment?: string) {
-	await page.goto("/dashboard/projects");
-	const created = await callAsStudent(page, "cs17_portal.api.create_project", {
-		project_title: `${TEST_ASSIGNMENT_PREFIX} Unsaved ${Date.now()}`,
-		assignment,
-	});
-	await saveProjectAsStudent(page, created.body.message.name);
-
-	await page.goto(`/dashboard/projects/${created.body.message.name}/edit`);
-	const editor = page.getByTitle("Scratch editor");
-	await expect(editor).toBeVisible();
-	await expect
-		.poll(() =>
-			editor
-				.contentFrame()
-				.locator("html")
-				.evaluate(() =>
-					(window as any).cs17vm?.runtime.targets.map((target: any) => target.getName())
-				)
-		)
-		.toEqual(["Stage"]);
-	await editor
-		.contentFrame()
-		.locator("html")
-		.evaluate(() => (window as any).cs17vm.runtime.emitProjectChanged());
 }
 
 test.describe("Student submission types", () => {

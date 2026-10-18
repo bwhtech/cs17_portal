@@ -1,0 +1,65 @@
+import { test, expect } from "@playwright/test";
+import { TEST_ASSIGNMENT_PREFIX } from "../helpers/cs17";
+import { deleteDoc, getList } from "../helpers/frappe";
+import { callAsStudent, openProjectWithUnsavedEdit } from "../helpers/student";
+
+test.describe("Editor after a failed save", () => {
+	test.afterAll(async ({ request }) => {
+		const projects = await getList<{ name: string }>(request, "CS17 Project", {
+			fields: ["name"],
+			filters: { project_title: ["like", `${TEST_ASSIGNMENT_PREFIX}%`] },
+			limit: 200,
+		});
+		for (const project of projects) {
+			await deleteDoc(request, "CS17 Project", project.name);
+		}
+	});
+
+	test("the Scratch editor saves again on the first leave and stays; a second try leaves", async ({
+		page,
+	}) => {
+		await openProjectWithUnsavedEdit(page);
+		let saves = 0;
+		await page.route("**/cs17_portal.api.save_project*", (route) => {
+			saves += 1;
+			return route.abort();
+		});
+		await page.getByRole("button", { name: "Save", exact: true }).click();
+		await expect(page.getByText("Save failed")).toBeVisible();
+		const back = page.getByRole("link", { name: "Back to projects" });
+
+		await back.click();
+		await expect.poll(() => saves).toBe(2);
+		await expect(page.getByText("Save failed")).toBeVisible();
+		await expect(page).toHaveURL(/\/edit$/);
+
+		await back.click();
+		await page.waitForURL((url) => url.pathname === "/dashboard/projects");
+	});
+
+	test("the Python editor stays on the first leave; a second try leaves", async ({ page }) => {
+		await page.goto("/dashboard/projects");
+		const created = await callAsStudent(page, "cs17_portal.api.create_project", {
+			project_title: `${TEST_ASSIGNMENT_PREFIX} Python Unsaved ${Date.now()}`,
+			project_type: "Python",
+		});
+		let saves = 0;
+		await page.route("**/cs17_portal.api.save_python_project*", (route) => {
+			saves += 1;
+			return route.abort();
+		});
+		await page.goto(`/dashboard/projects/${created.body.message.name}/code`);
+		await page.locator(".cm-content").fill('print("kept")');
+		await expect(page.getByText("Save failed")).toBeVisible();
+		const back = page.getByRole("link", { name: "Back to projects" });
+
+		await back.click();
+		await expect.poll(() => saves).toBe(2);
+		await expect(page.getByText("Save failed")).toBeVisible();
+		await expect(page).toHaveURL(/\/code$/);
+		await expect(page.locator(".cm-content")).toHaveText('print("kept")');
+
+		await back.click();
+		await page.waitForURL((url) => url.pathname === "/dashboard/projects");
+	});
+});
