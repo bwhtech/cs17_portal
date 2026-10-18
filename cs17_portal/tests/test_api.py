@@ -493,6 +493,28 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 
 		self.assertEqual([row.name for row in api.get_assigned_submissions(limit=1)], [self.submission_27])
 
+	def test_get_submission_blocks_other_cohort_faculty(self):
+		frappe.set_user(self.faculty_28_user)
+		self.assertRaises(frappe.PermissionError, api.get_submission, self.submission_27)
+
+	def test_get_submission_returns_the_row_with_its_file_and_grade(self):
+		frappe.db.set_value(
+			"CS17 Assignment Submission",
+			self.submission_27,
+			"submission_url",
+			"https://scratch.mit.edu/projects/27",
+		)
+		self.addCleanup(
+			frappe.db.set_value, "CS17 Assignment Submission", self.submission_27, "submission_url", None
+		)
+		frappe.set_user(self.faculty_27_user)
+
+		row = api.get_submission(self.submission_27)
+
+		self.assertEqual(
+			(row.submission_url, row.max_marks, row.grade), ("https://scratch.mit.edu/projects/27", 20, "B")
+		)
+
 
 def make_announcement(title: str, cohort: str | None) -> str:
 	return (
