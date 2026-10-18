@@ -141,4 +141,29 @@ test.describe("Faculty announcements", () => {
 
 		await expect(edit).toHaveCount(0);
 	});
+
+	test("says Announcement scheduled when the publish dialog schedules", async ({
+		page,
+		request,
+	}) => {
+		const title = `${TEST_ANNOUNCEMENT_PREFIX} ${Date.now()}`;
+		await callMethod(request, "cs17_portal.api.create_announcement", {
+			title,
+			content: "Please read the handbook.",
+		});
+		const publishOn = page.getByRole("combobox", { name: "Publish on" });
+
+		await page.goto("/dashboard/faculty/announcements");
+		await page
+			.locator('[data-slot="list-row"]', { hasText: title })
+			.getByRole("button", { name: "Publish", exact: true })
+			.click();
+		await page.getByRole("combobox").filter({ hasText: "Publish now" }).click();
+		await page.getByRole("option", { name: "Schedule" }).click();
+		await publishOn.fill("2035-06-01 09:00:00");
+		await publishOn.press("Enter");
+		await page.getByRole("button", { name: "Save", exact: true }).click();
+
+		await expect(page.getByText("Announcement scheduled")).toBeVisible();
+	});
 });
