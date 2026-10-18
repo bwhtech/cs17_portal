@@ -90,7 +90,7 @@ function apiHeaders(extra: Record<string, string> = {}): Record<string, string> 
 
 /**
  * Upload a file and attach it to a document via Frappe's upload_file method.
- * When `fieldname` is given the target field is set to the new file_url too.
+ * `fieldname` is stored on the File as `attached_to_field`; it does not set the target field.
  */
 export async function uploadFile(
 	request: APIRequestContext,
