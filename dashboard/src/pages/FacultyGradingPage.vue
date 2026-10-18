@@ -2,10 +2,10 @@
 	<AppHeader v-if="!isZen" />
 
 	<LoadError
-		v-if="failed"
+		v-if="failed && !submission"
 		title="Could not load this submission"
-		:loading="submissions.loading"
-		@retry="submissions.reload()"
+		:loading="detail.loading"
+		@retry="detail.reload()"
 	/>
 
 	<PageSkeleton v-else-if="loading" class="px-3 py-5 sm:px-5" />
@@ -70,16 +70,8 @@
 		</header>
 
 		<div :class="['min-h-0 bg-surface-gray-2', isZen ? 'flex-1' : 'h-[60vh] min-h-80']">
-			<div
-				v-if="isRefusal(detail.error) && !isProjectSubmission(submission.submission_type)"
-				class="flex h-full items-center justify-center p-6 text-center"
-			>
-				<p class="text-p-base text-ink-gray-5">
-					{{ frappeErrorMessage(detail.error, 'Could not load the submitted file.') }}
-				</p>
-			</div>
 			<LoadError
-				v-else-if="detailFailed && !isProjectSubmission(submission.submission_type)"
+				v-if="failed && !isProjectSubmission(submission.submission_type)"
 				class="h-full"
 				title="Could not load the submitted file"
 				:loading="detail.loading"
@@ -113,7 +105,7 @@
 				:max-marks="submission.max_marks"
 				:evaluation-type="submission.evaluation_type"
 				:suggested-marks="suggestedMarks"
-				@saved="submissions.reload()"
+				@saved="detail.reload()"
 			/>
 		</div>
 	</div>
@@ -132,9 +124,9 @@ import SubmissionPlayer from '@/components/grading/SubmissionPlayer.vue'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { useZenMode, useZenOnMount } from '@/composables/useZenMode'
-import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
+import { isRefusal } from '@/lib/frappeError'
 import { isProjectSubmission } from '@/lib/submissionTypes'
-import type { CS17Assignment, CS17Submission, CohortSubmission } from '@/types'
+import type { CS17Submission, CohortSubmission } from '@/types'
 
 const props = defineProps<{ submissionId: string }>()
 
@@ -150,49 +142,37 @@ const { set: setBreadcrumbs } = useBreadcrumbs()
 
 const zenLabel = computed(() => (isZen.value ? 'Exit zen mode' : 'Zen mode'))
 
-// Same call and cache key as the list page, so arriving from it renders the
-// header instantly and the fresh copy lands underneath.
-const submissions = useCall<CohortSubmission[]>({
+// The list page's cache, read and never fetched here, so arriving from it
+// renders the header instantly and this submission's own row lands underneath.
+const cohortSubmissions = useCall<CohortSubmission[]>({
 	url: '/api/v2/method/cs17_portal.api.list_cohort_submissions',
 	method: 'GET',
 	cacheKey: 'cohort-submissions',
-})
-
-const submission = computed(
-	() => submissions.data?.find((row) => row.name === props.submissionId) ?? null,
-)
-
-const loading = computed(() => !submissions.isFinished && !submissions.data)
-const failed = useLoadFailed(submissions)
-
-/**
- * `list_cohort_submissions` carries no file field, so the submitted document
- * comes from the assignment's own submission list — the one existing endpoint
- * that returns it to a faculty member.
- */
-const detail = useCall<
-	{ assignment: CS17Assignment; submissions: CS17Submission[] },
-	{ assignment: string }
->({
-	url: '/api/v2/method/cs17_portal.api.get_assignment_submissions',
-	method: 'GET',
-	params: () => ({ assignment: submission.value?.assignment ?? '' }),
 	immediate: false,
 })
 
-const detailFailed = useLoadFailed(detail, { except: isRefusal })
+const detail = useCall<
+	CohortSubmission & Pick<CS17Submission, 'submission_document' | 'submission_url'>,
+	{ submission: string }
+>({
+	url: '/api/v2/method/cs17_portal.api.get_submission',
+	method: 'GET',
+	params: () => ({ submission: props.submissionId }),
+	refetch: true,
+})
 
-watch(
-	() => submission.value?.assignment,
-	(assignment) => {
-		if (assignment) detail.reload()
-	},
-	{ immediate: true },
+const detailRow = computed(() => (detail.data?.name === props.submissionId ? detail.data : null))
+
+const submission = computed(() =>
+	isRefusal(detail.error)
+		? null
+		: (detailRow.value ??
+			cohortSubmissions.data?.find((row) => row.name === props.submissionId) ??
+			null),
 )
 
-const detailRow = computed(
-	() => detail.data?.submissions?.find((row) => row.name === props.submissionId) ?? null,
-)
+const loading = computed(() => !detail.isFinished && !submission.value)
+const failed = useLoadFailed(detail, { except: isRefusal })
 
 const detailLoading = computed(() => !detail.isFinished && !detailRow.value)
 
