@@ -184,4 +184,29 @@ test.describe("Faculty profile settings", () => {
 		});
 		await expect(page.getByText("Only PNG and JPG images are allowed")).toBeVisible();
 	});
+
+	test("uploads a photo from the phone settings", async ({ page }) => {
+		await page.setViewportSize({ width: 390, height: 844 });
+		await page.goto("/dashboard");
+		await page.getByRole("button", { name: "You" }).click();
+		await page.getByRole("button", { name: "Settings" }).click();
+		let uploads = 0;
+		await page.route("**/api/method/upload_file", (route) => {
+			uploads += 1;
+			return route.abort();
+		});
+		const fileChooserPromise = page.waitForEvent("filechooser");
+		await uploadPhotoButton(page).click();
+		const fileChooser = await fileChooserPromise;
+		await fileChooser.setFiles({
+			name: "avatar.png",
+			mimeType: "image/png",
+			buffer: Buffer.from(
+				"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+				"base64"
+			),
+		});
+		await photoEditor(page).getByRole("button", { name: "Save" }).click();
+		await expect.poll(() => uploads).toBe(1);
+	});
 });
