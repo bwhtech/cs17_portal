@@ -24,6 +24,28 @@ test.describe("Announcements bell", () => {
 
 		await expect(page.getByText(title)).toBeHidden();
 	});
+
+	test("keeps the unread list when a poll fails", async ({ page, request }) => {
+		const title = `${TEST_ANNOUNCEMENT_PREFIX} ${Date.now()}`;
+		const announcements = "**/cs17_portal.api.get_faculty_announcements*";
+		await callMethod(request, "cs17_portal.api.create_announcement", {
+			title,
+			content: "Please read the handbook.",
+			publish: "now",
+		});
+		const bell = page.getByRole("button", { name: /^Announcements, \d+ unread$/ });
+
+		await page.clock.install();
+		await page.goto("/dashboard/faculty");
+		await expect(bell).toBeVisible();
+		await page.route(announcements, (route) => route.fulfill({ status: 500 }));
+		const failedPoll = page.waitForResponse(announcements);
+		await page.clock.fastForward(45_000);
+		await failedPoll;
+		await bell.click();
+
+		await expect(page.getByText(title)).toBeVisible();
+	});
 });
 
 test.describe("Faculty announcements", () => {
@@ -96,5 +118,25 @@ test.describe("Faculty announcements", () => {
 		await page.getByRole("button", { name: "Save", exact: true }).click();
 
 		await expect(page.getByText("Announcement published")).toBeVisible();
+	});
+
+	test("reloads the list when a save is refused", async ({ page, request }) => {
+		const title = `${TEST_ANNOUNCEMENT_PREFIX} ${Date.now()}`;
+		const name = await callMethod<string>(request, "cs17_portal.api.create_announcement", {
+			title,
+			content: "Please read the handbook.",
+		});
+		const edit = page.getByRole("button", { name: `Edit ${title}` });
+
+		await page.goto("/dashboard/faculty/announcements");
+		await edit.click();
+		await callMethod(request, "cs17_portal.api.publish_announcement", { announcement: name });
+		await page.getByRole("button", { name: "Save changes" }).click();
+		await expect(page.getByRole("alert")).toHaveText(
+			"A published announcement can no longer be edited"
+		);
+		await page.getByRole("button", { name: "Cancel" }).click();
+
+		await expect(edit).toHaveCount(0);
 	});
 });

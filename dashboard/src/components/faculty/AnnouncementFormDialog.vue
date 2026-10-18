@@ -110,7 +110,7 @@ import AnnouncementPreview from '@/components/faculty/AnnouncementPreview.vue'
 import PublishFields from '@/components/common/PublishFields.vue'
 import { useSession } from '@/composables/useSession'
 import { isPast, toFrappeDatetime } from '@/lib/dates'
-import { frappeErrorMessage } from '@/lib/frappeError'
+import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
 import { trySubmit } from '@/lib/trySubmit'
 import { ALERT_VARIANTS, type AlertVariant, type CS17Announcement, type PublishMode } from '@/types'
 
@@ -241,6 +241,7 @@ async function save() {
 		call,
 		props.announcement ? { announcement: props.announcement.name, ...payload } : payload,
 	)
+	if (isRefusal(call.error)) emit('saved')
 	if (call.error) return
 
 	toast.success(
