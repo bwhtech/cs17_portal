@@ -113,13 +113,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { defineAsyncComponent, ref } from 'vue'
 import { Badge, Button, toast, useCall } from 'frappe-ui'
-import AnswersDialog from '@/components/answers/AnswersDialog.vue'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
 import SubmissionTypeIcon from '@/components/common/SubmissionTypeIcon.vue'
-import SubmissionPreviewDialog from '@/components/assignments/SubmissionPreviewDialog.vue'
 import SubmitAssignmentDialog from '@/components/assignments/SubmitAssignmentDialog.vue'
 import { usePythonAssignment } from '@/components/assignments/pythonEditor'
 import { useScratchAssignment } from '@/components/assignments/scratchEditor'
@@ -136,6 +134,11 @@ import type {
 	CS17Submission,
 	StudentAnswer,
 } from '@/types'
+
+const AnswersDialog = defineAsyncComponent(() => import('@/components/answers/AnswersDialog.vue'))
+const SubmissionPreviewDialog = defineAsyncComponent(
+	() => import('@/components/assignments/SubmissionPreviewDialog.vue'),
+)
 
 const props = defineProps<{
 	assignments: CS17Assignment[]
