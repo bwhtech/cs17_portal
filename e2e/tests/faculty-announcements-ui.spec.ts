@@ -101,6 +101,7 @@ test.describe("Faculty announcements", () => {
 		isPublished = 1;
 		await edit.click();
 		await page.getByRole("button", { name: "Cancel" }).click();
+		await expect(page.getByRole("dialog")).toBeHidden();
 
 		await expect(edit).toHaveCount(0);
 	});
