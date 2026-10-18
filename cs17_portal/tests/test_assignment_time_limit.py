@@ -240,3 +240,16 @@ class TestAssignmentTimeLimit(FrappeTestCase):
 		frappe.set_user(self.faculty_user)
 
 		self.assertEqual(api.get_assignment_attempt(submission)["started_at"], started_at)
+
+	def test_reattempt_after_an_older_attempt_is_deleted_starts_a_new_clock(self):
+		assignment = self.make_timed_assignment(attempts_allowed=2)
+		api.start_python_assignment(assignment)
+		self.start_minutes_ago(assignment, 31)
+		api.reattempt_python_assignment(assignment)
+		self.start_minutes_ago(assignment, 31)
+		frappe.db.delete("CS17 Assignment Attempt", f"{assignment}-{self.student}-1")
+		self.assertEqual(api.get_student_assignment(assignment).next_attempt, 2)
+
+		api.reattempt_python_assignment(assignment)
+
+		self.assertFalse(api.is_assignment_closed(assignment))
