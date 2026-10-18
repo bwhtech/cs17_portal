@@ -248,6 +248,7 @@ class TestAssignmentTimeLimit(FrappeTestCase):
 		api.reattempt_python_assignment(assignment)
 		self.start_minutes_ago(assignment, 31)
 		frappe.db.delete("CS17 Assignment Attempt", f"{assignment}-{self.student}-1")
+		self.assertEqual(api.get_student_assignment(assignment).next_attempt, 2)
 
 		api.reattempt_python_assignment(assignment)
 
