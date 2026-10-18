@@ -843,7 +843,7 @@ def get_next_attempts(assignments: list, student: str) -> dict[str, int]:
 	starts = frappe.get_all(
 		"CS17 Assignment Attempt",
 		filters={"student": student, "assignment": ["in", timed]},
-		fields=["assignment", "started_at"],
+		fields=["name", "assignment", "started_at"],
 		order_by="started_at desc",
 	)
 	submissions = frappe.get_all(
@@ -870,7 +870,13 @@ def get_next_attempts(assignments: list, student: str) -> dict[str, int]:
 			continue
 		time_is_up = now > add_to_date(started[0], minutes=assignment.time_limit)
 		if time_is_up or (submission and submission.submitted_at >= started[0]):
-			next_attempts[assignment.name] = len(started) + 1
+			name_prefix = f"{assignment.name}-{student}-"
+			attempt_numbers = [
+				cint(start.name.removeprefix(name_prefix))
+				for start in starts
+				if start.name.startswith(name_prefix)
+			]
+			next_attempts[assignment.name] = max([len(started), *attempt_numbers]) + 1
 	return next_attempts
 
 
