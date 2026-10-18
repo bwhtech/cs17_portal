@@ -47,15 +47,15 @@ jobs:
 
     services:
       redis-cache:
-        image: public.ecr.aws/docker/library/redis:alpine
+        image: mirror.gcr.io/library/redis:alpine
         ports:
           - 13000:6379
       redis-queue:
-        image: public.ecr.aws/docker/library/redis:alpine
+        image: mirror.gcr.io/library/redis:alpine
         ports:
           - 11000:6379
       mariadb:
-        image: public.ecr.aws/docker/library/mariadb:11.8
+        image: mirror.gcr.io/library/mariadb:11.8
         env:
           MYSQL_ROOT_PASSWORD: root
         ports:
