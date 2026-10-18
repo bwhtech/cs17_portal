@@ -1022,4 +1022,28 @@ test.describe("Faculty assignment portal", () => {
 			`${draft.title} renamed`
 		);
 	});
+
+	test("refuses a save over a change made after the draft was opened", async ({
+		page,
+		request,
+	}) => {
+		const draft = await createTestAssignment(request, {
+			cohort: cohort.name,
+			isPublished: false,
+		});
+
+		await page.goto("/dashboard/faculty/assignments");
+		await page.getByRole("button", { name: `Edit ${draft.title}` }).click();
+		await expect(page.getByPlaceholder("Assignment title")).toHaveValue(draft.title);
+		await updateDoc(request, "CS17 Assignment", draft.name, {
+			title: `${draft.title} renamed`,
+		});
+		await page.getByPlaceholder("Assignment title").fill(`${draft.title} retitled`);
+		await page.getByRole("button", { name: "Save Assignment" }).click();
+
+		await expect(page.getByText("has been modified after you have opened it")).toBeVisible();
+		await expect(page.getByPlaceholder("Assignment title")).toHaveValue(
+			`${draft.title} retitled`
+		);
+	});
 });
