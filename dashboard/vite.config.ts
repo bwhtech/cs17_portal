@@ -23,6 +23,15 @@ export default defineConfig({
 			'@': path.resolve(__dirname, 'src'),
 		},
 	},
+	build: {
+		rollupOptions: {
+			output: {
+				manualChunks: {
+					'frappe-ui': ['frappe-ui'],
+				},
+			},
+		},
+	},
 	optimizeDeps: {
 		// frappe-ui ships unbuilt source with `~icons/lucide/*` virtual imports
 		// that esbuild's prebundler cannot resolve.

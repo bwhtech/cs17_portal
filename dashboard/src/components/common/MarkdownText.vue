@@ -1,15 +1,25 @@
 <template>
 	<p v-if="!content?.trim()" class="text-p-base text-ink-gray-5">{{ fallback }}</p>
-	<!-- eslint-disable-next-line vue/no-v-html -- sanitized by DOMPurify above -->
-	<div v-else class="cs17-prose" v-html="html" />
+	<MarkdownHtml v-else :content="content" />
 </template>
 
-<script setup lang="ts">
-import { computed } from 'vue'
-import DOMPurify from 'dompurify'
-import MarkdownIt from 'markdown-it'
+<script lang="ts">
+import { defineAsyncComponent, h } from 'vue'
 
-const props = withDefaults(
+const MarkdownHtml = defineAsyncComponent({
+	loader: () => import('./MarkdownHtml.vue'),
+	loadingComponent: (props: { content: string }) =>
+		h(
+			'div',
+			{ class: 'cs17-prose invisible whitespace-pre-line' },
+			props.content.replace(/\n\s*\n/g, '\n'),
+		),
+	delay: 0,
+})
+</script>
+
+<script setup lang="ts">
+withDefaults(
 	defineProps<{
 		/** Markdown source — an assignment description, announcement content. */
 		content?: string | null
@@ -18,11 +28,4 @@ const props = withDefaults(
 	}>(),
 	{ fallback: 'No description provided.' },
 )
-
-// `html: true` because descriptions written before the Markdown switch contain
-// raw HTML; DOMPurify is what makes that safe. `linkify` turns bare URLs in a
-// description into links, which is what authors expect from a chat-like field.
-const markdown = new MarkdownIt({ html: true, linkify: true, breaks: true })
-
-const html = computed(() => DOMPurify.sanitize(markdown.render(props.content ?? '')))
 </script>
