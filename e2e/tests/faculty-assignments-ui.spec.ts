@@ -708,29 +708,27 @@ test.describe("Faculty assignment portal", () => {
 			const held = new Promise<void>((resolve) => {
 				release = resolve;
 			});
-			await page.route(
-				(url) => url.href.includes("get_assignment_submissions"),
-				async (route) => {
-					await held;
-					await route.continue();
-				}
-			);
-			await page.goto(`/dashboard/faculty/submissions/${markedSubmission.name}`);
+			await page.route(/cs17_portal\.api\.get_submission\?/, async (route) => {
+				await held;
+				await route.continue();
+			});
+			await page.goto("/dashboard/faculty/submissions");
+			await page.locator(LIST_ROW, { hasText: marked.title }).click();
 
 			await expect(page.getByRole("button", { name: "Back", exact: true })).toBeVisible();
 			await expect(page.getByText("No submitted file.")).toHaveCount(0);
 
-			const answered = page.waitForResponse(/get_assignment_submissions/);
+			const answered = page.waitForResponse(/cs17_portal\.api\.get_submission\?/);
 			release();
 			await answered;
 		});
 
 		test("offers a retry when the submitted file cannot be read", async ({ page }) => {
-			await page.route(
-				(url) => url.href.includes("get_assignment_submissions"),
-				(route) => route.fulfill({ status: 500 })
+			await page.route(/cs17_portal\.api\.get_submission\?/, (route) =>
+				route.fulfill({ status: 500 })
 			);
-			await page.goto(`/dashboard/faculty/submissions/${markedSubmission.name}`);
+			await page.goto("/dashboard/faculty/submissions");
+			await page.locator(LIST_ROW, { hasText: marked.title }).click();
 
 			await expect(page.getByText("Could not load the submitted file")).toBeVisible();
 			await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
