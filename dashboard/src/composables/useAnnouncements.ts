@@ -3,6 +3,7 @@ import { useCall } from 'frappe-ui'
 import { useAnnouncementDismissals } from '@/composables/useAnnouncementDismissals'
 import { usePolling } from '@/composables/usePolling'
 import { useSession } from '@/composables/useSession'
+import { isRefusal } from '@/lib/frappeError'
 import type { CS17Announcement, StudentAnnouncementsResponse } from '@/types'
 
 interface Announcements {
@@ -27,11 +28,13 @@ export function provideAnnouncements(): void {
 
 	usePolling(() => (isFaculty.value ? facultyCall.reload() : studentCall.reload()))
 
-	const announcements = computed(() =>
-		isFaculty.value
+	const announcements = computed<CS17Announcement[]>((previous = []) => {
+		const call = isFaculty.value ? facultyCall : studentCall
+		if (call.data == null && !isRefusal(call.error)) return previous
+		return isFaculty.value
 			? (facultyCall.data ?? []).filter((announcement) => announcement.is_published)
-			: (studentCall.data?.announcements ?? []),
-	)
+			: (studentCall.data?.announcements ?? [])
+	})
 
 	provide(announcementsKey, {
 		unread: computed(() => announcements.value.filter((a) => !dismissed.value.has(a.name))),
