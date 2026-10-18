@@ -136,6 +136,7 @@ test.describe("Faculty announcements", () => {
 			"A published announcement can no longer be edited"
 		);
 		await page.getByRole("button", { name: "Cancel" }).click();
+		await expect(page.getByRole("dialog")).toBeHidden();
 
 		await expect(edit).toHaveCount(0);
 	});
