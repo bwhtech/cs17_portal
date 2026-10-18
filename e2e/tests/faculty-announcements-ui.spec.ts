@@ -24,6 +24,28 @@ test.describe("Announcements bell", () => {
 
 		await expect(page.getByText(title)).toBeHidden();
 	});
+
+	test("keeps the unread list when a poll fails", async ({ page, request }) => {
+		const title = `${TEST_ANNOUNCEMENT_PREFIX} ${Date.now()}`;
+		const announcements = "**/cs17_portal.api.get_faculty_announcements*";
+		await callMethod(request, "cs17_portal.api.create_announcement", {
+			title,
+			content: "Please read the handbook.",
+			publish: "now",
+		});
+		const bell = page.getByRole("button", { name: /^Announcements, \d+ unread$/ });
+
+		await page.clock.install();
+		await page.goto("/dashboard/faculty");
+		await expect(bell).toBeVisible();
+		await page.route(announcements, (route) => route.fulfill({ status: 500 }));
+		const failedPoll = page.waitForResponse(announcements);
+		await page.clock.fastForward(45_000);
+		await failedPoll;
+		await bell.click();
+
+		await expect(page.getByText(title)).toBeVisible();
+	});
 });
 
 test.describe("Faculty announcements", () => {
