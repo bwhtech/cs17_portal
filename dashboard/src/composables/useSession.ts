@@ -1,5 +1,5 @@
 import { computed, onScopeDispose, ref, type ComputedRef, type Ref } from 'vue'
-import { call } from 'frappe-ui'
+import { call, toast, type FrappeResourceError } from 'frappe-ui'
 import { clear as clearFrappeUICache, delMany, keys } from 'idb-keyval'
 import { STORAGE_KEYS, removeDraftsOfOtherUsers, removeKey } from '@/lib/storage'
 import type { CS17Profile } from '@/types'
@@ -34,10 +34,14 @@ async function logout(): Promise<void> {
 	try {
 		await call('logout')
 		removeKey(STORAGE_KEYS.newAssignmentDraft)
-		await clearFrappeUICache()
-	} finally {
-		window.location.href = '/login'
+		await clearFrappeUICache().catch(() => null)
+	} catch (error) {
+		if (!(error as FrappeResourceError).response) {
+			toast.error('Could not log out.')
+			return
+		}
 	}
+	window.location.href = '/login'
 }
 
 export async function removeStorageOfOtherUsers(): Promise<void> {
