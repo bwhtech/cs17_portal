@@ -58,7 +58,8 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Cohort",
-   "options": "CS17 Cohort"
+   "options": "CS17 Cohort",
+   "search_index": 1
   },
   {
    "fieldname": "quarter",
@@ -210,7 +211,7 @@
    "link_fieldname": "assignment"
   }
  ],
- "modified": "2026-10-18 00:16:29.588252",
+ "modified": "2026-10-18 21:15:23.541198",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",
