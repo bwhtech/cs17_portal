@@ -90,9 +90,13 @@ test.describe("Faculty Scratch projects", () => {
 	});
 
 	test.afterAll(async ({ request }) => {
+		const faculty = JSON.parse(fs.readFileSync("e2e/.auth/faculty-info.json", "utf-8"));
 		const projects = await getList<{ name: string }>(request, "CS17 Project", {
 			fields: ["name"],
-			filters: { project_title: ["like", `${PROJECT_TITLE_PREFIX}%`] },
+			filters: {
+				project_title: ["like", `${PROJECT_TITLE_PREFIX}%`],
+				profile: ["in", [faculty.profileName, student.name]],
+			},
 			limit: 200,
 		});
 		for (const project of projects) {

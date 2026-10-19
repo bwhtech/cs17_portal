@@ -177,7 +177,10 @@ test.describe("Student submission types", () => {
 		await cleanupTestSubmissions(request, pdf.cohort);
 		const projects = await getList<{ name: string }>(request, "CS17 Project", {
 			fields: ["name"],
-			filters: { project_title: ["like", `${TEST_ASSIGNMENT_PREFIX}%`] },
+			filters: {
+				project_title: ["like", `${TEST_ASSIGNMENT_PREFIX}%`],
+				profile: ["like", `%-${pdf.cohort}-%`],
+			},
 			limit: 200,
 		});
 		for (const project of projects) {
