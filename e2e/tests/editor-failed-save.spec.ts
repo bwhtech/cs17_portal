@@ -179,4 +179,27 @@ test.describe("Editor after a failed save", () => {
 		await page.close({ runBeforeUnload: true });
 		expect((await dialog).type()).toBe("beforeunload");
 	});
+
+	test("the Scratch editor fails a save the frame does not answer within 15 s and keeps the edit", async ({
+		page,
+	}) => {
+		await page.clock.install();
+		await openProjectWithUnsavedEdit(page);
+		const editor = page.getByTitle("Scratch editor").contentFrame().locator("html");
+		await editor.evaluate(() => {
+			const vm = (window as any).cs17vm;
+			vm.runtime.getTargetForStage().createVariable("kept", "kept", "");
+			vm.saveProjectSb3 = () => new Promise(() => {});
+		});
+		await page.getByRole("button", { name: "Save", exact: true }).click();
+		await expect(page.getByText("Saving…")).toBeVisible();
+
+		await page.clock.fastForward(15_000);
+		await expect(page.getByText("Could not save the project.")).toBeVisible();
+		await expect(page.getByText("Save failed")).toBeVisible();
+		const stageVariables = await editor.evaluate(() =>
+			Object.keys((window as any).cs17vm.runtime.getTargetForStage().variables)
+		);
+		expect(stageVariables).toContain("kept");
+	});
 });
