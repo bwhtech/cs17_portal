@@ -49,6 +49,7 @@ interface AssignmentRow extends CS17Assignment {
 let cohort: CS17Cohort;
 let student: CS17Profile;
 let counter = 0;
+const draftsWithoutCohort: string[] = [];
 
 function assignmentTitle(): string {
 	return `${TEST_ASSIGNMENT_PREFIX} Faculty ${Date.now()}-${counter++}`;
@@ -84,7 +85,7 @@ test.describe("Faculty assignment management", () => {
 		await cleanupTestGrades(request, cohort.name);
 		await cleanupTestSubmissions(request, cohort.name);
 		await cleanupTestAssignments(request, cohort.name);
-		await cleanupTestAssignments(request, "");
+		for (const name of draftsWithoutCohort) await deleteDoc(request, "CS17 Assignment", name);
 		await deleteTestProfile(request, student.name);
 		await deleteDoc(request, "CS17 Cohort", cohort.name);
 	});
@@ -151,6 +152,7 @@ test.describe("Faculty assignment management", () => {
 			due_date: "",
 			publish: "draft",
 		});
+		draftsWithoutCohort.push(name);
 		const doc = await getDoc<CS17Assignment>(request, "CS17 Assignment", name);
 		expect(doc.is_published).toBe(0);
 	});
@@ -162,6 +164,7 @@ test.describe("Faculty assignment management", () => {
 			due_date: "",
 			publish: "draft",
 		});
+		draftsWithoutCohort.push(name);
 		await expect(
 			callMethod(request, PUBLISH, { assignment: name, publish: "now" })
 		).rejects.toThrow();
