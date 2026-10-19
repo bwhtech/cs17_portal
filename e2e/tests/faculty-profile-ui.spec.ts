@@ -190,6 +190,7 @@ test.describe("Faculty profile settings", () => {
 		await page.goto("/dashboard");
 		await page.getByRole("button", { name: "You" }).click();
 		await page.getByRole("button", { name: "Settings" }).click();
+		await expect(page.getByRole("heading", { name: "Preferences" })).toBeVisible();
 		let uploads = 0;
 		await page.route("**/api/method/upload_file", (route) => {
 			uploads += 1;
