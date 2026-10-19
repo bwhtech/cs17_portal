@@ -144,4 +144,39 @@ test.describe("Editor after a failed save", () => {
 		await login;
 		expect(logouts).toBe(1);
 	});
+
+	test("the Scratch editor asks before the tab closes after a failed save", async ({ page }) => {
+		await openProjectWithUnsavedEdit(page);
+		await page.route("**/cs17_portal.api.save_project*", (route) => route.abort());
+		await page.getByRole("button", { name: "Save", exact: true }).click();
+		await expect(page.getByText("Save failed")).toBeVisible();
+		// The Scratch bundle asks on its own after any change, saved or not.
+		await page
+			.getByTitle("Scratch editor")
+			.contentFrame()
+			.locator("html")
+			.evaluate(() => {
+				window.onbeforeunload = null;
+			});
+
+		const dialog = page.waitForEvent("dialog");
+		await page.close({ runBeforeUnload: true });
+		expect((await dialog).type()).toBe("beforeunload");
+	});
+
+	test("the Python editor asks before the tab closes after a failed save", async ({ page }) => {
+		await page.goto("/dashboard/projects");
+		const created = await callAsStudent(page, "cs17_portal.api.create_project", {
+			project_title: `${TEST_ASSIGNMENT_PREFIX} Python Unsaved ${Date.now()}`,
+			project_type: "Python",
+		});
+		await page.route("**/cs17_portal.api.save_python_project*", (route) => route.abort());
+		await page.goto(`/dashboard/projects/${created.body.message.name}/code`);
+		await page.locator(".cm-content").fill('print("kept")');
+		await expect(page.getByText("Save failed")).toBeVisible();
+
+		const dialog = page.waitForEvent("dialog");
+		await page.close({ runBeforeUnload: true });
+		expect((await dialog).type()).toBe("beforeunload");
+	});
 });
