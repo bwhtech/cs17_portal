@@ -93,7 +93,11 @@ test.describe("Python assignments", () => {
 			limit: 200,
 		});
 		for (const project of projects) {
-			await deleteDoc(request, "CS17 Project", project.name);
+			try {
+				await deleteDoc(request, "CS17 Project", project.name);
+			} catch (error) {
+				console.warn(`Failed to delete project ${project.name}:`, error);
+			}
 		}
 		const leaves = await getList<{ name: string }>(request, "CS17 Tab Leave", {
 			fields: ["name"],
@@ -101,7 +105,11 @@ test.describe("Python assignments", () => {
 			limit: 200,
 		});
 		for (const leave of leaves) {
-			await deleteDoc(request, "CS17 Tab Leave", leave.name);
+			try {
+				await deleteDoc(request, "CS17 Tab Leave", leave.name);
+			} catch (error) {
+				console.warn(`Failed to delete tab leave ${leave.name}:`, error);
+			}
 		}
 		await cleanupTestAssignments(request, cohort);
 		for (const faculty of faculties) {

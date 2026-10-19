@@ -89,7 +89,11 @@ test.describe("Python assignment time limit", () => {
 			limit: 200,
 		});
 		for (const project of projects) {
-			await deleteDoc(request, "CS17 Project", project.name);
+			try {
+				await deleteDoc(request, "CS17 Project", project.name);
+			} catch (error) {
+				console.warn(`Failed to delete project ${project.name}:`, error);
+			}
 		}
 		const attempts = await getList<{ name: string }>(request, "CS17 Assignment Attempt", {
 			fields: ["name"],
@@ -97,7 +101,11 @@ test.describe("Python assignment time limit", () => {
 			limit: 200,
 		});
 		for (const attempt of attempts) {
-			await deleteDoc(request, "CS17 Assignment Attempt", attempt.name);
+			try {
+				await deleteDoc(request, "CS17 Assignment Attempt", attempt.name);
+			} catch (error) {
+				console.warn(`Failed to delete attempt ${attempt.name}:`, error);
+			}
 		}
 		await cleanupTestAssignments(request, cohort);
 		for (const faculty of faculties) {
