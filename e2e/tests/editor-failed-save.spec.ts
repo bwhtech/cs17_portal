@@ -1,3 +1,4 @@
+import * as fs from "fs";
 import { test, expect } from "@playwright/test";
 import { TEST_ASSIGNMENT_PREFIX } from "../helpers/cs17";
 import { deleteDoc, getList } from "../helpers/frappe";
@@ -5,9 +6,13 @@ import { callAsStudent, openProjectWithUnsavedEdit } from "../helpers/student";
 
 test.describe("Editor after a failed save", () => {
 	test.afterAll(async ({ request }) => {
+		const { cohort } = JSON.parse(fs.readFileSync("e2e/.auth/student-info.json", "utf-8"));
 		const projects = await getList<{ name: string }>(request, "CS17 Project", {
 			fields: ["name"],
-			filters: { project_title: ["like", `${TEST_ASSIGNMENT_PREFIX}%`] },
+			filters: {
+				project_title: ["like", `${TEST_ASSIGNMENT_PREFIX}%`],
+				profile: ["like", `%-${cohort}-%`],
+			},
 			limit: 200,
 		});
 		for (const project of projects) {

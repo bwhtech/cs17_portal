@@ -27,8 +27,8 @@ test.describe("Scratch project player", () => {
 	});
 
 	test.afterAll(async ({ request }) => {
-		await cleanupTestSubmissions(request);
-		await cleanupTestAssignments(request);
+		await cleanupTestSubmissions(request, cohort.name);
+		await cleanupTestAssignments(request, cohort.name);
 		await deleteTestProfile(request, student.name);
 		await deleteDoc(request, "CS17 Cohort", cohort.name);
 	});

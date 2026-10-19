@@ -9,9 +9,10 @@ import {
 	createTestCohort,
 	createTestProfile,
 	createTestSubmission,
+	deleteTestProfile,
 	ensureSessionFaculty,
 } from "../helpers/cs17";
-import { callGetMethod, callMethod } from "../helpers/frappe";
+import { callGetMethod, callMethod, deleteDoc } from "../helpers/frappe";
 
 const CREATE = "cs17_portal.api.create_assignment";
 const ASSIGN = "cs17_portal.api.assign_submission";
@@ -62,8 +63,10 @@ test.describe("Faculty submission assignment", () => {
 	});
 
 	test.afterAll(async ({ request }) => {
-		await cleanupTestSubmissions(request);
-		await cleanupTestAssignments(request);
+		await cleanupTestSubmissions(request, cohort.name);
+		await cleanupTestAssignments(request, cohort.name);
+		await deleteTestProfile(request, student.name);
+		await deleteDoc(request, "CS17 Cohort", cohort.name);
 	});
 
 	test("assigned submission surfaces in get_assigned_submissions", async ({ request }) => {

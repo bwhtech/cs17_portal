@@ -27,7 +27,7 @@ test.describe("Assignment students", () => {
 	});
 
 	test.afterAll(async ({ request }) => {
-		await cleanupTestAssignments(request);
+		await cleanupTestAssignments(request, cohort.name);
 		for (const student of students) await deleteTestProfile(request, student.name);
 		await deleteDoc(request, "CS17 Cohort", cohort.name);
 	});

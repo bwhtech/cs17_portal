@@ -81,9 +81,10 @@ test.describe("Faculty assignment management", () => {
 	});
 
 	test.afterAll(async ({ request }) => {
-		await cleanupTestGrades(request);
-		await cleanupTestSubmissions(request);
-		await cleanupTestAssignments(request);
+		await cleanupTestGrades(request, cohort.name);
+		await cleanupTestSubmissions(request, cohort.name);
+		await cleanupTestAssignments(request, cohort.name);
+		await cleanupTestAssignments(request, "");
 		await deleteTestProfile(request, student.name);
 		await deleteDoc(request, "CS17 Cohort", cohort.name);
 	});

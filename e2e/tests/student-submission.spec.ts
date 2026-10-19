@@ -173,17 +173,20 @@ test.describe("Student submission types", () => {
 	});
 
 	test.afterAll(async ({ request }) => {
-		await cleanupTestGrades(request);
-		await cleanupTestSubmissions(request);
+		await cleanupTestGrades(request, pdf.cohort);
+		await cleanupTestSubmissions(request, pdf.cohort);
 		const projects = await getList<{ name: string }>(request, "CS17 Project", {
 			fields: ["name"],
-			filters: { project_title: ["like", `${TEST_ASSIGNMENT_PREFIX}%`] },
+			filters: {
+				project_title: ["like", `${TEST_ASSIGNMENT_PREFIX}%`],
+				profile: ["like", `%-${pdf.cohort}-%`],
+			},
 			limit: 200,
 		});
 		for (const project of projects) {
 			await deleteDoc(request, "CS17 Project", project.name);
 		}
-		await cleanupTestAssignments(request);
+		await cleanupTestAssignments(request, pdf.cohort);
 	});
 
 	test("offers one New project button on the projects page", async ({ page }) => {
@@ -550,7 +553,10 @@ test.describe("Student in another timezone", () => {
 	test.use({ timezoneId: "Pacific/Kiritimati" });
 
 	test.afterAll(async ({ request }) => {
-		await cleanupTestAssignments(request);
+		await cleanupTestAssignments(
+			request,
+			JSON.parse(fs.readFileSync("e2e/.auth/student-info.json", "utf-8")).cohort
+		);
 	});
 
 	test("an assignment due in an hour of site time is still open", async ({ page, request }) => {

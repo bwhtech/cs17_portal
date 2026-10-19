@@ -79,10 +79,13 @@ test.describe("Python assignment time limit", () => {
 	});
 
 	test.afterAll(async ({ request }) => {
-		await cleanupTestSubmissions(request);
+		await cleanupTestSubmissions(request, cohort);
 		const projects = await getList<{ name: string }>(request, "CS17 Project", {
 			fields: ["name"],
-			filters: { project_title: ["like", `${TEST_ASSIGNMENT_PREFIX}%`] },
+			filters: {
+				project_title: ["like", `${TEST_ASSIGNMENT_PREFIX}%`],
+				profile: ["like", `%-${cohort}-%`],
+			},
 			limit: 200,
 		});
 		for (const project of projects) {
@@ -96,7 +99,7 @@ test.describe("Python assignment time limit", () => {
 		for (const attempt of attempts) {
 			await deleteDoc(request, "CS17 Assignment Attempt", attempt.name);
 		}
-		await cleanupTestAssignments(request);
+		await cleanupTestAssignments(request, cohort);
 		for (const faculty of faculties) {
 			try {
 				await deleteTestProfile(request, faculty.profileName);
