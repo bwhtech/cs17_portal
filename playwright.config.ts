@@ -56,6 +56,11 @@ export default defineConfig({
 				},
 			},
 			dependencies: ["setup"],
+			teardown: "student-teardown",
+		},
+		{
+			name: "student-teardown",
+			testMatch: /student\.teardown\.ts/,
 		},
 		{
 			name: "chromium",
@@ -91,6 +96,11 @@ export default defineConfig({
 				},
 			},
 			dependencies: ["setup"],
+			teardown: "faculty-teardown",
+		},
+		{
+			name: "faculty-teardown",
+			testMatch: /faculty\.teardown\.ts/,
 		},
 		{
 			name: "chromium-faculty",
