@@ -1900,3 +1900,14 @@ def distribute_assignments(assignments: list | str) -> None:
 def open_assignments_to_cohort(assignments: list | str) -> None:
 	for assignment in frappe.parse_json(assignments):
 		set_assignment_students(assignment, [])
+
+
+@frappe.whitelist(methods=["POST"])
+def submit_issue(category: str, description: str) -> None:
+	require_current_student()
+	since = add_to_date(now_datetime(), hours=-1)
+	if frappe.db.count("CS17 Issue", {"owner": frappe.session.user, "creation": (">", since)}) >= 5:
+		frappe.throw(_("You can send up to 5 issues an hour. Please try again later."))
+	frappe.get_doc({"doctype": "CS17 Issue", "category": category, "description": description}).insert(
+		ignore_permissions=True
+	)
