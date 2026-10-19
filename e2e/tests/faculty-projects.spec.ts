@@ -4,12 +4,14 @@ import {
 	CS17Assignment,
 	CS17Cohort,
 	CS17Profile,
+	TestFaculty,
 	cleanupTestAssignments,
 	createTestAssignment,
 	createTestCohort,
 	createTestFaculty,
 	createTestProfile,
 	deleteTestProfile,
+	deleteTestUser,
 	ensureSessionFaculty,
 } from "../helpers/cs17";
 import { createDoc, deleteDoc, getList } from "../helpers/frappe";
@@ -75,6 +77,7 @@ test.describe("Faculty Scratch projects", () => {
 	let cohort: CS17Cohort;
 	let scratch: CS17Assignment;
 	let student: CS17Profile;
+	const faculties: TestFaculty[] = [];
 
 	test.beforeAll(async ({ request }) => {
 		await ensureSessionFaculty(request);
@@ -90,12 +93,13 @@ test.describe("Faculty Scratch projects", () => {
 	});
 
 	test.afterAll(async ({ request }) => {
-		const faculty = JSON.parse(fs.readFileSync("e2e/.auth/faculty-info.json", "utf-8"));
+		const facultyInfo = JSON.parse(fs.readFileSync("e2e/.auth/faculty-info.json", "utf-8"));
+		const profiles = [facultyInfo, ...faculties].map((faculty) => faculty.profileName);
 		const projects = await getList<{ name: string }>(request, "CS17 Project", {
 			fields: ["name"],
 			filters: {
 				project_title: ["like", `${PROJECT_TITLE_PREFIX}%`],
-				profile: ["in", [faculty.profileName, student.name]],
+				profile: ["in", [...profiles, student.name]],
 			},
 			limit: 200,
 		});
@@ -109,6 +113,14 @@ test.describe("Faculty Scratch projects", () => {
 		await cleanupTestAssignments(request, cohort.name);
 		await deleteTestProfile(request, student.name);
 		await deleteDoc(request, "CS17 Cohort", cohort.name);
+		for (const faculty of faculties) {
+			try {
+				await deleteTestProfile(request, faculty.profileName);
+				await deleteTestUser(request, faculty.email);
+			} catch (error) {
+				console.warn(`Failed to delete faculty ${faculty.email}:`, error);
+			}
+		}
 	});
 
 	test("shows Projects in the sidebar and opens the faculty projects page", async ({ page }) => {
@@ -271,6 +283,7 @@ test.describe("Faculty Scratch projects", () => {
 		request,
 	}) => {
 		const faculty = await createTestFaculty(request, []);
+		faculties.push(faculty);
 		const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
 		await context.request.post("/api/method/login", {
 			form: { usr: faculty.email, pwd: faculty.password },
