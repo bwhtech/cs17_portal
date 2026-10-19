@@ -83,7 +83,7 @@ test.describe("Python assignments", () => {
 	});
 
 	test.afterAll(async ({ request }) => {
-		await cleanupTestSubmissions(request);
+		await cleanupTestSubmissions(request, cohort);
 		const projects = await getList<{ name: string }>(request, "CS17 Project", {
 			fields: ["name"],
 			filters: { project_title: ["like", `${TEST_ASSIGNMENT_PREFIX}%`] },
@@ -100,7 +100,7 @@ test.describe("Python assignments", () => {
 		for (const leave of leaves) {
 			await deleteDoc(request, "CS17 Tab Leave", leave.name);
 		}
-		await cleanupTestAssignments(request);
+		await cleanupTestAssignments(request, cohort);
 		for (const faculty of faculties) {
 			try {
 				await deleteTestProfile(request, faculty.profileName);

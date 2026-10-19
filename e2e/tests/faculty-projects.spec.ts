@@ -102,7 +102,7 @@ test.describe("Faculty Scratch projects", () => {
 				console.warn(`Failed to delete project ${project.name}:`, error);
 			}
 		}
-		await cleanupTestAssignments(request);
+		await cleanupTestAssignments(request, cohort.name);
 		await deleteTestProfile(request, student.name);
 		await deleteDoc(request, "CS17 Cohort", cohort.name);
 	});

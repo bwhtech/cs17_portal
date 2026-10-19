@@ -62,8 +62,8 @@ test.describe("Faculty submission assignment", () => {
 	});
 
 	test.afterAll(async ({ request }) => {
-		await cleanupTestSubmissions(request);
-		await cleanupTestAssignments(request);
+		await cleanupTestSubmissions(request, cohort.name);
+		await cleanupTestAssignments(request, cohort.name);
 	});
 
 	test("assigned submission surfaces in get_assigned_submissions", async ({ request }) => {

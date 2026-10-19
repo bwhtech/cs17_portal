@@ -157,10 +157,13 @@ export async function createTestAssignment(
 	});
 }
 
-export async function cleanupTestAssignments(request: APIRequestContext): Promise<void> {
+export async function cleanupTestAssignments(
+	request: APIRequestContext,
+	cohort: string
+): Promise<void> {
 	const assignments = await getList<CS17Assignment>(request, "CS17 Assignment", {
 		fields: ["name"],
-		filters: { title: ["like", `${TEST_ASSIGNMENT_PREFIX}%`] },
+		filters: { cohort, title: ["like", `${TEST_ASSIGNMENT_PREFIX}%`] },
 		limit: 200,
 	});
 	for (const assignment of assignments) {
@@ -193,10 +196,16 @@ export async function createTestSubmission(
 	});
 }
 
-export async function cleanupTestSubmissions(request: APIRequestContext): Promise<void> {
+export async function cleanupTestSubmissions(
+	request: APIRequestContext,
+	cohort: string
+): Promise<void> {
 	const submissions = await getList<{ name: string }>(request, "CS17 Assignment Submission", {
 		fields: ["name"],
-		filters: { full_name: ["like", `${TEST_FIRST_NAME} %`] },
+		filters: {
+			full_name: ["like", `${TEST_FIRST_NAME} %`],
+			assignment: ["like", `%-${cohort}-%`],
+		},
 		limit: 500,
 	});
 	for (const submission of submissions) {
@@ -208,10 +217,16 @@ export async function cleanupTestSubmissions(request: APIRequestContext): Promis
 	}
 }
 
-export async function cleanupTestGrades(request: APIRequestContext): Promise<void> {
+export async function cleanupTestGrades(
+	request: APIRequestContext,
+	cohort: string
+): Promise<void> {
 	const grades = await getList<{ name: string }>(request, "CS17 Assignment Grade", {
 		fields: ["name"],
-		filters: { full_name: ["like", `${TEST_FIRST_NAME} %`] },
+		filters: {
+			full_name: ["like", `${TEST_FIRST_NAME} %`],
+			assignment: ["like", `%-${cohort}-%`],
+		},
 		limit: 500,
 	});
 	for (const grade of grades) {
