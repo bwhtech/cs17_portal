@@ -250,7 +250,7 @@ export interface CS17Announcement {
 	publish_on?: string | null;
 }
 
-export const TEST_ANNOUNCEMENT_PREFIX = "E2E Announcement";
+export const TEST_ANNOUNCEMENT_PREFIX = `E2E Announcement ${Date.now()}`;
 
 export async function cleanupTestAnnouncements(request: APIRequestContext): Promise<void> {
 	const announcements = await getList<{ name: string }>(request, "CS17 Announcement", {
