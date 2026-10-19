@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import {
 	CS17Cohort,
 	CS17Profile,
+	TEST_ASSIGNMENT_PREFIX,
 	cleanupTestAssignments,
 	createTestAssignment,
 	createTestCohort,
@@ -37,7 +38,7 @@ test.describe("Assignment students", () => {
 			await createTestAssignment(request, { cohort: cohort.name }),
 			await createTestAssignment(request, {
 				cohort: cohort.name,
-				title: "E2E Assignment Second",
+				title: `${TEST_ASSIGNMENT_PREFIX} Second ${Date.now()}`,
 			}),
 		];
 
