@@ -867,15 +867,30 @@ class TestSubmitFeedback(FrappeTestCase):
 	def tearDown(self):
 		frappe.set_user("Administrator")
 
-	def test_student_feedback_is_saved_with_them_as_owner(self):
+	def test_feedback_does_not_record_the_student(self):
 		frappe.set_user(self.student_user)
 		api.submit_feedback("Food", "Dinner is served cold")
 
 		self.assertTrue(
 			frappe.db.exists(
 				"CS17 Feedback",
-				{"owner": self.student_user, "category": "Food", "description": "Dinner is served cold"},
+				{
+					"owner": "Administrator",
+					"modified_by": "Administrator",
+					"description": "Dinner is served cold",
+				},
 			)
+		)
+
+	def test_feedback_keeps_the_cohort(self):
+		student_user = make_user("student121@cs17test.com")
+		make_profile("Student", make_cohort("C121TEST"), student_user, "Student 121")
+
+		frappe.set_user(student_user)
+		api.submit_feedback("Stay", "Fan is broken")
+
+		self.assertTrue(
+			frappe.db.exists("CS17 Feedback", {"cohort": "C121TEST", "description": "Fan is broken"})
 		)
 
 	def test_faculty_is_refused(self):
