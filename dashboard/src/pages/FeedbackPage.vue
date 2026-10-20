@@ -3,13 +3,9 @@
 
 	<PageBody width="narrow">
 		<form class="space-y-4" @submit.prevent="submitFeedback">
-			<Alert theme="blue" icon="lucide-shield-check">
-				<template #title>
-					<span class="whitespace-normal">
-						Your identity will remain private, and no personal details will be shared.
-					</span>
-				</template>
-			</Alert>
+			<AnnouncementAlert
+				title="Your identity will remain private, and no personal details will be shared."
+			/>
 
 			<FormControl
 				v-model="category"
@@ -43,7 +39,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Alert, Button, FormControl, toast, useCall } from 'frappe-ui'
+import { Button, FormControl, toast, useCall } from 'frappe-ui'
+import AnnouncementAlert from '@/components/announcements/AnnouncementAlert.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import { frappeErrorMessage } from '@/lib/frappeError'
