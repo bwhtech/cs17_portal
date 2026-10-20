@@ -1900,3 +1900,19 @@ def distribute_assignments(assignments: list | str) -> None:
 def open_assignments_to_cohort(assignments: list | str) -> None:
 	for assignment in frappe.parse_json(assignments):
 		set_assignment_students(assignment, [])
+
+
+@frappe.whitelist(methods=["POST"])
+@rate_limit(limit=5, seconds=60 * 60, methods=["POST"], ip_based=False, user_based=True)
+def submit_feedback(category: str, description: str) -> None:
+	cohort = frappe.db.get_value("CS17 Profile", require_current_student(), "cohort")
+	feedback = frappe.get_doc(
+		{"doctype": "CS17 Feedback", "cohort": cohort, "category": category, "description": description}
+	).insert(ignore_permissions=True)
+	# Feedback is anonymous, so the sender must not stay on the record as its owner.
+	frappe.db.set_value(
+		"CS17 Feedback",
+		feedback.name,
+		{"owner": "Administrator", "modified_by": "Administrator"},
+		update_modified=False,
+	)

@@ -88,6 +88,7 @@ import {
 import logoUrl from '@/assets/CS17.svg'
 import { isNavItemActive, navConfig } from '@/components/shell/nav'
 import { useAnnouncements } from '@/composables/useAnnouncements'
+import { useFeedbackDialog } from '@/composables/useFeedbackDialog'
 import { useSession } from '@/composables/useSession'
 import { useSettingsDialog } from '@/composables/useSettingsDialog'
 import { STORAGE_KEYS, readJSON, writeJSON } from '@/lib/storage'
@@ -95,6 +96,7 @@ import { STORAGE_KEYS, readJSON, writeJSON } from '@/lib/storage'
 const route = useRoute()
 const { profile, isFaculty, cohort, logout } = useSession()
 const settings = useSettingsDialog()
+const feedback = useFeedbackDialog()
 const { unread } = useAnnouncements()
 
 const collapsed = ref(readJSON(STORAGE_KEYS.sidebarCollapsed, false))
@@ -111,6 +113,15 @@ const roleLine = computed(() => {
 
 const accountOptions = [
 	{ label: 'Settings', icon: 'lucide-settings', onClick: () => settings.open() },
+	...(isFaculty.value
+		? []
+		: [
+				{
+					label: 'Feedback',
+					icon: 'lucide-message-square-text',
+					onClick: () => feedback.open(),
+				},
+			]),
 	{
 		label: 'Log out',
 		icon: 'lucide-log-out',

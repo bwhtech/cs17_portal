@@ -852,3 +852,47 @@ class TestUpdateMyProfile(FrappeTestCase):
 		self.assertEqual(
 			frappe.db.get_value("CS17 Profile", self.faculty, "profile_picture"), "/files/faculty-110.png"
 		)
+
+
+class TestSubmitFeedback(FrappeTestCase):
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+
+		cls.student_user = make_user("student120@cs17test.com")
+		cls.faculty_user = make_user("faculty120@cs17test.com")
+		make_profile("Student", None, cls.student_user, "Student 120")
+		make_profile("Faculty", None, cls.faculty_user, "Faculty 120")
+
+	def tearDown(self):
+		frappe.set_user("Administrator")
+
+	def test_feedback_does_not_record_the_student(self):
+		frappe.set_user(self.student_user)
+		api.submit_feedback("Food", "Dinner is served cold")
+
+		self.assertTrue(
+			frappe.db.exists(
+				"CS17 Feedback",
+				{
+					"owner": "Administrator",
+					"modified_by": "Administrator",
+					"description": "Dinner is served cold",
+				},
+			)
+		)
+
+	def test_feedback_keeps_the_cohort(self):
+		student_user = make_user("student121@cs17test.com")
+		make_profile("Student", make_cohort("C121TEST"), student_user, "Student 121")
+
+		frappe.set_user(student_user)
+		api.submit_feedback("Stay", "Fan is broken")
+
+		self.assertTrue(
+			frappe.db.exists("CS17 Feedback", {"cohort": "C121TEST", "description": "Fan is broken"})
+		)
+
+	def test_faculty_is_refused(self):
+		frappe.set_user(self.faculty_user)
+		self.assertRaises(frappe.PermissionError, api.submit_feedback, "Stay", "Fan is broken")

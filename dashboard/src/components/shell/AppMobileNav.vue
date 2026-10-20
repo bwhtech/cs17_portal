@@ -64,10 +64,22 @@
 
 			<button
 				class="flex items-center gap-3 rounded-4 px-3 py-2.5 text-left text-base text-ink-gray-8 hover:bg-surface-gray-2"
-				@click="openSettings"
+				@click="openAfterSheet(settings.open)"
 			>
 				<span class="lucide-settings size-4 text-ink-gray-6" aria-hidden="true" />
 				Settings
+			</button>
+
+			<button
+				v-if="!isFaculty"
+				class="flex items-center gap-3 rounded-4 px-3 py-2.5 text-left text-base text-ink-gray-8 hover:bg-surface-gray-2"
+				@click="openAfterSheet(feedback.open)"
+			>
+				<span
+					class="lucide-message-square-text size-4 text-ink-gray-6"
+					aria-hidden="true"
+				/>
+				Feedback
 			</button>
 		</div>
 	</BottomSheet>
@@ -79,6 +91,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { Avatar, Badge, BottomSheet, MobileNav, MobileNavItem } from 'frappe-ui'
 import { isNavItemActive, navConfig, type NavItem } from '@/components/shell/nav'
 import { useAnnouncements } from '@/composables/useAnnouncements'
+import { useFeedbackDialog } from '@/composables/useFeedbackDialog'
 import { useSession } from '@/composables/useSession'
 import { useSettingsDialog } from '@/composables/useSettingsDialog'
 
@@ -100,21 +113,21 @@ const sheetItems = computed<NavItem[]>(() => {
 })
 
 const settings = useSettingsDialog()
+const feedback = useFeedbackDialog()
 
-// The sheet and the settings dialog are both overlays: opening the dialog
-// while the sheet is still dismissing loses it to the same close. So the
-// sheet asks for it on the way out, and opens it once it has left.
-const openSettingsOnClose = ref(false)
+// The sheet and a dialog are both overlays: opening the dialog while the
+// sheet is still dismissing loses it to the same close. So the sheet asks for
+// it on the way out, and opens it once it has left.
+let openOnClose: (() => void) | null = null
 
-function openSettings() {
-	openSettingsOnClose.value = true
+function openAfterSheet(open: () => void) {
+	openOnClose = open
 	sheetOpen.value = false
 }
 
 function onSheetClosed() {
-	if (!openSettingsOnClose.value) return
-	openSettingsOnClose.value = false
-	settings.open()
+	openOnClose?.()
+	openOnClose = null
 }
 
 function run(item: NavItem) {
