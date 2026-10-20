@@ -4,7 +4,7 @@
 from frappe.model.document import Document
 
 
-class CS17Issue(Document):
+class CS17Feedback(Document):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
 

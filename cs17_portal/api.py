@@ -1904,8 +1904,8 @@ def open_assignments_to_cohort(assignments: list | str) -> None:
 
 @frappe.whitelist(methods=["POST"])
 @rate_limit(limit=5, seconds=60 * 60, methods=["POST"], ip_based=False, user_based=True)
-def submit_issue(category: str, description: str) -> None:
+def submit_feedback(category: str, description: str) -> None:
 	require_current_student()
-	frappe.get_doc({"doctype": "CS17 Issue", "category": category, "description": description}).insert(
+	frappe.get_doc({"doctype": "CS17 Feedback", "category": category, "description": description}).insert(
 		ignore_permissions=True
 	)

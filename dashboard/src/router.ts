@@ -40,7 +40,7 @@ const routes: RouteRecordRaw[] = [
 		name: 'Announcements',
 		component: () => import('@/pages/AnnouncementsPage.vue'),
 	},
-	{ path: '/issue', name: 'Issue', component: () => import('@/pages/IssuePage.vue') },
+	{ path: '/feedback', name: 'Feedback', component: () => import('@/pages/FeedbackPage.vue') },
 
 	// Faculty
 	{

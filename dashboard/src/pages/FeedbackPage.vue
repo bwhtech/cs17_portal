@@ -1,8 +1,8 @@
 <template>
-	<AppHeader title="Raise an issue" />
+	<AppHeader title="Share feedback" />
 
 	<PageBody width="narrow">
-		<form class="space-y-4" @submit.prevent="submitIssue">
+		<form class="space-y-4" @submit.prevent="submitFeedback">
 			<Alert theme="blue" icon="lucide-shield-check">
 				<template #title>
 					<span class="whitespace-normal">
@@ -25,7 +25,7 @@
 				v-model="description"
 				type="textarea"
 				label="Description"
-				placeholder="Describe the issue"
+				placeholder="Write your feedback"
 				:rows="6"
 				required
 			/>
@@ -53,18 +53,18 @@ const category = ref('')
 const description = ref('')
 
 const submitCall = useCall<null, { category: string; description: string }>({
-	url: '/api/v2/method/cs17_portal.api.submit_issue',
+	url: '/api/v2/method/cs17_portal.api.submit_feedback',
 	method: 'POST',
 	immediate: false,
 })
 
-async function submitIssue() {
+async function submitFeedback() {
 	await trySubmit(submitCall, { category: category.value, description: description.value })
 	if (submitCall.error) {
-		toast.error(frappeErrorMessage(submitCall.error, 'Could not submit the issue.'))
+		toast.error(frappeErrorMessage(submitCall.error, 'Could not send your feedback.'))
 		return
 	}
-	toast.success('Issue submitted')
+	toast.success('Feedback sent')
 	category.value = ''
 	description.value = ''
 }
