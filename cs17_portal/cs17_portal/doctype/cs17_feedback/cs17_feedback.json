@@ -1,10 +1,11 @@
 {
  "actions": [],
  "autoname": "FEEDBACK-.###",
- "creation": "2026-10-19 12:00:00.000000",
+ "creation": "2026-10-19 12:00:00",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "cohort",
   "category",
   "description"
  ],
@@ -21,17 +22,25 @@
   {
    "fieldname": "description",
    "fieldtype": "Small Text",
-   "in_list_view": 1,
    "label": "Description",
    "reqd": 1
+  },
+  {
+   "fieldname": "cohort",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Cohort",
+   "options": "CS17 Cohort",
+   "read_only": 1
   }
  ],
  "links": [],
- "modified": "2026-10-20 10:00:00.000000",
+ "modified": "2026-10-20 11:29:42.504782",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Feedback",
- "naming_rule": "Expression (old style)",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {

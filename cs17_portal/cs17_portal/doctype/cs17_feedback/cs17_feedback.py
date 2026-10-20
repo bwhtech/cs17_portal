@@ -14,6 +14,7 @@ class CS17Feedback(Document):
 		from frappe.types import DF
 
 		category: DF.Literal["Food", "Stay", "Other"]
+		cohort: DF.Link | None
 		description: DF.SmallText
 	# end: auto-generated types
 

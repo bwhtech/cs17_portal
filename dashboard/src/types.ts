@@ -284,6 +284,8 @@ export type GradeLetter = (typeof GRADE_SCALE)[number]
 export const ALERT_VARIANTS = ['info', 'warning', 'error'] as const
 export type AlertVariant = (typeof ALERT_VARIANTS)[number]
 
+export const FEEDBACK_CATEGORIES = ['Food', 'Stay', 'Other'] as const
+
 /** The publishing choice shared by the assignment and announcement forms. */
 export type PublishMode = 'draft' | 'now' | 'schedule'
 
