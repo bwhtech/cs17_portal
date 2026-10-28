@@ -230,6 +230,19 @@ export interface CohortSubmission {
 	marks_obtained: number | null
 	grade: string | null
 	graded: boolean
+	/** Only from `get_submission`. */
+	can_check_with_ai?: boolean
+}
+
+export interface AISettings {
+	model: string | null
+	has_api_key: boolean
+}
+
+export interface AIGradeDraft {
+	marks_obtained: number | null
+	grade: string | null
+	remarks: string
 }
 
 /** One row of `get_faculty_members`. */

@@ -58,6 +58,15 @@
 		/>
 
 		<Button
+			v-if="canCheckWithAi"
+			class="col-span-2 w-full md:w-auto"
+			icon-left="lucide-sparkles"
+			label="Check with AI"
+			:loading="aiCheck.loading"
+			@click="checkWithAi"
+		/>
+
+		<Button
 			class="col-span-2 w-full md:w-auto"
 			variant="solid"
 			theme="gray"
@@ -76,7 +85,7 @@ import { useLoadFailed } from '@/composables/useLoadFailed'
 import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
 import { gradeForMarks } from '@/lib/grades'
 import { trySubmit } from '@/lib/trySubmit'
-import { GRADE_SCALE, type EvaluationType, type GradeBand } from '@/types'
+import { GRADE_SCALE, type AIGradeDraft, type EvaluationType, type GradeBand } from '@/types'
 
 interface SubmissionGrade {
 	name: string
@@ -91,6 +100,7 @@ const props = defineProps<{
 	maxMarks: number
 	evaluationType: EvaluationType
 	suggestedMarks?: number | null
+	canCheckWithAi?: boolean
 }>()
 
 const emit = defineEmits<{ saved: [] }>()
@@ -215,5 +225,27 @@ async function save() {
 	graded.value = true
 	toast.success('Grade saved.')
 	emit('saved')
+}
+
+const aiCheck = useCall<AIGradeDraft, { submission: string }>({
+	url: '/api/v2/method/cs17_portal.api.check_submission',
+	method: 'POST',
+	immediate: false,
+})
+
+async function checkWithAi() {
+	await trySubmit(aiCheck, { submission: props.submission })
+	if (aiCheck.error || !aiCheck.data) {
+		toast.error(frappeErrorMessage(aiCheck.error, 'Could not check with AI.'))
+		return
+	}
+	const draft = aiCheck.data
+	if (draft.marks_obtained != null) marks.value = String(draft.marks_obtained)
+	if (draft.grade && GRADE_SCALE.some((letter) => letter === draft.grade)) {
+		gradeLetter.value = draft.grade
+	}
+	if (draft.remarks) remarks.value = draft.remarks
+	marksError.value = ''
+	toast.success('AI draft filled in. Review it, then save.')
 }
 </script>

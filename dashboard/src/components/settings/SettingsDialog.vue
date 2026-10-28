@@ -22,6 +22,15 @@
 					</template>
 					Preferences
 				</SettingsNavItem>
+				<SettingsNavItem v-if="canEditAISettings" value="ai">
+					<template #prefix>
+						<span
+							class="lucide-sparkles size-4 shrink-0 text-ink-gray-6"
+							aria-hidden="true"
+						/>
+					</template>
+					AI check
+				</SettingsNavItem>
 			</SettingsNavGroup>
 		</SettingsSidebar>
 		<SettingsContent>
@@ -31,6 +40,9 @@
 			<SettingsPanel value="preferences">
 				<PreferencesSettings />
 			</SettingsPanel>
+			<SettingsPanel v-if="canEditAISettings" value="ai">
+				<AISettings />
+			</SettingsPanel>
 		</SettingsContent>
 	</SettingsDialog>
 
@@ -38,12 +50,13 @@
 		<div class="space-y-11">
 			<ProfileSettings />
 			<PreferencesSettings />
+			<AISettings v-if="canEditAISettings" />
 		</div>
 	</Dialog>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import {
 	Avatar,
 	Dialog,
@@ -53,16 +66,33 @@ import {
 	SettingsNavItem,
 	SettingsPanel,
 	SettingsSidebar,
+	useCall,
 } from 'frappe-ui'
+import AISettings from '@/components/settings/AISettings.vue'
 import PreferencesSettings from '@/components/settings/PreferencesSettings.vue'
 import ProfileSettings from '@/components/settings/ProfileSettings.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useSession } from '@/composables/useSession'
 import { useSettingsDialog } from '@/composables/useSettingsDialog'
 
-const { profile } = useSession()
+const { profile, isFaculty } = useSession()
 const { isOpen } = useSettingsDialog()
 const { isDesktop } = useBreakpoint()
+
+const aiSettingsAccess = useCall<
+	{ has_permission: boolean },
+	{ doctype: string; docname: string; perm_type: string }
+>({
+	url: '/api/v2/method/frappe.client.has_permission',
+	method: 'GET',
+	params: { doctype: 'CS17 AI Settings', docname: 'CS17 AI Settings', perm_type: 'write' },
+	immediate: false,
+})
+const canEditAISettings = computed(() => aiSettingsAccess.data?.has_permission === true)
+
+watch(isOpen, (open) => {
+	if (open && isFaculty.value && !aiSettingsAccess.data) aiSettingsAccess.fetch()
+})
 
 const tab = ref<string | number | undefined>('profile')
 </script>
