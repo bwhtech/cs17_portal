@@ -241,9 +241,7 @@ async function checkWithAi() {
 	}
 	const draft = aiCheck.data
 	if (draft.marks_obtained != null) marks.value = String(draft.marks_obtained)
-	if (draft.grade && GRADE_SCALE.some((letter) => letter === draft.grade)) {
-		gradeLetter.value = draft.grade
-	}
+	if (draft.grade) gradeLetter.value = draft.grade
 	if (draft.remarks) remarks.value = draft.remarks
 	marksError.value = ''
 	toast.success('AI draft filled in. Review it, then save.')
