@@ -1927,6 +1927,71 @@ def distribute_assignments(assignments: list | str) -> None:
 		set_assignment_students(assignment, students[index :: len(assignments)])
 
 
+def _handed_out_students(assignments: list) -> dict:
+	given = {assignment: [] for assignment in assignments}
+	for row in frappe.get_all(
+		"CS17 Assignment Student",
+		filters={"parent": ["in", assignments], "parenttype": "CS17 Assignment"},
+		fields=["parent", "student"],
+		order_by="idx asc",
+	):
+		given[row.parent].append(row.student)
+	return {assignment: students for assignment, students in given.items() if students}
+
+
+@frappe.whitelist(methods=["GET"])
+def get_finished_students(assignments: list | str) -> list:
+	assignments = frappe.parse_json(assignments)
+	for assignment in assignments:
+		require_faculty_for_assignment(assignment)
+	given = _handed_out_students(assignments)
+	submitted = {
+		(row.assignment, row.student)
+		for row in frappe.get_all(
+			ASSIGNMENT_SUBMISSION,
+			filters={"assignment": ["in", list(given)]},
+			fields=["assignment", "student"],
+		)
+	}
+	finished = [
+		student
+		for student in {student for students in given.values() for student in students}
+		if all((assignment, student) in submitted for assignment in given if student in given[assignment])
+		and any(student not in given[assignment] for assignment in given)
+	]
+	return frappe.get_all(
+		"CS17 Profile",
+		filters={"name": ["in", finished]},
+		fields=["name as student", "full_name"],
+		order_by="full_name asc",
+	)
+
+
+@frappe.whitelist(methods=["POST"])
+def distribute_next_assignments(assignments: list | str, students: list | str) -> None:
+	assignments = frappe.parse_json(assignments)
+	for assignment in assignments:
+		require_faculty_for_assignment(assignment)
+	given = _handed_out_students(assignments)
+	updated = set()
+	students = frappe.parse_json(students)
+	random.shuffle(students)
+	for student in students:
+		left = [assignment for assignment in given if student not in given[assignment]]
+		if not left:
+			frappe.throw(
+				_("{0} already has every one of these assignments.").format(
+					frappe.db.get_value("CS17 Profile", student, "full_name")
+				)
+			)
+		random.shuffle(left)
+		assignment = min(left, key=lambda name: len(given[name]))
+		given[assignment].append(student)
+		updated.add(assignment)
+	for assignment in updated:
+		set_assignment_students(assignment, given[assignment])
+
+
 @frappe.whitelist(methods=["POST"])
 def open_assignments_to_cohort(assignments: list | str) -> None:
 	for assignment in frappe.parse_json(assignments):
