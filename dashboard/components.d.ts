@@ -61,6 +61,7 @@ declare module 'vue' {
     PythonSubmissionView: typeof import('./src/components/grading/PythonSubmissionView.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    RowDragPreview: typeof import('./src/components/common/RowDragPreview.vue')['default']
     RowTitle: typeof import('./src/components/common/RowTitle.vue')['default']
     RunPanel: typeof import('./src/components/python/RunPanel.vue')['default']
     ScratchFrame: typeof import('./src/components/scratch/ScratchFrame.vue')['default']
