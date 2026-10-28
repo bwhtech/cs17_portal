@@ -165,6 +165,9 @@ class TestAISettings(FrappeTestCase):
 
 		self.assertEqual(frappe.get_doc("CS17 AI Settings").get_password("api_key"), "sk-first")
 
+	def test_save_ai_settings_refuses_a_model_without_a_provider(self):
+		self.assertRaises(frappe.ValidationError, api.save_ai_settings, ":free", "sk-first")
+
 	def test_get_ai_settings_says_a_key_is_stored_without_returning_it(self):
 		api.save_ai_settings("openai/gpt-5", "sk-first")
 
