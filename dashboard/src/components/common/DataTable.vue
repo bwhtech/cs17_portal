@@ -1,5 +1,5 @@
 <template>
-	<div ref="root">
+	<div ref="root" @click.capture="swallowClickAfterDrop">
 		<EmptyState v-if="!loading && !rows.length" :title="empty" />
 
 		<!-- Desktop, when the columns fit: a frappe-ui List in column mode per group. -->
@@ -12,7 +12,15 @@
 			<section
 				v-for="(group, index) in groups"
 				:key="group.label"
-				:class="groupBy && 'rounded-4 border border-outline-gray-1 bg-surface-base'"
+				:ref="(el) => setGroupElement(group.label, el)"
+				:class="
+					groupBy && [
+						'rounded-4 border transition-colors',
+						over === group.label
+							? 'border-outline-gray-3 bg-surface-gray-1'
+							: 'border-outline-gray-1 bg-surface-base',
+					]
+				"
 				:aria-labelledby="group.label ? `${groupId}-${index}-label` : undefined"
 			>
 				<GroupHeader
@@ -77,7 +85,15 @@
 							:items="group.selectableRows"
 							:row-key="listRowKey"
 						>
-							<ListRow :value="rowKey(item)" @click="onRowClick?.(item)">
+							<ListRow
+								:value="rowKey(item)"
+								:class="
+									onRowDrop && ['cursor-grab', isDragging(item) && 'opacity-40']
+								"
+								@click="onRowClick?.(item)"
+								@pointerdown="onRowDrop && press($event, item)"
+								@dragstart="onRowDrop && $event.preventDefault()"
+							>
 								<ListCell
 									v-for="column in columns"
 									:key="column.header"
@@ -98,7 +114,12 @@
 							<ListRow
 								v-for="row in group.plainRows"
 								:key="rowKey(row)"
+								:class="
+									onRowDrop && ['cursor-grab', isDragging(row) && 'opacity-40']
+								"
 								@click="onRowClick?.(row)"
+								@pointerdown="onRowDrop && press($event, row)"
+								@dragstart="onRowDrop && $event.preventDefault()"
 							>
 								<ListCell
 									v-for="column in columns"
@@ -144,6 +165,9 @@
 			<section
 				v-for="(group, index) in groups"
 				:key="group.label"
+				:ref="(el) => setGroupElement(group.label, el)"
+				class="rounded-4 transition-colors"
+				:class="over === group.label && 'bg-surface-gray-2'"
 				:aria-labelledby="group.label ? `${groupId}-${index}-label` : undefined"
 			>
 				<GroupHeader
@@ -166,7 +190,10 @@
 						v-for="row in group.rows"
 						:key="rowKey(row)"
 						class="space-y-2 rounded-4 border border-outline-gray-1 p-4"
+						:class="onRowDrop && ['select-none', isDragging(row) && 'opacity-40']"
 						@click="onRowClick?.(row)"
+						@pointerdown="onRowDrop && press($event, row)"
+						@dragstart="onRowDrop && $event.preventDefault()"
 					>
 						<div class="flex items-start gap-2">
 							<Checkbox
@@ -214,16 +241,37 @@
 				</div>
 			</section>
 		</div>
+
+		<RowDragPreview
+			v-if="dragging"
+			:count="dragging.length"
+			:start="start"
+			:offset="offset"
+			:width="previewWidth"
+		>
+			<div class="flex items-start gap-2 text-base">
+				<slot v-if="avatarColumn" :name="`cell-${avatarColumn.key}`" :row="dragging[0]" />
+				<div class="min-w-0 flex-1">
+					<slot
+						v-if="primaryColumn"
+						:name="`cell-${primaryColumn.key}`"
+						:row="dragging[0]"
+					/>
+				</div>
+			</div>
+		</RowDragPreview>
 	</div>
 </template>
 
 <script setup lang="ts" generic="T">
-import { computed, onBeforeUnmount, onMounted, ref, useId } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, useId, type ComponentPublicInstance } from 'vue'
 import { Checkbox, Skeleton } from 'frappe-ui'
 import EmptyState from '@/components/common/EmptyState.vue'
 import GroupHeader from '@/components/common/GroupHeader.vue'
+import RowDragPreview from '@/components/common/RowDragPreview.vue'
 import { List, ListCell, ListHeader, ListHeaderCell, ListRow, ListRows } from 'frappe-ui/list'
 import { useBreakpoint } from '@/composables/useBreakpoint'
+import { useRowDrag } from '@/composables/useRowDrag'
 
 export interface Column {
 	/** Column heading, and the label of the field row on mobile. */
@@ -261,6 +309,7 @@ const props = withDefaults(
 		/** Taller rows for a two-line primary cell; 44 is the dense default. */
 		rowHeight?: number
 		groupBy?: (row: T) => string
+		onRowDrop?: (rows: T[], group: string) => void
 	}>(),
 	{
 		empty: 'Nothing here yet.',
@@ -359,6 +408,34 @@ function toggleGroup(label: string) {
 		? collapsedGroups.value.filter((collapsed) => collapsed !== label)
 		: [...collapsedGroups.value, label]
 }
+
+const groupElements: Record<string, HTMLElement | null> = {}
+
+function setGroupElement(label: string, el: Element | ComponentPublicInstance | null) {
+	groupElements[label] = el as HTMLElement | null
+}
+
+const {
+	dragging,
+	over,
+	start,
+	offset,
+	width: previewWidth,
+	isDragging,
+	press,
+	swallowClickAfterDrop,
+} = useRowDrag<T>({
+	groups: () => groupElements,
+	groupOf: (row) => props.groupBy?.(row) ?? '',
+	pick: (row) =>
+		props.selection.length > 1 && props.selection.includes(props.rowKey(row))
+			? props.rows.filter((selected) => props.selection.includes(props.rowKey(selected)))
+			: [row],
+	onDrop: (rows, group) => {
+		if (rows.length > 1) emit('update:selection', [])
+		props.onRowDrop?.(rows, group)
+	},
+})
 
 const allSelected = computed(
 	() => selectableRows.value.length > 0 && props.selection.length === selectableRows.value.length,

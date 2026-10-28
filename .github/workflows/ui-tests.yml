@@ -112,6 +112,7 @@ jobs:
         working-directory: /home/runner/frappe-bench
         run: |
           bench --site test_site set-config developer_mode 1
+          bench --site test_site set-config max_queued_jobs 5000
           bench serve --port 8000 > /tmp/bench.log 2>&1 &
           echo "Waiting for bench to start..."
           npx wait-on http://test_site:8000 --timeout 60000

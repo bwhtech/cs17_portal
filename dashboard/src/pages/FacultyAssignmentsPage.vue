@@ -56,7 +56,8 @@
 			:loading="assignmentsCall.loading && !assignmentsCall.data"
 			:row-height="60"
 			v-model:collapsed-groups="collapsedTopics"
-			:group-by="(row: AssignmentRow) => row.topic || 'No topic'"
+			:group-by="(row: AssignmentRow) => row.topic || NO_TOPIC"
+			:on-row-drop="moveToTopic"
 			selectable
 			empty="No assignments yet."
 		>
@@ -164,7 +165,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Badge, Button, Select, useCall } from 'frappe-ui'
+import { Badge, Button, Select, toast, useCall } from 'frappe-ui'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
@@ -178,7 +179,9 @@ import PageBody from '@/components/common/PageBody.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { formatDateTime } from '@/lib/dates'
+import { frappeErrorMessage } from '@/lib/frappeError'
 import { STORAGE_KEYS, readJSON, writeJSON } from '@/lib/storage'
+import { trySubmit } from '@/lib/trySubmit'
 import type { CS17Assignment } from '@/types'
 
 /** A row plus the badge ladder, resolved once instead of three times in the cell. */
@@ -190,6 +193,7 @@ interface AssignmentRow extends CS17Assignment {
 }
 
 const ALL_COHORTS = 'all'
+const NO_TOPIC = 'No topic'
 
 const columns: Column[] = [
 	{ header: '', key: 'icon', variant: 'avatar', width: '2.75rem' },
@@ -230,6 +234,12 @@ const assignmentsCall = useCall<CS17Assignment[], { cohort?: string }>({
 
 const failed = useLoadFailed(assignmentsCall)
 
+const moveCall = useCall<null, { assignments: string[]; topic: string }>({
+	url: '/api/v2/method/cs17_portal.api.move_assignments_to_topic',
+	method: 'POST',
+	immediate: false,
+})
+
 const cohorts = computed(() => cohortsCall.data ?? [])
 
 const quarters = computed(() => quartersCall.data ?? [])
@@ -239,8 +249,14 @@ const cohortFilterOptions = computed(() => [
 	...cohorts.value.map((cohort) => ({ label: cohort, value: cohort })),
 ])
 
+const movedTopics = ref<Record<string, string>>({})
+
 const rows = computed<AssignmentRow[]>(() =>
-	(assignmentsCall.data ?? []).map((assignment) => ({ ...assignment, ...status(assignment) })),
+	(assignmentsCall.data ?? []).map((assignment) => ({
+		...assignment,
+		topic: movedTopics.value[assignment.name] ?? assignment.topic,
+		...status(assignment),
+	})),
 )
 
 watch(rows, () => {
@@ -268,6 +284,21 @@ function onDeleteOpen(open: boolean) {
 function onBulkDone() {
 	selection.value = []
 	assignmentsCall.reload()
+}
+
+async function moveToTopic(moved: AssignmentRow[], group: string) {
+	const topic = group === NO_TOPIC ? '' : group
+	const names = moved.map((row) => row.name)
+	for (const name of names) movedTopics.value[name] = topic
+	await trySubmit(moveCall, { assignments: names, topic })
+	const label = `${names.length} ${names.length === 1 ? 'assignment' : 'assignments'}`
+	if (moveCall.error) {
+		toast.error(frappeErrorMessage(moveCall.error, `Could not move to ${group}.`))
+	} else {
+		toast.success(topic ? `Moved ${label} to ${topic}.` : `Removed the topic from ${label}.`)
+	}
+	await assignmentsCall.reload()
+	for (const name of names) delete movedTopics.value[name]
 }
 
 function status(assignment: CS17Assignment) {
