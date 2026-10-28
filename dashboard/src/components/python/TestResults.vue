@@ -61,7 +61,7 @@ const allPassed = computed(
 function verdict(run: TestRun): string {
 	if (run.passed) return 'Passed'
 	if (run.result.status === 'timed-out') return 'Timed out'
-	if (run.result.status === 'unavailable') return 'Not run'
+	if (run.result.status === 'unavailable' || run.result.status === 'loading') return 'Not run'
 	return run.result.error ? 'Error' : 'Wrong output'
 }
 
@@ -75,6 +75,7 @@ function output(result: RunResult): { text: string; isError: boolean } {
 	if (result.status === 'timed-out') {
 		return { text: `Stopped after ${result.timeoutMs / 1000} seconds.`, isError: true }
 	}
+	if (result.status === 'loading') return { text: 'Python is still downloading.', isError: false }
 	return { text: 'Could not start Python.', isError: true }
 }
 </script>

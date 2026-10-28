@@ -13,6 +13,7 @@ export interface ProgramOutput {
 export type RunResult =
 	| ({ status: 'finished' } & ProgramOutput)
 	| { status: 'timed-out'; timeoutMs: number }
+	| { status: 'loading' }
 	| { status: 'unavailable' }
 
 type SandboxMessage =
@@ -32,10 +33,12 @@ export class PythonRunner {
 	}
 
 	async run(code: string, stdin = ''): Promise<RunResult> {
-		if (!(await this.start())) {
-			this.stop()
-			return { status: 'unavailable' }
-		}
+		const started = await Promise.race([
+			this.start(),
+			new Promise<null>((resolve) => setTimeout(() => resolve(null), START_TIMEOUT_MS)),
+		])
+		if (started === null) return { status: 'loading' }
+		if (!started) return { status: 'unavailable' }
 		const id = ++this.lastId
 		return new Promise((resolve) => {
 			const timer = setTimeout(() => {
@@ -55,11 +58,10 @@ export class PythonRunner {
 		window.removeEventListener('message', this.onMessage)
 	}
 
-	private start(): Promise<boolean> {
+	start(): Promise<boolean> {
 		if (this.started) return this.started
 		this.started = new Promise((resolve) => {
 			this.markStarted = resolve
-			setTimeout(() => resolve(false), START_TIMEOUT_MS)
 		})
 		this.frame = document.createElement('iframe')
 		this.frame.sandbox.add('allow-scripts')
@@ -84,12 +86,14 @@ export class PythonRunner {
 			this.pending.delete(data.id)
 		} else {
 			this.markStarted?.(data.type === 'ready')
+			if (data.type === 'failed') this.stop()
 		}
 	}
 }
 
 export function usePythonRunner(): PythonRunner {
 	const runner = new PythonRunner()
+	runner.start()
 	onBeforeUnmount(() => runner.dispose())
 	return runner
 }
