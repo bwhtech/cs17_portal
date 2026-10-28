@@ -37,6 +37,10 @@ class TestCheckSubmission(FrappeTestCase):
 		cls.marks_assignment = make_assignment(cohort, "Python Task 180", "Python", 20)
 		frappe.db.set_value("CS17 Assignment", cls.marks_assignment, "remarks", "Marks")
 		cls.submission = make_submission(cls.marks_assignment, student, "Student 180", "Python Task 180")
+		other_student = make_profile("Student", cohort, make_user("student181@cs17test.com"), "Student 181")
+		cls.other_submission = make_submission(
+			cls.marks_assignment, other_student, "Student 181", "Python Task 180"
+		)
 
 		grade_assignment = make_assignment(cohort, "Python Task 181", "Python", 20)
 		frappe.db.set_value("CS17 Assignment", grade_assignment, "remarks", "Grade")
@@ -108,6 +112,38 @@ class TestCheckSubmission(FrappeTestCase):
 			self.assertRaisesRegex(
 				frappe.ValidationError, "^The AI model is busy", api.check_submission, self.submission
 			)
+
+	def test_check_submissions_queues_a_job_for_each_ungraded_submission_only(self):
+		grade = api.grade_submission(self.other_submission, marks_obtained=10)["name"]
+		self.addCleanup(frappe.delete_doc, "CS17 Assignment Grade", grade, ignore_permissions=True)
+
+		with patch("frappe.enqueue") as enqueue:
+			counts = api.check_submissions([self.submission, self.other_submission])
+
+		self.assertEqual(counts, {"queued": 1, "skipped": 1})
+		self.assertEqual([call.kwargs["submission"] for call in enqueue.call_args_list], [self.submission])
+
+	def test_save_ai_grade_draft_saves_an_unpublished_grade(self):
+		with patch("litellm.completion", return_value=ai_reply('{"marks_obtained": 15, "remarks": "Good"}')):
+			api.save_ai_grade_draft(self.submission)
+
+		grade = frappe.db.get_value(
+			"CS17 Assignment Grade",
+			{"submission": self.submission},
+			["name", "marks_obtained", "is_published", "published_on"],
+			as_dict=True,
+		)
+		self.addCleanup(frappe.delete_doc, "CS17 Assignment Grade", grade.name, ignore_permissions=True)
+		self.assertEqual((grade.marks_obtained, grade.is_published, grade.published_on), (15, 0, None))
+
+	def test_save_ai_grade_draft_keeps_an_existing_grade(self):
+		grade = api.grade_submission(self.other_submission, marks_obtained=10)["name"]
+		self.addCleanup(frappe.delete_doc, "CS17 Assignment Grade", grade, ignore_permissions=True)
+
+		with patch("litellm.completion", return_value=ai_reply('{"marks_obtained": 15, "remarks": "Good"}')):
+			api.save_ai_grade_draft(self.other_submission)
+
+		self.assertEqual(frappe.db.get_value("CS17 Assignment Grade", grade, "marks_obtained"), 10)
 
 
 class TestAISettings(FrappeTestCase):
