@@ -132,10 +132,10 @@ jobs:
         run: npm install
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium firefox webkit
+        run: npx playwright install --with-deps ${{ github.event_name == 'pull_request' && 'chromium' || 'chromium firefox webkit' }}
 
       - name: Run Playwright tests
-        run: npm run test:e2e -- --shard=${{ matrix.shard }}/2
+        run: npm run test:e2e -- --shard=${{ matrix.shard }}/2 ${{ github.event_name == 'pull_request' && '--project=chromium --project=chromium-student --project=chromium-faculty' || '' }}
         env:
           SITE_HOST: test_site.localhost:8000
           API_BASE: http://127.0.0.1:8000
