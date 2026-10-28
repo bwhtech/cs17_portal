@@ -42,6 +42,7 @@ class CS17Assignment(Document):
 		test_cases: DF.Table[CS17PythonTestCase]
 		time_limit: DF.Int
 		title: DF.Data
+		topic: DF.Link | None
 		watch_tab_switches: DF.Check
 	# end: auto-generated types
 

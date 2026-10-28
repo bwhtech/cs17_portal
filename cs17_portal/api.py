@@ -112,8 +112,9 @@ def get_faculty_assignments(cohort: str | None = None) -> list:
 			"due_date",
 			"is_published",
 			"publish_on",
+			"topic",
 		],
-		order_by="creation desc",
+		order_by="due_date desc, creation desc",
 	)
 	now = now_datetime()
 	for assignment in assignments:
@@ -172,6 +173,7 @@ def create_assignment(
 	watch_tab_switches: int | None = None,
 	time_limit: int | None = None,
 	attempts_allowed: int | None = None,
+	topic: str | None = None,
 ) -> str:
 	faculty = get_current_faculty()
 	if faculty.cohort and faculty.cohort != cohort:
@@ -193,6 +195,7 @@ def create_assignment(
 		watch_tab_switches,
 		time_limit,
 		attempts_allowed,
+		topic=topic,
 	)
 	assignment.naming_series = _naming_series(assignment_type)
 	_apply_publish_state(assignment, publish, publish_on)
@@ -1100,6 +1103,7 @@ def get_student_assignments() -> dict:
 			"show_answers",
 			"time_limit",
 			"attempts_allowed",
+			"topic",
 		],
 		order_by="due_date desc",
 	)
@@ -1419,6 +1423,7 @@ def update_assignment(
 	time_limit: int | None = None,
 	attempts_allowed: int | None = None,
 	modified: str | None = None,
+	topic: str | None = None,
 ) -> str:
 	require_faculty_for_assignment(assignment)
 	faculty = get_current_faculty()
@@ -1447,6 +1452,7 @@ def update_assignment(
 		watch_tab_switches,
 		time_limit,
 		attempts_allowed,
+		topic=topic,
 	)
 	if publish is not None:
 		_apply_publish_state(doc, publish, publish_on)
@@ -1472,6 +1478,7 @@ def _set_assignment_fields(
 	watch_tab_switches: int | None = None,
 	time_limit: int | None = None,
 	attempts_allowed: int | None = None,
+	topic: str | None = None,
 ) -> None:
 	doc.update(
 		{
@@ -1485,6 +1492,8 @@ def _set_assignment_fields(
 	)
 	if quarter is not None:
 		doc.quarter = quarter
+	if topic is not None:
+		doc.topic = topic
 	if starter_code is not None:
 		doc.starter_code = starter_code
 	if watch_tab_switches is not None:
@@ -1533,6 +1542,7 @@ def get_assignment(assignment: str) -> dict | None:
 			"watch_tab_switches",
 			"time_limit",
 			"attempts_allowed",
+			"topic",
 			"modified",
 		],
 		as_dict=True,
@@ -1672,6 +1682,21 @@ def get_cohorts() -> list:
 def get_quarters() -> list:
 	get_current_faculty()
 	return frappe.get_all("CS17 Quarter", pluck="name", order_by="name asc")
+
+
+@frappe.whitelist(methods=["GET"])
+def get_topics() -> list:
+	get_current_faculty()
+	return frappe.get_all("CS17 Topic", pluck="name", order_by="name asc")
+
+
+@frappe.whitelist(methods=["POST"])
+def create_topic(topic_name: str) -> str:
+	get_current_faculty()
+	topic = frappe.new_doc("CS17 Topic")
+	topic.topic_name = topic_name
+	topic.insert(ignore_permissions=True)
+	return topic.name
 
 
 @frappe.whitelist(methods=["GET"])
@@ -1900,6 +1925,16 @@ def distribute_assignments(assignments: list | str) -> None:
 def open_assignments_to_cohort(assignments: list | str) -> None:
 	for assignment in frappe.parse_json(assignments):
 		set_assignment_students(assignment, [])
+
+
+@frappe.whitelist(methods=["POST"])
+def move_assignments_to_topic(assignments: list | str, topic: str | None = None) -> None:
+	assignments = frappe.parse_json(assignments)
+	for assignment in assignments:
+		require_faculty_for_assignment(assignment)
+	if topic and not frappe.db.exists("CS17 Topic", topic):
+		frappe.throw(_("Topic {0} not found").format(topic), frappe.DoesNotExistError)
+	frappe.db.set_value("CS17 Assignment", {"name": ["in", assignments]}, "topic", topic or None)
 
 
 @frappe.whitelist(methods=["POST"])
