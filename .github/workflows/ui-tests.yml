@@ -99,23 +99,23 @@ jobs:
         run: |
           bench get-app cs17_portal $GITHUB_WORKSPACE
           bench setup requirements --dev
-          bench new-site --db-root-password root --admin-password admin test_site
-          bench --site test_site install-app cs17_portal
+          bench new-site --db-root-password root --admin-password admin test_site.localhost
+          bench --site test_site.localhost install-app cs17_portal
           bench build
         env:
           CI: "Yes"
 
       - name: Add site to hosts
-        run: echo "127.0.0.1 test_site" | sudo tee -a /etc/hosts
+        run: echo "127.0.0.1 test_site.localhost" | sudo tee -a /etc/hosts
 
       - name: Start Bench
         working-directory: /home/runner/frappe-bench
         run: |
-          bench --site test_site set-config developer_mode 1
-          bench --site test_site set-config max_queued_jobs 5000
+          bench --site test_site.localhost set-config developer_mode 1
+          bench --site test_site.localhost set-config max_queued_jobs 5000
           bench serve --port 8000 > /tmp/bench.log 2>&1 &
           echo "Waiting for bench to start..."
-          npx wait-on http://test_site:8000 --timeout 60000
+          npx wait-on http://test_site.localhost:8000 --timeout 60000
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
@@ -134,9 +134,9 @@ jobs:
       - name: Run Playwright tests
         run: npm run test:e2e
         env:
-          SITE_HOST: test_site:8000
+          SITE_HOST: test_site.localhost:8000
           API_BASE: http://127.0.0.1:8000
-          BASE_URL: http://test_site:8000
+          BASE_URL: http://test_site.localhost:8000
           FRAPPE_USER: Administrator
           FRAPPE_PASSWORD: admin
 
