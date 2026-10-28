@@ -1,0 +1,46 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "creation": "2026-10-28 23:00:43.720534",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "model",
+  "api_key"
+ ],
+ "fields": [
+  {
+   "description": "As provider/model, for example anthropic/claude-sonnet-5-5 or gemini/gemini-3.5-flash.",
+   "fieldname": "model",
+   "fieldtype": "Data",
+   "label": "Model"
+  },
+  {
+   "fieldname": "api_key",
+   "fieldtype": "Password",
+   "label": "API Key"
+  }
+ ],
+ "grid_page_length": 50,
+ "issingle": 1,
+ "link_display_mode": "Search",
+ "links": [],
+ "modified": "2026-10-29 00:19:52.763996",
+ "modified_by": "Administrator",
+ "module": "CS17 Portal",
+ "name": "CS17 AI Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

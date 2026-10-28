@@ -46,6 +46,8 @@ export interface CS17Assignment {
 	modified?: string
 	/** Only on the faculty list. */
 	submission_count?: number
+	/** Only from `get_assignment_submissions`. */
+	can_check_with_ai?: boolean
 	starter_code?: string | null
 	test_cases?: PythonTestCase[]
 	sample_tests?: PythonTestCase[]
@@ -230,6 +232,19 @@ export interface CohortSubmission {
 	marks_obtained: number | null
 	grade: string | null
 	graded: boolean
+	/** Only from `get_submission`. */
+	can_check_with_ai?: boolean
+}
+
+export interface AISettings {
+	model: string | null
+	has_api_key: boolean
+}
+
+export interface AIGradeDraft {
+	marks_obtained: number | null
+	grade: string | null
+	remarks: string
 }
 
 /** One row of `get_faculty_members`. */
