@@ -6,7 +6,18 @@
 		:loading="loading"
 		:row-height="60"
 		:empty="cohort ? 'No assignments yet.' : 'You are not in a cohort yet.'"
+		v-model:collapsed-groups="collapsedTopics"
+		:group-by="grouped ? (row: CS17Assignment) => row.topic || 'Other' : undefined"
 	>
+		<template #group-suffix="{ rows }">
+			<Badge
+				v-if="pendingCount(rows)"
+				:label="`${pendingCount(rows)} pending`"
+				:theme="assignmentStatusTheme('Pending')"
+				variant="subtle"
+			/>
+		</template>
+
 		<template #cell-icon="{ row }">
 			<SubmissionTypeIcon :submission-type="row.submission_type" />
 		</template>
@@ -113,7 +124,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, ref } from 'vue'
+import { defineAsyncComponent, ref, watch } from 'vue'
 import { Badge, Button, toast, useCall } from 'frappe-ui'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
@@ -125,6 +136,7 @@ import { useSession } from '@/composables/useSession'
 import { formatDateTime, isPast } from '@/lib/dates'
 import { formatGrade } from '@/lib/grades'
 import { assignmentStatus, assignmentStatusTheme } from '@/lib/status'
+import { STORAGE_KEYS, readJSON, writeJSON } from '@/lib/storage'
 import { isProjectSubmission } from '@/lib/submissionTypes'
 import { trySubmit } from '@/lib/trySubmit'
 import type {
@@ -147,6 +159,7 @@ const props = defineProps<{
 	/** The grades they are allowed to see, keyed by assignment. */
 	gradeMap?: Record<string, CS17Grade>
 	loading?: boolean
+	grouped?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -165,6 +178,9 @@ const columns: Column[] = [
 ]
 
 const rowKey = (row: CS17Assignment) => row.name
+
+const collapsedTopics = ref(readJSON<string[]>(STORAGE_KEYS.collapsedTopics, []))
+watch(collapsedTopics, (value) => writeJSON(STORAGE_KEYS.collapsedTopics, value))
 
 const scratch = useScratchAssignment()
 const python = usePythonAssignment()
@@ -205,6 +221,10 @@ function statusOf(assignment: CS17Assignment) {
 		props.submissionMap[assignment.name],
 		props.gradeMap?.[assignment.name],
 	)
+}
+
+function pendingCount(assignments: CS17Assignment[]): number {
+	return assignments.filter((assignment) => statusOf(assignment) === 'Pending').length
 }
 
 function isOverdue(assignment: CS17Assignment): boolean {

@@ -120,3 +120,39 @@ class TestAssignmentApi(FrappeTestCase):
 			"2030-01-01 00:00:00",
 			modified=opened,
 		)
+
+	def test_create_assignment_lists_it_under_its_topic(self):
+		frappe.set_user(self.faculty_user)
+		topic = api.create_topic("Loops 197")
+		assignment = api.create_assignment(
+			"Sum of Digits 197", self.cohort, "2030-01-01 00:00:00", topic=topic
+		)
+
+		self.assertIn(
+			{"name": assignment, "topic": "Loops 197"},
+			[{"name": row.name, "topic": row.topic} for row in api.get_faculty_assignments()],
+		)
+
+	def test_move_assignments_to_topic_moves_a_published_assignment_for_students(self):
+		student_user = make_user("student198@cs17test.com")
+		make_profile("Student", self.cohort, student_user, "Student 198")
+		frappe.set_user(self.faculty_user)
+		assignment = api.create_assignment("Leap Year 198", self.cohort, "2030-01-01 00:00:00", publish="now")
+		topic = api.create_topic("Conditionals 198")
+
+		api.move_assignments_to_topic([assignment], topic)
+
+		frappe.set_user(student_user)
+		self.assertEqual(
+			{row.name: row.topic for row in api.get_student_assignments()["assignments"]}[assignment],
+			"Conditionals 198",
+		)
+
+	def test_move_assignments_to_topic_refuses_a_student(self):
+		student_user = make_user("student199@cs17test.com")
+		make_profile("Student", self.cohort, student_user, "Student 199")
+		frappe.set_user(self.faculty_user)
+		assignment = api.create_assignment("Leap Year 199", self.cohort, "2030-01-01 00:00:00")
+
+		frappe.set_user(student_user)
+		self.assertRaises(frappe.PermissionError, api.move_assignments_to_topic, [assignment])

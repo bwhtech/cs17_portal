@@ -27,6 +27,22 @@
 				@click="confirmOpen"
 			/>
 
+			<TopicSelect
+				model-value=""
+				placeholder="Find or create a topic"
+				@update:model-value="moveToTopic"
+			>
+				<template #trigger>
+					<Button
+						label="Move to topic"
+						:icon-left="isDesktop ? 'lucide-folder-input' : undefined"
+						:icon="isDesktop ? undefined : 'lucide-folder-input'"
+						:tooltip="isDesktop ? undefined : 'Move to topic'"
+						:loading="moveCall.loading"
+					/>
+				</template>
+			</TopicSelect>
+
 			<Button
 				variant="ghost"
 				icon="lucide-x"
@@ -41,6 +57,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Button, dialog, toast, useCall } from 'frappe-ui'
+import TopicSelect from '@/components/faculty/TopicSelect.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { trySubmit } from '@/lib/trySubmit'
@@ -67,6 +84,26 @@ const openToCohort = useCall<null, { assignments: string[] }>({
 	method: 'POST',
 	immediate: false,
 })
+
+const moveCall = useCall<null, { assignments: string[]; topic: string }>({
+	url: '/api/v2/method/cs17_portal.api.move_assignments_to_topic',
+	method: 'POST',
+	immediate: false,
+})
+
+async function moveToTopic(topic: string) {
+	await trySubmit(moveCall, { assignments: props.assignments, topic })
+	if (moveCall.error) {
+		toast.error(frappeErrorMessage(moveCall.error, 'Could not move the assignments.'))
+		return
+	}
+	toast.success(
+		topic
+			? `Moved ${countLabel.value} to ${topic}.`
+			: `Removed the topic from ${countLabel.value}.`,
+	)
+	emit('done')
+}
 
 function confirmDistribute() {
 	const label = countLabel.value

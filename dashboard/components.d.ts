@@ -41,6 +41,7 @@ declare module 'vue' {
     GradeDialog: typeof import('./src/components/assignments/GradeDialog.vue')['default']
     GradeForm: typeof import('./src/components/grading/GradeForm.vue')['default']
     GradeSubmissionDialog: typeof import('./src/components/faculty/GradeSubmissionDialog.vue')['default']
+    GroupHeader: typeof import('./src/components/common/GroupHeader.vue')['default']
     LoadError: typeof import('./src/components/common/LoadError.vue')['default']
     MarkdownHtml: typeof import('./src/components/common/MarkdownHtml.vue')['default']
     MarkdownText: typeof import('./src/components/common/MarkdownText.vue')['default']
@@ -77,6 +78,7 @@ declare module 'vue' {
     TestResults: typeof import('./src/components/python/TestResults.vue')['default']
     TimeLeft: typeof import('./src/components/python/TimeLeft.vue')['default']
     TimeTaken: typeof import('./src/components/grading/TimeTaken.vue')['default']
+    TopicSelect: typeof import('./src/components/faculty/TopicSelect.vue')['default']
     UnreadAnnouncements: typeof import('./src/components/announcements/UnreadAnnouncements.vue')['default']
   }
 }

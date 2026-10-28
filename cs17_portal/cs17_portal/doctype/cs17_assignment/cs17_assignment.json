@@ -16,6 +16,7 @@
   "title",
   "cohort",
   "quarter",
+  "topic",
   "submission_type",
   "max_marks",
   "column_break_vtqn",
@@ -198,9 +199,16 @@
    "fieldname": "attempts_allowed",
    "fieldtype": "Int",
    "label": "Attempts Allowed"
+  },
+  {
+   "fieldname": "topic",
+   "fieldtype": "Link",
+   "label": "Topic",
+   "options": "CS17 Topic"
   }
  ],
  "grid_page_length": 50,
+ "link_display_mode": "Search",
  "links": [
   {
    "link_doctype": "CS17 Assignment Submission",
@@ -211,7 +219,7 @@
    "link_fieldname": "assignment"
   }
  ],
- "modified": "2026-10-18 21:15:23.541198",
+ "modified": "2026-10-28 20:54:16.562738",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",

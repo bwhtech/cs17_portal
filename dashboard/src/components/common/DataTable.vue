@@ -2,73 +2,120 @@
 	<div ref="root">
 		<EmptyState v-if="!loading && !rows.length" :title="empty" />
 
-		<!-- Desktop, when the columns fit: one frappe-ui List in column mode. -->
+		<!-- Desktop, when the columns fit: a frappe-ui List in column mode per group. -->
 		<!-- `list-row-px-3` is what keeps the header aligned with the rows: an
 		     interactive row insets its content by 0.75rem on its own, but the
 		     header only picks that up from this public hook. `-mx-3` then lets the
 		     hover surface bleed into the page gutter while the text stays lined up
 		     with everything above it. -->
-		<List
-			v-else-if="showTable"
-			class="-mx-3 list-row-px-3"
-			:columns="trackSizes"
-			:selectable="selectable"
-			:selection="selection"
-			:row-height="rowHeight"
-			:divider="divider"
-			@update:selection="emit('update:selection', $event)"
-		>
-			<ListHeader>
-				<ListHeaderCell
-					v-for="column in columns"
-					:key="column.header"
-					:class="column.align === 'right' ? 'justify-end' : undefined"
+		<div v-else-if="showTable" class="space-y-3">
+			<section
+				v-for="(group, index) in groups"
+				:key="group.label"
+				:class="groupBy && 'rounded-4 border border-outline-gray-1 bg-surface-base'"
+				:aria-labelledby="group.label ? `${groupId}-${index}-label` : undefined"
+			>
+				<GroupHeader
+					v-if="group.label"
+					class="px-5"
+					:label="group.label"
+					:count="group.rows.length"
+					:expanded="!collapsedGroups.includes(group.label)"
+					:label-id="`${groupId}-${index}-label`"
+					:controls="`${groupId}-${index}`"
+					@toggle="toggleGroup(group.label)"
 				>
-					{{ column.header }}
-				</ListHeaderCell>
-			</ListHeader>
-
-			<template v-if="loading">
-				<ListRow v-for="n in skeletonRows" :key="`skeleton-${n}`" :value="`skeleton-${n}`">
-					<ListCell v-for="column in columns" :key="column.header" class="cs17-delay-in">
-						<Skeleton class="h-3 w-full max-w-24 rounded-full" />
-					</ListCell>
-				</ListRow>
-			</template>
-
-			<!-- `ListRows`, not a bare `v-for`: it feeds the header's select-all the
-			     full set of row keys. -->
-			<ListRows v-else v-slot="{ item }" :items="selectableRows" :row-key="listRowKey">
-				<ListRow :value="rowKey(item)" @click="onRowClick?.(item)">
-					<ListCell
-						v-for="column in columns"
-						:key="column.header"
-						class="text-base"
-						:class="column.align === 'right' ? 'justify-end' : undefined"
-						@click="column.variant === 'actions' && $event.stopPropagation()"
+					<slot name="group-suffix" :rows="group.rows" />
+				</GroupHeader>
+				<div
+					v-show="!collapsedGroups.includes(group.label)"
+					:id="`${groupId}-${index}`"
+					:class="
+						groupBy && ['px-5 py-2', group.label && 'border-t border-outline-gray-1']
+					"
+				>
+					<List
+						class="-mx-3 list-row-px-3"
+						:columns="trackSizes"
+						:selectable="selectable"
+						:selection="selection"
+						:row-height="rowHeight"
+						:divider="divider"
+						@update:selection="emit('update:selection', $event)"
 					>
-						<slot :name="`cell-${column.key}`" :row="item">{{
-							cellText(item, column)
-						}}</slot>
-					</ListCell>
-				</ListRow>
-			</ListRows>
+						<ListHeader>
+							<ListHeaderCell
+								v-for="column in columns"
+								:key="column.header"
+								:class="column.align === 'right' ? 'justify-end' : undefined"
+							>
+								{{ column.header }}
+							</ListHeaderCell>
+						</ListHeader>
 
-			<template v-if="!loading">
-				<ListRow v-for="row in plainRows" :key="rowKey(row)" @click="onRowClick?.(row)">
-					<ListCell
-						v-for="column in columns"
-						:key="column.header"
-						class="text-base"
-						:class="column.align === 'right' ? 'justify-end' : undefined"
-					>
-						<slot :name="`cell-${column.key}`" :row="row">{{
-							cellText(row, column)
-						}}</slot>
-					</ListCell>
-				</ListRow>
-			</template>
-		</List>
+						<template v-if="loading">
+							<ListRow
+								v-for="n in skeletonRows"
+								:key="`skeleton-${n}`"
+								:value="`skeleton-${n}`"
+							>
+								<ListCell
+									v-for="column in columns"
+									:key="column.header"
+									class="cs17-delay-in"
+								>
+									<Skeleton class="h-3 w-full max-w-24 rounded-full" />
+								</ListCell>
+							</ListRow>
+						</template>
+
+						<!-- `ListRows`, not a bare `v-for`: it feeds the header's select-all the
+					     full set of row keys. -->
+						<ListRows
+							v-else
+							v-slot="{ item }"
+							:items="group.selectableRows"
+							:row-key="listRowKey"
+						>
+							<ListRow :value="rowKey(item)" @click="onRowClick?.(item)">
+								<ListCell
+									v-for="column in columns"
+									:key="column.header"
+									class="text-base"
+									:class="column.align === 'right' ? 'justify-end' : undefined"
+									@click="
+										column.variant === 'actions' && $event.stopPropagation()
+									"
+								>
+									<slot :name="`cell-${column.key}`" :row="item">{{
+										cellText(item, column)
+									}}</slot>
+								</ListCell>
+							</ListRow>
+						</ListRows>
+
+						<template v-if="!loading">
+							<ListRow
+								v-for="row in group.plainRows"
+								:key="rowKey(row)"
+								@click="onRowClick?.(row)"
+							>
+								<ListCell
+									v-for="column in columns"
+									:key="column.header"
+									class="text-base"
+									:class="column.align === 'right' ? 'justify-end' : undefined"
+								>
+									<slot :name="`cell-${column.key}`" :row="row">{{
+										cellText(row, column)
+									}}</slot>
+								</ListCell>
+							</ListRow>
+						</template>
+					</List>
+				</div>
+			</section>
+		</div>
 
 		<!-- Otherwise the same rows become cards: the primary column is the
 		     heading, `field` columns are label/value pairs, actions sit at the
@@ -94,53 +141,87 @@
 				Select all
 			</label>
 
-			<div
-				v-for="row in rows"
-				:key="rowKey(row)"
-				class="space-y-2 rounded-4 border border-outline-gray-1 p-4"
-				@click="onRowClick?.(row)"
+			<section
+				v-for="(group, index) in groups"
+				:key="group.label"
+				:aria-labelledby="group.label ? `${groupId}-${index}-label` : undefined"
 			>
-				<div class="flex items-start gap-2">
-					<Checkbox
-						v-if="selectable && isRowSelectable(row)"
-						:model-value="selection.includes(rowKey(row))"
-						@click.stop
-						@update:model-value="toggleRow(rowKey(row))"
-					/>
-					<slot v-if="avatarColumn" :name="`cell-${avatarColumn.key}`" :row="row" />
+				<GroupHeader
+					v-if="group.label"
+					:label="group.label"
+					:count="group.rows.length"
+					:expanded="!collapsedGroups.includes(group.label)"
+					:label-id="`${groupId}-${index}-label`"
+					:controls="`${groupId}-${index}`"
+					@toggle="toggleGroup(group.label)"
+				>
+					<slot name="group-suffix" :rows="group.rows" />
+				</GroupHeader>
+				<div
+					v-show="!collapsedGroups.includes(group.label)"
+					:id="`${groupId}-${index}`"
+					class="space-y-3 pb-3"
+				>
 					<div
-						data-card-heading
-						class="flex min-w-0 flex-1 items-center text-base font-medium text-ink-gray-8 [&>.truncate]:line-clamp-2 [&>.truncate]:whitespace-normal [&>.truncate]:break-words"
+						v-for="row in group.rows"
+						:key="rowKey(row)"
+						class="space-y-2 rounded-4 border border-outline-gray-1 p-4"
+						@click="onRowClick?.(row)"
 					>
-						<slot v-if="primaryColumn" :name="`cell-${primaryColumn.key}`" :row="row" />
+						<div class="flex items-start gap-2">
+							<Checkbox
+								v-if="selectable && isRowSelectable(row)"
+								:model-value="selection.includes(rowKey(row))"
+								@click.stop
+								@update:model-value="toggleRow(rowKey(row))"
+							/>
+							<slot
+								v-if="avatarColumn"
+								:name="`cell-${avatarColumn.key}`"
+								:row="row"
+							/>
+							<div
+								data-card-heading
+								class="flex min-w-0 flex-1 items-center text-base font-medium text-ink-gray-8 [&>.truncate]:line-clamp-2 [&>.truncate]:whitespace-normal [&>.truncate]:break-words"
+							>
+								<slot
+									v-if="primaryColumn"
+									:name="`cell-${primaryColumn.key}`"
+									:row="row"
+								/>
+							</div>
+						</div>
+
+						<div
+							v-for="column in fieldColumns"
+							:key="column.header"
+							class="flex items-center justify-between gap-4 text-base"
+						>
+							<span class="shrink-0 text-ink-gray-5">{{ column.header }}</span>
+							<span
+								class="flex min-w-0 items-center justify-end text-right text-ink-gray-7"
+							>
+								<slot :name="`cell-${column.key}`" :row="row">{{
+									cellText(row, column)
+								}}</slot>
+							</span>
+						</div>
+
+						<div v-for="column in actionColumns" :key="column.header" class="pt-1">
+							<slot :name="`cell-${column.key}`" :row="row" />
+						</div>
 					</div>
 				</div>
-
-				<div
-					v-for="column in fieldColumns"
-					:key="column.header"
-					class="flex items-center justify-between gap-4 text-base"
-				>
-					<span class="shrink-0 text-ink-gray-5">{{ column.header }}</span>
-					<span class="flex min-w-0 items-center justify-end text-right text-ink-gray-7">
-						<slot :name="`cell-${column.key}`" :row="row">{{
-							cellText(row, column)
-						}}</slot>
-					</span>
-				</div>
-
-				<div v-for="column in actionColumns" :key="column.header" class="pt-1">
-					<slot :name="`cell-${column.key}`" :row="row" />
-				</div>
-			</div>
+			</section>
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts" generic="T">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, useId } from 'vue'
 import { Checkbox, Skeleton } from 'frappe-ui'
 import EmptyState from '@/components/common/EmptyState.vue'
+import GroupHeader from '@/components/common/GroupHeader.vue'
 import { List, ListCell, ListHeader, ListHeaderCell, ListRow, ListRows } from 'frappe-ui/list'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 
@@ -179,6 +260,7 @@ const props = withDefaults(
 		onRowClick?: (row: T) => void
 		/** Taller rows for a two-line primary cell; 44 is the dense default. */
 		rowHeight?: number
+		groupBy?: (row: T) => string
 	}>(),
 	{
 		empty: 'Nothing here yet.',
@@ -251,7 +333,32 @@ const fieldColumns = computed(() => props.columns.filter((c) => (c.variant ?? 'f
 const actionColumns = computed(() => props.columns.filter((c) => c.variant === 'actions'))
 
 const selectableRows = computed(() => props.rows.filter(props.isRowSelectable))
-const plainRows = computed(() => props.rows.filter((row) => !props.isRowSelectable(row)))
+
+const groupId = useId()
+
+const groups = computed(() => {
+	const rowsByLabel = new Map<string, T[]>()
+	for (const row of props.rows) {
+		const label = props.groupBy?.(row) ?? ''
+		if (!rowsByLabel.has(label)) rowsByLabel.set(label, [])
+		rowsByLabel.get(label)!.push(row)
+	}
+	if (!rowsByLabel.size) rowsByLabel.set('', [])
+	return [...rowsByLabel].map(([label, rows]) => ({
+		label,
+		rows,
+		selectableRows: rows.filter(props.isRowSelectable),
+		plainRows: rows.filter((row) => !props.isRowSelectable(row)),
+	}))
+})
+
+const collapsedGroups = defineModel<string[]>('collapsedGroups', { default: () => [] })
+
+function toggleGroup(label: string) {
+	collapsedGroups.value = collapsedGroups.value.includes(label)
+		? collapsedGroups.value.filter((collapsed) => collapsed !== label)
+		: [...collapsedGroups.value, label]
+}
 
 const allSelected = computed(
 	() => selectableRows.value.length > 0 && props.selection.length === selectableRows.value.length,

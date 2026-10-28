@@ -44,6 +44,7 @@ export interface AssignmentDraft {
 	title: string
 	cohort: string
 	quarter: string
+	topic: string
 	submission_type: SubmissionType
 	assignment_type: AssignmentType
 	max_marks: string

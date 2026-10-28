@@ -35,6 +35,7 @@ export interface CS17Assignment {
 	due_date: string
 	cohort?: string
 	quarter?: string | null
+	topic?: string | null
 	submission_type?: SubmissionType
 	assignment_type?: AssignmentType
 	/** `Grade` or `Marks` — the field is named `remarks` in the doctype. */

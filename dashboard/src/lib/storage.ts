@@ -17,6 +17,9 @@ export const STORAGE_KEYS = {
 		return `cs17-new-assignment-draft:${window.current_user}`
 	},
 	sidebarCollapsed: 'cs17-sidebar-collapsed',
+	get collapsedTopics() {
+		return `cs17-collapsed-topics:${window.current_user}`
+	},
 } as const
 
 export function readJSON<T>(key: string, fallback: T): T {
