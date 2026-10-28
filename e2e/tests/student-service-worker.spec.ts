@@ -14,6 +14,8 @@ async function reloadWithServiceWorker(page: Page) {
 }
 
 test.describe("Service worker", () => {
+	test.use({ serviceWorkers: "allow" });
+
 	test("serves the dashboard's own files on the next visit", async ({ page }) => {
 		const fromWorker = await reloadWithServiceWorker(page);
 
