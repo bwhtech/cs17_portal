@@ -1,5 +1,5 @@
 import { createApp } from 'vue'
-import { FrappeUI, call, setConfig } from 'frappe-ui'
+import { FrappeUI, call, setConfig, toast } from 'frappe-ui'
 import App from './App.vue'
 import router from './router'
 import { refreshSessionFromBoot, removeStorageOfOtherUsers } from '@/composables/useSession'
@@ -43,5 +43,14 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
 		navigator.serviceWorker.register('/dashboard/sw.js', { scope: '/dashboard' }).catch(() => null)
 	})
 }
+
+window.addEventListener('offline', () => {
+	if (document.hidden) return
+	toast.warning('Connection lost. Some features might not work.', { id: 'connection-status' })
+})
+window.addEventListener('online', () => {
+	if (document.hidden) return
+	toast.success('You are back online.', { id: 'connection-status' })
+})
 
 start()

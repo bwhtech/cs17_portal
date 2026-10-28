@@ -1,12 +1,15 @@
 export function frappeErrorMessage(error: unknown, fallback: string): string {
 	if (typeof error === 'string') return error || fallback
-	const err = error as { message?: string; type?: string; messages?: string[] }
+	const err = error as { message?: string; type?: string; messages?: string[]; kind?: string }
 	if (err?.type) {
 		const prefix = `${err.type}: `
 		const message = err.message?.startsWith(prefix) ? err.message.slice(prefix.length) : ''
 		return message.replace(/<[^>]*>/g, '') || fallback
 	}
 	if (err?.messages?.length) return err.messages.join(' ').replace(/<[^>]*>/g, '')
+	if (error instanceof TypeError || err?.kind === 'network') {
+		return `${fallback} Check your internet connection.`
+	}
 	return fallback
 }
 
