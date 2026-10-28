@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import frappe
+import litellm
 from frappe.tests.utils import FrappeTestCase
 
 from cs17_portal import api
@@ -92,6 +93,15 @@ class TestCheckSubmission(FrappeTestCase):
 		):
 			self.assertRaisesRegex(
 				frappe.ValidationError, "^The AI model did not answer", api.check_submission, self.submission
+			)
+
+	def test_check_submission_says_a_busy_provider_is_busy(self):
+		busy = litellm.ServiceUnavailableError(
+			message="This model is currently experiencing high demand", llm_provider="gemini", model="gemini"
+		)
+		with patch("litellm.completion", side_effect=busy), patch.object(frappe, "log_error"):
+			self.assertRaisesRegex(
+				frappe.ValidationError, "^The AI model is busy", api.check_submission, self.submission
 			)
 
 
