@@ -40,94 +40,94 @@
 			/>
 		</div>
 
-		<div class="md:rounded-4 md:border md:border-outline-gray-1 md:bg-surface-base md:p-5">
-			<LoadError
-				v-if="failed"
-				title="Could not load assignments"
-				:loading="assignmentsCall.loading"
-				@retry="assignmentsCall.reload()"
-			/>
+		<LoadError
+			v-if="failed"
+			title="Could not load assignments"
+			:loading="assignmentsCall.loading"
+			@retry="assignmentsCall.reload()"
+		/>
 
-			<DataTable
-				v-else
-				v-model:selection="selection"
-				:columns="columns"
-				:rows="rows"
-				:row-key="(row: AssignmentRow) => row.name"
-				:loading="assignmentsCall.loading && !assignmentsCall.data"
-				:row-height="60"
-				selectable
-				empty="No assignments yet."
-			>
-				<template #cell-icon="{ row }">
-					<SubmissionTypeIcon :submission-type="row.submission_type" />
-				</template>
+		<DataTable
+			v-else
+			v-model:selection="selection"
+			:columns="columns"
+			:rows="rows"
+			:row-key="(row: AssignmentRow) => row.name"
+			:loading="assignmentsCall.loading && !assignmentsCall.data"
+			:row-height="60"
+			v-model:collapsed-groups="collapsedTopics"
+			:group-by="(row: AssignmentRow) => row.topic || 'No topic'"
+			selectable
+			empty="No assignments yet."
+		>
+			<template #cell-icon="{ row }">
+				<SubmissionTypeIcon :submission-type="row.submission_type" />
+			</template>
 
-				<!-- Same two-line row as the student list: title over the
+			<!-- Same two-line row as the student list: title over the
 				     cohort, what is expected, and when it is due. -->
-				<template #cell-title="{ row }">
-					<div class="flex min-w-0 items-start gap-2">
-						<RowTitle :title="row.title" :to="`/faculty/assignments/${row.name}`">
-							<template v-if="row.due_date">
-								Due {{ formatDateTime(row.due_date) }} ·
-							</template>
-							{{ row.submission_type ?? 'Any' }} · {{ row.cohort }}
-						</RowTitle>
-						<Badge
-							v-if="row.student_count"
-							class="shrink-0"
-							:label="`${row.student_count} ${row.student_count === 1 ? 'student' : 'students'}`"
-							theme="blue"
-							variant="subtle"
-						/>
-					</div>
-				</template>
+			<template #cell-title="{ row }">
+				<div class="flex min-w-0 items-start gap-2">
+					<RowTitle :title="row.title" :to="`/faculty/assignments/${row.name}`">
+						<template v-if="row.due_date">
+							Due {{ formatDateTime(row.due_date) }} ·
+						</template>
+						{{ row.submission_type ?? 'Any' }} · {{ row.cohort }}
+					</RowTitle>
+					<Badge
+						v-if="row.student_count"
+						class="shrink-0"
+						:label="`${row.student_count} ${row.student_count === 1 ? 'student' : 'students'}`"
+						theme="blue"
+						variant="subtle"
+					/>
+				</div>
+			</template>
 
-				<template #cell-submission_count="{ row }">
-					<span class="text-base text-ink-gray-7">
-						{{ (row.submission_count ?? 0).toLocaleString() }}
-					</span>
-				</template>
+			<template #cell-submission_count="{ row }">
+				<span class="text-base text-ink-gray-7">
+					{{ (row.submission_count ?? 0).toLocaleString() }}
+				</span>
+			</template>
 
-				<template #cell-status="{ row }">
-					<div class="min-w-0 leading-tight">
-						<Badge :label="row.statusLabel" :theme="row.statusTheme" variant="subtle" />
-						<div
-							v-if="row.scheduledAt"
-							class="mt-1.5 text-balance text-sm leading-tight text-ink-gray-5"
-						>
-							{{ row.scheduledAt }}
-						</div>
+			<template #cell-status="{ row }">
+				<div class="min-w-0 leading-tight">
+					<Badge :label="row.statusLabel" :theme="row.statusTheme" variant="subtle" />
+					<div
+						v-if="row.scheduledAt"
+						class="mt-1.5 text-balance text-sm leading-tight text-ink-gray-5"
+					>
+						{{ row.scheduledAt }}
 					</div>
-				</template>
+				</div>
+			</template>
 
-				<template #cell-actions="{ row }">
-					<div class="flex items-center justify-end gap-2">
-						<Button
-							v-if="row.statusLabel !== 'Published'"
-							variant="ghost"
-							icon="lucide-pencil"
-							:aria-label="`Edit ${row.title}`"
-							tooltip="Edit"
-							@click="openDraft(row.name, row.statusLabel === 'Scheduled')"
-						/>
-						<Button
-							v-if="!row.is_published"
-							:label="row.publish_on ? 'Reschedule' : 'Publish'"
-							@click="publishTarget = row"
-						/>
-						<Button
-							variant="ghost"
-							icon="lucide-trash-2"
-							class="hover:!bg-surface-red-3 hover:!text-ink-red-7"
-							:aria-label="`Delete ${row.title}`"
-							tooltip="Delete"
-							@click="deleteTarget = row"
-						/>
-					</div>
-				</template>
-			</DataTable>
-		</div>
+			<template #cell-actions="{ row }">
+				<div class="flex items-center justify-end gap-2">
+					<Button
+						v-if="row.statusLabel !== 'Published'"
+						variant="ghost"
+						icon="lucide-pencil"
+						:aria-label="`Edit ${row.title}`"
+						tooltip="Edit"
+						@click="openDraft(row.name, row.statusLabel === 'Scheduled')"
+					/>
+					<Button
+						v-if="!row.is_published"
+						:label="row.publish_on ? 'Reschedule' : 'Publish'"
+						@click="publishTarget = row"
+					/>
+					<Button
+						variant="ghost"
+						icon="lucide-trash-2"
+						class="hover:!bg-surface-red-3 hover:!text-ink-red-7"
+						:aria-label="`Delete ${row.title}`"
+						tooltip="Delete"
+						@click="deleteTarget = row"
+					/>
+				</div>
+			</template>
+		</DataTable>
 
 		<AssignmentBulkActions
 			v-if="selection.length"
@@ -178,6 +178,7 @@ import PageBody from '@/components/common/PageBody.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { formatDateTime } from '@/lib/dates'
+import { STORAGE_KEYS, readJSON, writeJSON } from '@/lib/storage'
 import type { CS17Assignment } from '@/types'
 
 /** A row plus the badge ladder, resolved once instead of three times in the cell. */
@@ -207,6 +208,8 @@ const editingScheduled = ref(false)
 const publishTarget = ref<AssignmentRow | null>(null)
 const deleteTarget = ref<AssignmentRow | null>(null)
 const selection = ref<string[]>([])
+const collapsedTopics = ref(readJSON<string[]>(STORAGE_KEYS.collapsedTopics, []))
+watch(collapsedTopics, (value) => writeJSON(STORAGE_KEYS.collapsedTopics, value))
 
 const cohortsCall = useCall<string[]>({
 	url: '/api/v2/method/cs17_portal.api.get_cohorts',

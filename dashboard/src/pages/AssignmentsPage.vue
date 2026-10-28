@@ -11,6 +11,7 @@
 
 		<AssignmentTable
 			v-else
+			grouped
 			:assignments="assignments"
 			:submission-map="submissionMap"
 			:grade-map="gradeMap"

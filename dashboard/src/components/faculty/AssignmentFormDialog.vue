@@ -73,6 +73,12 @@
 						:options="quarterOptions"
 					/>
 
+					<TopicSelect
+						v-model="draft.topic"
+						label="Topic"
+						placeholder="Select or create a topic"
+					/>
+
 					<div class="grid gap-3 sm:grid-cols-2">
 						<FormControl
 							v-model="draft.submission_type"
@@ -221,6 +227,7 @@ import PublishFields from '@/components/common/PublishFields.vue'
 import AssignmentPreview, { type AssignmentDraft } from '@/components/faculty/AssignmentPreview.vue'
 import DeleteAssignmentDialog from '@/components/faculty/DeleteAssignmentDialog.vue'
 import TestCasesField from '@/components/faculty/TestCasesField.vue'
+import TopicSelect from '@/components/faculty/TopicSelect.vue'
 import PythonEditor from '@/components/python/PythonEditor.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useSession } from '@/composables/useSession'
@@ -264,6 +271,7 @@ function emptyDraft(): AssignmentDraft {
 		title: '',
 		cohort: '',
 		quarter: '',
+		topic: '',
 		submission_type: 'Any',
 		assignment_type: 'Not Graded',
 		max_marks: '',
@@ -414,6 +422,7 @@ async function loadExisting(name: string) {
 		title: existing.title ?? '',
 		cohort: existing.cohort ?? '',
 		quarter: existing.quarter ?? '',
+		topic: existing.topic ?? '',
 		submission_type: existing.submission_type ?? 'Any',
 		assignment_type: existing.assignment_type ?? 'Not Graded',
 		max_marks: existing.max_marks ? String(existing.max_marks) : '',
@@ -447,6 +456,7 @@ function isDirty(): boolean {
 			draft.time_limit ||
 			(draft.cohort && !facultyCohort.value) ||
 			draft.quarter ||
+			draft.topic ||
 			draft.due_date ||
 			publishMode.value !== 'draft' ||
 			publishOn.value,
@@ -505,6 +515,7 @@ async function handleSubmit() {
 		title: draft.title,
 		cohort: draft.cohort,
 		quarter: draft.quarter,
+		topic: draft.topic,
 		due_date: toFrappeDatetime(draft.due_date),
 		submission_type: draft.submission_type,
 		description: draft.description,
