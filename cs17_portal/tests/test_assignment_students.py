@@ -168,6 +168,63 @@ class TestAssignmentStudents(FrappeTestCase):
 			assignments,
 		)
 
+	def test_get_finished_students_lists_only_who_submitted_theirs(self):
+		frappe.set_user(self.faculty_user)
+		assignments = [
+			make_assignment(self.cohort, "PDF Task 284", "PDF", 0),
+			make_assignment(self.cohort, "PDF Task 285", "PDF", 0),
+		]
+		api.set_assignment_students(assignments[0], [self.student_270])
+		api.set_assignment_students(assignments[1], [self.student_271])
+		make_submission(assignments[0], self.student_270, "Student 270", "PDF Task 284")
+
+		self.assertEqual([row.student for row in api.get_finished_students(assignments)], [self.student_270])
+
+	def test_distribute_next_assignments_gives_each_student_a_different_one_they_had_not(self):
+		student_287 = make_profile(
+			"Student", self.cohort, make_user("student287@cs17test.com"), "Student 287"
+		)
+		student_288 = make_profile(
+			"Student", self.cohort, make_user("student288@cs17test.com"), "Student 288"
+		)
+		frappe.set_user(self.faculty_user)
+		assignments = [
+			make_assignment(self.cohort, "PDF Task 286", "PDF", 0),
+			make_assignment(self.cohort, "PDF Task 287", "PDF", 0),
+			make_assignment(self.cohort, "PDF Task 288", "PDF", 0),
+		]
+		api.set_assignment_students(assignments[0], [self.student_270, self.student_271])
+		api.set_assignment_students(assignments[1], [student_287])
+		api.set_assignment_students(assignments[2], [student_288])
+
+		api.distribute_next_assignments(assignments, [self.student_270, self.student_271])
+
+		received = frappe.get_all(
+			"CS17 Assignment Student",
+			filters={
+				"parent": ["in", assignments[1:]],
+				"student": ["in", [self.student_270, self.student_271]],
+			},
+			pluck="parent",
+		)
+		self.assertCountEqual(received, assignments[1:])
+
+	def test_distribute_next_assignments_leaves_an_assignment_open_to_everyone(self):
+		frappe.set_user(self.faculty_user)
+		assignments = [
+			make_assignment(self.cohort, "PDF Task 289", "PDF", 0),
+			make_assignment(self.cohort, "PDF Task 290", "PDF", 0),
+		]
+		api.set_assignment_students(assignments[0], [self.student_270])
+
+		self.assertRaisesRegex(
+			frappe.ValidationError,
+			"Student 270 already has every one of these assignments.",
+			api.distribute_next_assignments,
+			assignments,
+			[self.student_270],
+		)
+
 	def test_open_assignments_to_cohort_clears_the_students(self):
 		frappe.set_user(self.faculty_user)
 		assignment = make_assignment(self.cohort, "PDF Task 283", "PDF", 0)
