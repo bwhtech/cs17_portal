@@ -16,6 +16,8 @@ const SUBMISSION = {
 	can_check_with_ai: true,
 };
 
+const DRAFT = { marks_obtained: 15, grade: null, remarks: "Reads the input and prints it." };
+
 test.describe("Faculty AI check", () => {
 	test("fills the grade form from the AI check without saving it", async ({ page }) => {
 		await page.route(/cs17_portal\.api\.get_submission\?/, (route) =>
@@ -39,15 +41,7 @@ test.describe("Faculty AI check", () => {
 			route.fulfill({ json: { data: null } })
 		);
 		await page.route("**/cs17_portal.api.check_submission", (route) =>
-			route.fulfill({
-				json: {
-					data: {
-						marks_obtained: 15,
-						grade: null,
-						remarks: "Reads the input and prints it.",
-					},
-				},
-			})
+			route.fulfill({ json: { data: DRAFT } })
 		);
 		const savedGrades: string[] = [];
 		await page.route("**/cs17_portal.api.save_grade", (route) => {
@@ -59,8 +53,41 @@ test.describe("Faculty AI check", () => {
 		await page.getByRole("button", { name: "Check with AI" }).click();
 
 		await expect(page.getByLabel("Marks obtained")).toHaveValue("15");
-		await expect(page.getByLabel("Remarks")).toHaveValue("Reads the input and prints it.");
+		await expect(page.getByLabel("Remarks")).toHaveValue(DRAFT.remarks);
 		expect(savedGrades).toEqual([]);
+	});
+
+	test("fills the assignment page's grade dialog from the AI check", async ({ page }) => {
+		await page.route("**/cs17_portal.api.get_assignment_submissions*", (route) =>
+			route.fulfill({
+				json: {
+					data: {
+						assignment: {
+							name: SUBMISSION.assignment,
+							title: SUBMISSION.assignment_title,
+							due_date: "2026-01-08 09:00:00",
+							submission_type: "Python",
+							assignment_type: "Graded",
+							remarks: "Marks",
+							max_marks: 20,
+							can_check_with_ai: true,
+						},
+						submissions: [SUBMISSION],
+						not_submitted: [],
+					},
+				},
+			})
+		);
+		await page.route("**/cs17_portal.api.check_submission", (route) =>
+			route.fulfill({ json: { data: DRAFT } })
+		);
+
+		await page.goto(`/dashboard/faculty/assignments/${SUBMISSION.assignment}`);
+		await page.getByRole("button", { name: "Grade", exact: true }).click();
+		await page.getByRole("button", { name: "Check with AI" }).click();
+
+		await expect(page.getByLabel("Marks (out of 20)")).toHaveValue("15");
+		await expect(page.getByLabel("Remarks")).toHaveValue(DRAFT.remarks);
 	});
 
 	test("saves the model from the Settings dialog", async ({ page }) => {
