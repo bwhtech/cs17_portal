@@ -34,9 +34,9 @@ class TestCheckSubmission(FrappeTestCase):
 		cls.student_user = make_user("student180@cs17test.com")
 		student = make_profile("Student", cohort, cls.student_user, "Student 180")
 
-		marks_assignment = make_assignment(cohort, "Python Task 180", "Python", 20)
-		frappe.db.set_value("CS17 Assignment", marks_assignment, "remarks", "Marks")
-		cls.submission = make_submission(marks_assignment, student, "Student 180", "Python Task 180")
+		cls.marks_assignment = make_assignment(cohort, "Python Task 180", "Python", 20)
+		frappe.db.set_value("CS17 Assignment", cls.marks_assignment, "remarks", "Marks")
+		cls.submission = make_submission(cls.marks_assignment, student, "Student 180", "Python Task 180")
 
 		grade_assignment = make_assignment(cohort, "Python Task 181", "Python", 20)
 		frappe.db.set_value("CS17 Assignment", grade_assignment, "remarks", "Grade")
@@ -47,6 +47,11 @@ class TestCheckSubmission(FrappeTestCase):
 		self.addCleanup(set_ai_settings, "", "")
 		self.addCleanup(frappe.set_user, "Administrator")
 		frappe.set_user(self.faculty_user)
+
+	def test_get_assignment_submissions_says_a_python_assignment_can_be_checked_with_ai(self):
+		assignment = api.get_assignment_submissions(self.marks_assignment)["assignment"]
+
+		self.assertTrue(assignment.can_check_with_ai)
 
 	def test_check_submission_keeps_the_marks_within_the_maximum(self):
 		with patch("litellm.completion", return_value=ai_reply('{"marks_obtained": 25, "remarks": "Good"}')):
