@@ -21,6 +21,16 @@
 			</Dropdown>
 
 			<Button
+				v-if="canCheckWithAi && ungradedSubmissions?.length"
+				label="Check with AI"
+				:icon-left="isDesktop ? 'lucide-sparkles' : undefined"
+				:icon="isDesktop ? undefined : 'lucide-sparkles'"
+				:tooltip="isDesktop ? undefined : 'Check with AI'"
+				:loading="aiCheck.loading"
+				@click="confirmAiCheck"
+			/>
+
+			<Button
 				v-if="draftGrades"
 				:label="publishLabel"
 				:icon-left="isDesktop ? 'lucide-send' : undefined"
@@ -57,9 +67,11 @@ const props = defineProps<{
 	cohort?: string
 	/** How many of the selected submissions have a grade that is still a draft. */
 	draftGrades?: number
+	canCheckWithAi?: boolean
+	ungradedSubmissions?: string[]
 }>()
 
-const emit = defineEmits<{ done: []; clear: [] }>()
+const emit = defineEmits<{ done: []; clear: []; checking: [submissions: string[]] }>()
 
 const { isDesktop } = useBreakpoint()
 
@@ -81,6 +93,12 @@ const publish = useCall<number, { submissions: string[] }>({
 	immediate: false,
 })
 
+const aiCheck = useCall<{ queued: number; skipped: number }, { submissions: string[] }>({
+	url: '/api/v2/method/cs17_portal.api.check_submissions',
+	method: 'POST',
+	immediate: false,
+})
+
 function confirmPublish() {
 	const count = props.draftGrades
 	dialog.confirm({
@@ -93,6 +111,33 @@ function confirmPublish() {
 				return
 			}
 			toast.success(`Published ${count} ${count === 1 ? 'grade' : 'grades'}.`)
+			emit('done')
+		},
+	})
+}
+
+function confirmAiCheck() {
+	const submissions = props.ungradedSubmissions ?? []
+	const count = submissions.length
+	dialog.confirm({
+		title: `Check ${count} ${count === 1 ? 'submission' : 'submissions'} with AI?`,
+		message: 'Each one gets a draft grade for you to review. Nothing is published.',
+		onConfirm: async () => {
+			await trySubmit(aiCheck, { submissions })
+			if (aiCheck.error || !aiCheck.data) {
+				toast.error(
+					frappeErrorMessage(aiCheck.error, 'Could not check the submissions with AI.'),
+				)
+				return
+			}
+			const { queued, skipped } = aiCheck.data
+			const skippedLine = skipped
+				? ` ${skipped} already graded ${skipped === 1 ? 'was' : 'were'} skipped.`
+				: ''
+			toast.success(
+				`Checking ${queued} ${queued === 1 ? 'submission' : 'submissions'} with AI.${skippedLine}`,
+			)
+			emit('checking', submissions)
 			emit('done')
 		},
 	})

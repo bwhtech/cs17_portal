@@ -172,6 +172,9 @@
 					:submissions="selection"
 					:cohort="assignment.cohort"
 					:draft-grades="selectedDraftGrades"
+					:can-check-with-ai="assignment.can_check_with_ai"
+					:ungraded-submissions="selectedUngradedSubmissions"
+					@checking="waitForAiDrafts"
 					@done="clearSelection"
 					@clear="selection = []"
 				/>
@@ -253,6 +256,7 @@ import SubmissionBulkActions from '@/components/faculty/SubmissionBulkActions.vu
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useLoadFailed } from '@/composables/useLoadFailed'
+import { usePolling } from '@/composables/usePolling'
 import { formatDateTime, isPast } from '@/lib/dates'
 import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
 import { formatGrade } from '@/lib/grades'
@@ -325,6 +329,7 @@ const timingOpen = ref(false)
 
 watch(assignmentId, () => {
 	selection.value = []
+	aiDraftsPending.value = []
 })
 
 function openPreview(row: CS17Submission) {
@@ -502,6 +507,35 @@ const selectedDraftGrades = computed(
 				!isPast(row.grade.published_on),
 		).length,
 )
+
+const selectedUngradedSubmissions = computed(() =>
+	submissions.value
+		.filter((row) => selection.value.includes(row.name) && !row.grade)
+		.map((row) => row.name),
+)
+
+const AI_DRAFT_POLL_MS = 5_000
+const AI_DRAFT_MAX_POLLS = 60
+
+const aiDraftsPending = ref<string[]>([])
+let aiDraftPolls = 0
+
+function waitForAiDrafts(names: string[]) {
+	aiDraftsPending.value = [...aiDraftsPending.value, ...names]
+	aiDraftPolls = 0
+}
+
+usePolling(() => {
+	if (!aiDraftsPending.value.length) return
+	aiDraftPolls += 1
+	if (aiDraftPolls > AI_DRAFT_MAX_POLLS) aiDraftsPending.value = []
+	else detail.reload()
+}, AI_DRAFT_POLL_MS)
+
+watch(submissions, (rows) => {
+	const graded = new Set(rows.filter((row) => row.grade).map((row) => row.name))
+	aiDraftsPending.value = aiDraftsPending.value.filter((name) => !graded.has(name))
+})
 
 function clearSelection() {
 	selection.value = []

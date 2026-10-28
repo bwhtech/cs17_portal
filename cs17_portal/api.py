@@ -1992,17 +1992,21 @@ Reply with one JSON object and nothing else:
 
 @frappe.whitelist(methods=["POST"])
 def check_submission(submission: str) -> dict:
+	get_current_faculty()
+	assignment = frappe.db.get_value(ASSIGNMENT_SUBMISSION, submission, "assignment")
+	if not assignment:
+		frappe.throw(_("Submission not found"), frappe.DoesNotExistError)
+
+	require_faculty_for_assignment(assignment)
+	return _ai_grade_draft(submission)
+
+
+def _ai_grade_draft(submission: str) -> dict:
 	import litellm
 
 	from cs17_portal.cs17_portal.doctype.cs17_assignment_grade.cs17_assignment_grade import LETTER_GRADES
 
-	get_current_faculty()
 	row = frappe.db.get_value(ASSIGNMENT_SUBMISSION, submission, ["assignment", "code"], as_dict=True)
-	if not row:
-		frappe.throw(_("Submission not found"), frappe.DoesNotExistError)
-
-	require_faculty_for_assignment(row.assignment)
-
 	assignment = frappe.db.get_value(
 		"CS17 Assignment",
 		row.assignment,
@@ -2059,3 +2063,60 @@ def check_submission(submission: str) -> dict:
 		"grade": grade if grade in LETTER_GRADES else None,
 		"remarks": draft.get("remarks") or "",
 	}
+
+
+@frappe.whitelist(methods=["POST"])
+def check_submissions(submissions: list | str) -> dict:
+	submissions = frappe.parse_json(submissions)
+	require_faculty_for_submissions(submissions)
+	rows = frappe.get_all(
+		ASSIGNMENT_SUBMISSION, filters={"name": ["in", submissions]}, fields=["name", "assignment"]
+	)
+	assignments = {row.assignment for row in rows}
+	if len(assignments) != 1:
+		frappe.throw(_("Pick submissions of one assignment."))
+
+	assignment = frappe.db.get_value(
+		"CS17 Assignment", assignments.pop(), ["submission_type", "remarks"], as_dict=True
+	)
+	if assignment.submission_type != "Python":
+		frappe.throw(_("Only Python submissions can be checked with AI."))
+	if assignment.remarks not in ("Grade", "Marks"):
+		frappe.throw(_("Cannot grade a Not Graded assignment."))
+	if not frappe.get_cached_doc("CS17 AI Settings").is_set_up():
+		frappe.throw(_("Add an AI model and API key in Settings first."))
+
+	graded = set(
+		frappe.get_all(
+			"CS17 Assignment Grade",
+			filters={"submission": ["in", [row.name for row in rows]]},
+			pluck="submission",
+		)
+	)
+	ungraded = [row.name for row in rows if row.name not in graded]
+	for submission in ungraded:
+		frappe.enqueue(
+			save_ai_grade_draft,
+			queue="long",
+			job_id=f"cs17-ai-check-{submission}",
+			deduplicate=True,
+			enqueue_after_commit=True,
+			submission=submission,
+		)
+	return {"queued": len(ungraded), "skipped": len(submissions) - len(ungraded)}
+
+
+def save_ai_grade_draft(submission: str) -> None:
+	try:
+		draft = _ai_grade_draft(submission)
+	except frappe.ValidationError:
+		return
+	if frappe.db.exists("CS17 Assignment Grade", {"submission": submission}):
+		return
+	grade_submission(
+		submission,
+		grade=draft["grade"],
+		marks_obtained=draft["marks_obtained"],
+		remarks=draft["remarks"],
+		publish="draft",
+	)
