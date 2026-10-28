@@ -15,7 +15,7 @@
 				:icon="isDesktop ? undefined : 'lucide-shuffle'"
 				:tooltip="isDesktop ? undefined : 'Hand out at random'"
 				:loading="distribute.loading"
-				@click="confirmDistribute"
+				@click="handOut"
 			/>
 
 			<Button
@@ -51,22 +51,32 @@
 				@click="emit('clear')"
 			/>
 		</div>
+
+		<DistributeNextAssignmentsDialog
+			v-if="nextOpen"
+			v-model:open="nextOpen"
+			:assignments="assignments"
+			@done="emit('done')"
+		/>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { Button, dialog, toast, useCall } from 'frappe-ui'
+import DistributeNextAssignmentsDialog from '@/components/faculty/DistributeNextAssignmentsDialog.vue'
 import TopicSelect from '@/components/faculty/TopicSelect.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { trySubmit } from '@/lib/trySubmit'
 
-const props = defineProps<{ assignments: string[] }>()
+const props = defineProps<{ assignments: string[]; hasSubmissions?: boolean }>()
 
 const emit = defineEmits<{ done: []; clear: [] }>()
 
 const { isDesktop } = useBreakpoint()
+
+const nextOpen = ref(false)
 
 const countLabel = computed(
 	() =>
@@ -103,6 +113,11 @@ async function moveToTopic(topic: string) {
 			: `Removed the topic from ${countLabel.value}.`,
 	)
 	emit('done')
+}
+
+function handOut() {
+	if (props.hasSubmissions) nextOpen.value = true
+	else confirmDistribute()
 }
 
 function confirmDistribute() {

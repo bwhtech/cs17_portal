@@ -133,6 +133,7 @@
 		<AssignmentBulkActions
 			v-if="selection.length"
 			:assignments="selection"
+			:has-submissions="selectionHasSubmissions"
 			@done="onBulkDone"
 			@clear="selection = []"
 		/>
@@ -258,6 +259,10 @@ const rows = computed<AssignmentRow[]>(() =>
 		topic: movedTopics.value[assignment.name] ?? assignment.topic,
 		...status(assignment),
 	})),
+)
+
+const selectionHasSubmissions = computed(() =>
+	rows.value.some((row) => selection.value.includes(row.name) && !!row.submission_count),
 )
 
 watch(rows, () => {

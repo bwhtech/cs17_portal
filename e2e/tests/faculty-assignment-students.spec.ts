@@ -4,9 +4,11 @@ import {
 	CS17Profile,
 	TEST_ASSIGNMENT_PREFIX,
 	cleanupTestAssignments,
+	cleanupTestSubmissions,
 	createTestAssignment,
 	createTestCohort,
 	createTestProfile,
+	createTestSubmission,
 	deleteTestProfile,
 	ensureSessionFaculty,
 } from "../helpers/cs17";
@@ -28,6 +30,7 @@ test.describe("Assignment students", () => {
 	});
 
 	test.afterAll(async ({ request }) => {
+		await cleanupTestSubmissions(request, cohort.name);
 		await cleanupTestAssignments(request, cohort.name);
 		for (const student of students) await deleteTestProfile(request, student.name);
 		await deleteDoc(request, "CS17 Cohort", cohort.name);
@@ -59,6 +62,45 @@ test.describe("Assignment students", () => {
 					.getByText("1 student", { exact: true })
 			).toBeVisible();
 		}
+	});
+
+	test("hands the next assignment to a student who submitted theirs", async ({
+		page,
+		request,
+	}) => {
+		const assignments = [
+			await createTestAssignment(request, { cohort: cohort.name }),
+			await createTestAssignment(request, {
+				cohort: cohort.name,
+				title: `${TEST_ASSIGNMENT_PREFIX} Next ${Date.now()}`,
+			}),
+		];
+		for (const [index, assignment] of assignments.entries()) {
+			await callMethod(request, "cs17_portal.api.set_assignment_students", {
+				assignment: assignment.name,
+				students: [students[index].name],
+			});
+		}
+		await createTestSubmission(request, {
+			assignment: assignments[0].name,
+			student: students[0].name,
+		});
+
+		await page.goto("/dashboard/faculty/assignments");
+		for (const assignment of assignments) {
+			await page
+				.locator(LIST_ROW, { hasText: assignment.title })
+				.getByRole("checkbox")
+				.click();
+		}
+		await page.getByRole("button", { name: "Hand out at random" }).click();
+		await page.getByRole("dialog").getByRole("button", { name: "Hand out" }).click();
+
+		await expect(
+			page
+				.locator(LIST_ROW, { hasText: assignments[1].title })
+				.getByText("2 students", { exact: true })
+		).toBeVisible();
 	});
 
 	test("gives an assignment to a picked student", async ({ page, request }) => {
