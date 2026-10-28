@@ -22,7 +22,7 @@
 				<FormControl
 					v-model="model"
 					label="Model"
-					description="As provider/model, for example anthropic/claude-opus-5-5, openai/gpt-5 or gemini/gemini-2.5-pro."
+					description="As provider/model, for example anthropic/claude-sonnet-5-5 or gemini/gemini-3.5-flash."
 					:error="modelError"
 					@blur="saveModel"
 				/>

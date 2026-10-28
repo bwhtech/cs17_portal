@@ -11,7 +11,7 @@
  ],
  "fields": [
   {
-   "description": "As provider/model, for example anthropic/claude-opus-5-5, openai/gpt-5 or gemini/gemini-2.5-pro.",
+   "description": "As provider/model, for example anthropic/claude-sonnet-5-5 or gemini/gemini-3.5-flash.",
    "fieldname": "model",
    "fieldtype": "Data",
    "label": "Model"
@@ -26,7 +26,7 @@
  "issingle": 1,
  "link_display_mode": "Search",
  "links": [],
- "modified": "2026-10-28 23:01:17.258067",
+ "modified": "2026-10-29 00:19:52.763996",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 AI Settings",
