@@ -73,6 +73,36 @@ test.describe("Assignment topics", () => {
 		).toBeVisible();
 	});
 
+	test("puts a dragged assignment back with Undo", async ({ page, request }) => {
+		const stamp = Date.now();
+		const from = await createDoc<{ name: string }>(request, "CS17 Topic", {
+			topic_name: `${TEST_TOPIC_PREFIX} Loops ${stamp}`,
+		});
+		const to = await createDoc<{ name: string }>(request, "CS17 Topic", {
+			topic_name: `${TEST_TOPIC_PREFIX} Conditionals ${stamp}`,
+		});
+		const assignment = await createTestAssignment(request, {
+			cohort: cohort.name,
+			topic: from.name,
+		});
+		await createTestAssignment(request, { cohort: cohort.name, topic: to.name });
+
+		await page.goto("/dashboard/faculty/assignments");
+		await page
+			.locator(LIST_ROW, { hasText: assignment.title })
+			.dragTo(topicSection(page, to.name));
+		const undo = page.getByRole("button", { name: "Undo" });
+		await undo.waitFor();
+		const undone = page.waitForResponse(/move_assignments_to_topic/);
+		await undo.click();
+		await undone;
+		await page.reload();
+
+		await expect(
+			topicSection(page, from.name).locator(LIST_ROW, { hasText: assignment.title })
+		).toBeVisible();
+	});
+
 	test("creates an assignment under a topic made in the New topic dialog", async ({ page }) => {
 		const title = `${TEST_ASSIGNMENT_PREFIX} Topic ${Date.now()}`;
 		const topic = `${TEST_TOPIC_PREFIX} Conditionals ${Date.now()}`;
