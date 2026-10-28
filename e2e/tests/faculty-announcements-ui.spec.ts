@@ -1,6 +1,14 @@
 import { test, expect } from "@playwright/test";
-import { TEST_ANNOUNCEMENT_PREFIX, cleanupTestAnnouncements } from "../helpers/cs17";
+import {
+	TEST_ANNOUNCEMENT_PREFIX,
+	cleanupTestAnnouncements,
+	ensureSessionFaculty,
+} from "../helpers/cs17";
 import { callMethod } from "../helpers/frappe";
+
+test.beforeAll(async ({ request }) => {
+	await ensureSessionFaculty(request);
+});
 
 test.describe("Announcements bell", () => {
 	test.afterAll(async ({ request }) => {

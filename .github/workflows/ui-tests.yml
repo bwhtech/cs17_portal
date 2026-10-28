@@ -43,7 +43,11 @@ jobs:
     if: needs.plan.outputs.ui == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    name: Playwright E2E Tests
+    name: Playwright E2E Tests (${{ matrix.shard }}/2)
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
 
     services:
       redis-cache:
@@ -84,7 +88,6 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/*requirements.txt', '**/pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-            ${{ runner.os }}-
 
       - name: Install MariaDB Client
         run: sudo apt-get install -y mariadb-client
@@ -129,10 +132,10 @@ jobs:
         run: npm install
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium firefox webkit
+        run: npx playwright install --with-deps ${{ github.event_name == 'pull_request' && 'chromium' || 'chromium firefox webkit' }}
 
       - name: Run Playwright tests
-        run: npm run test:e2e
+        run: npm run test:e2e -- --shard=${{ matrix.shard }}/2 ${{ github.event_name == 'pull_request' && '--project=chromium --project=chromium-student --project=chromium-faculty' || '' }}
         env:
           SITE_HOST: test_site.localhost:8000
           API_BASE: http://127.0.0.1:8000
@@ -144,7 +147,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: playwright-report/
           retention-days: 14
 
@@ -152,10 +155,19 @@ jobs:
         uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: test-results
+          name: test-results-${{ matrix.shard }}
           path: test-results/
           retention-days: 14
 
       - name: Show bench logs on failure
         if: failure()
         run: cat /tmp/bench.log || true
+
+  ui-tests-result:
+    needs: ui-tests
+    if: always()
+    runs-on: ubuntu-latest
+    name: Playwright E2E Tests
+    steps:
+      - name: Check every shard passed
+        run: '[ "${{ needs.ui-tests.result }}" = "success" ] || [ "${{ needs.ui-tests.result }}" = "skipped" ]'
