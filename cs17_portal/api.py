@@ -2035,11 +2035,15 @@ def check_submission(submission: str) -> dict:
 		{"role": "user", "content": f"{prompt}\n\n<student_code>\n{row.code or ''}"},
 	]
 	try:
-		response = litellm.completion(model=settings.model, api_key=api_key, messages=messages, timeout=90)
-	except Exception:
+		response = litellm.completion(
+			model=settings.model, api_key=api_key, messages=messages, timeout=50, num_retries=1
+		)
+	except Exception as error:
 		frappe.log_error(
 			title=_("AI check failed"), reference_doctype=ASSIGNMENT_SUBMISSION, reference_name=submission
 		)
+		if isinstance(error, litellm.ServiceUnavailableError | litellm.RateLimitError | litellm.Timeout):
+			frappe.throw(_("The AI model is busy right now. Try again in a minute."))
 		frappe.throw(_("The AI model did not answer. Try again, or check the model and API key in Settings."))
 
 	reply = response.choices[0].message.content or ""
