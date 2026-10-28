@@ -46,6 +46,8 @@ export interface CS17Assignment {
 	modified?: string
 	/** Only on the faculty list. */
 	submission_count?: number
+	/** Only from `get_assignment_submissions`. */
+	can_check_with_ai?: boolean
 	starter_code?: string | null
 	test_cases?: PythonTestCase[]
 	sample_tests?: PythonTestCase[]

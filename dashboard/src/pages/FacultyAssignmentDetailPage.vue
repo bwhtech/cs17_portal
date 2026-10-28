@@ -209,6 +209,7 @@
 		:submission="gradeTarget"
 		:evaluation-type="assignment?.remarks ?? 'Marks'"
 		:max-marks="assignment?.max_marks"
+		:can-check-with-ai="assignment?.can_check_with_ai"
 		@update:open="gradeTarget = null"
 		@success="detail.reload()"
 	/>

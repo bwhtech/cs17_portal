@@ -28,6 +28,16 @@
 				:rows="3"
 			/>
 
+			<div v-if="canCheckWithAi" class="space-y-2">
+				<Button
+					icon-left="lucide-sparkles"
+					label="Check with AI"
+					:loading="aiCheck.loading"
+					@click="checkWithAi"
+				/>
+				<ErrorMessage :message="aiCheckError" />
+			</div>
+
 			<div class="space-y-2">
 				<PublishFields
 					v-model:mode="publishMode"
@@ -57,7 +67,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Button, Dialog, ErrorMessage, FormControl, Select, useCall } from 'frappe-ui'
+import { Button, Dialog, ErrorMessage, FormControl, Select, toast, useCall } from 'frappe-ui'
 import PublishFields from '@/components/common/PublishFields.vue'
 import { isPast, toFrappeDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
@@ -65,6 +75,7 @@ import { gradeForMarks } from '@/lib/grades'
 import { trySubmit } from '@/lib/trySubmit'
 import {
 	GRADE_SCALE,
+	type AIGradeDraft,
 	type CS17Submission,
 	type EvaluationType,
 	type GradeBand,
@@ -78,6 +89,7 @@ const props = defineProps<{
 	/** The assignment's `remarks` field: `Grade` scores a letter, `Marks` a number. */
 	evaluationType: EvaluationType | ''
 	maxMarks?: number
+	canCheckWithAi?: boolean
 }>()
 
 const emit = defineEmits<{ 'update:open': [value: boolean]; success: [] }>()
@@ -100,6 +112,7 @@ const fieldError = ref('')
 const publishOnError = ref('')
 /** Whatever the API answered with. */
 const saveError = ref('')
+const aiCheckError = ref('')
 
 const title = computed(() => `Grade: ${props.submission?.full_name ?? 'Submission'}`)
 
@@ -157,6 +170,7 @@ watch(
 		fieldError.value = ''
 		publishOnError.value = ''
 		saveError.value = ''
+		aiCheckError.value = ''
 	},
 	{ immediate: true },
 )
@@ -205,5 +219,26 @@ async function handleSave() {
 	}
 	emit('success')
 	emit('update:open', false)
+}
+
+const aiCheck = useCall<AIGradeDraft, { submission: string }>({
+	url: '/api/v2/method/cs17_portal.api.check_submission',
+	method: 'POST',
+	immediate: false,
+})
+
+async function checkWithAi() {
+	if (!props.submission) return
+	aiCheckError.value = ''
+	await trySubmit(aiCheck, { submission: props.submission.name })
+	if (aiCheck.error || !aiCheck.data) {
+		aiCheckError.value = frappeErrorMessage(aiCheck.error, 'Could not check with AI.')
+		return
+	}
+	const draft = aiCheck.data
+	if (draft.marks_obtained != null) marks.value = String(draft.marks_obtained)
+	if (draft.grade) grade.value = draft.grade
+	if (draft.remarks) remarks.value = draft.remarks
+	toast.success('AI draft filled in. Review it, then save.')
 }
 </script>

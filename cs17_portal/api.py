@@ -262,6 +262,9 @@ def get_assignment_submissions(assignment: str) -> dict:
 	)
 	if not assignment_doc:
 		frappe.throw(_("Assignment not found"), frappe.DoesNotExistError)
+	assignment_doc.can_check_with_ai = (
+		assignment_doc.submission_type == "Python" and frappe.get_cached_doc("CS17 AI Settings").is_set_up()
+	)
 	assignment_doc.students = frappe.get_all(
 		"CS17 Assignment Student",
 		filters={"parent": assignment, "parenttype": "CS17 Assignment"},
@@ -334,9 +337,8 @@ def get_submission(submission: str) -> dict:
 	row.marks_obtained = grade.marks_obtained if grade else None
 	row.grade = grade.grade if grade else None
 	row.graded = bool(grade)
-	ai_settings = frappe.get_cached_doc("CS17 AI Settings")
-	row.can_check_with_ai = assignment.submission_type == "Python" and bool(
-		ai_settings.model and ai_settings.api_key
+	row.can_check_with_ai = (
+		assignment.submission_type == "Python" and frappe.get_cached_doc("CS17 AI Settings").is_set_up()
 	)
 	return row
 

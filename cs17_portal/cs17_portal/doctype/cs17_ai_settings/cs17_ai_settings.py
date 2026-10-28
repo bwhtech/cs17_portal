@@ -19,3 +19,6 @@ class CS17AISettings(Document):
 	# end: auto-generated types
 
 	_DOCTYPE_NAME = "CS17 AI Settings"
+
+	def is_set_up(self) -> bool:
+		return bool(self.model and self.api_key)
