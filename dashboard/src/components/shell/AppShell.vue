@@ -22,11 +22,13 @@
 	     outlives both the zen flip and the breakpoint swap. -->
 	<SettingsDialog />
 	<SubmitFeedbackDialog />
+	<ToastHost />
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { DesktopShell, MobileShell, useColorScheme, usePageMeta } from 'frappe-ui'
+import ToastHost from '@/components/common/ToastHost.vue'
 import SubmitFeedbackDialog from '@/components/feedback/SubmitFeedbackDialog.vue'
 import SettingsDialog from '@/components/settings/SettingsDialog.vue'
 import AppMobileNav from '@/components/shell/AppMobileNav.vue'

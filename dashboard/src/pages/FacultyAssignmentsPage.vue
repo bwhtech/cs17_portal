@@ -165,7 +165,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Badge, Button, Select, toast, useCall } from 'frappe-ui'
+import { Badge, Button, Select, useCall } from 'frappe-ui'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
@@ -181,6 +181,7 @@ import { useLoadFailed } from '@/composables/useLoadFailed'
 import { formatDateTime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { STORAGE_KEYS, readJSON, writeJSON } from '@/lib/storage'
+import { toast } from '@/lib/toast'
 import { trySubmit } from '@/lib/trySubmit'
 import type { CS17Assignment } from '@/types'
 
@@ -288,17 +289,35 @@ function onBulkDone() {
 
 async function moveToTopic(moved: AssignmentRow[], group: string) {
 	const topic = group === NO_TOPIC ? '' : group
-	const names = moved.map((row) => row.name)
-	for (const name of names) movedTopics.value[name] = topic
-	await trySubmit(moveCall, { assignments: names, topic })
-	const label = `${names.length} ${names.length === 1 ? 'assignment' : 'assignments'}`
-	if (moveCall.error) {
-		toast.error(frappeErrorMessage(moveCall.error, `Could not move to ${group}.`))
-	} else {
-		toast.success(topic ? `Moved ${label} to ${topic}.` : `Removed the topic from ${label}.`)
+	const previous = Object.fromEntries(moved.map((row) => [row.name, row.topic || '']))
+	const error = await saveTopics(Object.fromEntries(moved.map((row) => [row.name, topic])))
+	if (error) return toast.error(`Could not move to ${group}`, { description: error })
+	toast.success(topic ? `Moved to ${topic}` : 'Topic removed', {
+		description: moved.length === 1 ? moved[0].title : `${moved.length} assignments`,
+		action: { label: 'Undo', onClick: () => undoMove(previous) },
+	})
+}
+
+async function undoMove(previous: Record<string, string>) {
+	const error = await saveTopics(previous)
+	if (error) toast.error('Could not undo the move', { description: error })
+}
+
+async function saveTopics(topics: Record<string, string>): Promise<string> {
+	const namesByTopic = new Map<string, string[]>()
+	for (const [name, topic] of Object.entries(topics)) {
+		namesByTopic.set(topic, [...(namesByTopic.get(topic) ?? []), name])
+	}
+	Object.assign(movedTopics.value, topics)
+	let error = ''
+	for (const [topic, assignments] of namesByTopic) {
+		await trySubmit(moveCall, { assignments, topic })
+		if (moveCall.error && !error)
+			error = frappeErrorMessage(moveCall.error, 'Nothing was moved.')
 	}
 	await assignmentsCall.reload()
-	for (const name of names) delete movedTopics.value[name]
+	for (const name of Object.keys(topics)) delete movedTopics.value[name]
+	return error
 }
 
 function status(assignment: CS17Assignment) {

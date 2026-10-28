@@ -48,6 +48,7 @@ declare module 'vue' {
     PageBody: typeof import('./src/components/common/PageBody.vue')['default']
     PageSkeleton: typeof import('./src/components/common/PageSkeleton.vue')['default']
     PanelLayout: typeof import('./src/components/settings/PanelLayout.vue')['default']
+    PillToast: typeof import('./src/components/common/PillToast.vue')['default']
     PreferencesSettings: typeof import('./src/components/settings/PreferencesSettings.vue')['default']
     PreviewAnnouncementDialog: typeof import('./src/components/faculty/PreviewAnnouncementDialog.vue')['default']
     ProblemPanel: typeof import('./src/components/python/ProblemPanel.vue')['default']
@@ -79,6 +80,7 @@ declare module 'vue' {
     TestResults: typeof import('./src/components/python/TestResults.vue')['default']
     TimeLeft: typeof import('./src/components/python/TimeLeft.vue')['default']
     TimeTaken: typeof import('./src/components/grading/TimeTaken.vue')['default']
+    ToastHost: typeof import('./src/components/common/ToastHost.vue')['default']
     TopicSelect: typeof import('./src/components/faculty/TopicSelect.vue')['default']
     UnreadAnnouncements: typeof import('./src/components/announcements/UnreadAnnouncements.vue')['default']
   }
