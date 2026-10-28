@@ -18,6 +18,21 @@ const SUBMISSION = {
 
 const DRAFT = { marks_obtained: 15, grade: null, remarks: "Reads the input and prints it." };
 
+const ASSIGNMENT_SUBMISSIONS = {
+	assignment: {
+		name: SUBMISSION.assignment,
+		title: SUBMISSION.assignment_title,
+		due_date: "2026-01-08 09:00:00",
+		submission_type: "Python",
+		assignment_type: "Graded",
+		remarks: "Marks",
+		max_marks: 20,
+		can_check_with_ai: true,
+	},
+	submissions: [SUBMISSION],
+	not_submitted: [],
+};
+
 test.describe("Faculty AI check", () => {
 	test("fills the grade form from the AI check without saving it", async ({ page }) => {
 		await page.route(/cs17_portal\.api\.get_submission\?/, (route) =>
@@ -59,24 +74,7 @@ test.describe("Faculty AI check", () => {
 
 	test("fills the assignment page's grade dialog from the AI check", async ({ page }) => {
 		await page.route("**/cs17_portal.api.get_assignment_submissions*", (route) =>
-			route.fulfill({
-				json: {
-					data: {
-						assignment: {
-							name: SUBMISSION.assignment,
-							title: SUBMISSION.assignment_title,
-							due_date: "2026-01-08 09:00:00",
-							submission_type: "Python",
-							assignment_type: "Graded",
-							remarks: "Marks",
-							max_marks: 20,
-							can_check_with_ai: true,
-						},
-						submissions: [SUBMISSION],
-						not_submitted: [],
-					},
-				},
-			})
+			route.fulfill({ json: { data: ASSIGNMENT_SUBMISSIONS } })
 		);
 		await page.route("**/cs17_portal.api.check_submission", (route) =>
 			route.fulfill({ json: { data: DRAFT } })
@@ -88,6 +86,31 @@ test.describe("Faculty AI check", () => {
 
 		await expect(page.getByLabel("Marks (out of 20)")).toHaveValue("15");
 		await expect(page.getByLabel("Remarks")).toHaveValue(DRAFT.remarks);
+	});
+
+	test("checks the selected submissions with AI from the bulk bar", async ({ page }) => {
+		await page.route("**/cs17_portal.api.get_assignment_submissions*", (route) =>
+			route.fulfill({ json: { data: ASSIGNMENT_SUBMISSIONS } })
+		);
+		const checks: unknown[] = [];
+		await page.route("**/cs17_portal.api.check_submissions", (route) => {
+			checks.push(route.request().postDataJSON());
+			return route.fulfill({ json: { data: { queued: 1, skipped: 0 } } });
+		});
+
+		await page.goto(`/dashboard/faculty/assignments/${SUBMISSION.assignment}`);
+		await page
+			.locator('[data-slot="list-row"]', { hasText: SUBMISSION.full_name })
+			.getByRole("checkbox")
+			.check();
+		await page
+			.getByRole("region", { name: "Selected submissions" })
+			.getByRole("button", { name: "Check with AI" })
+			.click();
+		await page.getByRole("button", { name: "Confirm" }).click();
+
+		await expect(page.getByText("Checking 1 submission with AI.")).toBeVisible();
+		expect(checks).toEqual([{ submissions: [SUBMISSION.name] }]);
 	});
 
 	test("saves the model from the Settings dialog", async ({ page }) => {
