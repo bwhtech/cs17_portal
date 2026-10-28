@@ -51,6 +51,10 @@
 				Stopped after {{ result.timeoutMs / 1000 }} seconds. A loop that never ends does
 				this.
 			</p>
+			<p v-else-if="result.status === 'loading'" class="text-p-sm text-ink-gray-5">
+				Python is still downloading. On a slow connection this takes a few minutes. Run
+				again in a moment.
+			</p>
 			<p v-else class="text-p-sm text-ink-red-6">
 				Could not start Python. Check your internet connection and run again.
 			</p>

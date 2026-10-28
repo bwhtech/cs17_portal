@@ -77,7 +77,7 @@ test.describe("Faculty profile settings", () => {
 		await page.getByLabel("Last name").fill("Faculty");
 		await page.getByLabel("Last name").blur();
 		await expect(page.getByLabel("Last name")).toHaveAccessibleErrorMessage(
-			"Could not save your name."
+			"Could not save your name. Check your internet connection."
 		);
 	});
 

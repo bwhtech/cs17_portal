@@ -2,6 +2,7 @@ import path from 'node:path'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import frappeui from 'frappe-ui/vite'
+import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
 	plugins: [
@@ -17,6 +18,19 @@ export default defineConfig({
 			},
 		}),
 		vue(),
+		VitePWA({
+			strategies: 'injectManifest',
+			srcDir: 'src',
+			filename: 'sw.ts',
+			injectRegister: false,
+			manifest: false,
+			injectManifest: {
+				globPatterns: ['**/*.{js,css,svg,woff2}'],
+				globIgnores: ['**/Inter-Italic*'],
+				modifyURLPrefix: { '': '/assets/cs17_portal/dashboard/' },
+				dontCacheBustURLsMatching: /^\/assets\/cs17_portal\/dashboard\/assets\//,
+			},
+		}),
 	],
 	resolve: {
 		alias: {

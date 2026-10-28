@@ -5,7 +5,7 @@ const authFile = path.join(__dirname, "e2e", ".auth", "user.json");
 const studentAuthFile = path.join(__dirname, "e2e", ".auth", "student.json");
 const facultyAuthFile = path.join(__dirname, "e2e", ".auth", "faculty.json");
 const studentSpecs =
-	/(student-submission|student-theme|student-results|student-assignment-title|python-assignments|python-time-limit|editor-failed-save)\.spec\.ts/;
+	/(student-submission|student-theme|student-results|student-assignment-title|student-service-worker|python-assignments|python-time-limit|editor-failed-save)\.spec\.ts/;
 const facultySpecs =
 	/(faculty-announcements-ui|faculty-assignments-ui|faculty-profile-ui|faculty-projects|faculty-assignment-students|faculty-assignment-topics|faculty-dashboard|faculty-ai-check)\.spec\.ts/;
 
@@ -33,6 +33,7 @@ export default defineConfig({
 		screenshot: "only-on-failure",
 		actionTimeout: 15000,
 		navigationTimeout: 30000,
+		serviceWorkers: "block",
 	},
 
 	projects: [
