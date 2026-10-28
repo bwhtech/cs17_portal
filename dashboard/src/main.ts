@@ -38,4 +38,10 @@ async function start() {
 	app.mount('#app')
 }
 
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+	window.addEventListener('load', () => {
+		navigator.serviceWorker.register('/dashboard/sw.js', { scope: '/dashboard' }).catch(() => null)
+	})
+}
+
 start()
