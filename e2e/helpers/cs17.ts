@@ -144,6 +144,7 @@ export async function createTestAssignment(
 		assignmentType?: string;
 		dueDate?: string;
 		isPublished?: boolean;
+		topic?: string;
 	}
 ): Promise<CS17Assignment> {
 	const submissionType = options.submissionType ?? "Any";
@@ -154,6 +155,7 @@ export async function createTestAssignment(
 		assignment_type: options.assignmentType ?? "Not Graded",
 		due_date: options.dueDate ?? "2030-01-01 00:00:00",
 		is_published: options.isPublished === false ? 0 : 1,
+		topic: options.topic,
 	});
 }
 

@@ -7,7 +7,7 @@ import {
 	createTestCohort,
 	ensureSessionFaculty,
 } from "../helpers/cs17";
-import { deleteDoc, getList } from "../helpers/frappe";
+import { createDoc, deleteDoc, getList } from "../helpers/frappe";
 
 const LIST_ROW = '[data-slot="list-row"]';
 const TEST_TOPIC_PREFIX = "E2E Topic";
@@ -46,6 +46,30 @@ test.describe("Assignment topics", () => {
 
 		await expect(
 			topicSection(page, topic).locator(LIST_ROW, { hasText: assignment.title })
+		).toBeVisible();
+	});
+
+	test("drags an assignment onto another topic", async ({ page, request }) => {
+		const stamp = Date.now();
+		const from = await createDoc<{ name: string }>(request, "CS17 Topic", {
+			topic_name: `${TEST_TOPIC_PREFIX} Loops ${stamp}`,
+		});
+		const to = await createDoc<{ name: string }>(request, "CS17 Topic", {
+			topic_name: `${TEST_TOPIC_PREFIX} Conditionals ${stamp}`,
+		});
+		const assignment = await createTestAssignment(request, {
+			cohort: cohort.name,
+			topic: from.name,
+		});
+		await createTestAssignment(request, { cohort: cohort.name, topic: to.name });
+
+		await page.goto("/dashboard/faculty/assignments");
+		await page
+			.locator(LIST_ROW, { hasText: assignment.title })
+			.dragTo(topicSection(page, to.name));
+
+		await expect(
+			topicSection(page, to.name).locator(LIST_ROW, { hasText: assignment.title })
 		).toBeVisible();
 	});
 
