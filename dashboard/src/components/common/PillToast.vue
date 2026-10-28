@@ -5,10 +5,7 @@
 			class="relative transition-[height] duration-[600ms] ease-[--toast-spring] motion-reduce:transition-none"
 			:style="{ height: `${open ? expandedHeight : HEIGHT}px` }"
 		>
-			<div
-				class="pointer-events-none absolute inset-x-0 bottom-0"
-				aria-hidden="true"
-			>
+			<div class="pointer-events-none absolute inset-x-0 bottom-0" aria-hidden="true">
 				<svg
 					class="block -scale-y-100 overflow-visible"
 					:width="width"
