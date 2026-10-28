@@ -51,13 +51,16 @@ class TestCheckSubmission(FrappeTestCase):
 		with patch("litellm.completion", return_value=ai_reply('{"marks_obtained": 25, "remarks": "Good"}')):
 			self.assertEqual(api.check_submission(self.submission)["marks_obtained"], 20)
 
-	def test_check_submission_drops_a_grade_outside_the_grading_scale(self):
-		bands = [{"grade": "A", "min_percent": 80}, {"grade": "B", "min_percent": 0}]
-		with (
-			patch("cs17_portal.api.get_grade_bands", return_value=bands),
-			patch("litellm.completion", return_value=ai_reply('{"grade": "A+", "remarks": "Good"}')),
-		):
+	def test_check_submission_drops_a_grade_outside_the_letter_grades(self):
+		with patch("litellm.completion", return_value=ai_reply('{"grade": "A+", "remarks": "Good"}')):
 			self.assertIsNone(api.check_submission(self.graded_submission)["grade"])
+
+	def test_check_submission_keeps_a_letter_grade_when_the_grading_scale_uses_other_letters(self):
+		with (
+			patch("cs17_portal.api.get_grade_bands", return_value=[{"grade": "B1", "min_percent": 0}]),
+			patch("litellm.completion", return_value=ai_reply('{"grade": "B", "remarks": "Good"}')),
+		):
+			self.assertEqual(api.check_submission(self.graded_submission)["grade"], "B")
 
 	def test_check_submission_leaves_the_student_out_of_the_prompt(self):
 		with patch("litellm.completion", return_value=ai_reply("{}")) as completion:
