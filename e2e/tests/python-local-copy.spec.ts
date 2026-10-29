@@ -70,6 +70,8 @@ test.describe("Python editor code kept on the device", () => {
 			`/dashboard/projects/${started.body.message.name}/code?assignment=${assignment.name}`
 		);
 		await expect(page.getByRole("button", { name: "Submit", exact: true })).toBeVisible();
+		await page.locator(".cm-content").fill('print("saved")');
+		await expect(page.getByText("Saved", { exact: true })).toBeVisible();
 		await context.setOffline(true);
 		await page.locator(".cm-content").fill('print("late")');
 		await expect(page.getByText("Save failed")).toBeVisible();
@@ -81,6 +83,6 @@ test.describe("Python editor code kept on the device", () => {
 		page.on("dialog", (dialog) => dialog.accept());
 		await page.reload();
 		await expect(page.locator(".cm-content")).toHaveAttribute("contenteditable", "false");
-		await expect(page.locator(".cm-content")).toHaveText("");
+		await expect(page.locator(".cm-content")).toHaveText('print("saved")');
 	});
 });
