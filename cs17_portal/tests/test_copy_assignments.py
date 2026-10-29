@@ -41,6 +41,7 @@ class TestCopyAssignments(FrappeTestCase):
 			time_limit=30,
 			attempts_allowed=2,
 			topic=api.create_topic("Functions 380"),
+			difficulty="Hard",
 		)
 
 		[copy] = api.copy_assignments([assignment], self.next_cohort)
@@ -58,6 +59,7 @@ class TestCopyAssignments(FrappeTestCase):
 			"time_limit",
 			"attempts_allowed",
 			"topic",
+			"difficulty",
 		]
 		source, copied = api.get_assignment(assignment), api.get_assignment(copy)
 		self.assertEqual({key: copied[key] for key in work}, {key: source[key] for key in work})
