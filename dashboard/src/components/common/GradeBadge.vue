@@ -18,5 +18,8 @@ const props = defineProps<{
 	maxMarks?: number
 }>()
 
-const label = computed(() => (props.graded ? formatGrade(props) : 'Not graded'))
+const label = computed(() => {
+	if (!props.graded) return 'Not graded'
+	return props.evaluationType ? formatGrade(props) : 'Remarks'
+})
 </script>

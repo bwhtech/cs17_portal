@@ -55,6 +55,8 @@
 			label="Remarks"
 			:rows="2"
 			placeholder="Feedback for the student (Markdown supported)"
+			:required="remarksOnly"
+			:error="remarksError"
 		/>
 
 		<Button
@@ -72,7 +74,7 @@
 			theme="gray"
 			type="submit"
 			:loading="saveCall.loading"
-			:label="graded ? 'Update grade' : 'Save grade'"
+			:label="`${graded ? 'Update' : 'Save'} ${noun}`"
 		/>
 	</form>
 </template>
@@ -99,15 +101,17 @@ const props = defineProps<{
 	/** `CS17 Assignment Submission` name. */
 	submission: string
 	maxMarks: number
-	evaluationType: EvaluationType
+	evaluationType: EvaluationType | '' | null
 	suggestedMarks?: number | null
 	canCheckWithAi?: boolean
 }>()
 
 const emit = defineEmits<{ saved: [] }>()
 
-const showMarks = computed(() => props.evaluationType !== 'Grade')
-const showGrade = computed(() => props.evaluationType !== 'Marks')
+const showMarks = computed(() => props.evaluationType === 'Marks')
+const showGrade = computed(() => props.evaluationType === 'Grade')
+const remarksOnly = computed(() => !props.evaluationType)
+const noun = computed(() => (remarksOnly.value ? 'remarks' : 'grade'))
 
 const gradeOptions = [
 	{ label: 'No grade', value: '' },
@@ -118,6 +122,7 @@ const marks = ref('')
 const gradeLetter = ref('')
 const remarks = ref('')
 const marksError = ref('')
+const remarksError = ref('')
 const seeded = ref(false)
 const graded = ref(false)
 
@@ -210,6 +215,8 @@ async function save() {
 		return
 	}
 	marksError.value = ''
+	remarksError.value = remarksOnly.value && !remarks.value.trim() ? 'Enter the remarks.' : ''
+	if (remarksError.value) return
 
 	await trySubmit(saveCall, {
 		submission: props.submission,
@@ -219,12 +226,12 @@ async function save() {
 	})
 
 	if (saveCall.error) {
-		toast.error(frappeErrorMessage(saveCall.error, 'Could not save the grade.'))
+		toast.error(frappeErrorMessage(saveCall.error, `Could not save the ${noun.value}.`))
 		return
 	}
 
 	graded.value = true
-	toast.success('Grade saved.')
+	toast.success(remarksOnly.value ? 'Remarks saved.' : 'Grade saved.')
 	emit('saved')
 }
 

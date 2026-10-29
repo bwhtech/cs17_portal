@@ -68,7 +68,7 @@
 				<Button v-if="row.has_answers" label="Answers" @click="openAnswers(row)" />
 				<Button
 					v-if="showsGrade(row)"
-					label="View Grade"
+					:label="row.assignment_type === 'Not Graded' ? 'View Remarks' : 'View Grade'"
 					@click="emit('view-grade', row.name)"
 				/>
 				<Button
@@ -256,13 +256,8 @@ function isScratch(assignment: CS17Assignment): boolean {
 	return assignment.submission_type === 'Scratch'
 }
 
-/** A Not Graded assignment closes without a grade, so it offers nothing to view. */
 function showsGrade(assignment: CS17Assignment): boolean {
-	return (
-		statusOf(assignment) === 'Closed' &&
-		Boolean(props.gradeMap?.[assignment.name]) &&
-		assignment.assignment_type !== 'Not Graded'
-	)
+	return statusOf(assignment) === 'Closed' && Boolean(props.gradeMap?.[assignment.name])
 }
 
 function openSubmit(assignment: CS17Assignment, existing: CS17Submission | null) {
