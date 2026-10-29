@@ -57,6 +57,12 @@ class TestCheckSubmission(FrappeTestCase):
 
 		self.assertTrue(assignment.can_check_with_ai)
 
+	def test_get_assignment_submissions_says_a_not_graded_assignment_cannot_be_checked_with_ai(self):
+		assignment = make_assignment(make_cohort("C180TEST"), "Python Task 182", "Python", 0)
+		frappe.db.set_value("CS17 Assignment", assignment, {"assignment_type": "Not Graded", "remarks": ""})
+
+		self.assertFalse(api.get_assignment_submissions(assignment)["assignment"].can_check_with_ai)
+
 	def test_check_submission_keeps_the_marks_within_the_maximum(self):
 		with patch("litellm.completion", return_value=ai_reply('{"marks_obtained": 25, "remarks": "Good"}')):
 			self.assertEqual(api.check_submission(self.submission)["marks_obtained"], 20)
