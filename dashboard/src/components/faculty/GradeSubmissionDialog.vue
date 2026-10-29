@@ -72,6 +72,7 @@ import PublishFields from '@/components/common/PublishFields.vue'
 import { isPast, toFrappeDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { gradeForMarks } from '@/lib/grades'
+import { unescapeTags } from '@/lib/markdown'
 import { trySubmit } from '@/lib/trySubmit'
 import {
 	GRADE_SCALE,
@@ -155,7 +156,7 @@ watch(
 		const existing = submission?.grade
 		grade.value = existing?.grade ?? ''
 		marks.value = existing?.marks_obtained == null ? '' : String(existing.marks_obtained)
-		remarks.value = existing?.remarks ?? ''
+		remarks.value = unescapeTags(existing?.remarks ?? '')
 		published.value = Boolean(existing?.is_published) || isPast(existing?.published_on)
 		if (published.value) {
 			publishMode.value = 'now'

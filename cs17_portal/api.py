@@ -2055,6 +2055,36 @@ def move_assignments_to_topic(assignments: list | str, topic: str | None = None)
 
 
 @frappe.whitelist(methods=["POST"])
+def copy_assignments(assignments: list | str, cohort: str, quarter: str | None = None) -> list:
+	assignments = frappe.parse_json(assignments)
+	for assignment in assignments:
+		require_faculty_for_assignment(assignment)
+	copies = []
+	for assignment in assignments:
+		source = frappe.get_doc("CS17 Assignment", assignment)
+		copies.append(
+			create_assignment(
+				title=source.title,
+				cohort=cohort,
+				due_date="",
+				submission_type=source.submission_type,
+				description=source.description,
+				assignment_type=source.assignment_type,
+				max_marks=source.max_marks,
+				remarks=source.remarks,
+				quarter=quarter,
+				starter_code=source.starter_code,
+				test_cases=source.test_cases,
+				watch_tab_switches=source.watch_tab_switches,
+				time_limit=source.time_limit,
+				attempts_allowed=source.attempts_allowed,
+				topic=source.topic,
+			)
+		)
+	return copies
+
+
+@frappe.whitelist(methods=["POST"])
 @rate_limit(limit=5, seconds=60 * 60, methods=["POST"], ip_based=False, user_based=True)
 def submit_feedback(category: str, description: str) -> None:
 	cohort = frappe.db.get_value("CS17 Profile", require_current_student(), "cohort")
@@ -2230,4 +2260,15 @@ def save_ai_grade_draft(submission: str) -> None:
 		marks_obtained=draft["marks_obtained"],
 		remarks=draft["remarks"],
 		publish="draft",
+	)
+
+
+@frappe.whitelist(methods=["GET"])
+def get_assignment_submission_names(assignment: str) -> list:
+	require_faculty_for_assignment(assignment)
+	return frappe.get_all(
+		"CS17 Assignment Submission",
+		filters={"assignment": assignment},
+		pluck="name",
+		order_by="submitted_at desc",
 	)

@@ -134,6 +134,8 @@
 			v-if="selection.length"
 			:assignments="selection"
 			:has-submissions="selectionHasSubmissions"
+			:cohorts="cohorts"
+			:quarters="quarters"
 			@done="onBulkDone"
 			@clear="selection = []"
 		/>

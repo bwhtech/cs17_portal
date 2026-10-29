@@ -33,6 +33,7 @@ declare module 'vue' {
     AssignmentTable: typeof import('./src/components/assignments/AssignmentTable.vue')['default']
     AssignmentTimingDialog: typeof import('./src/components/faculty/AssignmentTimingDialog.vue')['default']
     AvatarCropper: typeof import('./src/components/settings/AvatarCropper.vue')['default']
+    CopyAssignmentsDialog: typeof import('./src/components/faculty/CopyAssignmentsDialog.vue')['default']
     DataTable: typeof import('./src/components/common/DataTable.vue')['default']
     DeleteAnnouncementDialog: typeof import('./src/components/faculty/DeleteAnnouncementDialog.vue')['default']
     DeleteAssignmentDialog: typeof import('./src/components/faculty/DeleteAssignmentDialog.vue')['default']

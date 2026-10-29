@@ -22,7 +22,7 @@
 	     block that scrolls with the page. -->
 	<div v-else :class="['flex flex-col', isZen ? 'h-full' : '']">
 		<header
-			class="flex shrink-0 items-center gap-3 border-b border-outline-gray-1 bg-surface-base px-3 py-2 sm:px-5"
+			class="flex shrink-0 flex-wrap items-center gap-3 border-b border-outline-gray-1 bg-surface-base px-3 py-2 sm:px-5"
 		>
 			<Button
 				variant="ghost"
@@ -32,7 +32,7 @@
 				@click="goBack"
 			/>
 
-			<div class="min-w-0">
+			<div class="min-w-0 flex-1">
 				<h1
 					class="text-base font-medium text-ink-gray-8 [overflow-wrap:anywhere] max-md:line-clamp-2 md:truncate"
 					dir="auto"
@@ -51,7 +51,7 @@
 				</p>
 			</div>
 
-			<div class="ml-auto flex shrink-0 items-center gap-2">
+			<div class="flex shrink-0 flex-wrap items-center justify-end gap-2 max-md:w-full">
 				<Button
 					variant="ghost"
 					:icon="isZen ? 'lucide-minimize-2' : 'lucide-maximize-2'"
@@ -79,6 +79,24 @@
 					:grade="submission.grade"
 					:max-marks="submission.max_marks"
 				/>
+				<div class="flex items-center">
+					<Button
+						variant="ghost"
+						icon="lucide-chevron-left"
+						aria-label="Previous submission"
+						tooltip="Previous submission"
+						:disabled="!previousSubmission"
+						:route="gradingRoute(previousSubmission)"
+					/>
+					<Button
+						variant="ghost"
+						icon="lucide-chevron-right"
+						aria-label="Next submission"
+						tooltip="Next submission"
+						:disabled="!nextSubmission"
+						:route="gradingRoute(nextSubmission)"
+					/>
+				</div>
 			</div>
 		</header>
 
@@ -112,15 +130,17 @@
 			v-if="submission.evaluation_type"
 			class="shrink-0 border-t border-outline-gray-1 bg-surface-base px-3 py-4 sm:px-5"
 		>
-			<GradeForm
-				:key="submission.name"
-				:submission="submission.name"
-				:max-marks="submission.max_marks"
-				:evaluation-type="submission.evaluation_type"
-				:suggested-marks="suggestedMarks"
-				:can-check-with-ai="submission.can_check_with_ai"
-				@saved="onSaved"
-			/>
+			<KeepAlive>
+				<GradeForm
+					:key="submission.name"
+					:submission="submission.name"
+					:max-marks="submission.max_marks"
+					:evaluation-type="submission.evaluation_type"
+					:suggested-marks="suggestedMarks"
+					:can-check-with-ai="submission.can_check_with_ai"
+					@saved="onSaved"
+				/>
+			</KeepAlive>
 		</div>
 
 		<Dialog v-model:open="revisionsOpen" title="Earlier attempts">
@@ -200,7 +220,7 @@ const submission = computed(() =>
 		? null
 		: (detailRow.value ??
 			cohortSubmissions.data?.find((row) => row.name === props.submissionId) ??
-			null),
+			(detail.error ? null : detail.data)),
 )
 
 const loading = computed(() => !detail.isFinished && !submission.value)
@@ -214,6 +234,33 @@ const revisions = useCall<SubmissionRevision[], { submission: string }>({
 	params: () => ({ submission: props.submissionId }),
 	refetch: true,
 })
+
+const assignmentSubmissionNames = useCall<string[], { assignment: string }>({
+	url: '/api/v2/method/cs17_portal.api.get_assignment_submission_names',
+	method: 'GET',
+	params: () => ({ assignment: submission.value?.assignment ?? '' }),
+	immediate: false,
+})
+
+watch(
+	() => submission.value?.assignment,
+	(assignment) => {
+		if (assignment) assignmentSubmissionNames.reload()
+	},
+	{ immediate: true },
+)
+
+const position = computed(() => assignmentSubmissionNames.data?.indexOf(props.submissionId) ?? -1)
+const previousSubmission = computed(() =>
+	position.value > 0 ? assignmentSubmissionNames.data?.[position.value - 1] : undefined,
+)
+const nextSubmission = computed(() =>
+	position.value >= 0 ? assignmentSubmissionNames.data?.[position.value + 1] : undefined,
+)
+
+function gradingRoute(name: string | undefined) {
+	return name ? { path: `/faculty/submissions/${name}`, replace: true } : undefined
+}
 
 const sendBackOpen = ref(false)
 const revisionsOpen = ref(false)
