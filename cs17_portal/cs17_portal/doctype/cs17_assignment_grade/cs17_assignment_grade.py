@@ -48,6 +48,8 @@ class CS17AssignmentGrade(Document):
 	def validate(self):
 		self.remarks = (self.remarks or "").strip() or None
 		self.escape_tags_in_remarks()
+		if self.published_on:
+			self.published_on = get_datetime(self.published_on)
 		self.validate_duplicate()
 		assignment = frappe.db.get_value(
 			"CS17 Assignment", self.assignment, ["assignment_type", "max_marks", "remarks"], as_dict=True
@@ -80,8 +82,6 @@ class CS17AssignmentGrade(Document):
 			self.remarks = re.sub(r"<(?=/?[a-zA-Z])", "&lt;", self.remarks)
 
 	def on_update(self):
-		if self.published_on:
-			self.published_on = get_datetime(self.published_on)
 		previous = self.get_doc_before_save()
 		if is_published_now(self, "published_on") or (
 			previous and is_published_now(previous, "published_on")
