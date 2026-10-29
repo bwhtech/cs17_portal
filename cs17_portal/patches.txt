@@ -17,3 +17,4 @@ cs17_portal.patches.v1_0.set_grade_for_marks_assignments
 cs17_portal.patches.v1_0.set_submitted_at_on_old_submissions
 cs17_portal.patches.v1_0.remove_stray_spaces_from_profile_names
 cs17_portal.patches.v1_0.add_unique_indexes_missing_on_fresh_installs
+cs17_portal.patches.v1_0.remove_draft_grades_from_results
