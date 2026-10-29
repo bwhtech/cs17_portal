@@ -72,6 +72,7 @@ declare module 'vue' {
     ScratchFrame: typeof import('./src/components/scratch/ScratchFrame.vue')['default']
     SendBackDialog: typeof import('./src/components/faculty/SendBackDialog.vue')['default']
     SettingsDialog: typeof import('./src/components/settings/SettingsDialog.vue')['default']
+    StudentImport: typeof import('./src/components/settings/StudentImport.vue')['default']
     SubmissionAssignees: typeof import('./src/components/faculty/SubmissionAssignees.vue')['default']
     SubmissionBulkActions: typeof import('./src/components/faculty/SubmissionBulkActions.vue')['default']
     SubmissionPlayer: typeof import('./src/components/grading/SubmissionPlayer.vue')['default']

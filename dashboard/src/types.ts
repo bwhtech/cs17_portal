@@ -19,6 +19,15 @@ export interface CS17Profile {
 	profile_picture: string | null
 }
 
+export interface NewStudent {
+	row: number
+	first_name: string
+	last_name: string
+	email: string
+	cohort: string
+	error: string | null
+}
+
 /** `CS17 Assignment`. */
 export interface CS17Assignment {
 	name: string
