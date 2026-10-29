@@ -173,17 +173,21 @@
 								label="Preview"
 								@click="openPreview(row)"
 							/>
-							<Button v-if="sheet" label="Answers" @click="answersTarget = row" />
 							<Button
 								v-if="isSubmitted(row)"
 								:label="gradeActionLabel(row)"
 								@click="gradeTarget = row"
 							/>
-							<Button
-								v-if="isSubmitted(row) && !row.returned_on"
-								label="Send back"
-								@click="sendBackTarget = row"
-							/>
+							<Dropdown
+								v-if="moreActions(row).length"
+								:options="moreActions(row)"
+								align="end"
+							>
+								<Button
+									icon="lucide-ellipsis"
+									:aria-label="`Actions for ${row.full_name ?? row.student}`"
+								/>
+							</Dropdown>
 						</div>
 					</template>
 				</DataTable>
@@ -274,7 +278,15 @@
 <script setup lang="ts">
 import { computed, reactive, ref, toRefs, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Badge, Button, PageHeaderBackButton, toast, useCall } from 'frappe-ui'
+import {
+	Badge,
+	Button,
+	Dropdown,
+	PageHeaderBackButton,
+	toast,
+	useCall,
+	type DropdownActionOption,
+} from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
@@ -508,6 +520,25 @@ const columns = computed<Column[]>(() => [
 function gradeActionLabel(row: CS17Submission): string {
 	if (isGraded.value) return row.grade ? 'Edit grade' : 'Grade'
 	return row.grade ? 'Edit remarks' : 'Add remarks'
+}
+
+function moreActions(row: CS17Submission): DropdownActionOption[] {
+	const actions: DropdownActionOption[] = []
+	if (sheet.value) {
+		actions.push({
+			label: 'Answers',
+			icon: 'lucide-list-checks',
+			onClick: () => (answersTarget.value = row),
+		})
+	}
+	if (isSubmitted(row) && !row.returned_on) {
+		actions.push({
+			label: 'Send back',
+			icon: 'lucide-undo-2',
+			onClick: () => (sendBackTarget.value = row),
+		})
+	}
+	return actions
 }
 
 /** `_assign` is Frappe's ToDo mirror: a JSON array of user ids, or nothing. */

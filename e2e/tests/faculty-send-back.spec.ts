@@ -44,7 +44,8 @@ test.describe("Send back for revision", () => {
 		const row = page.locator(LIST_ROW, { hasText: student.full_name });
 
 		await page.goto(`/dashboard/faculty/assignments/${assignment.name}`);
-		await row.getByRole("button", { name: "Send back" }).click();
+		await row.getByRole("button", { name: /Actions for/ }).click();
+		await page.getByRole("menuitem", { name: "Send back" }).click();
 		await page
 			.getByLabel(/What should they change/)
 			.fill("Add the second page of the report.");
