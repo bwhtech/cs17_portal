@@ -31,6 +31,15 @@
 				label="Copy submission link"
 				@click="copySubmissionLink"
 			/>
+			<Button
+				v-if="assignment?.submission_type === 'Python'"
+				:variant="isDesktop ? 'subtle' : 'ghost'"
+				:icon-left="isDesktop ? 'lucide-files' : undefined"
+				:icon="isDesktop ? undefined : 'lucide-files'"
+				:tooltip="isDesktop ? undefined : 'Similar code'"
+				label="Similar code"
+				@click="similarCodeOpen = true"
+			/>
 		</template>
 	</AppHeader>
 
@@ -99,12 +108,11 @@
 					empty="No submissions yet."
 				>
 					<template #cell-student="{ row }">
-						<span
-							class="block truncate text-ink-gray-8"
+						<RowTitle
 							:title="row.full_name ?? row.student"
-						>
-							{{ row.full_name ?? row.student }}
-						</span>
+							:to="`/faculty/students/${row.student}`"
+							@click.stop
+						/>
 					</template>
 
 					<template #cell-status="{ row }">
@@ -255,6 +263,12 @@
 		:assignment="assignment"
 		@saved="detail.reload()"
 	/>
+
+	<SimilarCodeDialog
+		v-if="similarCodeOpen && assignment"
+		v-model:open="similarCodeOpen"
+		:assignment="assignment.name"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -268,6 +282,7 @@ import EmptyState from '@/components/common/EmptyState.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import MarkdownText from '@/components/common/MarkdownText.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
+import RowTitle from '@/components/common/RowTitle.vue'
 import SubmissionPreviewDialog from '@/components/assignments/SubmissionPreviewDialog.vue'
 import AnswersDialog from '@/components/answers/AnswersDialog.vue'
 import AnswerSheetCard from '@/components/faculty/AnswerSheetCard.vue'
@@ -275,6 +290,7 @@ import AssignmentStudentsDialog from '@/components/faculty/AssignmentStudentsDia
 import AssignmentTimingDialog from '@/components/faculty/AssignmentTimingDialog.vue'
 import GradeSubmissionDialog from '@/components/faculty/GradeSubmissionDialog.vue'
 import SendBackDialog from '@/components/faculty/SendBackDialog.vue'
+import SimilarCodeDialog from '@/components/faculty/SimilarCodeDialog.vue'
 import SubmissionAssignees from '@/components/faculty/SubmissionAssignees.vue'
 import SubmissionBulkActions from '@/components/faculty/SubmissionBulkActions.vue'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
@@ -351,6 +367,7 @@ const gradeTarget = ref<CS17Submission | null>(null)
 const sendBackTarget = ref<CS17Submission | null>(null)
 const studentsOpen = ref(false)
 const timingOpen = ref(false)
+const similarCodeOpen = ref(false)
 
 watch(assignmentId, () => {
 	selection.value = []
