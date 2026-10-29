@@ -108,12 +108,11 @@
 					empty="No submissions yet."
 				>
 					<template #cell-student="{ row }">
-						<span
-							class="block truncate text-ink-gray-8"
+						<RowTitle
 							:title="row.full_name ?? row.student"
-						>
-							{{ row.full_name ?? row.student }}
-						</span>
+							:to="`/faculty/students/${row.student}`"
+							@click.stop
+						/>
 					</template>
 
 					<template #cell-status="{ row }">
@@ -283,6 +282,7 @@ import EmptyState from '@/components/common/EmptyState.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import MarkdownText from '@/components/common/MarkdownText.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
+import RowTitle from '@/components/common/RowTitle.vue'
 import SubmissionPreviewDialog from '@/components/assignments/SubmissionPreviewDialog.vue'
 import AnswersDialog from '@/components/answers/AnswersDialog.vue'
 import AnswerSheetCard from '@/components/faculty/AnswerSheetCard.vue'
