@@ -150,6 +150,13 @@ export interface CS17Announcement {
 	can_edit?: boolean
 }
 
+export interface NotificationLog {
+	name: string
+	subject: string
+	document_name: string
+	creation: string
+}
+
 export type ProjectType = 'Scratch' | 'Python'
 
 /** `CS17 Project` — a saved Scratch project or Python program. */

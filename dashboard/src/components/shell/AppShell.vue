@@ -36,12 +36,14 @@ import AppSidebar from '@/components/shell/AppSidebar.vue'
 import { beforeShellSwap } from '@/components/shell/shellSwap'
 import { provideAnnouncements } from '@/composables/useAnnouncements'
 import { useBreakpoint } from '@/composables/useBreakpoint'
+import { provideNotifications } from '@/composables/useNotifications'
 import { useZenMode } from '@/composables/useZenMode'
 
 // Restores the stored `data-theme`; `index.html` has already painted it.
 useColorScheme()
 usePageMeta(() => ({ title: 'CS17 Portal' }))
 provideAnnouncements()
+provideNotifications()
 
 const { isDesktop } = useBreakpoint()
 const { isZen } = useZenMode()

@@ -27,7 +27,7 @@ test.describe("Announcements bell", () => {
 		});
 
 		await page.goto("/dashboard/faculty");
-		await page.getByRole("button", { name: /^Announcements, \d+ unread$/ }).click();
+		await page.getByRole("button", { name: /^Notifications, \d+ unread$/ }).click();
 		await page.getByRole("button", { name: `Mark ${title} as read` }).click();
 
 		await expect(page.getByText(title)).toBeHidden();
@@ -41,7 +41,7 @@ test.describe("Announcements bell", () => {
 			content: "Please read the handbook.",
 			publish: "now",
 		});
-		const bell = page.getByRole("button", { name: /^Announcements, \d+ unread$/ });
+		const bell = page.getByRole("button", { name: /^Notifications, \d+ unread$/ });
 
 		await page.clock.install();
 		await page.goto("/dashboard/faculty");

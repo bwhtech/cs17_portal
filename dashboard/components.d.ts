@@ -36,6 +36,7 @@ declare module 'vue' {
     DataTable: typeof import('./src/components/common/DataTable.vue')['default']
     DeleteAnnouncementDialog: typeof import('./src/components/faculty/DeleteAnnouncementDialog.vue')['default']
     DeleteAssignmentDialog: typeof import('./src/components/faculty/DeleteAssignmentDialog.vue')['default']
+    DistributeNextAssignmentsDialog: typeof import('./src/components/faculty/DistributeNextAssignmentsDialog.vue')['default']
     EmptyState: typeof import('./src/components/common/EmptyState.vue')['default']
     FacultyAvatar: typeof import('./src/components/faculty/FacultyAvatar.vue')['default']
     GradeBadge: typeof import('./src/components/common/GradeBadge.vue')['default']
@@ -84,5 +85,6 @@ declare module 'vue' {
     ToastHost: typeof import('./src/components/common/ToastHost.vue')['default']
     TopicSelect: typeof import('./src/components/faculty/TopicSelect.vue')['default']
     UnreadAnnouncements: typeof import('./src/components/announcements/UnreadAnnouncements.vue')['default']
+    UnreadNotifications: typeof import('./src/components/announcements/UnreadNotifications.vue')['default']
   }
 }
