@@ -8,6 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+src/lib/python/pyodide.asm.wasm.gzip
 dist
 dist-ssr
 *.local
