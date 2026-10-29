@@ -144,15 +144,7 @@
 					</template>
 
 					<template #cell-status="{ row }">
-						<div class="min-w-0 leading-tight">
-							<Badge v-bind="resultStatus(row)" variant="subtle" />
-							<div
-								v-if="!row.is_published && row.published_on"
-								class="mt-1.5 text-balance text-sm leading-tight text-ink-gray-5"
-							>
-								{{ formatDateTime(row.published_on) }}
-							</div>
-						</div>
+						<Badge v-bind="resultStatus(row)" variant="subtle" />
 					</template>
 				</DataTable>
 			</section>
@@ -261,7 +253,13 @@ function publishStatus(grade: CS17Grade) {
 
 function resultStatus(result: StudentOverviewResult) {
 	if (result.is_published) return { label: 'Published', theme: 'green' } as const
-	if (result.published_on) return { label: 'Scheduled', theme: 'amber' } as const
+	if (result.published_on) {
+		return {
+			label: 'Scheduled',
+			theme: 'amber',
+			title: formatDateTime(result.published_on),
+		} as const
+	}
 	return { label: 'Draft', theme: 'gray' } as const
 }
 
