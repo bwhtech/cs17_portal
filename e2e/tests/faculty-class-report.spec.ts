@@ -16,6 +16,7 @@ import { deleteDoc } from "../helpers/frappe";
 const LIST_ROW = '[data-slot="list-row"]';
 
 let cohort: CS17Cohort;
+let otherCohort: CS17Cohort;
 let onTimeStudent: CS17Profile;
 let behindStudent: CS17Profile;
 
@@ -23,6 +24,7 @@ test.describe("Class report", () => {
 	test.beforeAll(async ({ request }) => {
 		await ensureSessionFaculty(request);
 		cohort = await createTestCohort(request);
+		otherCohort = await createTestCohort(request);
 		onTimeStudent = await createTestProfile(request, { cohort: cohort.name });
 		behindStudent = await createTestProfile(request, { cohort: cohort.name });
 		const assignment = await createTestAssignment(request, {
@@ -41,6 +43,7 @@ test.describe("Class report", () => {
 		await deleteTestProfile(request, onTimeStudent.name);
 		await deleteTestProfile(request, behindStudent.name);
 		await deleteDoc(request, "CS17 Cohort", cohort.name);
+		await deleteDoc(request, "CS17 Cohort", otherCohort.name);
 	});
 
 	test("lists the student with missing work first and downloads the same rows", async ({
