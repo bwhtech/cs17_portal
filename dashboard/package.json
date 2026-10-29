@@ -19,10 +19,14 @@
     "frappe-ui": "1.0.0",
     "idb-keyval": "^6.2.0",
     "markdown-it": "^14.1.0",
+    "pyodide": "0.29.3",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0",
     "workbox-core": "^7.4.1",
-    "workbox-precaching": "^7.4.1"
+    "workbox-expiration": "^7.4.1",
+    "workbox-precaching": "^7.4.1",
+    "workbox-routing": "^7.4.1",
+    "workbox-strategies": "^7.4.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
