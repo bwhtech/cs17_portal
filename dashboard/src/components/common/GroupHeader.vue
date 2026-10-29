@@ -9,7 +9,7 @@
 				@click="emit('toggle')"
 			>
 				<span
-					class="lucide-chevron-down size-4 shrink-0 text-ink-gray-5 transition-transform duration-200 group-hover:text-ink-gray-8"
+					class="lucide-chevron-down size-4 shrink-0 text-ink-gray-5 transition-transform duration-300 ease-in-out group-hover:text-ink-gray-8"
 					:class="!expanded && '-rotate-90'"
 				/>
 				<span class="truncate text-base-medium text-ink-gray-8">{{ label }}</span>

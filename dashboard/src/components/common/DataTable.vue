@@ -35,106 +35,134 @@
 				>
 					<slot name="group-suffix" :rows="group.rows" />
 				</GroupHeader>
-				<div
-					v-show="!collapsedGroups.includes(group.label)"
-					:id="`${groupId}-${index}`"
-					:class="
-						groupBy && ['px-5 py-2', group.label && 'border-t border-outline-gray-1']
-					"
+				<Transition
+					enter-active-class="overflow-hidden transition-[height] duration-300 ease-in-out motion-reduce:transition-none"
+					leave-active-class="overflow-hidden transition-[height] duration-300 ease-in-out motion-reduce:transition-none"
+					@enter="growToContent"
+					@after-enter="releaseHeight"
+					@leave="shrinkToZero"
+					@after-leave="releaseHeight"
 				>
-					<List
-						class="-mx-3 list-row-px-3"
-						:columns="trackSizes"
-						:selectable="selectable"
-						:selection="selection"
-						:row-height="rowHeight"
-						:divider="divider"
-						@update:selection="emit('update:selection', $event)"
+					<div
+						v-show="!collapsedGroups.includes(group.label)"
+						:id="`${groupId}-${index}`"
 					>
-						<ListHeader>
-							<ListHeaderCell
-								v-for="column in columns"
-								:key="column.header"
-								:class="column.align === 'right' ? 'justify-end' : undefined"
-							>
-								{{ column.header }}
-							</ListHeaderCell>
-						</ListHeader>
-
-						<template v-if="loading">
-							<ListRow
-								v-for="n in skeletonRows"
-								:key="`skeleton-${n}`"
-								:value="`skeleton-${n}`"
-							>
-								<ListCell
-									v-for="column in columns"
-									:key="column.header"
-									class="cs17-delay-in"
-								>
-									<Skeleton class="h-3 w-full max-w-24 rounded-full" />
-								</ListCell>
-							</ListRow>
-						</template>
-
-						<!-- `ListRows`, not a bare `v-for`: it feeds the header's select-all the
-					     full set of row keys. -->
-						<ListRows
-							v-else
-							v-slot="{ item }"
-							:items="group.selectableRows"
-							:row-key="listRowKey"
+						<div
+							:class="
+								groupBy && [
+									'px-5 py-2',
+									group.label && 'border-t border-outline-gray-1',
+								]
+							"
 						>
-							<ListRow
-								:value="rowKey(item)"
-								:class="
-									onRowDrop && ['cursor-grab', isDragging(item) && 'opacity-40']
-								"
-								@click="onRowClick?.(item)"
-								@pointerdown="onRowDrop && press($event, item)"
-								@dragstart="onRowDrop && $event.preventDefault()"
+							<List
+								class="-mx-3 list-row-px-3"
+								:columns="trackSizes"
+								:selectable="selectable"
+								:selection="selection"
+								:row-height="rowHeight"
+								:divider="divider"
+								@update:selection="emit('update:selection', $event)"
 							>
-								<ListCell
-									v-for="column in columns"
-									:key="column.header"
-									class="text-base"
-									:class="column.align === 'right' ? 'justify-end' : undefined"
-									@click="
-										column.variant === 'actions' && $event.stopPropagation()
-									"
-								>
-									<slot :name="`cell-${column.key}`" :row="item">{{
-										cellText(item, column)
-									}}</slot>
-								</ListCell>
-							</ListRow>
-						</ListRows>
+								<ListHeader>
+									<ListHeaderCell
+										v-for="column in columns"
+										:key="column.header"
+										:class="
+											column.align === 'right' ? 'justify-end' : undefined
+										"
+									>
+										{{ column.header }}
+									</ListHeaderCell>
+								</ListHeader>
 
-						<template v-if="!loading">
-							<ListRow
-								v-for="row in group.plainRows"
-								:key="rowKey(row)"
-								:class="
-									onRowDrop && ['cursor-grab', isDragging(row) && 'opacity-40']
-								"
-								@click="onRowClick?.(row)"
-								@pointerdown="onRowDrop && press($event, row)"
-								@dragstart="onRowDrop && $event.preventDefault()"
-							>
-								<ListCell
-									v-for="column in columns"
-									:key="column.header"
-									class="text-base"
-									:class="column.align === 'right' ? 'justify-end' : undefined"
+								<template v-if="loading">
+									<ListRow
+										v-for="n in skeletonRows"
+										:key="`skeleton-${n}`"
+										:value="`skeleton-${n}`"
+									>
+										<ListCell
+											v-for="column in columns"
+											:key="column.header"
+											class="cs17-delay-in"
+										>
+											<Skeleton class="h-3 w-full max-w-24 rounded-full" />
+										</ListCell>
+									</ListRow>
+								</template>
+
+								<!-- `ListRows`, not a bare `v-for`: it feeds the header's select-all the
+					     full set of row keys. -->
+								<ListRows
+									v-else
+									v-slot="{ item }"
+									:items="group.selectableRows"
+									:row-key="listRowKey"
 								>
-									<slot :name="`cell-${column.key}`" :row="row">{{
-										cellText(row, column)
-									}}</slot>
-								</ListCell>
-							</ListRow>
-						</template>
-					</List>
-				</div>
+									<ListRow
+										:value="rowKey(item)"
+										:class="
+											onRowDrop && [
+												'cursor-grab',
+												isDragging(item) && 'opacity-40',
+											]
+										"
+										@click="onRowClick?.(item)"
+										@pointerdown="onRowDrop && press($event, item)"
+										@dragstart="onRowDrop && $event.preventDefault()"
+									>
+										<ListCell
+											v-for="column in columns"
+											:key="column.header"
+											class="text-base"
+											:class="
+												column.align === 'right' ? 'justify-end' : undefined
+											"
+											@click="
+												column.variant === 'actions' &&
+													$event.stopPropagation()
+											"
+										>
+											<slot :name="`cell-${column.key}`" :row="item">{{
+												cellText(item, column)
+											}}</slot>
+										</ListCell>
+									</ListRow>
+								</ListRows>
+
+								<template v-if="!loading">
+									<ListRow
+										v-for="row in group.plainRows"
+										:key="rowKey(row)"
+										:class="
+											onRowDrop && [
+												'cursor-grab',
+												isDragging(row) && 'opacity-40',
+											]
+										"
+										@click="onRowClick?.(row)"
+										@pointerdown="onRowDrop && press($event, row)"
+										@dragstart="onRowDrop && $event.preventDefault()"
+									>
+										<ListCell
+											v-for="column in columns"
+											:key="column.header"
+											class="text-base"
+											:class="
+												column.align === 'right' ? 'justify-end' : undefined
+											"
+										>
+											<slot :name="`cell-${column.key}`" :row="row">{{
+												cellText(row, column)
+											}}</slot>
+										</ListCell>
+									</ListRow>
+								</template>
+							</List>
+						</div>
+					</div>
+				</Transition>
 			</section>
 		</div>
 
@@ -181,64 +209,82 @@
 				>
 					<slot name="group-suffix" :rows="group.rows" />
 				</GroupHeader>
-				<div
-					v-show="!collapsedGroups.includes(group.label)"
-					:id="`${groupId}-${index}`"
-					class="space-y-3 pb-3"
+				<Transition
+					enter-active-class="overflow-hidden transition-[height] duration-300 ease-in-out motion-reduce:transition-none"
+					leave-active-class="overflow-hidden transition-[height] duration-300 ease-in-out motion-reduce:transition-none"
+					@enter="growToContent"
+					@after-enter="releaseHeight"
+					@leave="shrinkToZero"
+					@after-leave="releaseHeight"
 				>
 					<div
-						v-for="row in group.rows"
-						:key="rowKey(row)"
-						class="space-y-2 rounded-4 border border-outline-gray-1 p-4"
-						:class="onRowDrop && ['select-none', isDragging(row) && 'opacity-40']"
-						@click="onRowClick?.(row)"
-						@pointerdown="onRowDrop && press($event, row)"
-						@dragstart="onRowDrop && $event.preventDefault()"
+						v-show="!collapsedGroups.includes(group.label)"
+						:id="`${groupId}-${index}`"
 					>
-						<div class="flex items-start gap-2">
-							<Checkbox
-								v-if="selectable && isRowSelectable(row)"
-								:model-value="selection.includes(rowKey(row))"
-								@click.stop
-								@update:model-value="toggleRow(rowKey(row))"
-							/>
-							<slot
-								v-if="avatarColumn"
-								:name="`cell-${avatarColumn.key}`"
-								:row="row"
-							/>
+						<div class="space-y-3 pb-3">
 							<div
-								data-card-heading
-								class="flex min-w-0 flex-1 items-center text-base font-medium text-ink-gray-8 [&>.truncate]:line-clamp-2 [&>.truncate]:whitespace-normal [&>.truncate]:break-words"
+								v-for="row in group.rows"
+								:key="rowKey(row)"
+								class="space-y-2 rounded-4 border border-outline-gray-1 p-4"
+								:class="
+									onRowDrop && ['select-none', isDragging(row) && 'opacity-40']
+								"
+								@click="onRowClick?.(row)"
+								@pointerdown="onRowDrop && press($event, row)"
+								@dragstart="onRowDrop && $event.preventDefault()"
 							>
-								<slot
-									v-if="primaryColumn"
-									:name="`cell-${primaryColumn.key}`"
-									:row="row"
-								/>
+								<div class="flex items-start gap-2">
+									<Checkbox
+										v-if="selectable && isRowSelectable(row)"
+										:model-value="selection.includes(rowKey(row))"
+										@click.stop
+										@update:model-value="toggleRow(rowKey(row))"
+									/>
+									<slot
+										v-if="avatarColumn"
+										:name="`cell-${avatarColumn.key}`"
+										:row="row"
+									/>
+									<div
+										data-card-heading
+										class="flex min-w-0 flex-1 items-center text-base font-medium text-ink-gray-8 [&>.truncate]:line-clamp-2 [&>.truncate]:whitespace-normal [&>.truncate]:break-words"
+									>
+										<slot
+											v-if="primaryColumn"
+											:name="`cell-${primaryColumn.key}`"
+											:row="row"
+										/>
+									</div>
+								</div>
+
+								<div
+									v-for="column in fieldColumns"
+									:key="column.header"
+									class="flex items-center justify-between gap-4 text-base"
+								>
+									<span class="shrink-0 text-ink-gray-5">{{
+										column.header
+									}}</span>
+									<span
+										class="flex min-w-0 items-center justify-end text-right text-ink-gray-7"
+									>
+										<slot :name="`cell-${column.key}`" :row="row">{{
+											cellText(row, column)
+										}}</slot>
+									</span>
+								</div>
+
+								<div
+									v-for="column in actionColumns"
+									:key="column.header"
+									class="pt-1"
+								>
+									<slot :name="`cell-${column.key}`" :row="row" />
+								</div>
 							</div>
 						</div>
-
-						<div
-							v-for="column in fieldColumns"
-							:key="column.header"
-							class="flex items-center justify-between gap-4 text-base"
-						>
-							<span class="shrink-0 text-ink-gray-5">{{ column.header }}</span>
-							<span
-								class="flex min-w-0 items-center justify-end text-right text-ink-gray-7"
-							>
-								<slot :name="`cell-${column.key}`" :row="row">{{
-									cellText(row, column)
-								}}</slot>
-							</span>
-						</div>
-
-						<div v-for="column in actionColumns" :key="column.header" class="pt-1">
-							<slot :name="`cell-${column.key}`" :row="row" />
-						</div>
 					</div>
-				</div>
+				</Transition>
 			</section>
 		</div>
 
@@ -402,6 +448,24 @@ const groups = computed(() => {
 })
 
 const collapsedGroups = defineModel<string[]>('collapsedGroups', { default: () => [] })
+
+function growToContent(el: Element) {
+	const body = el as HTMLElement
+	body.style.height = '0'
+	void body.offsetHeight
+	body.style.height = `${body.scrollHeight}px`
+}
+
+function shrinkToZero(el: Element) {
+	const body = el as HTMLElement
+	body.style.height = `${body.scrollHeight}px`
+	void body.offsetHeight
+	body.style.height = '0'
+}
+
+function releaseHeight(el: Element) {
+	;(el as HTMLElement).style.height = ''
+}
 
 function toggleGroup(label: string) {
 	collapsedGroups.value = collapsedGroups.value.includes(label)
