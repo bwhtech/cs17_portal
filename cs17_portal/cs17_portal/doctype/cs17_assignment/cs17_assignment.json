@@ -17,6 +17,7 @@
   "cohort",
   "quarter",
   "topic",
+  "difficulty",
   "submission_type",
   "max_marks",
   "column_break_vtqn",
@@ -205,6 +206,12 @@
    "fieldtype": "Link",
    "label": "Topic",
    "options": "CS17 Topic"
+  },
+  {
+   "fieldname": "difficulty",
+   "fieldtype": "Select",
+   "label": "Difficulty",
+   "options": "\nEasy\nMedium\nHard\nExtra hard"
   }
  ],
  "grid_page_length": 50,
@@ -219,7 +226,7 @@
    "link_fieldname": "assignment"
   }
  ],
- "modified": "2026-10-28 20:54:16.562738",
+ "modified": "2026-10-30 02:50:44.587886",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",

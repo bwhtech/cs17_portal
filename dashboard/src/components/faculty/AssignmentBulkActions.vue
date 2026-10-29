@@ -43,6 +43,16 @@
 				</template>
 			</TopicSelect>
 
+			<Dropdown :options="difficultyOptions" side="top" align="center" :offset="8">
+				<Button
+					label="Set difficulty"
+					:icon-left="isDesktop ? 'lucide-signal' : undefined"
+					:icon="isDesktop ? undefined : 'lucide-signal'"
+					:tooltip="isDesktop ? undefined : 'Set difficulty'"
+					:loading="difficultyCall.loading"
+				/>
+			</Dropdown>
+
 			<Button
 				label="Copy"
 				:icon-left="isDesktop ? 'lucide-copy' : undefined"
@@ -80,13 +90,14 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Button, dialog, toast, useCall } from 'frappe-ui'
+import { Button, Dropdown, dialog, toast, useCall } from 'frappe-ui'
 import CopyAssignmentsDialog from '@/components/faculty/CopyAssignmentsDialog.vue'
 import DistributeNextAssignmentsDialog from '@/components/faculty/DistributeNextAssignmentsDialog.vue'
 import TopicSelect from '@/components/faculty/TopicSelect.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { trySubmit } from '@/lib/trySubmit'
+import { DIFFICULTIES, type Difficulty } from '@/types'
 
 const props = defineProps<{
 	assignments: string[]
@@ -135,6 +146,34 @@ async function moveToTopic(topic: string) {
 		topic
 			? `Moved ${countLabel.value} to ${topic}.`
 			: `Removed the topic from ${countLabel.value}.`,
+	)
+	emit('done')
+}
+
+const difficultyCall = useCall<null, { assignments: string[]; difficulty: Difficulty | '' }>({
+	url: '/api/v2/method/cs17_portal.api.set_assignments_difficulty',
+	method: 'POST',
+	immediate: false,
+})
+
+const difficultyOptions = [
+	...DIFFICULTIES.map((difficulty) => ({
+		label: difficulty,
+		onClick: () => setDifficulty(difficulty),
+	})),
+	{ label: 'Remove difficulty', onClick: () => setDifficulty('') },
+]
+
+async function setDifficulty(difficulty: Difficulty | '') {
+	await trySubmit(difficultyCall, { assignments: props.assignments, difficulty })
+	if (difficultyCall.error) {
+		toast.error(frappeErrorMessage(difficultyCall.error, 'Could not set the difficulty.'))
+		return
+	}
+	toast.success(
+		difficulty
+			? `Marked ${countLabel.value} as ${difficulty}.`
+			: `Removed the difficulty from ${countLabel.value}.`,
 	)
 	emit('done')
 }

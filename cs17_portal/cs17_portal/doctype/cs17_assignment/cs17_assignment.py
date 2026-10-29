@@ -29,6 +29,7 @@ class CS17Assignment(Document):
 		attempts_allowed: DF.Int
 		cohort: DF.Link | None
 		description: DF.TextEditor | None
+		difficulty: DF.Literal["", "Easy", "Medium", "Hard", "Extra hard"]
 		due_date: DF.Datetime | None
 		is_published: DF.Check
 		max_marks: DF.Float

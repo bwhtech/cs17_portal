@@ -156,3 +156,40 @@ class TestAssignmentApi(FrappeTestCase):
 
 		frappe.set_user(student_user)
 		self.assertRaises(frappe.PermissionError, api.move_assignments_to_topic, [assignment])
+
+	def test_set_assignments_difficulty_tags_a_published_assignment_for_faculty(self):
+		frappe.set_user(self.faculty_user)
+		assignment = api.create_assignment("Factorial 873", self.cohort, "2030-01-01 00:00:00", publish="now")
+
+		api.set_assignments_difficulty([assignment], "Medium")
+
+		self.assertEqual(
+			{row.name: row.difficulty for row in api.get_faculty_assignments()}[assignment], "Medium"
+		)
+
+	def test_set_assignments_difficulty_refuses_an_unknown_difficulty(self):
+		frappe.set_user(self.faculty_user)
+		assignment = api.create_assignment("Factorial 874", self.cohort, "2030-01-01 00:00:00")
+
+		self.assertRaises(frappe.ValidationError, api.set_assignments_difficulty, [assignment], "Tricky")
+
+	def test_set_assignments_difficulty_refuses_a_student(self):
+		student_user = make_user("student875@cs17test.com")
+		make_profile("Student", self.cohort, student_user, "Student 875")
+		frappe.set_user(self.faculty_user)
+		assignment = api.create_assignment("Factorial 875", self.cohort, "2030-01-01 00:00:00")
+
+		frappe.set_user(student_user)
+		self.assertRaises(frappe.PermissionError, api.set_assignments_difficulty, [assignment], "Easy")
+
+	def test_student_assignments_leave_out_the_difficulty(self):
+		student_user = make_user("student876@cs17test.com")
+		make_profile("Student", self.cohort, student_user, "Student 876")
+		frappe.set_user(self.faculty_user)
+		assignment = api.create_assignment(
+			"Factorial 876", self.cohort, "2030-01-01 00:00:00", publish="now", difficulty="Hard"
+		)
+
+		frappe.set_user(student_user)
+		[row] = [row for row in api.get_student_assignments()["assignments"] if row.name == assignment]
+		self.assertNotIn("difficulty", row)

@@ -45,6 +45,7 @@ export interface CS17Assignment {
 	cohort?: string
 	quarter?: string | null
 	topic?: string | null
+	difficulty?: Difficulty | '' | null
 	submission_type?: SubmissionType
 	assignment_type?: AssignmentType
 	/** `Grade` or `Marks` — the field is named `remarks` in the doctype. */
@@ -320,6 +321,9 @@ export type SubmissionType = (typeof SUBMISSION_TYPES)[number]
 
 export const ASSIGNMENT_TYPES = ['Graded', 'Not Graded'] as const
 export type AssignmentType = (typeof ASSIGNMENT_TYPES)[number]
+
+export const DIFFICULTIES = ['Easy', 'Medium', 'Hard', 'Extra hard'] as const
+export type Difficulty = (typeof DIFFICULTIES)[number]
 
 /** How a graded assignment is scored. `''` on a Not Graded assignment. */
 export const EVALUATION_TYPES = ['Grade', 'Marks'] as const

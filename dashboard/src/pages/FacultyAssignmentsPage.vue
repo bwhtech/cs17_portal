@@ -75,6 +75,11 @@
 						</template>
 						{{ row.submission_type ?? 'Any' }} · {{ row.cohort }}
 					</RowTitle>
+					<DifficultyBadge
+						v-if="row.difficulty"
+						class="shrink-0"
+						:difficulty="row.difficulty"
+					/>
 					<Badge
 						v-if="row.student_count"
 						class="shrink-0"
@@ -176,6 +181,7 @@ import SubmissionTypeIcon from '@/components/common/SubmissionTypeIcon.vue'
 import AssignmentBulkActions from '@/components/faculty/AssignmentBulkActions.vue'
 import AssignmentFormDialog from '@/components/faculty/AssignmentFormDialog.vue'
 import DeleteAssignmentDialog from '@/components/faculty/DeleteAssignmentDialog.vue'
+import DifficultyBadge from '@/components/faculty/DifficultyBadge.vue'
 import PublishAssignmentDialog from '@/components/faculty/PublishAssignmentDialog.vue'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'

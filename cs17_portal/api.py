@@ -115,6 +115,7 @@ def get_faculty_assignments(cohort: str | None = None) -> list:
 			"is_published",
 			"publish_on",
 			"topic",
+			"difficulty",
 		],
 		order_by="due_date desc, creation desc",
 	)
@@ -176,6 +177,7 @@ def create_assignment(
 	time_limit: int | None = None,
 	attempts_allowed: int | None = None,
 	topic: str | None = None,
+	difficulty: str | None = None,
 ) -> str:
 	faculty = get_current_faculty()
 	if faculty.cohort and faculty.cohort != cohort:
@@ -198,6 +200,7 @@ def create_assignment(
 		time_limit,
 		attempts_allowed,
 		topic=topic,
+		difficulty=difficulty,
 	)
 	assignment.naming_series = _naming_series(assignment_type)
 	_apply_publish_state(assignment, publish, publish_on)
@@ -259,6 +262,7 @@ def get_assignment_submissions(assignment: str) -> dict:
 			"remarks",
 			"time_limit",
 			"attempts_allowed",
+			"difficulty",
 		],
 		as_dict=True,
 	)
@@ -1567,6 +1571,7 @@ def update_assignment(
 	attempts_allowed: int | None = None,
 	modified: str | None = None,
 	topic: str | None = None,
+	difficulty: str | None = None,
 ) -> str:
 	require_faculty_for_assignment(assignment)
 	faculty = get_current_faculty()
@@ -1596,6 +1601,7 @@ def update_assignment(
 		time_limit,
 		attempts_allowed,
 		topic=topic,
+		difficulty=difficulty,
 	)
 	if publish is not None:
 		_apply_publish_state(doc, publish, publish_on)
@@ -1622,6 +1628,7 @@ def _set_assignment_fields(
 	time_limit: int | None = None,
 	attempts_allowed: int | None = None,
 	topic: str | None = None,
+	difficulty: str | None = None,
 ) -> None:
 	doc.update(
 		{
@@ -1637,6 +1644,8 @@ def _set_assignment_fields(
 		doc.quarter = quarter
 	if topic is not None:
 		doc.topic = topic
+	if difficulty is not None:
+		doc.difficulty = difficulty
 	if starter_code is not None:
 		doc.starter_code = starter_code
 	if watch_tab_switches is not None:
@@ -1686,6 +1695,7 @@ def get_assignment(assignment: str) -> dict | None:
 			"time_limit",
 			"attempts_allowed",
 			"topic",
+			"difficulty",
 			"modified",
 		],
 		as_dict=True,
@@ -2322,6 +2332,16 @@ def move_assignments_to_topic(assignments: list | str, topic: str | None = None)
 
 
 @frappe.whitelist(methods=["POST"])
+def set_assignments_difficulty(assignments: list | str, difficulty: str = "") -> None:
+	assignments = frappe.parse_json(assignments)
+	for assignment in assignments:
+		require_faculty_for_assignment(assignment)
+	if difficulty not in frappe.get_meta("CS17 Assignment").get_options("difficulty").split("\n"):
+		frappe.throw(_("{0} is not a difficulty").format(difficulty))
+	frappe.db.set_value("CS17 Assignment", {"name": ["in", assignments]}, "difficulty", difficulty)
+
+
+@frappe.whitelist(methods=["POST"])
 def copy_assignments(assignments: list | str, cohort: str, quarter: str | None = None) -> list:
 	assignments = frappe.parse_json(assignments)
 	for assignment in assignments:
@@ -2346,6 +2366,7 @@ def copy_assignments(assignments: list | str, cohort: str, quarter: str | None =
 				time_limit=source.time_limit,
 				attempts_allowed=source.attempts_allowed,
 				topic=source.topic,
+				difficulty=source.difficulty,
 			)
 		)
 	return copies

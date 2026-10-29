@@ -79,6 +79,13 @@
 						placeholder="Select or create a topic"
 					/>
 
+					<FormControl
+						v-model="draft.difficulty"
+						type="select"
+						label="Difficulty"
+						:options="DIFFICULTY_OPTIONS"
+					/>
+
 					<div class="grid gap-3 sm:grid-cols-2">
 						<FormControl
 							v-model="draft.submission_type"
@@ -236,6 +243,7 @@ import { frappeErrorMessage } from '@/lib/frappeError'
 import { STORAGE_KEYS, readJSON, removeKey, writeJSON } from '@/lib/storage'
 import { trySubmit } from '@/lib/trySubmit'
 import {
+	DIFFICULTIES,
 	SUBMISSION_TYPES,
 	type CS17Assignment,
 	type EvaluationType,
@@ -256,6 +264,11 @@ const emit = defineEmits<{ 'update:open': [value: boolean]; saved: [] }>()
 
 const EVALUATION_OPTIONS = ['Grade', 'Marks', 'Non-graded']
 
+const DIFFICULTY_OPTIONS = [
+	{ label: 'No difficulty', value: '' },
+	...DIFFICULTIES.map((difficulty) => ({ label: difficulty, value: difficulty })),
+]
+
 const DESCRIPTION_PLACEHOLDER =
 	'What should students do?\n\n- Use **markdown**\n- Add lists, links, headings'
 
@@ -272,6 +285,7 @@ function emptyDraft(): AssignmentDraft {
 		cohort: '',
 		quarter: '',
 		topic: '',
+		difficulty: '',
 		submission_type: 'Any',
 		assignment_type: 'Not Graded',
 		max_marks: '',
@@ -423,6 +437,7 @@ async function loadExisting(name: string) {
 		cohort: existing.cohort ?? '',
 		quarter: existing.quarter ?? '',
 		topic: existing.topic ?? '',
+		difficulty: existing.difficulty || '',
 		submission_type: existing.submission_type ?? 'Any',
 		assignment_type: existing.assignment_type ?? 'Not Graded',
 		max_marks: existing.max_marks ? String(existing.max_marks) : '',
@@ -457,6 +472,7 @@ function isDirty(): boolean {
 			(draft.cohort && !facultyCohort.value) ||
 			draft.quarter ||
 			draft.topic ||
+			draft.difficulty ||
 			draft.due_date ||
 			publishMode.value !== 'draft' ||
 			publishOn.value,
@@ -516,6 +532,7 @@ async function handleSubmit() {
 		cohort: draft.cohort,
 		quarter: draft.quarter,
 		topic: draft.topic,
+		difficulty: draft.difficulty,
 		due_date: toFrappeDatetime(draft.due_date),
 		submission_type: draft.submission_type,
 		description: draft.description,

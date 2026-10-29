@@ -37,6 +37,7 @@ declare module 'vue' {
     DataTable: typeof import('./src/components/common/DataTable.vue')['default']
     DeleteAnnouncementDialog: typeof import('./src/components/faculty/DeleteAnnouncementDialog.vue')['default']
     DeleteAssignmentDialog: typeof import('./src/components/faculty/DeleteAssignmentDialog.vue')['default']
+    DifficultyBadge: typeof import('./src/components/faculty/DifficultyBadge.vue')['default']
     DistributeNextAssignmentsDialog: typeof import('./src/components/faculty/DistributeNextAssignmentsDialog.vue')['default']
     EmptyState: typeof import('./src/components/common/EmptyState.vue')['default']
     FacultyAvatar: typeof import('./src/components/faculty/FacultyAvatar.vue')['default']
