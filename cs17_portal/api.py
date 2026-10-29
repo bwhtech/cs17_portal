@@ -2261,3 +2261,14 @@ def save_ai_grade_draft(submission: str) -> None:
 		remarks=draft["remarks"],
 		publish="draft",
 	)
+
+
+@frappe.whitelist(methods=["GET"])
+def get_assignment_submission_names(assignment: str) -> list:
+	require_faculty_for_assignment(assignment)
+	return frappe.get_all(
+		"CS17 Assignment Submission",
+		filters={"assignment": assignment},
+		pluck="name",
+		order_by="submitted_at desc",
+	)
