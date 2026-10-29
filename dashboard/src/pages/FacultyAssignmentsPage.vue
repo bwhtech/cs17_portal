@@ -13,24 +13,6 @@
 	</AppHeader>
 
 	<PageBody class="space-y-5">
-		<div v-if="drafts.length">
-			<Button
-				:label="`Drafts (${drafts.length})`"
-				:icon-right="draftsOpen ? 'lucide-chevron-up' : 'lucide-chevron-down'"
-				:aria-expanded="draftsOpen"
-				@click="draftsOpen = !draftsOpen"
-			/>
-			<div v-if="draftsOpen" class="mt-3 flex flex-wrap gap-2">
-				<Button
-					v-for="draft in drafts"
-					:key="draft.name"
-					class="max-w-full"
-					:label="draft.title || 'Untitled'"
-					@click="openDraft(draft.name)"
-				/>
-			</div>
-		</div>
-
 		<div v-if="cohorts.length > 1" class="max-w-xs">
 			<Select
 				label="Cohort"
@@ -214,7 +196,6 @@ const columns: Column[] = [
 ]
 
 const cohortFilter = ref(ALL_COHORTS)
-const draftsOpen = ref(false)
 const formOpen = ref(false)
 const formKey = ref(0)
 const editingDraft = ref<string | null>(null)
@@ -277,9 +258,6 @@ watch(rows, () => {
 	const names = new Set(rows.value.map((row) => row.name))
 	selection.value = selection.value.filter((name) => names.has(name))
 })
-
-/** Neither published nor scheduled — the rows the Drafts row offers to reopen. */
-const drafts = computed(() => rows.value.filter((row) => row.statusLabel === 'Draft'))
 
 function onPublishOpen(open: boolean) {
 	if (!open) publishTarget.value = null
