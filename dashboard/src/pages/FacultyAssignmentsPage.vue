@@ -75,7 +75,11 @@
 						</template>
 						{{ row.submission_type ?? 'Any' }} · {{ row.cohort }}
 					</RowTitle>
-					<DifficultyBadge v-if="row.difficulty" class="shrink-0" :difficulty="row.difficulty" />
+					<DifficultyBadge
+						v-if="row.difficulty"
+						class="shrink-0"
+						:difficulty="row.difficulty"
+					/>
 					<Badge
 						v-if="row.student_count"
 						class="shrink-0"
