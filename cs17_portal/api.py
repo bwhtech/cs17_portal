@@ -1769,7 +1769,7 @@ def get_cohorts() -> list:
 	cohort = get_current_faculty().cohort
 	if cohort:
 		return [cohort]
-	return frappe.get_all("CS17 Cohort", pluck="name", order_by="name asc")
+	return frappe.get_all("CS17 Cohort", filters={"disabled": 0}, pluck="name", order_by="name asc")
 
 
 @frappe.whitelist(methods=["GET"])
