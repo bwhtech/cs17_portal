@@ -340,6 +340,20 @@ declare global {
 	}
 }
 
+/** A row of `get_faculty_results`: one student's result, published or not. */
+export interface FacultyResultSummary extends CS17ResultSummary {
+	cohort: string
+	student: string
+	student_name: string | null
+	is_published: Bool
+}
+
+/** `get_faculty_result`: the report card, with whose it is and whether it is out. */
+export interface FacultyResult extends CS17Result {
+	student: string
+	is_published: Bool
+}
+
 export interface ClassReportRow {
 	student: string
 	full_name: string
