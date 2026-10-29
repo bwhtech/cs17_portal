@@ -332,8 +332,7 @@ test.describe("Faculty assignment portal", () => {
 		await updateDoc(request, "CS17 Assignment", draft.name, { quarter: quarter.name });
 
 		await page.goto("/dashboard/faculty/assignments");
-		await page.getByRole("button", { name: /^Drafts/ }).click();
-		await page.getByRole("button", { name: draft.title, exact: true }).click();
+		await page.getByRole("button", { name: `Edit ${draft.title}`, exact: true }).click();
 		await page.getByRole("combobox").filter({ hasText: quarter.name }).click();
 		await page.getByRole("option", { name: "No quarter" }).click();
 		await page.getByRole("button", { name: "Save Assignment" }).click();
@@ -359,11 +358,12 @@ test.describe("Faculty assignment portal", () => {
 		});
 
 		await page.goto("/dashboard/faculty/assignments");
-		await page.getByRole("button", { name: /^Drafts/ }).click();
+		const edit = page.getByRole("button", { name: `Edit ${draft.title}`, exact: true });
+		await edit.waitFor();
 		await updateDoc(request, "CS17 Assignment", draft.name, {
 			publish_on: "2030-01-05 09:30:00",
 		});
-		await page.getByRole("button", { name: draft.title, exact: true }).click();
+		await edit.click();
 		await page.getByPlaceholder("Assignment title").fill(`${draft.title} edited`);
 		await page.getByRole("button", { name: "Save Assignment" }).click();
 		await expect(page.getByText("Assignment saved")).toBeVisible();
@@ -410,8 +410,7 @@ test.describe("Faculty assignment portal", () => {
 		);
 
 		await page.goto("/dashboard/faculty/assignments");
-		await page.getByRole("button", { name: /^Drafts/ }).click();
-		await page.getByRole("button", { name: draft.title, exact: true }).click();
+		await page.getByRole("button", { name: `Edit ${draft.title}`, exact: true }).click();
 
 		await expect(page.getByText("Could not load this draft")).toBeVisible();
 		await expect(page.getByRole("button", { name: "Save Assignment" })).toHaveCount(0);
@@ -434,8 +433,7 @@ test.describe("Faculty assignment portal", () => {
 
 		await page.goto("/dashboard/faculty/assignments");
 		await page.evaluate((key) => localStorage.removeItem(key), await draftKey(page));
-		await page.getByRole("button", { name: /^Drafts/ }).click();
-		await page.getByRole("button", { name: draft.title, exact: true }).click();
+		await page.getByRole("button", { name: `Edit ${draft.title}`, exact: true }).click();
 		await expect(page.getByRole("dialog")).toBeVisible();
 		await page.keyboard.press("Escape");
 		await expect(page.getByRole("dialog")).toBeHidden();
@@ -909,11 +907,12 @@ test.describe("Faculty assignment portal", () => {
 		});
 
 		await page.goto("/dashboard/faculty/assignments");
-		await page.getByRole("button", { name: /^Drafts/ }).click();
+		const edit = page.getByRole("button", { name: `Edit ${draft.title}`, exact: true });
+		await edit.waitFor();
 		await updateDoc(request, "CS17 Assignment", draft.name, {
 			publish_on: "2000-01-01 09:00:00",
 		});
-		await page.getByRole("button", { name: draft.title, exact: true }).click();
+		await edit.click();
 
 		await expect(
 			page.getByText("A published assignment can no longer be edited")
