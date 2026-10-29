@@ -98,6 +98,17 @@ const routes: RouteRecordRaw[] = [
 		props: true,
 	},
 	{
+		path: '/faculty/results',
+		name: 'FacultyResults',
+		component: () => import('@/pages/FacultyResultsPage.vue'),
+	},
+	{
+		path: '/faculty/results/:resultId',
+		name: 'FacultyResultDetail',
+		component: () => import('@/pages/FacultyResultDetailPage.vue'),
+		props: true,
+	},
+	{
 		// Hidden sandbox rendering every shared contract. Not linked from anywhere.
 		path: '/dev',
 		name: 'Dev',
