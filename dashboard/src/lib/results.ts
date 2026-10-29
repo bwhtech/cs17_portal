@@ -1,5 +1,6 @@
+import { formatDateTime } from '@/lib/dates'
 import { formatGrade } from '@/lib/grades'
-import type { CS17ResultAssignmentScore, CS17ResultSummary } from '@/types'
+import type { CS17ResultAssignmentScore, CS17ResultSummary, FacultyResultSummary } from '@/types'
 
 /**
  * How a result reads. The list and the detail page both show marks, a
@@ -45,6 +46,22 @@ export function assignmentScoreLabel(row: CS17ResultAssignmentScore): string {
 		})
 	}
 	return 'Submitted'
+}
+
+/**
+ * Unlike a grade, a past `published_on` is not enough: the scheduler refuses a
+ * result with marks missing, and students see only `is_published` ones.
+ */
+export function publishStatus(result: Pick<FacultyResultSummary, 'is_published' | 'published_on'>) {
+	if (result.is_published) return { label: 'Published', theme: 'green' } as const
+	if (result.published_on) {
+		return {
+			label: 'Scheduled',
+			theme: 'amber',
+			title: formatDateTime(result.published_on),
+		} as const
+	}
+	return { label: 'Draft', theme: 'gray' } as const
 }
 
 /** The heading a result goes by: its exam, with the quarter when there is one. */

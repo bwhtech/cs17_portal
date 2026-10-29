@@ -1,4 +1,6 @@
+import { readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
+import { gzipSync } from 'node:zlib'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import frappeui from 'frappe-ui/vite'
@@ -18,6 +20,17 @@ export default defineConfig({
 			},
 		}),
 		vue(),
+		{
+			name: 'gzip-pyodide-wasm',
+			buildStart() {
+				const wasm = readFileSync(path.resolve(__dirname, 'node_modules/pyodide/pyodide.asm.wasm'))
+				// Not .gz: Vite's dev server sends .gz files with Content-Encoding, so the browser would unzip it first.
+				writeFileSync(
+					path.resolve(__dirname, 'src/lib/python/pyodide.asm.wasm.gzip'),
+					gzipSync(wasm),
+				)
+			},
+		},
 		VitePWA({
 			strategies: 'injectManifest',
 			srcDir: 'src',
@@ -26,7 +39,7 @@ export default defineConfig({
 			manifest: false,
 			injectManifest: {
 				globPatterns: ['**/*.{js,css,svg,woff2}'],
-				globIgnores: ['**/Inter-Italic*'],
+				globIgnores: ['**/Inter-Italic*', '**/pyodide*'],
 				modifyURLPrefix: { '': '/assets/cs17_portal/dashboard/' },
 				dontCacheBustURLsMatching: /^\/assets\/cs17_portal\/dashboard\/assets\//,
 			},

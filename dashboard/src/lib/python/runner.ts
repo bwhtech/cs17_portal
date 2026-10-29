@@ -1,4 +1,5 @@
 import { onBeforeUnmount } from 'vue'
+import { fetchPyodide } from './pyodide'
 import { sandboxDocument } from './sandbox'
 
 const RUN_TIMEOUT_MS = 5000
@@ -63,11 +64,21 @@ export class PythonRunner {
 		this.started = new Promise((resolve) => {
 			this.markStarted = resolve
 		})
-		this.frame = document.createElement('iframe')
-		this.frame.sandbox.add('allow-scripts')
-		this.frame.hidden = true
-		this.frame.srcdoc = sandboxDocument
-		document.body.appendChild(this.frame)
+		const frame = document.createElement('iframe')
+		frame.sandbox.add('allow-scripts')
+		frame.hidden = true
+		frame.srcdoc = sandboxDocument
+		const loaded = new Promise((resolve) => frame.addEventListener('load', resolve, { once: true }))
+		Promise.all([fetchPyodide(), loaded]).then(
+			([files]) => frame.contentWindow?.postMessage(files, '*'),
+			() => {
+				if (frame !== this.frame) return
+				this.markStarted?.(false)
+				this.stop()
+			},
+		)
+		this.frame = frame
+		document.body.appendChild(frame)
 		return this.started
 	}
 
