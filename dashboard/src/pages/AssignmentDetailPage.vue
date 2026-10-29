@@ -106,7 +106,7 @@
 							<p class="text-xs text-ink-gray-5">Grade</p>
 							<p class="text-lg text-ink-gray-9">{{ grade.grade }}</p>
 						</div>
-						<div>
+						<div v-if="grade.evaluation_type">
 							<p class="text-xs text-ink-gray-5">
 								{{ isLetterGrade ? 'Grade' : 'Marks Obtained' }}
 							</p>

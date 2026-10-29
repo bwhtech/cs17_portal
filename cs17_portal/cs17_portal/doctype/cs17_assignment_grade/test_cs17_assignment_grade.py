@@ -31,13 +31,13 @@ class IntegrationTestCS17AssignmentGrade(IntegrationTestCase):
 		make_profile("Faculty", cohort, cls.faculty_user, "Faculty 85")
 		cls.second_faculty_user = make_user("faculty86@cs17test.com")
 		make_profile("Faculty", cohort, cls.second_faculty_user, "Faculty 86")
-		student = make_profile("Student", cohort, make_user("student85@cs17test.com"), "Student 85")
+		cls.student = make_profile("Student", cohort, make_user("student85@cs17test.com"), "Student 85")
 
 		frappe.set_user(cls.faculty_user)
 		cls.assignment = make_assignment(cohort, "PDF Task 85", "PDF", 20)
 		frappe.set_user("Administrator")
 
-		cls.submission = make_submission(cls.assignment, student, "Student 85", "PDF Task 85")
+		cls.submission = make_submission(cls.assignment, cls.student, "Student 85", "PDF Task 85")
 
 	def setUp(self):
 		super().setUp()
@@ -142,6 +142,16 @@ class IntegrationTestCS17AssignmentGrade(IntegrationTestCase):
 		)
 
 		self.assertRaises(frappe.ValidationError, second_grade.insert)
+
+	def test_grade_submission_saves_remarks_on_not_graded_work(self):
+		assignment = make_assignment(make_cohort("C85TEST"), "PDF Task 89", "PDF", 0)
+		frappe.db.set_value("CS17 Assignment", assignment, {"assignment_type": "Not Graded", "remarks": ""})
+		submission = make_submission(assignment, self.student, "Student 85", "PDF Task 89")
+
+		with self.set_user(self.faculty_user):
+			grade = api.grade_submission(submission, remarks="Neat loops", publish="now")["name"]
+
+		self.assertEqual(frappe.db.get_value("CS17 Assignment Grade", grade, "remarks"), "Neat loops")
 
 
 class TestGradeFromMarks(IntegrationTestCase):

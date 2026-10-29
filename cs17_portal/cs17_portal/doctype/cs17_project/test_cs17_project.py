@@ -363,12 +363,12 @@ class TestCS17Project(FrappeTestCase):
 		project = self.make_saved_project()
 		self.assertTrue(api.submit_scratch_project(scheduled, project)["name"])
 
-	def test_grade_on_not_graded_assignment_rejected(self):
+	def test_grade_on_not_graded_assignment_without_remarks_rejected(self):
 		not_graded = self.make_assignment(self.cohort_in, assignment_type="Not Graded")
 		project = self.make_saved_project()
 		submission = api.submit_scratch_project(not_graded, project)["name"]
 		frappe.set_user(FACULTY_IN_USER)
-		self.assertRaises(frappe.ValidationError, api.save_grade, submission, 50)
+		self.assertRaises(frappe.ValidationError, api.save_grade, submission)
 
 	def test_second_save_replaces_the_project_file(self):
 		project = self.make_saved_project()

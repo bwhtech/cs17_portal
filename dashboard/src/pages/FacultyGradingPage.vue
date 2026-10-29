@@ -126,10 +126,7 @@
 			/>
 		</div>
 
-		<div
-			v-if="submission.evaluation_type"
-			class="shrink-0 border-t border-outline-gray-1 bg-surface-base px-3 py-4 sm:px-5"
-		>
+		<div class="shrink-0 border-t border-outline-gray-1 bg-surface-base px-3 py-4 sm:px-5">
 			<KeepAlive>
 				<GradeForm
 					:key="submission.name"

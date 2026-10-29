@@ -67,6 +67,7 @@ const props = defineProps<{
 	cohort?: string
 	/** How many of the selected submissions have a grade that is still a draft. */
 	draftGrades?: number
+	remarksOnly?: boolean
 	canCheckWithAi?: boolean
 	ungradedSubmissions?: string[]
 }>()
@@ -75,9 +76,13 @@ const emit = defineEmits<{ done: []; clear: []; checking: [submissions: string[]
 
 const { isDesktop } = useBreakpoint()
 
-const publishLabel = computed(
-	() => `Publish ${props.draftGrades} ${props.draftGrades === 1 ? 'grade' : 'grades'}`,
-)
+const draftNoun = computed(() => {
+	const one = props.draftGrades === 1
+	if (props.remarksOnly) return one ? 'remark' : 'remarks'
+	return one ? 'grade' : 'grades'
+})
+
+const publishLabel = computed(() => `Publish ${props.draftGrades} ${draftNoun.value}`)
 
 const members = useFacultyMembers(props.cohort)
 
@@ -101,16 +106,19 @@ const aiCheck = useCall<{ queued: number; skipped: number }, { submissions: stri
 
 function confirmPublish() {
 	const count = props.draftGrades
+	const noun = draftNoun.value
 	dialog.confirm({
-		title: `Publish ${count} ${count === 1 ? 'grade' : 'grades'}?`,
-		message: 'The students will see their grade and remarks right away.',
+		title: `Publish ${count} ${noun}?`,
+		message: props.remarksOnly
+			? 'The students will see their remarks right away.'
+			: 'The students will see their grade and remarks right away.',
 		onConfirm: async () => {
 			await trySubmit(publish, { submissions: props.submissions })
 			if (publish.error) {
-				toast.error(frappeErrorMessage(publish.error, 'Could not publish the grades.'))
+				toast.error(frappeErrorMessage(publish.error, `Could not publish the ${noun}.`))
 				return
 			}
-			toast.success(`Published ${count} ${count === 1 ? 'grade' : 'grades'}.`)
+			toast.success(`Published ${count} ${noun}.`)
 			emit('done')
 		},
 	})
