@@ -339,3 +339,14 @@ declare global {
 		read_only_mode?: boolean
 	}
 }
+
+export interface ClassReportRow {
+	student: string
+	full_name: string
+	given: number
+	submitted: number
+	missing: number
+	late: number
+	average: number | null
+	grade: string | null
+}
