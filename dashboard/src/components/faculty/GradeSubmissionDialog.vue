@@ -9,7 +9,7 @@
 				:options="gradeOptions"
 			/>
 			<FormControl
-				v-else
+				v-else-if="isMarks"
 				v-model="marks"
 				type="number"
 				:label="marksLabel"
@@ -24,7 +24,9 @@
 				v-model="remarks"
 				type="textarea"
 				label="Remarks"
-				description="Optional feedback for the student."
+				:description="remarksOnly ? undefined : 'Optional feedback for the student.'"
+				:required="remarksOnly"
+				:error="remarksError"
 				:rows="3"
 			/>
 
@@ -44,7 +46,7 @@
 					v-model:publish-on="publishOn"
 					include-draft
 					:published="published"
-					hint="Published grades are visible to the student."
+					:hint="`Published ${remarksOnly ? 'remarks' : 'grades'} are visible to the student.`"
 				/>
 				<ErrorMessage :message="publishOnError" />
 			</div>
@@ -57,7 +59,7 @@
 				class="w-full"
 				variant="solid"
 				theme="gray"
-				label="Save grade"
+				:label="`Save ${noun}`"
 				:loading="save.loading"
 				@click="handleSave"
 			/>
@@ -96,6 +98,9 @@ const props = defineProps<{
 const emit = defineEmits<{ 'update:open': [value: boolean]; success: [] }>()
 
 const isGradeScale = computed(() => props.evaluationType === 'Grade')
+const isMarks = computed(() => props.evaluationType === 'Marks')
+const remarksOnly = computed(() => !props.evaluationType)
+const noun = computed(() => (remarksOnly.value ? 'remarks' : 'grade'))
 
 const gradeOptions = [
 	{ label: 'No grade', value: '' },
@@ -110,12 +115,16 @@ const publishOn = ref('')
 const published = ref(false)
 /** Validation, kept under the field it belongs to rather than sent to a toast. */
 const fieldError = ref('')
+const remarksError = ref('')
 const publishOnError = ref('')
 /** Whatever the API answered with. */
 const saveError = ref('')
 const aiCheckError = ref('')
 
-const title = computed(() => `Grade: ${props.submission?.full_name ?? 'Submission'}`)
+const title = computed(
+	() =>
+		`${remarksOnly.value ? 'Remarks' : 'Grade'}: ${props.submission?.full_name ?? 'Submission'}`,
+)
 
 const marksLabel = computed(() =>
 	props.maxMarks == null ? 'Marks' : `Marks (out of ${props.maxMarks})`,
@@ -124,7 +133,7 @@ const marksLabel = computed(() =>
 const bands = useCall<GradeBand[]>({
 	url: '/api/v2/method/cs17_portal.api.get_grade_bands',
 	method: 'GET',
-	immediate: !isGradeScale.value,
+	immediate: isMarks.value,
 })
 
 const marksGrade = computed(() => {
@@ -169,6 +178,7 @@ watch(
 			publishOn.value = ''
 		}
 		fieldError.value = ''
+		remarksError.value = ''
 		publishOnError.value = ''
 		saveError.value = ''
 		aiCheckError.value = ''
@@ -180,12 +190,16 @@ watch(marks, () => {
 	fieldError.value = ''
 })
 
+watch(remarks, () => {
+	remarksError.value = ''
+})
+
 watch([publishMode, publishOn], () => {
 	publishOnError.value = ''
 })
 
 function validate(): string | null {
-	if (!isGradeScale.value) {
+	if (isMarks.value) {
 		const value = Number(marks.value)
 		if (marks.value.trim() === '' || Number.isNaN(value) || value < 0) {
 			return 'Please enter valid marks.'
@@ -201,21 +215,22 @@ async function handleSave() {
 	if (!props.submission) return
 	saveError.value = ''
 	fieldError.value = validate() ?? ''
+	remarksError.value = remarksOnly.value && !remarks.value.trim() ? 'Enter the remarks.' : ''
 	publishOnError.value =
 		publishMode.value === 'schedule' && !publishOn.value ? 'Pick a publish date.' : ''
-	if (fieldError.value || publishOnError.value) return
+	if (fieldError.value || remarksError.value || publishOnError.value) return
 
 	await trySubmit(save, {
 		submission: props.submission.name,
 		grade: isGradeScale.value && grade.value ? grade.value : undefined,
-		marks_obtained: isGradeScale.value ? undefined : Number(marks.value),
+		marks_obtained: isMarks.value ? Number(marks.value) : undefined,
 		remarks: remarks.value.trim() || undefined,
 		publish: publishMode.value,
 		publish_on: toFrappeDatetime(publishOn.value),
 	})
 
 	if (save.error) {
-		saveError.value = frappeErrorMessage(save.error, 'Could not save the grade.')
+		saveError.value = frappeErrorMessage(save.error, `Could not save the ${noun.value}.`)
 		return
 	}
 	emit('success')

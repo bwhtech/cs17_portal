@@ -142,19 +142,19 @@
 					</template>
 
 					<template #cell-grade="{ row }">
-						<span v-if="!isSubmitted(row) || !isGraded" class="text-ink-gray-5">—</span>
-						<Badge
-							v-else-if="!row.grade"
-							label="Ungraded"
-							theme="gray"
-							variant="subtle"
-						/>
-						<span v-else class="flex items-center gap-2">
-							<span class="text-base font-medium text-ink-gray-8">{{
+						<span v-if="row.grade" class="flex items-center gap-2">
+							<span v-if="isGraded" class="text-base font-medium text-ink-gray-8">{{
 								gradeValue(row.grade)
 							}}</span>
 							<Badge v-bind="publishStatus(row.grade)" variant="subtle" />
 						</span>
+						<Badge
+							v-else-if="isSubmitted(row) && isGraded"
+							label="Ungraded"
+							theme="gray"
+							variant="subtle"
+						/>
+						<span v-else class="text-ink-gray-5">—</span>
 					</template>
 
 					<template #cell-actions="{ row }">
@@ -166,8 +166,8 @@
 							/>
 							<Button v-if="sheet" label="Answers" @click="answersTarget = row" />
 							<Button
-								v-if="isSubmitted(row) && isGraded"
-								:label="row.grade ? 'Edit grade' : 'Grade'"
+								v-if="isSubmitted(row)"
+								:label="gradeActionLabel(row)"
 								@click="gradeTarget = row"
 							/>
 							<Button
@@ -184,6 +184,7 @@
 					:submissions="selection"
 					:cohort="assignment.cohort"
 					:draft-grades="selectedDraftGrades"
+					:remarks-only="!isGraded"
 					:can-check-with-ai="assignment.can_check_with_ai"
 					:ungraded-submissions="selectedUngradedSubmissions"
 					@checking="waitForAiDrafts"
@@ -478,14 +479,19 @@ const metaRows = computed(() => {
 	return rows
 })
 
-const columns: Column[] = [
+const columns = computed<Column[]>(() => [
 	{ header: 'Student', key: 'student', variant: 'primary' },
 	{ header: 'Status', key: 'status', width: '6.5rem' },
 	{ header: 'Submitted', key: 'submitted', width: '8rem' },
 	{ header: 'Assigned to', key: 'assignees', width: '9rem' },
-	{ header: 'Grade', key: 'grade', width: '10rem' },
+	{ header: isGraded.value ? 'Grade' : 'Remarks', key: 'grade', width: '10rem' },
 	{ header: '', key: 'actions', variant: 'actions', width: '16rem', align: 'right' },
-]
+])
+
+function gradeActionLabel(row: CS17Submission): string {
+	if (isGraded.value) return row.grade ? 'Edit grade' : 'Grade'
+	return row.grade ? 'Edit remarks' : 'Add remarks'
+}
 
 /** `_assign` is Frappe's ToDo mirror: a JSON array of user ids, or nothing. */
 function assigneesOf(submission: CS17Submission): string[] {

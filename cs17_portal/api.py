@@ -263,7 +263,9 @@ def get_assignment_submissions(assignment: str) -> dict:
 	if not assignment_doc:
 		frappe.throw(_("Assignment not found"), frappe.DoesNotExistError)
 	assignment_doc.can_check_with_ai = (
-		assignment_doc.submission_type == "Python" and frappe.get_cached_doc("CS17 AI Settings").is_set_up()
+		assignment_doc.submission_type == "Python"
+		and assignment_doc.remarks in ("Grade", "Marks")
+		and frappe.get_cached_doc("CS17 AI Settings").is_set_up()
 	)
 	assignment_doc.students = frappe.get_all(
 		"CS17 Assignment Student",
@@ -340,7 +342,9 @@ def get_submission(submission: str) -> dict:
 	row.grade = grade.grade if grade else None
 	row.graded = bool(grade)
 	row.can_check_with_ai = (
-		assignment.submission_type == "Python" and frappe.get_cached_doc("CS17 AI Settings").is_set_up()
+		assignment.submission_type == "Python"
+		and assignment.remarks in ("Grade", "Marks")
+		and frappe.get_cached_doc("CS17 AI Settings").is_set_up()
 	)
 	return row
 
@@ -380,8 +384,6 @@ def grade_submission(
 	sub_doc = frappe.get_doc("CS17 Assignment Submission", submission)
 	require_faculty_for_assignment(sub_doc.assignment)
 	evaluation_type = frappe.db.get_value("CS17 Assignment", sub_doc.assignment, "remarks")
-	if evaluation_type not in ("Grade", "Marks"):
-		frappe.throw(_("Cannot grade a Not Graded assignment."))
 	if evaluation_type == "Marks" and marks_obtained is None:
 		frappe.throw(_("Enter the marks."))
 	doc = _get_or_new_grade(submission, sub_doc.assignment)
