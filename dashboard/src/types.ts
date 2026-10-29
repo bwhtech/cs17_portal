@@ -354,6 +354,17 @@ export interface FacultyResult extends CS17Result {
 	is_published: Bool
 }
 
+export interface ClassReportRow {
+	student: string
+	full_name: string
+	given: number
+	submitted: number
+	missing: number
+	late: number
+	average: number | null
+	grade: string | null
+}
+
 export interface StudentOverviewAssignment extends CS17Assignment {
 	tab_leave_count: number
 }
