@@ -50,8 +50,8 @@ class CS17AssignmentGrade(Document):
 		)
 		if not assignment:
 			return
-		if assignment.assignment_type == "Not Graded":
-			frappe.throw(_("Cannot grade a Not Graded assignment."))
+		if assignment.assignment_type == "Not Graded" and not self.remarks:
+			frappe.throw(_("Enter the remarks."))
 
 		max_marks = flt(assignment.max_marks)
 		if flt(self.marks_obtained) < 0 or flt(self.marks_obtained) > max_marks:
@@ -77,7 +77,9 @@ class CS17AssignmentGrade(Document):
 				notify_students,
 				assignment=self.assignment,
 				students=[frappe.db.get_value("CS17 Assignment Submission", self.submission, "student")],
-				subject=_("Graded: {0}").format(self.assignment_title),
+				subject=(_("Graded: {0}") if self.evaluation_type else _("New remarks: {0}")).format(
+					self.assignment_title
+				),
 				enqueue_after_commit=True,
 			)
 

@@ -20,8 +20,8 @@
 			</div>
 
 			<div v-if="revision.graded_by" class="space-y-1">
-				<p class="text-xs text-ink-gray-5">Grade</p>
-				<p class="text-base text-ink-gray-8">
+				<p class="text-xs text-ink-gray-5">{{ evaluationType ? 'Grade' : 'Remarks' }}</p>
+				<p v-if="evaluationType" class="text-base text-ink-gray-8">
 					{{
 						formatGrade({
 							evaluationType,
