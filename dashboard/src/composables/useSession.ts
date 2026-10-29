@@ -1,7 +1,12 @@
 import { computed, onScopeDispose, ref, type ComputedRef, type Ref } from 'vue'
 import { call, toast } from 'frappe-ui'
 import { clear as clearFrappeUICache, delMany, keys } from 'idb-keyval'
-import { STORAGE_KEYS, removeDraftsOfOtherUsers, removeKey } from '@/lib/storage'
+import {
+	STORAGE_KEYS,
+	removeDraftsOfOtherUsers,
+	removeKey,
+	removeUnsavedPythonCode,
+} from '@/lib/storage'
 import type { CS17Profile } from '@/types'
 
 /**
@@ -38,6 +43,7 @@ async function logout(): Promise<void> {
 		return
 	}
 	removeKey(STORAGE_KEYS.newAssignmentDraft)
+	removeUnsavedPythonCode()
 	await clearFrappeUICache().catch(() => null)
 	window.location.href = '/login'
 }
