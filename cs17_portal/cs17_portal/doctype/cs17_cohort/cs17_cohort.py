@@ -18,6 +18,7 @@ class CS17Cohort(Document):
 		from frappe.types import DF
 
 		cohort_code: DF.Data
+		disabled: DF.Check
 		start_date: DF.Date
 	# end: auto-generated types
 
