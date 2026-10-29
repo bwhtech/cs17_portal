@@ -3,8 +3,9 @@
 
 import frappe
 from frappe import _
+from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 from frappe.model.document import Document
-from frappe.utils import cint, flt, get_datetime
+from frappe.utils import cint, flt, get_datetime, get_url
 
 
 class CS17Assignment(Document):
@@ -136,6 +137,78 @@ class CS17Assignment(Document):
 		)
 		if submitted:
 			frappe.throw(_("{0} has already submitted this assignment.").format(submitted))
+
+	def on_update(self):
+		self.notify_new_students()
+
+	def notify_new_students(self):
+		if not self.is_published:
+			return
+		previous = self.get_doc_before_save()
+		was_published = previous and previous.is_published
+		if was_published and not previous.students:
+			return
+		students = self.given_students()
+		if was_published:
+			students -= {row.student for row in previous.students}
+		if students:
+			frappe.enqueue(
+				notify_students,
+				assignment=self.name,
+				students=sorted(students),
+				subject=_("New assignment: {0}").format(self.title),
+				enqueue_after_commit=True,
+			)
+
+	def remind_students(self):
+		students = self.given_students() - set(
+			frappe.get_all("CS17 Assignment Submission", filters={"assignment": self.name}, pluck="student")
+		)
+		if students:
+			notify_students(self.name, sorted(students), _("Due in 24 hours: {0}").format(self.title))
+
+	def given_students(self) -> set[str]:
+		return {row.student for row in self.students} or set(
+			frappe.get_all(
+				"CS17 Profile", filters={"profile_type": "Student", "cohort": self.cohort}, pluck="name"
+			)
+		)
+
+
+def notify_students(assignment: str, students: list[str], subject: str) -> None:
+	users = frappe.get_all(
+		"User",
+		filters={
+			"name": ["in", frappe.get_all("CS17 Profile", filters={"name": ["in", students]}, pluck="user")],
+			"enabled": 1,
+			"email": ["is", "set"],
+		},
+		fields=["name", "email"],
+	)
+	link = f"/dashboard/assignments/{assignment}/submission"
+	make_notification_logs(
+		frappe._dict(
+			type="Alert",
+			subject=subject,
+			document_type="CS17 Assignment",
+			document_name=assignment,
+			link=link,
+		),
+		[user.email for user in users],
+	)
+	opted_out = frappe.get_all(
+		"Notification Settings",
+		filters={"name": ["in", [user.name for user in users]], "enable_email_notifications": 0},
+		pluck="name",
+	)
+	recipients = [user.email for user in users if user.name not in opted_out]
+	if recipients:
+		frappe.sendmail(
+			recipients=recipients,
+			subject=subject,
+			template="new_notification",
+			args={"body_content": subject, "doc_link": get_url(link)},
+		)
 
 
 def get_quarter_assignments(quarter: str, cohort: str, student: str) -> list[dict]:

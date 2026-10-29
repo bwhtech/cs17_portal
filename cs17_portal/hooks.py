@@ -162,6 +162,7 @@ scheduler_events = {
 		"cs17_portal.tasks.auto_publish_announcements",
 		"cs17_portal.tasks.auto_publish_results",
 	],
+	"hourly": ["cs17_portal.tasks.remind_due_assignments"],
 }
 
 # Testing

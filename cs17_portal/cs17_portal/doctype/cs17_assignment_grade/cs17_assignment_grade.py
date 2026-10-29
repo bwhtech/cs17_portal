@@ -6,6 +6,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt
 
+from cs17_portal.cs17_portal.doctype.cs17_assignment.cs17_assignment import notify_students
 from cs17_portal.cs17_portal.doctype.cs17_grading_scale.cs17_grading_scale import get_default_scale
 
 LETTER_GRADES = ("A", "B", "C", "D", "E")
@@ -69,6 +70,16 @@ class CS17AssignmentGrade(Document):
 		)
 		if duplicate:
 			frappe.throw(_("Grade {0} already exists for this submission.").format(duplicate))
+
+	def on_update(self):
+		if self.submission and self.is_published and self.has_value_changed("is_published"):
+			frappe.enqueue(
+				notify_students,
+				assignment=self.assignment,
+				students=[frappe.db.get_value("CS17 Assignment Submission", self.submission, "student")],
+				subject=_("Graded: {0}").format(self.assignment_title),
+				enqueue_after_commit=True,
+			)
 
 
 def get_grade_for_marks(marks_obtained: float, max_marks: float, scale: str | None) -> str | None:
