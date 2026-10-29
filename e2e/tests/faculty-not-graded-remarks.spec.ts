@@ -48,7 +48,7 @@ test.describe("Remarks on Not Graded work", () => {
 
 		await page.goto(`/dashboard/faculty/assignments/${assignment.name}`);
 		await row.getByRole("button", { name: "Add remarks" }).click();
-		await page.getByLabel("Remarks").fill(REMARKS);
+		await page.getByRole("textbox", { name: "Remarks" }).fill(REMARKS);
 		await page.getByRole("combobox").filter({ hasText: "Save as draft" }).click();
 		await page.getByRole("option", { name: "Publish now" }).click();
 		await page.getByRole("button", { name: "Save remarks" }).click();
@@ -64,7 +64,7 @@ test.describe("Remarks on Not Graded work", () => {
 		});
 
 		await page.goto(`/dashboard/faculty/submissions/${submission.name}`);
-		await page.getByLabel("Remarks").fill(REMARKS);
+		await page.getByRole("textbox", { name: "Remarks" }).fill(REMARKS);
 		await page.getByRole("button", { name: "Save remarks" }).click();
 
 		await expect(page.getByRole("button", { name: "Update remarks" })).toBeVisible();
