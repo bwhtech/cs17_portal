@@ -44,6 +44,14 @@
 			</TopicSelect>
 
 			<Button
+				label="Copy"
+				:icon-left="isDesktop ? 'lucide-copy' : undefined"
+				:icon="isDesktop ? undefined : 'lucide-copy'"
+				:tooltip="isDesktop ? undefined : 'Copy'"
+				@click="copyOpen = true"
+			/>
+
+			<Button
 				variant="ghost"
 				icon="lucide-x"
 				aria-label="Clear selection"
@@ -58,25 +66,41 @@
 			:assignments="assignments"
 			@done="emit('done')"
 		/>
+
+		<CopyAssignmentsDialog
+			v-if="copyOpen"
+			v-model:open="copyOpen"
+			:assignments="assignments"
+			:cohorts="cohorts"
+			:quarters="quarters"
+			@done="emit('done')"
+		/>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Button, dialog, toast, useCall } from 'frappe-ui'
+import CopyAssignmentsDialog from '@/components/faculty/CopyAssignmentsDialog.vue'
 import DistributeNextAssignmentsDialog from '@/components/faculty/DistributeNextAssignmentsDialog.vue'
 import TopicSelect from '@/components/faculty/TopicSelect.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { trySubmit } from '@/lib/trySubmit'
 
-const props = defineProps<{ assignments: string[]; hasSubmissions?: boolean }>()
+const props = defineProps<{
+	assignments: string[]
+	hasSubmissions?: boolean
+	cohorts: string[]
+	quarters: string[]
+}>()
 
 const emit = defineEmits<{ done: []; clear: [] }>()
 
 const { isDesktop } = useBreakpoint()
 
 const nextOpen = ref(false)
+const copyOpen = ref(false)
 
 const countLabel = computed(
 	() =>
