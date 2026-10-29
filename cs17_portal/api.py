@@ -1,7 +1,9 @@
 import base64
+import difflib
 import functools
 import io
 import random
+import re
 import zipfile
 from typing import TYPE_CHECKING
 
@@ -787,6 +789,53 @@ def get_submission_code(submission: str) -> str:
 		frappe.throw(_("Submission not found"), frappe.DoesNotExistError)
 	require_faculty_for_assignment(submission_doc.assignment)
 	return submission_doc.code or ""
+
+
+SIMILAR_CODE_CUTOFF = 0.6
+PYTHON_TOKEN = re.compile(r"""'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"|#.*|\w+|\S""")
+
+
+@frappe.whitelist(methods=["GET"])
+def get_similar_submissions(assignment: str) -> list:
+	require_faculty_for_assignment(assignment)
+	starter_lines = set(
+		_comparable_lines(frappe.db.get_value("CS17 Assignment", assignment, "starter_code") or "")
+	)
+	submissions = []
+	for submission in frappe.get_all(
+		ASSIGNMENT_SUBMISSION,
+		filters={"assignment": assignment},
+		fields=["name", "student", "full_name", "code"],
+		order_by="submitted_at asc",
+	):
+		lines = [
+			line for line in _comparable_lines(submission.pop("code") or "") if line not in starter_lines
+		]
+		if lines:
+			submissions.append((submission, lines))
+
+	matcher = difflib.SequenceMatcher(autojunk=False)
+	pairs = []
+	for index, (second, second_lines) in enumerate(submissions):
+		matcher.set_seq2(second_lines)
+		for first, first_lines in submissions[:index]:
+			matcher.set_seq1(first_lines)
+			if (
+				matcher.real_quick_ratio() >= SIMILAR_CODE_CUTOFF
+				and matcher.quick_ratio() >= SIMILAR_CODE_CUTOFF
+				and matcher.ratio() >= SIMILAR_CODE_CUTOFF
+			):
+				pairs.append({"similarity": matcher.ratio(), "submissions": [first, second]})
+	return sorted(pairs, key=lambda pair: pair["similarity"], reverse=True)
+
+
+def _comparable_lines(code: str) -> list[str]:
+	lines = []
+	for line in code.splitlines():
+		tokens = [token for token in PYTHON_TOKEN.findall(line) if not token.startswith("#")]
+		if tokens:
+			lines.append(" ".join(tokens))
+	return lines
 
 
 @frappe.whitelist(methods=["POST"])
@@ -1769,13 +1818,117 @@ def get_cohorts() -> list:
 	cohort = get_current_faculty().cohort
 	if cohort:
 		return [cohort]
-	return frappe.get_all("CS17 Cohort", pluck="name", order_by="name asc")
+	return frappe.get_all("CS17 Cohort", filters={"disabled": 0}, pluck="name", order_by="name asc")
 
 
 @frappe.whitelist(methods=["GET"])
 def get_quarters() -> list:
 	get_current_faculty()
 	return frappe.get_all("CS17 Quarter", pluck="name", order_by="name asc")
+
+
+@frappe.whitelist(methods=["GET"])
+def get_class_report(cohort: str, quarter: str | None = None) -> list:
+	from cs17_portal.cs17_portal.doctype.cs17_assignment_grade.cs17_assignment_grade import (
+		get_grade_for_marks,
+	)
+	from cs17_portal.cs17_portal.doctype.cs17_grading_scale.cs17_grading_scale import get_default_scale
+
+	rows = {
+		student.student: frappe._dict(
+			student, given=0, submitted=0, missing=0, late=0, marks_obtained=0, max_marks=0
+		)
+		for student in get_cohort_students(cohort)
+	}
+	assignments = [
+		assignment
+		for assignment in frappe.get_all(
+			"CS17 Assignment",
+			filters={"cohort": cohort, "quarter": quarter} if quarter else {"cohort": cohort},
+			fields=[
+				"name",
+				"due_date",
+				"assignment_type",
+				"remarks",
+				"max_marks",
+				"is_published",
+				"publish_on",
+			],
+		)
+		if is_published_now(assignment)
+	]
+	names = [assignment.name for assignment in assignments]
+	students_by_assignment = {}
+	for row in frappe.get_all(
+		"CS17 Assignment Student",
+		filters={"parent": ("in", names), "parenttype": "CS17 Assignment"},
+		fields=["parent", "student"],
+	):
+		students_by_assignment.setdefault(row.parent, set()).add(row.student)
+	submissions = {
+		(submission.assignment, submission.student): submission
+		for submission in frappe.get_all(
+			ASSIGNMENT_SUBMISSION,
+			filters={"assignment": ("in", names), "docstatus": ("<", 2)},
+			fields=["name", "assignment", "student", "submitted_at"],
+		)
+	}
+	published_marks = {
+		grade.submission: grade.marks_obtained
+		for grade in frappe.get_all(
+			"CS17 Assignment Grade",
+			filters={"submission": ("in", [submission.name for submission in submissions.values()])},
+			fields=["submission", "marks_obtained", "is_published", "published_on"],
+		)
+		if is_published_now(grade, "published_on")
+	}
+
+	now = now_datetime()
+	for assignment in assignments:
+		by_marks = assignment.assignment_type == "Graded" and assignment.remarks == "Marks"
+		for student in students_by_assignment.get(assignment.name) or rows:
+			row = rows.get(student)
+			if not row:
+				continue
+			row.given += 1
+			submission = submissions.get((assignment.name, student))
+			if not submission:
+				if assignment.due_date and assignment.due_date < now:
+					row.missing += 1
+				continue
+			row.submitted += 1
+			if (
+				assignment.due_date
+				and submission.submitted_at
+				and submission.submitted_at > assignment.due_date
+			):
+				row.late += 1
+			if by_marks and submission.name in published_marks:
+				row.marks_obtained += flt(published_marks[submission.name])
+				row.max_marks += flt(assignment.max_marks)
+
+	scale = get_default_scale()
+	for row in rows.values():
+		marks_obtained, max_marks = row.pop("marks_obtained"), row.pop("max_marks")
+		row.average = flt(marks_obtained * 100 / max_marks, 2) if max_marks else None
+		row.grade = get_grade_for_marks(marks_obtained, max_marks, scale) if max_marks else None
+	return sorted(rows.values(), key=lambda row: (-row.missing, row.average is None, row.average or 0))
+
+
+@frappe.whitelist(methods=["GET"])
+def download_class_report(cohort: str, quarter: str | None = None) -> None:
+	from frappe.utils.csvutils import build_csv_response
+
+	build_csv_response(
+		[
+			[_("Student"), _("Given"), _("Submitted"), _("Missing"), _("Late"), _("Average"), _("Grade")],
+			*(
+				[row.full_name, row.given, row.submitted, row.missing, row.late, row.average, row.grade]
+				for row in get_class_report(cohort, quarter)
+			),
+		],
+		" ".join(part for part in (_("Class report"), cohort, quarter) if part),
+	)
 
 
 @frappe.whitelist(methods=["GET"])
