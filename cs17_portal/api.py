@@ -1838,7 +1838,7 @@ def download_class_report(cohort: str, quarter: str | None = None) -> None:
 				for row in get_class_report(cohort, quarter)
 			),
 		],
-		" ".join(filter(None, [_("Class report"), cohort, quarter])),
+		" ".join(part for part in (_("Class report"), cohort, quarter) if part),
 	)
 
 
