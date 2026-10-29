@@ -5,9 +5,9 @@ const authFile = path.join(__dirname, "e2e", ".auth", "user.json");
 const studentAuthFile = path.join(__dirname, "e2e", ".auth", "student.json");
 const facultyAuthFile = path.join(__dirname, "e2e", ".auth", "faculty.json");
 const studentSpecs =
-	/(student-submission|student-theme|student-results|student-assignment-title|student-service-worker|student-notifications|python-assignments|python-time-limit|editor-failed-save|python-self-hosted)\.spec\.ts/;
+	/(student-submission|student-theme|student-results|student-assignment-title|student-service-worker|student-notifications|python-assignments|python-time-limit|editor-failed-save|python-self-hosted|python-local-copy)\.spec\.ts/;
 const facultySpecs =
-	/(faculty-announcements-ui|faculty-assignments-ui|faculty-profile-ui|faculty-projects|faculty-assignment-students|faculty-assignment-topics|faculty-dashboard|faculty-ai-check|faculty-send-back|faculty-not-graded-remarks|faculty-remarks-text|faculty-grading-navigation|faculty-copy-assignments)\.spec\.ts/;
+	/(faculty-announcements-ui|faculty-assignments-ui|faculty-profile-ui|faculty-projects|faculty-assignment-students|faculty-assignment-topics|faculty-dashboard|faculty-ai-check|faculty-send-back|faculty-not-graded-remarks|faculty-remarks-text|faculty-grading-navigation|faculty-copy-assignments|faculty-similar-code|faculty-student-page|faculty-class-report|faculty-results)\.spec\.ts/;
 
 const SITE_HOST = process.env.SITE_HOST || "cs17.portal:8000";
 const SITE_DOMAIN = SITE_HOST.split(":")[0];
