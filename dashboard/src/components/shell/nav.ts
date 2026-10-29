@@ -74,6 +74,7 @@ const faculty: NavConfig = {
 			items: [
 				{ label: 'Dashboard', icon: 'lucide-layout-dashboard', to: '/faculty', exact: true },
 				{ label: 'Assignments', icon: 'lucide-clipboard-list', to: '/faculty/assignments' },
+				{ label: 'Results', icon: 'lucide-award', to: '/faculty/results' },
 				{ label: 'Projects', icon: 'lucide-blocks', to: '/faculty/projects' },
 			],
 		},

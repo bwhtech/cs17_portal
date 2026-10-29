@@ -63,6 +63,7 @@ declare module 'vue' {
     PublishFields: typeof import('./src/components/common/PublishFields.vue')['default']
     PythonEditor: typeof import('./src/components/python/PythonEditor.vue')['default']
     PythonSubmissionView: typeof import('./src/components/grading/PythonSubmissionView.vue')['default']
+    ResultCard: typeof import('./src/components/results/ResultCard.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     RowDragPreview: typeof import('./src/components/common/RowDragPreview.vue')['default']

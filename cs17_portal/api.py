@@ -1385,6 +1385,10 @@ def get_student_result(result: str) -> dict:
 	require_current_student()
 	doc = frappe.get_doc("CS17 Result", result)
 	doc.check_permission("read")
+	return _result_card(doc)
+
+
+def _result_card(doc: "Document") -> dict:
 	return {
 		"name": doc.name,
 		"exam": doc.exam,
@@ -1453,6 +1457,42 @@ def _exam_name(exam: str | None) -> str | None:
 	if not exam:
 		return None
 	return frappe.db.get_value("CS17 Exam", exam, "exam_name") or exam
+
+
+@frappe.whitelist(methods=["GET"])
+def get_faculty_results(cohort: str | None = None) -> list:
+	cohort = get_current_faculty().cohort or cohort
+	results = frappe.get_all(
+		"CS17 Result",
+		filters={"cohort": cohort} if cohort else {},
+		fields=[
+			"name",
+			"exam",
+			"quarter",
+			"cohort",
+			"student",
+			"student_name",
+			"total_marks_obtained",
+			"total_max_marks",
+			"percentage",
+			"overall_grade",
+			"result_status",
+			"is_published",
+			"published_on",
+		],
+		order_by="exam desc, student_name asc",
+	)
+	_attach_exam_names(results)
+	return results
+
+
+@frappe.whitelist(methods=["GET"])
+def get_faculty_result(result: str) -> dict:
+	faculty = get_current_faculty()
+	doc = frappe.get_doc("CS17 Result", result)
+	if faculty.cohort and faculty.cohort != doc.cohort:
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	return {**_result_card(doc), "student": doc.student, "is_published": doc.is_published}
 
 
 @frappe.whitelist(methods=["POST"])
