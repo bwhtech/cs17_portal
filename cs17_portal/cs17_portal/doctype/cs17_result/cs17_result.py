@@ -11,6 +11,9 @@ from cs17_portal.cs17_portal.doctype.cs17_assignment.cs17_assignment import get_
 from cs17_portal.cs17_portal.doctype.cs17_assignment_grade.cs17_assignment_grade import get_student_grades
 from cs17_portal.cs17_portal.doctype.cs17_exam.cs17_exam import get_subject_rows
 from cs17_portal.cs17_portal.doctype.cs17_project.cs17_project import get_owner_profile
+from cs17_portal.cs17_portal.doctype.cs17_result_assignment_score.cs17_result_assignment_score import (
+	get_assignment_score,
+)
 from cs17_portal.cs17_portal.doctype.cs17_subject_marks.cs17_subject_marks import get_subject_totals
 
 
@@ -141,26 +144,7 @@ class CS17Result(Document):
 		assignments = get_quarter_assignments(self.quarter, self.cohort, self.student)
 		grades = get_student_grades(self.student, [row.name for row in assignments])
 		for assignment in assignments:
-			graded = assignment.assignment_type == "Graded"
-			grade = grades.get(assignment.name, {})
-			# a letter assignment still carries marks it never used; the letter is set on both kinds
-			by_marks = graded and assignment.evaluation_type == "Marks"
-			self.append(
-				"assignments",
-				{
-					"assignment": assignment.name,
-					"assignment_title": assignment.title,
-					"assignment_type": assignment.assignment_type,
-					"evaluation_type": assignment.evaluation_type,
-					"due_date": assignment.due_date,
-					"max_marks": flt(assignment.max_marks) if by_marks else 0,
-					"marks_obtained": flt(grade.get("marks_obtained")) if by_marks else 0,
-					"grade": grade.get("grade") if graded else None,
-					"is_submitted": 1 if grade.get("submission") else 0,
-					"is_graded": 1 if grade.get("grade_name") else 0,
-					"remarks": grade.get("remarks"),
-				},
-			)
+			self.append("assignments", get_assignment_score(assignment, grades.get(assignment.name, {})))
 
 	def calculate(self):
 		for row in self.scores:

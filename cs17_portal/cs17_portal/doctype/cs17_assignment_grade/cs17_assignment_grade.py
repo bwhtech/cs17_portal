@@ -6,10 +6,14 @@ import re
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt
+from frappe.utils import flt, get_datetime
 
+from cs17_portal.api import is_published_now
 from cs17_portal.cs17_portal.doctype.cs17_assignment.cs17_assignment import notify_students
 from cs17_portal.cs17_portal.doctype.cs17_grading_scale.cs17_grading_scale import get_default_scale
+from cs17_portal.cs17_portal.doctype.cs17_result_assignment_score.cs17_result_assignment_score import (
+	get_assignment_score,
+)
 
 LETTER_GRADES = ("A", "B", "C", "D", "E")
 
@@ -47,6 +51,8 @@ class CS17AssignmentGrade(Document):
 	def validate(self):
 		self.remarks = (self.remarks or "").strip() or None
 		self.escape_tags_in_remarks()
+		if self.published_on:
+			self.published_on = get_datetime(self.published_on)
 		self.validate_duplicate()
 		assignment = frappe.db.get_value(
 			"CS17 Assignment", self.assignment, ["assignment_type", "max_marks", "remarks"], as_dict=True
@@ -79,6 +85,11 @@ class CS17AssignmentGrade(Document):
 			self.remarks = re.sub(r"<(?=/?[a-zA-Z])", "&lt;", self.remarks)
 
 	def on_update(self):
+		previous = self.get_doc_before_save()
+		if is_published_now(self, "published_on") or (
+			previous and is_published_now(previous, "published_on")
+		):
+			self.refresh_results()
 		if self.submission and self.is_published and self.has_value_changed("is_published"):
 			frappe.enqueue(
 				notify_students,
@@ -90,6 +101,30 @@ class CS17AssignmentGrade(Document):
 				enqueue_after_commit=True,
 			)
 
+	def refresh_results(self):
+		if not self.submission:
+			return
+		student = frappe.db.get_value("CS17 Assignment Submission", self.submission, "student")
+		results = frappe.get_all(
+			"CS17 Result",
+			filters={"student": student, "assignments.assignment": self.assignment},
+			pluck="name",
+		)
+		if not results:
+			return
+		assignment = frappe.db.get_value(
+			"CS17 Assignment",
+			self.assignment,
+			["name", "title", "assignment_type", "remarks as evaluation_type", "max_marks", "due_date"],
+			as_dict=True,
+		)
+		grade = get_student_grades(student, [self.assignment]).get(self.assignment, {})
+		frappe.db.set_value(
+			"CS17 Result Assignment Score",
+			{"parenttype": "CS17 Result", "parent": ("in", results), "assignment": self.assignment},
+			get_assignment_score(assignment, grade),
+		)
+
 
 def get_grade_for_marks(marks_obtained: float, max_marks: float, scale: str | None) -> str | None:
 	if not scale:
@@ -99,7 +134,7 @@ def get_grade_for_marks(marks_obtained: float, max_marks: float, scale: str | No
 
 
 def get_student_grades(student: str, assignments: list[str]) -> dict[str, dict]:
-	"""One student's submission and grade per assignment, keyed by assignment.
+	"""One student's submission and published grade per assignment, keyed by assignment.
 
 	A grade is reachable only through the submission it was given on, so an assignment the
 	student never submitted is absent from the map.
@@ -119,10 +154,18 @@ def get_student_grades(student: str, assignments: list[str]) -> dict[str, dict]:
 	grades = frappe.get_all(
 		"CS17 Assignment Grade",
 		filters={"submission": ("in", [row.name for row in submissions])},
-		fields=["name as grade_name", "assignment", "marks_obtained", "grade", "remarks"],
+		fields=[
+			"name as grade_name",
+			"assignment",
+			"marks_obtained",
+			"grade",
+			"remarks",
+			"is_published",
+			"published_on",
+		],
 	)
 	for grade in grades:
-		if grade.assignment in by_assignment:
+		if grade.assignment in by_assignment and is_published_now(grade, "published_on"):
 			by_assignment[grade.assignment].update(grade)
 
 	return by_assignment
