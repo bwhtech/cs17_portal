@@ -58,9 +58,9 @@ test.describe("Send back for revision", () => {
 						await getDoc<{ returned_on: string | null }>(
 							request,
 							"CS17 Assignment Submission",
-							submission.name,
+							submission.name
 						)
-					).returned_on,
+					).returned_on
 			)
 			.toBeTruthy();
 	});

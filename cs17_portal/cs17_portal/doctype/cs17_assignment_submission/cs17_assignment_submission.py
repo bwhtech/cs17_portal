@@ -22,8 +22,11 @@ class CS17AssignmentSubmission(Document):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
-		from cs17_portal.cs17_portal.doctype.cs17_submission_revision.cs17_submission_revision import CS17SubmissionRevision
 		from frappe.types import DF
+
+		from cs17_portal.cs17_portal.doctype.cs17_submission_revision.cs17_submission_revision import (
+			CS17SubmissionRevision,
+		)
 
 		amended_from: DF.Link | None
 		assignment: DF.Link

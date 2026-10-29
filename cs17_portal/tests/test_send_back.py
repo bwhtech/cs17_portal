@@ -109,7 +109,12 @@ class TestSendBack(FrappeTestCase):
 
 		frappe.set_user(self.student_user)
 		second = frappe.get_doc(
-			{"doctype": "File", "file_name": "notes-340-final.txt", "is_private": 1, "content": "final notes 340"}
+			{
+				"doctype": "File",
+				"file_name": "notes-340-final.txt",
+				"is_private": 1,
+				"content": "final notes 340",
+			}
 		).save(ignore_permissions=True)
 		edit_submission(submission, second.file_url)
 
