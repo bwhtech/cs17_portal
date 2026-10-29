@@ -11,6 +11,9 @@ from frappe.utils import flt, get_datetime
 from cs17_portal.api import is_published_now
 from cs17_portal.cs17_portal.doctype.cs17_assignment.cs17_assignment import notify_students
 from cs17_portal.cs17_portal.doctype.cs17_grading_scale.cs17_grading_scale import get_default_scale
+from cs17_portal.cs17_portal.doctype.cs17_result_assignment_score.cs17_result_assignment_score import (
+	get_assignment_score,
+)
 
 LETTER_GRADES = ("A", "B", "C", "D", "E")
 
@@ -107,8 +110,20 @@ class CS17AssignmentGrade(Document):
 			filters={"student": student, "assignments.assignment": self.assignment},
 			pluck="name",
 		)
-		for result in results:
-			frappe.get_doc("CS17 Result", result).save(ignore_permissions=True)
+		if not results:
+			return
+		assignment = frappe.db.get_value(
+			"CS17 Assignment",
+			self.assignment,
+			["name", "title", "assignment_type", "remarks as evaluation_type", "max_marks", "due_date"],
+			as_dict=True,
+		)
+		grade = get_student_grades(student, [self.assignment]).get(self.assignment, {})
+		frappe.db.set_value(
+			"CS17 Result Assignment Score",
+			{"parenttype": "CS17 Result", "parent": ("in", results), "assignment": self.assignment},
+			get_assignment_score(assignment, grade),
+		)
 
 
 def get_grade_for_marks(marks_obtained: float, max_marks: float, scale: str | None) -> str | None:
