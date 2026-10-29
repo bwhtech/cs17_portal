@@ -160,12 +160,14 @@ import { parseDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { usePythonRunner, type RunResult } from '@/lib/python/runner'
 import { runTests, type TestRun } from '@/lib/python/tests'
+import { STORAGE_KEYS, readJSON, removeKey, writeJSON } from '@/lib/storage'
 import { trySubmit } from '@/lib/trySubmit'
 import type { CS17Assignment, CS17Project } from '@/types'
 
 const AUTOSAVE_IDLE_MS = 2000
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
+type LocalCopy = { code: string; lastSavedAt: string | null }
 
 const props = defineProps<{ id: string }>()
 
@@ -235,6 +237,9 @@ watch(
 const readOnly = computed(
 	() => route.query.readonly === '1' || assignmentClosed.data === true || timeIsUp.value,
 )
+const readOnlySettled = computed(
+	() => !isStudent.value || !assignmentName.value || assignmentClosed.isFinished,
+)
 const canSubmit = computed(() => isStudent.value && Boolean(assignment.data) && !readOnly.value)
 const canReattempt = computed(
 	() => isStudent.value && readOnly.value && Boolean(timing.data?.next_attempt),
@@ -258,6 +263,8 @@ const code = ref('')
 const savedCode = ref('')
 const status = ref<SaveStatus>('idle')
 let opened = false
+let lastSavedAt: string | null = null
+let localCopyChecked = false
 let autosaveTimer: ReturnType<typeof setTimeout> | undefined
 let saving: Promise<boolean> = Promise.resolve(true)
 let saveBeforeLeaveFailed = false
@@ -276,13 +283,34 @@ watch(
 		opened = true
 		code.value = doc.code ?? ''
 		savedCode.value = code.value
+		lastSavedAt = doc.last_saved_at
+		restoreLocalCopy()
 	},
 	{ immediate: true },
 )
+watch(readOnlySettled, restoreLocalCopy)
+
+function restoreLocalCopy() {
+	if (!opened || !readOnlySettled.value || localCopyChecked) return
+	localCopyChecked = true
+	if (readOnly.value) return
+	const copy = readJSON<LocalCopy | null>(STORAGE_KEYS.unsavedPythonCode(props.id), null)
+	if (copy?.lastSavedAt === lastSavedAt) code.value = copy.code
+	else updateLocalCopy()
+}
+
+function updateLocalCopy() {
+	if (!localCopyChecked) return
+	const key = STORAGE_KEYS.unsavedPythonCode(props.id)
+	if (code.value === savedCode.value) removeKey(key)
+	else writeJSON(key, { code: code.value, lastSavedAt } satisfies LocalCopy)
+}
 
 watch(code, (value) => {
 	clearTimeout(autosaveTimer)
-	if (value === savedCode.value || readOnly.value) return
+	if (readOnly.value) return
+	updateLocalCopy()
+	if (value === savedCode.value) return
 	saveBeforeLeaveFailed = false
 	status.value = 'idle'
 	autosaveTimer = setTimeout(save, AUTOSAVE_IDLE_MS)
@@ -309,7 +337,9 @@ async function saveLatest(): Promise<boolean> {
 		return false
 	}
 	savedCode.value = content
+	lastSavedAt = saved.last_saved_at
 	status.value = code.value === content ? 'saved' : 'idle'
+	updateLocalCopy()
 	return true
 }
 

@@ -20,6 +20,9 @@ export const STORAGE_KEYS = {
 	get collapsedTopics() {
 		return `cs17-collapsed-topics:${window.current_user}`
 	},
+	unsavedPythonCode(project: string) {
+		return `cs17-unsaved-python-code:${window.current_user}:${project}`
+	},
 } as const
 
 export function readJSON<T>(key: string, fallback: T): T {
@@ -50,8 +53,21 @@ export function removeKey(key: string): void {
 export function removeDraftsOfOtherUsers(): void {
 	try {
 		for (const key of Object.keys(localStorage))
-			if (key.startsWith('cs17-new-assignment-draft') && key !== STORAGE_KEYS.newAssignmentDraft)
+			if (
+				(key.startsWith('cs17-new-assignment-draft') && key !== STORAGE_KEYS.newAssignmentDraft) ||
+				(key.startsWith('cs17-unsaved-python-code:') &&
+					!key.startsWith(STORAGE_KEYS.unsavedPythonCode('')))
+			)
 				localStorage.removeItem(key)
+	} catch {
+		// As above.
+	}
+}
+
+export function removeUnsavedPythonCode(): void {
+	try {
+		for (const key of Object.keys(localStorage))
+			if (key.startsWith('cs17-unsaved-python-code:')) localStorage.removeItem(key)
 	} catch {
 		// As above.
 	}
