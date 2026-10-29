@@ -31,6 +31,15 @@
 					</template>
 					AI check
 				</SettingsNavItem>
+				<SettingsNavItem v-if="canAddStudents" value="students">
+					<template #prefix>
+						<span
+							class="lucide-user-plus size-4 shrink-0 text-ink-gray-6"
+							aria-hidden="true"
+						/>
+					</template>
+					Add students
+				</SettingsNavItem>
 			</SettingsNavGroup>
 		</SettingsSidebar>
 		<SettingsContent>
@@ -43,6 +52,9 @@
 			<SettingsPanel v-if="canEditAISettings" value="ai">
 				<AISettings />
 			</SettingsPanel>
+			<SettingsPanel v-if="canAddStudents" value="students">
+				<StudentImport />
+			</SettingsPanel>
 		</SettingsContent>
 	</SettingsDialog>
 
@@ -51,6 +63,7 @@
 			<ProfileSettings />
 			<PreferencesSettings />
 			<AISettings v-if="canEditAISettings" />
+			<StudentImport v-if="canAddStudents" />
 		</div>
 	</Dialog>
 </template>
@@ -71,6 +84,7 @@ import {
 import AISettings from '@/components/settings/AISettings.vue'
 import PreferencesSettings from '@/components/settings/PreferencesSettings.vue'
 import ProfileSettings from '@/components/settings/ProfileSettings.vue'
+import StudentImport from '@/components/settings/StudentImport.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useSession } from '@/composables/useSession'
 import { useSettingsDialog } from '@/composables/useSettingsDialog'
@@ -90,8 +104,21 @@ const aiSettingsAccess = useCall<
 })
 const canEditAISettings = computed(() => aiSettingsAccess.data?.has_permission === true)
 
+const studentImportAccess = useCall<
+	{ has_permission: boolean },
+	{ doctype: string; docname: string; perm_type: string }
+>({
+	url: '/api/v2/method/frappe.client.has_permission',
+	method: 'GET',
+	params: { doctype: 'CS17 Profile', docname: '', perm_type: 'create' },
+	immediate: false,
+})
+const canAddStudents = computed(() => studentImportAccess.data?.has_permission === true)
+
 watch(isOpen, (open) => {
-	if (open && isFaculty.value && !aiSettingsAccess.data) aiSettingsAccess.fetch()
+	if (!open || !isFaculty.value) return
+	if (!aiSettingsAccess.data) aiSettingsAccess.fetch()
+	if (!studentImportAccess.data) studentImportAccess.fetch()
 })
 
 const tab = ref<string | number | undefined>('profile')

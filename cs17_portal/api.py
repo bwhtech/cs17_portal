@@ -2385,6 +2385,110 @@ def save_ai_settings(model: str, api_key: str | None = None) -> dict:
 	return get_ai_settings()
 
 
+STUDENTS_FILE_HEADER = ["first name", "last name", "email", "cohort"]
+
+
+@frappe.whitelist(methods=["POST"])
+def read_students_file(file_url: str) -> list:
+	frappe.only_for("System Manager")
+	file = frappe.get_doc(
+		"File",
+		{"file_url": file_url, "owner": frappe.session.user, "attached_to_name": ("is", "not set")},
+	)
+	try:
+		students = parse_students_file(file)
+	except Exception:
+		frappe.enqueue("frappe.delete_doc", doctype="File", name=file.name, ignore_permissions=True)
+		raise
+	frappe.delete_doc("File", file.name, ignore_permissions=True)
+	return check_new_students(students)
+
+
+@frappe.whitelist(methods=["POST"])
+def add_students(students: list) -> list:
+	frappe.only_for("System Manager")
+	students = check_new_students(students)
+	for student in students:
+		if student["error"]:
+			continue
+		frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": student["email"],
+				"first_name": student["first_name"],
+				"last_name": student["last_name"],
+				"send_welcome_email": 1,
+				"enabled": 1,
+				"roles": [{"role": "CS17 Student"}],
+			}
+		).insert(ignore_permissions=True)
+		frappe.get_doc(
+			{
+				"doctype": "CS17 Profile",
+				"profile_type": "Student",
+				"first_name": student["first_name"],
+				"last_name": student["last_name"],
+				"user": student["email"],
+				"cohort": student["cohort"],
+			}
+		).insert(ignore_permissions=True)
+	return students
+
+
+def parse_students_file(file: "Document") -> list:
+	from frappe.utils.csvutils import read_csv_content
+
+	if not file.file_name.lower().endswith(".csv"):
+		frappe.throw(_("Upload the students as a CSV file."))
+	rows = [
+		[frappe.utils.strip(frappe.utils.cstr(cell)) for cell in row]
+		for row in read_csv_content(file.get_content())
+	]
+	if not rows or [cell.lower() for cell in rows[0][:4]] != STUDENTS_FILE_HEADER:
+		frappe.throw(_("The first row must be: First name, Last name, Email, Cohort."))
+	students = []
+	for number, row in enumerate(rows[1:], start=2):
+		if not any(row):
+			continue
+		first_name, last_name, email, cohort = (row + [""] * 4)[:4]
+		students.append(
+			{
+				"row": number,
+				"first_name": first_name,
+				"last_name": last_name,
+				"email": email.lower(),
+				"cohort": cohort,
+			}
+		)
+	return students
+
+
+def check_new_students(students: list) -> list:
+	emails = [student["email"] for student in students]
+	cohorts = dict(frappe.get_all("CS17 Cohort", fields=["name", "disabled"], as_list=True))
+	users = frappe.get_all("User", filters={"name": ["in", emails]}, pluck="name")
+	users_with_profile = frappe.get_all("CS17 Profile", filters={"user": ["in", emails]}, pluck="user")
+	for student in students:
+		email = student["email"]
+		if not all(student[field] for field in ("first_name", "last_name", "email", "cohort")):
+			student["error"] = _("Fill in all four columns.")
+		elif frappe.utils.validate_email_address(email) != email:
+			student["error"] = _("Not a valid email.")
+		elif emails.count(email) > 1:
+			student["error"] = _("This email is on more than one row.")
+		elif student["cohort"] not in cohorts:
+			student["error"] = _("No cohort named {0}.").format(student["cohort"])
+		elif cohorts[student["cohort"]]:
+			student["error"] = _("{0} is archived.").format(student["cohort"])
+		elif email in users_with_profile:
+			student["error"] = _("Already has a profile.")
+		elif email in users:
+			student["error"] = _("Already has a user. Add their profile in desk.")
+		else:
+			student["error"] = None
+	return students
+
+
 AI_CHECK_INSTRUCTIONS = """You help a teacher grade a student's Python program.
 
 The assignment comes as JSON: its title, its description, how it is scored (max_marks for marks, or the grades to choose from) and its test cases. is_hidden marks a test case the student cannot see.
