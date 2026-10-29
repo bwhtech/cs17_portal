@@ -6,18 +6,20 @@ import type { CS17Assignment, CS17Grade, CS17Submission } from '@/types'
  * card, the assignments table and the detail page — so the ladder is derived
  * here once and never re-derived at a call site.
  */
-export type AssignmentStatus = 'Pending' | 'Submitted' | 'Closed'
+export type AssignmentStatus = 'Pending' | 'Returned' | 'Submitted' | 'Closed'
 
 /**
- * The ladder, in order: a graded assignment is done with; a submission that
- * has not been graded yet is Submitted; a passed due date closes an
- * assignment that was never submitted to; everything else is still open.
+ * The ladder, in order: work sent back is Returned until it is submitted again;
+ * a graded assignment is done with; a submission that has not been graded yet
+ * is Submitted; a passed due date closes an assignment that was never
+ * submitted to; everything else is still open.
  */
 export function assignmentStatus(
 	assignment: Pick<CS17Assignment, 'due_date'>,
 	submission?: CS17Submission | null,
 	grade?: CS17Grade | null,
 ): AssignmentStatus {
+	if (submission?.returned_on) return 'Returned'
 	if (grade) return 'Closed'
 	if (submission) return 'Submitted'
 	if (isPast(assignment.due_date)) return 'Closed'
@@ -27,7 +29,7 @@ export function assignmentStatus(
 /** Badge theme for each rung, so the three surfaces also agree on color. */
 export function assignmentStatusTheme(status: AssignmentStatus): 'gray' | 'green' | 'amber' {
 	if (status === 'Submitted') return 'green'
-	if (status === 'Pending') return 'amber'
+	if (status === 'Pending' || status === 'Returned') return 'amber'
 	return 'gray'
 }
 

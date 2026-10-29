@@ -59,6 +59,19 @@
 					:tooltip="zenLabel"
 					@click="toggle"
 				/>
+				<Button
+					v-if="revisions.data?.length"
+					icon-left="lucide-history"
+					label="Earlier attempts"
+					@click="revisionsOpen = true"
+				/>
+				<Badge
+					v-if="detailRow?.returned_on"
+					label="Returned"
+					theme="amber"
+					variant="subtle"
+				/>
+				<Button v-else-if="detailRow" label="Send back" @click="sendBackOpen = true" />
 				<GradeBadge
 					:graded="submission.graded"
 					:evaluation-type="submission.evaluation_type"
@@ -109,17 +122,34 @@
 				@saved="onSaved"
 			/>
 		</div>
+
+		<Dialog v-model:open="revisionsOpen" title="Earlier attempts">
+			<SubmissionRevisions
+				:revisions="revisions.data ?? []"
+				:evaluation-type="submission.evaluation_type"
+				:max-marks="submission.max_marks"
+			/>
+		</Dialog>
+
+		<SendBackDialog
+			v-model:open="sendBackOpen"
+			:submission="submission.name"
+			:student-name="submission.full_name"
+			@success="onSaved"
+		/>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { Button, Skeleton, useCall } from 'frappe-ui'
+import { Badge, Button, Dialog, Skeleton, useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import GradeBadge from '@/components/common/GradeBadge.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
+import SubmissionRevisions from '@/components/assignments/SubmissionRevisions.vue'
+import SendBackDialog from '@/components/faculty/SendBackDialog.vue'
 import GradeForm from '@/components/grading/GradeForm.vue'
 import SubmissionPlayer from '@/components/grading/SubmissionPlayer.vue'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
@@ -127,7 +157,7 @@ import { useLoadFailed } from '@/composables/useLoadFailed'
 import { useZenMode, useZenOnMount } from '@/composables/useZenMode'
 import { isRefusal } from '@/lib/frappeError'
 import { isProjectSubmission } from '@/lib/submissionTypes'
-import type { CS17Submission, CohortSubmission } from '@/types'
+import type { CS17Submission, CohortSubmission, SubmissionRevision } from '@/types'
 
 const props = defineProps<{ submissionId: string }>()
 
@@ -153,7 +183,8 @@ const cohortSubmissions = useCall<CohortSubmission[]>({
 })
 
 const detail = useCall<
-	CohortSubmission & Pick<CS17Submission, 'submission_document' | 'submission_url'>,
+	CohortSubmission &
+		Pick<CS17Submission, 'submission_document' | 'submission_url' | 'returned_on'>,
 	{ submission: string }
 >({
 	url: '/api/v2/method/cs17_portal.api.get_submission',
@@ -177,9 +208,20 @@ const failed = useLoadFailed(detail, { except: isRefusal })
 
 const detailLoading = computed(() => !detail.isFinished && !detailRow.value)
 
+const revisions = useCall<SubmissionRevision[], { submission: string }>({
+	url: '/api/v2/method/cs17_portal.api.get_submission_revisions',
+	method: 'GET',
+	params: () => ({ submission: props.submissionId }),
+	refetch: true,
+})
+
+const sendBackOpen = ref(false)
+const revisionsOpen = ref(false)
+
 function onSaved() {
 	detail.reload()
 	cohortSubmissions.reload()
+	revisions.reload()
 }
 
 const testScore = ref<{ passed: number; total: number } | null>(null)

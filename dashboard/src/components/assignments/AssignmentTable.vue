@@ -79,6 +79,13 @@
 					@click="openSubmit(row, submissionMap[row.name])"
 				/>
 				<Button
+					v-else-if="statusOf(row) === 'Returned'"
+					variant="solid"
+					theme="gray"
+					label="Submit again"
+					@click="openSubmit(row, submissionMap[row.name])"
+				/>
+				<Button
 					v-else-if="row.next_attempt"
 					variant="solid"
 					theme="gray"

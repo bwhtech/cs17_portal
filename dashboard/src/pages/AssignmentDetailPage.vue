@@ -30,6 +30,15 @@
 							: undefined
 					"
 				/>
+				<section v-if="revisions.data?.length" class="mt-6">
+					<h2 class="text-base-medium text-ink-gray-8">Earlier attempts</h2>
+					<SubmissionRevisions
+						class="mt-2"
+						:revisions="revisions.data"
+						:evaluation-type="assignment.remarks"
+						:max-marks="assignment.max_marks"
+					/>
+				</section>
 			</div>
 
 			<!-- The meta panel: everything about the assignment that is a value
@@ -71,10 +80,24 @@
 						</p>
 					</div>
 
+					<div v-if="submission.returned_on">
+						<p class="text-xs text-ink-gray-5">Sent back</p>
+						<p class="text-base text-ink-amber-6">
+							{{ formatDateTime(submission.returned_on) }}
+						</p>
+						<p
+							v-if="revisions.data?.[0]"
+							class="mt-1 whitespace-pre-line text-p-sm text-ink-gray-8"
+							dir="auto"
+						>
+							{{ revisions.data[0].reason }}
+						</p>
+					</div>
+
 					<Button
 						v-if="!isClosed && !grade"
 						class="w-full"
-						label="Edit Submission"
+						:label="submission.returned_on ? 'Submit again' : 'Edit Submission'"
 						@click="openSubmit"
 					/>
 
@@ -160,6 +183,7 @@ import LoadError from '@/components/common/LoadError.vue'
 import MarkdownText from '@/components/common/MarkdownText.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import AnswersDialog from '@/components/answers/AnswersDialog.vue'
+import SubmissionRevisions from '@/components/assignments/SubmissionRevisions.vue'
 import SubmitAssignmentDialog from '@/components/assignments/SubmitAssignmentDialog.vue'
 import { usePythonAssignment } from '@/components/assignments/pythonEditor'
 import { useScratchAssignment } from '@/components/assignments/scratchEditor'
@@ -176,6 +200,7 @@ import type {
 	CS17Submission,
 	StudentAnswer,
 	StudentGradesResponse,
+	SubmissionRevision,
 } from '@/types'
 
 const props = defineProps<{ assignmentId: string }>()
@@ -193,7 +218,15 @@ const assignmentCall = useCall<CS17Assignment, { assignment: string }>({
 
 const submissions = useList<CS17Submission>({
 	doctype: 'CS17 Assignment Submission',
-	fields: ['name', 'student', 'assignment', 'submitted_at', 'submission_url', 'project'],
+	fields: [
+		'name',
+		'student',
+		'assignment',
+		'submitted_at',
+		'submission_url',
+		'project',
+		'returned_on',
+	],
 	filters: () => ({ student: profile.value?.name ?? '', assignment: props.assignmentId }),
 	limit: 1,
 	immediate: Boolean(profile.value?.name),
@@ -245,7 +278,23 @@ const score = computed(() => {
 })
 
 const isOverdue = computed(() => isPast(assignment.value?.due_date))
-const isClosed = computed(() => isOverdue.value || isPast(assignment.value?.ends_at))
+const isClosed = computed(
+	() => !submission.value?.returned_on && (isOverdue.value || isPast(assignment.value?.ends_at)),
+)
+
+const revisions = useCall<SubmissionRevision[], { submission: string }>({
+	url: '/api/v2/method/cs17_portal.api.get_submission_revisions',
+	params: () => ({ submission: submission.value?.name ?? '' }),
+	immediate: false,
+})
+
+watch(
+	() => submission.value?.name,
+	(name) => {
+		if (name) revisions.reload()
+	},
+	{ immediate: true },
+)
 
 /** `remarks` is the doctype's field for how a graded assignment is scored. */
 const evaluationType = computed(() =>

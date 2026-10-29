@@ -109,6 +109,14 @@
 
 					<template #cell-status="{ row }">
 						<Badge
+							v-if="row.returned_on"
+							label="Returned"
+							theme="amber"
+							variant="subtle"
+							:title="formatDateTime(row.returned_on)"
+						/>
+						<Badge
+							v-else
 							:label="isSubmitted(row) ? 'Submitted' : 'Not submitted'"
 							:theme="isSubmitted(row) ? 'green' : 'gray'"
 							variant="subtle"
@@ -162,6 +170,11 @@
 								v-if="isSubmitted(row) && isGraded"
 								:label="row.grade ? 'Edit grade' : 'Grade'"
 								@click="gradeTarget = row"
+							/>
+							<Button
+								v-if="isSubmitted(row) && !row.returned_on"
+								label="Send back"
+								@click="sendBackTarget = row"
 							/>
 						</div>
 					</template>
@@ -217,6 +230,15 @@
 		@success="detail.reload()"
 	/>
 
+	<SendBackDialog
+		v-if="sendBackTarget"
+		:open="Boolean(sendBackTarget)"
+		:submission="sendBackTarget.name"
+		:student-name="sendBackTarget.full_name ?? sendBackTarget.student"
+		@update:open="sendBackTarget = null"
+		@success="detail.reload()"
+	/>
+
 	<AssignmentStudentsDialog
 		v-if="studentsOpen && assignment"
 		v-model:open="studentsOpen"
@@ -251,6 +273,7 @@ import AnswerSheetCard from '@/components/faculty/AnswerSheetCard.vue'
 import AssignmentStudentsDialog from '@/components/faculty/AssignmentStudentsDialog.vue'
 import AssignmentTimingDialog from '@/components/faculty/AssignmentTimingDialog.vue'
 import GradeSubmissionDialog from '@/components/faculty/GradeSubmissionDialog.vue'
+import SendBackDialog from '@/components/faculty/SendBackDialog.vue'
 import SubmissionAssignees from '@/components/faculty/SubmissionAssignees.vue'
 import SubmissionBulkActions from '@/components/faculty/SubmissionBulkActions.vue'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
@@ -324,6 +347,7 @@ function isSubmitted(row: CS17Submission): boolean {
 const selection = ref<string[]>([])
 const previewTarget = ref<CS17Submission | null>(null)
 const gradeTarget = ref<CS17Submission | null>(null)
+const sendBackTarget = ref<CS17Submission | null>(null)
 const studentsOpen = ref(false)
 const timingOpen = ref(false)
 

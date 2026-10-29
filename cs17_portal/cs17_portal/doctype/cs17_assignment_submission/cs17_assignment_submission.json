@@ -20,7 +20,10 @@
   "submission_url",
   "project",
   "code",
-  "submitted_at"
+  "submitted_at",
+  "returned_on",
+  "section_break_revisions",
+  "revisions"
  ],
  "fields": [
   {
@@ -118,17 +121,36 @@
    "label": "Code",
    "options": "Py",
    "read_only": 1
+  },
+  {
+   "fieldname": "returned_on",
+   "fieldtype": "Datetime",
+   "label": "Returned On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_revisions",
+   "fieldtype": "Section Break",
+   "label": "Earlier Attempts"
+  },
+  {
+   "fieldname": "revisions",
+   "fieldtype": "Table",
+   "label": "Revisions",
+   "options": "CS17 Submission Revision",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "is_submittable": 1,
+ "link_display_mode": "Search",
  "links": [
   {
    "link_doctype": "CS17 Assignment Grade",
    "link_fieldname": "submission"
   }
  ],
- "modified": "2026-10-18 21:15:22.979189",
+ "modified": "2026-10-29 20:28:25.199450",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Submission",

@@ -281,6 +281,7 @@ def get_assignment_submissions(assignment: str) -> dict:
 			"submitted_at",
 			"submission_document",
 			"submission_url",
+			"returned_on",
 			# The detail page shows who a submission is assigned to, and the
 			# grading assignment is stored in Frappe's own ToDo-backed field.
 			"_assign",
@@ -318,6 +319,7 @@ def get_submission(submission: str) -> dict:
 			"submitted_at",
 			"submission_document",
 			"submission_url",
+			"returned_on",
 		],
 		as_dict=True,
 	)
@@ -841,20 +843,25 @@ def _get_or_new_submission(assignment: str, student: str) -> "frappe.model.docum
 @with_current_student
 def is_assignment_closed(assignment: str, student: str | None = None) -> bool:
 	"""True once the student can no longer revise: deadline or time limit passed, or grade published."""
+	submission = frappe.db.get_value(
+		ASSIGNMENT_SUBMISSION,
+		{"assignment": assignment, "student": student},
+		["name", "returned_on"],
+		as_dict=True,
+	)
+	if submission and submission.returned_on:
+		return False
 	due_date = frappe.db.get_value("CS17 Assignment", assignment, "due_date")
 	if due_date and now_datetime() > due_date:
 		return True
 	attempt = get_attempt(assignment, student)
 	if attempt and now_datetime() > attempt.ends_at:
 		return True
-	submission = frappe.db.get_value(
-		ASSIGNMENT_SUBMISSION, {"assignment": assignment, "student": student}, "name"
-	)
 	if not submission:
 		return False
 	grades = frappe.get_all(
 		"CS17 Assignment Grade",
-		filters={"submission": submission},
+		filters={"submission": submission.name},
 		fields=["is_published", "published_on"],
 	)
 	return any(is_published_now(grade, "published_on") for grade in grades)
@@ -1078,6 +1085,42 @@ def publish_grades(submissions: list | str) -> int:
 	return len(grades)
 
 
+@frappe.whitelist(methods=["POST"])
+def send_back_submission(submission: str, reason: str) -> None:
+	assignment = frappe.db.get_value(ASSIGNMENT_SUBMISSION, submission, "assignment")
+	if not assignment:
+		frappe.throw(_("Submission not found"), frappe.DoesNotExistError)
+	require_faculty_for_assignment(assignment)
+	frappe.get_doc(ASSIGNMENT_SUBMISSION, submission).send_back(reason)
+
+
+@frappe.whitelist(methods=["GET"])
+def get_submission_revisions(submission: str) -> list:
+	row = frappe.db.get_value(ASSIGNMENT_SUBMISSION, submission, ["student", "assignment"], as_dict=True)
+	if not row:
+		frappe.throw(_("Submission not found"), frappe.DoesNotExistError)
+	if row.student != get_current_profile_name("Student"):
+		require_faculty_for_assignment(row.assignment)
+	return frappe.get_all(
+		"CS17 Submission Revision",
+		filters={"parent": submission, "parenttype": ASSIGNMENT_SUBMISSION},
+		fields=[
+			"name",
+			"returned_on",
+			"reason",
+			"submitted_at",
+			"submission_document",
+			"submission_url",
+			"code",
+			"grade",
+			"marks_obtained",
+			"graded_by",
+			"remarks",
+		],
+		order_by="idx desc",
+	)
+
+
 @frappe.whitelist(methods=["GET"])
 def get_student_assignments() -> dict:
 	"""Assignments a student can see now, plus the next scheduled publish time.
@@ -1126,6 +1169,7 @@ def get_student_assignments() -> dict:
 			"submission_document",
 			"submission_url",
 			"project",
+			"returned_on",
 		],
 	)
 	submission_by_assignment = {submission.assignment: submission for submission in submissions}
@@ -1173,7 +1217,9 @@ def get_student_assignment(assignment: str) -> dict:
 	if not (assignments and is_published_now(assignments[0])):
 		frappe.throw(_("Assignment not found"), frappe.DoesNotExistError)
 	details = assignments[0]
-	if details.time_limit:
+	if details.time_limit and not frappe.db.get_value(
+		ASSIGNMENT_SUBMISSION, {"assignment": assignment, "student": student}, "returned_on"
+	):
 		details.now = now_datetime()
 		attempt = get_attempt(assignment, student)
 		if not attempt:
