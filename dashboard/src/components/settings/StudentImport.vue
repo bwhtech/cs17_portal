@@ -40,13 +40,19 @@
 					:columns="columns"
 					:rows="students"
 					:row-key="(student) => String(student.row)"
+					:row-height="60"
 					empty="No students in this file."
 				>
 					<template #cell-name="{ row }">
-						<span class="truncate">{{ row.first_name }} {{ row.last_name }}</span>
+						<RowTitle :title="`${row.first_name} ${row.last_name}`">
+							<span :title="row.email">{{ row.email }}</span>
+						</RowTitle>
+					</template>
+					<template #cell-cohort="{ row }">
+						<span class="block truncate" :title="row.cohort">{{ row.cohort }}</span>
 					</template>
 					<template #cell-status="{ row }">
-						<span class="flex min-w-0 items-center gap-1.5" :title="status(row)">
+						<span class="flex min-w-0 items-start gap-1.5">
 							<span
 								class="size-4 shrink-0"
 								:class="
@@ -56,7 +62,7 @@
 								"
 								aria-hidden="true"
 							/>
-							<span class="truncate text-ink-gray-8">{{ status(row) }}</span>
+							<span class="break-words text-ink-gray-8">{{ status(row) }}</span>
 						</span>
 					</template>
 				</DataTable>
@@ -79,6 +85,7 @@
 import { computed, ref } from 'vue'
 import { Button, ErrorMessage, FileUploader, toast, useCall, type UploadedFile } from 'frappe-ui'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
+import RowTitle from '@/components/common/RowTitle.vue'
 import PanelLayout from '@/components/settings/PanelLayout.vue'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { trySubmit } from '@/lib/trySubmit'
@@ -88,8 +95,7 @@ const METHOD = '/api/v2/method/cs17_portal.api'
 
 const columns: Column[] = [
 	{ header: 'Row', key: 'row', width: '3rem' },
-	{ header: 'Name', key: 'name', variant: 'primary' },
-	{ header: 'Email', key: 'email' },
+	{ header: 'Student', key: 'name', variant: 'primary' },
 	{ header: 'Cohort', key: 'cohort', width: '6rem' },
 	{ header: 'Status', key: 'status' },
 ]
