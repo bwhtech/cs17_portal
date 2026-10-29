@@ -66,8 +66,25 @@
 				<Button :label="openLabel(row)" @click.stop="openGrading(row)" />
 			</template>
 		</DataTable>
+
+		<div v-if="hasNextPage && !failed" class="mt-4 flex justify-center">
+			<Button
+				label="Load more"
+				icon-left="lucide-refresh-cw"
+				:loading="submissions.loading"
+				@click="limit += PAGE_LENGTH"
+			/>
+		</div>
 	</PageBody>
 </template>
+
+<script lang="ts">
+import { ref } from 'vue'
+
+const PAGE_LENGTH = 20
+// Outside setup, so coming back from grading keeps the pages already loaded.
+const limit = ref(PAGE_LENGTH)
+</script>
 
 <script setup lang="ts">
 import { computed } from 'vue'
@@ -94,13 +111,22 @@ const columns: Column[] = [
 	{ header: '', key: 'actions', variant: 'actions', width: '5rem', align: 'right' },
 ]
 
-const submissions = useCall<CohortSubmission[]>({
+const submissions = useCall<CohortSubmission[], { limit: number }>({
 	url: '/api/v2/method/cs17_portal.api.list_cohort_submissions',
 	method: 'GET',
+	params: () => ({ limit: limit.value }),
+	refetch: true,
 	cacheKey: 'cohort-submissions',
 })
 
-const rows = computed(() => submissions.data ?? [])
+// While a request runs, `data` falls back to the rows cached when the page
+// opened, so Load more would briefly show fewer rows.
+const rows = computed<CohortSubmission[]>((previous) =>
+	submissions.loading && previous?.length ? previous : (submissions.data ?? []),
+)
+const hasNextPage = computed<boolean>((previous = false) =>
+	submissions.loading || submissions.error ? previous : rows.value.length >= limit.value,
+)
 const failed = useLoadFailed(submissions)
 
 const rowKey = (row: CohortSubmission) => row.name

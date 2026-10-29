@@ -1031,8 +1031,8 @@ def get_submission_project(submission: str) -> dict:
 
 
 @frappe.whitelist(methods=["GET"])
-def list_cohort_submissions() -> list:
-	submissions = get_cohort_submissions(get_current_faculty().cohort)
+def list_cohort_submissions(limit: int | None = None) -> list:
+	submissions = get_cohort_submissions(get_current_faculty().cohort, limit=limit)
 	if not submissions:
 		return []
 
