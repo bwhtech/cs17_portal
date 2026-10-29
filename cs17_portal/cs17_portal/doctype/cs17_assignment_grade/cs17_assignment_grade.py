@@ -1,6 +1,8 @@
 # Copyright (c) 2026, developers@bwh.tech and contributors
 # For license information, please see license.txt
 
+import re
+
 import frappe
 from frappe import _
 from frappe.model.document import Document
@@ -44,6 +46,7 @@ class CS17AssignmentGrade(Document):
 
 	def validate(self):
 		self.remarks = (self.remarks or "").strip() or None
+		self.escape_tags_in_remarks()
 		self.validate_duplicate()
 		assignment = frappe.db.get_value(
 			"CS17 Assignment", self.assignment, ["assignment_type", "max_marks", "remarks"], as_dict=True
@@ -70,6 +73,10 @@ class CS17AssignmentGrade(Document):
 		)
 		if duplicate:
 			frappe.throw(_("Grade {0} already exists for this submission.").format(duplicate))
+
+	def escape_tags_in_remarks(self):
+		if self.remarks:
+			self.remarks = re.sub(r"<(?=/?[a-zA-Z])", "&lt;", self.remarks)
 
 	def on_update(self):
 		if self.submission and self.is_published and self.has_value_changed("is_published"):

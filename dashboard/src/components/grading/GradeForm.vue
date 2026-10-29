@@ -86,6 +86,7 @@ import LoadError from '@/components/common/LoadError.vue'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
 import { gradeForMarks } from '@/lib/grades'
+import { unescapeTags } from '@/lib/markdown'
 import { trySubmit } from '@/lib/trySubmit'
 import { GRADE_SCALE, type AIGradeDraft, type EvaluationType, type GradeBand } from '@/types'
 
@@ -143,7 +144,7 @@ watch(
 		const grade = existing.data
 		marks.value = grade?.marks_obtained != null ? String(grade.marks_obtained) : ''
 		gradeLetter.value = grade?.grade ?? ''
-		remarks.value = grade?.remarks ?? ''
+		remarks.value = unescapeTags(grade?.remarks ?? '')
 		graded.value = grade != null
 		seeded.value = true
 	},
