@@ -23,9 +23,11 @@
 			empty="No submissions yet."
 		>
 			<template #cell-full_name="{ row }">
-				<span class="block truncate text-ink-gray-8" :title="row.full_name">{{
-					row.full_name
-				}}</span>
+				<RowTitle
+					:title="row.full_name"
+					:to="`/faculty/students/${row.student}`"
+					@click.stop
+				/>
 			</template>
 
 			<template #cell-assignment_title="{ row }">
@@ -76,6 +78,7 @@ import PageBody from '@/components/common/PageBody.vue'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import GradeBadge from '@/components/common/GradeBadge.vue'
 import LoadError from '@/components/common/LoadError.vue'
+import RowTitle from '@/components/common/RowTitle.vue'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { formatDateTime } from '@/lib/dates'
 import type { CohortSubmission } from '@/types'

@@ -339,3 +339,17 @@ declare global {
 		read_only_mode?: boolean
 	}
 }
+
+export interface StudentOverviewAssignment extends CS17Assignment {
+	tab_leave_count: number
+}
+
+export interface StudentOverviewResult extends CS17ResultSummary {
+	is_published: Bool
+}
+
+export interface StudentOverview {
+	student: Pick<CS17Profile, 'name' | 'full_name' | 'cohort' | 'profile_picture'>
+	assignments: StudentOverviewAssignment[]
+	results: StudentOverviewResult[]
+}
