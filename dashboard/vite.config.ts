@@ -26,7 +26,7 @@ export default defineConfig({
 			manifest: false,
 			injectManifest: {
 				globPatterns: ['**/*.{js,css,svg,woff2}'],
-				globIgnores: ['**/Inter-Italic*'],
+				globIgnores: ['**/Inter-Italic*', '**/pyodide*'],
 				modifyURLPrefix: { '': '/assets/cs17_portal/dashboard/' },
 				dontCacheBustURLsMatching: /^\/assets\/cs17_portal\/dashboard\/assets\//,
 			},
