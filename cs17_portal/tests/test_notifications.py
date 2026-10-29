@@ -77,6 +77,22 @@ class TestStudentNotifications(FrappeTestCase):
 			enqueue_after_commit=True,
 		)
 
+	def test_publishing_remarks_on_not_graded_work_notifies_its_student(self):
+		assignment = make_assignment(self.cohort, "PDF Task 336", "PDF", 0)
+		frappe.db.set_value("CS17 Assignment", assignment, {"assignment_type": "Not Graded", "remarks": ""})
+		submission = make_submission(assignment, self.student_330, "Student 330", "PDF Task 336")
+
+		with patch.object(frappe, "enqueue") as enqueue:
+			api.grade_submission(submission, remarks="Neat loops", publish="now")
+
+		enqueue.assert_called_once_with(
+			notify_students,
+			assignment=assignment,
+			students=[self.student_330],
+			subject="New remarks: PDF Task 336",
+			enqueue_after_commit=True,
+		)
+
 	def test_student_is_notified_in_the_bell_and_by_email(self):
 		assignment = make_assignment(self.cohort, "PDF Task 333", "PDF", 0)
 
