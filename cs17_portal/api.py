@@ -2127,6 +2127,78 @@ def get_cohort_students(cohort: str) -> list:
 	)
 
 
+@frappe.whitelist(methods=["GET"])
+def get_student_overview(student: str) -> dict:
+	faculty = get_current_faculty()
+	profile = frappe.db.get_value(
+		"CS17 Profile",
+		{"name": student, "profile_type": "Student"},
+		["name", "full_name", "cohort", "profile_picture"],
+		as_dict=True,
+	)
+	if not profile:
+		frappe.throw(_("Student not found"), frappe.DoesNotExistError)
+	if faculty.cohort and faculty.cohort != profile.cohort:
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	assignments = frappe.get_all(
+		"CS17 Assignment",
+		filters={"cohort": profile.cohort},
+		or_filters=given_to(student),
+		fields=[
+			"name",
+			"title",
+			"due_date",
+			"submission_type",
+			"assignment_type",
+			"remarks",
+			"max_marks",
+			"watch_tab_switches",
+			"is_published",
+			"publish_on",
+		],
+		order_by="due_date desc, creation desc",
+	)
+	assignments = [assignment for assignment in assignments if is_published_now(assignment)]
+	submissions = frappe.get_all(
+		ASSIGNMENT_SUBMISSION,
+		filters={"student": student},
+		fields=["name", "assignment", "submitted_at", "returned_on"],
+	)
+	_attach_grades(submissions)
+	submission_by_assignment = {submission.assignment: submission for submission in submissions}
+	tab_leave_counts = dict(
+		frappe.get_all(
+			"CS17 Tab Leave",
+			filters={"student": student},
+			fields=["assignment", {"COUNT": "name", "as": "count"}],
+			group_by="assignment",
+			as_list=True,
+		)
+	)
+	for assignment in assignments:
+		assignment.submission = submission_by_assignment.get(assignment.name)
+		assignment.tab_leave_count = tab_leave_counts.get(assignment.name, 0)
+	results = frappe.get_all(
+		"CS17 Result",
+		filters={"student": student},
+		fields=[
+			"name",
+			"exam",
+			"quarter",
+			"total_marks_obtained",
+			"total_max_marks",
+			"percentage",
+			"overall_grade",
+			"result_status",
+			"is_published",
+			"published_on",
+		],
+		order_by="creation desc",
+	)
+	_attach_exam_names(results)
+	return {"student": profile, "assignments": assignments, "results": results}
+
+
 @frappe.whitelist(methods=["POST"])
 def set_assignment_students(assignment: str, students: list | str) -> None:
 	require_faculty_for_assignment(assignment)
