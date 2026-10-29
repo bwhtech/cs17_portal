@@ -33,7 +33,13 @@ import { Button } from 'frappe-ui'
 import MarkdownText from '@/components/common/MarkdownText.vue'
 import { formatDateTime } from '@/lib/dates'
 import { isProjectSubmission } from '@/lib/submissionTypes'
-import type { AssignmentType, EvaluationType, PythonTestCase, SubmissionType } from '@/types'
+import type {
+	AssignmentType,
+	Difficulty,
+	EvaluationType,
+	PythonTestCase,
+	SubmissionType,
+} from '@/types'
 
 /**
  * The authoring form's working copy of an assignment. Every field is a string
@@ -45,6 +51,7 @@ export interface AssignmentDraft {
 	cohort: string
 	quarter: string
 	topic: string
+	difficulty: Difficulty | ''
 	submission_type: SubmissionType
 	assignment_type: AssignmentType
 	max_marks: string

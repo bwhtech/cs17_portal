@@ -501,6 +501,9 @@ const metaRows = computed(() => {
 			label: 'Evaluation Type',
 			value: isGraded.value ? assignment.value?.remarks || '—' : 'Non-graded',
 		},
+		...(assignment.value?.difficulty
+			? [{ label: 'Difficulty', value: assignment.value.difficulty }]
+			: []),
 	]
 	if (isGraded.value && assignment.value?.remarks === 'Marks') {
 		rows.push({ label: 'Max Marks', value: String(assignment.value?.max_marks ?? '—') })
