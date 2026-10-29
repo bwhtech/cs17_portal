@@ -112,10 +112,11 @@
 					:rows="overview.data?.results ?? []"
 					:row-key="(row: StudentOverviewResult) => row.name"
 					:row-height="60"
+					:on-row-click="openResult"
 					empty="No results yet."
 				>
 					<template #cell-exam="{ row }">
-						<RowTitle :title="row.exam_name">
+						<RowTitle :title="row.exam_name" :to="`/faculty/results/${row.name}`">
 							<template v-if="row.quarter" #default>{{ row.quarter }}</template>
 						</RowTitle>
 					</template>
@@ -168,7 +169,7 @@ import { useLoadFailed } from '@/composables/useLoadFailed'
 import { formatDateTime, isPast } from '@/lib/dates'
 import { isRefusal } from '@/lib/frappeError'
 import { formatGrade } from '@/lib/grades'
-import { formatMarks, formatPercent, passTheme } from '@/lib/results'
+import { formatMarks, formatPercent, passTheme, publishStatus as resultStatus } from '@/lib/results'
 import type {
 	CS17Grade,
 	StudentOverview,
@@ -251,16 +252,8 @@ function publishStatus(grade: CS17Grade) {
 	return { label: 'Draft', theme: 'gray' } as const
 }
 
-function resultStatus(result: StudentOverviewResult) {
-	if (result.is_published) return { label: 'Published', theme: 'green' } as const
-	if (result.published_on) {
-		return {
-			label: 'Scheduled',
-			theme: 'amber',
-			title: formatDateTime(result.published_on),
-		} as const
-	}
-	return { label: 'Draft', theme: 'gray' } as const
+function openResult(row: StudentOverviewResult) {
+	router.push(`/faculty/results/${row.name}`)
 }
 
 watch(
