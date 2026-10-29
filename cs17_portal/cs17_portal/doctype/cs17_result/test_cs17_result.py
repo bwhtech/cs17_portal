@@ -226,6 +226,7 @@ class IntegrationTestCS17Result(IntegrationTestCase):
 				"assignment": assignment,
 				"submission": submission,
 				"marks_obtained": 0,
+				"is_published": 1,
 			}
 		).insert(ignore_permissions=True)
 
@@ -241,6 +242,7 @@ class IntegrationTestCS17Result(IntegrationTestCase):
 				"assignment": assignment,
 				"submission": submission,
 				"marks_obtained": 10,
+				"is_published": 1,
 			}
 		).insert(ignore_permissions=True)
 		frappe.db.set_value("CS17 Assignment Grade", grade.name, "grade", "B")
@@ -248,3 +250,66 @@ class IntegrationTestCS17Result(IntegrationTestCase):
 		row = self.get_assignment_row(assignment)
 
 		self.assertEqual(row.grade, "B")
+
+	def test_marks_assignment_with_a_draft_grade_is_not_graded(self):
+		assignment, submission = self.make_marks_submission()
+		frappe.get_doc(
+			{
+				"doctype": "CS17 Assignment Grade",
+				"assignment": assignment,
+				"submission": submission,
+				"marks_obtained": 10,
+			}
+		).insert(ignore_permissions=True)
+
+		row = self.get_assignment_row(assignment)
+
+		self.assertEqual((row.is_graded, row.marks_obtained), (0, 0))
+
+	def test_sent_back_grade_drops_off_a_saved_result(self):
+		assignment, submission = self.make_marks_submission()
+		frappe.get_doc(
+			{
+				"doctype": "CS17 Assignment Grade",
+				"assignment": assignment,
+				"submission": submission,
+				"marks_obtained": 10,
+				"is_published": 1,
+			}
+		).insert(ignore_permissions=True)
+		self.get_assignment_row(assignment)
+		self.addCleanup(frappe.set_user, "Administrator")
+		frappe.set_user(self.faculty_user)
+
+		api.send_back_submission(submission, "Add the ending scene to the storyboard.")
+
+		self.assertEqual(
+			frappe.db.get_value(
+				"CS17 Result Assignment Score",
+				{"parent": self.result, "assignment": assignment},
+				["is_graded", "marks_obtained"],
+			),
+			(0, 0),
+		)
+
+	def test_patch_removes_a_draft_grade_from_the_result(self):
+		from cs17_portal.patches.v1_0.remove_draft_grades_from_results import execute
+
+		assignment, submission = self.make_marks_submission()
+		frappe.get_doc(
+			{
+				"doctype": "CS17 Assignment Grade",
+				"assignment": assignment,
+				"submission": submission,
+				"marks_obtained": 10,
+			}
+		).insert(ignore_permissions=True)
+		row = self.get_assignment_row(assignment)
+		frappe.db.set_value("CS17 Result Assignment Score", row.name, {"is_graded": 1, "marks_obtained": 10})
+
+		execute()
+
+		self.assertEqual(
+			frappe.db.get_value("CS17 Result Assignment Score", row.name, ["is_graded", "marks_obtained"]),
+			(0, 0),
+		)
