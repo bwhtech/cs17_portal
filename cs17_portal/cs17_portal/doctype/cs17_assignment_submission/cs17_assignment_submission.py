@@ -6,8 +6,10 @@ from urllib.parse import urlparse
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import now_datetime
 
 from cs17_portal.api import get_attempt, given_to, is_published_now, require_current_student
+from cs17_portal.cs17_portal.doctype.cs17_assignment.cs17_assignment import notify_students
 from cs17_portal.cs17_portal.doctype.cs17_project.cs17_project import get_owner_profile
 
 AUTO_SUBMIT_GRACE_SECONDS = 30
@@ -20,6 +22,7 @@ class CS17AssignmentSubmission(Document):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
+		from cs17_portal.cs17_portal.doctype.cs17_submission_revision.cs17_submission_revision import CS17SubmissionRevision
 		from frappe.types import DF
 
 		amended_from: DF.Link | None
@@ -29,6 +32,8 @@ class CS17AssignmentSubmission(Document):
 		full_name: DF.Data | None
 		naming_series: DF.Literal["SUB.-.{assignment}.-.###"]
 		project: DF.Link | None
+		returned_on: DF.Datetime | None
+		revisions: DF.Table[CS17SubmissionRevision]
 		student: DF.Link
 		submission_document: DF.Attach | None
 		submission_url: DF.Data | None
@@ -42,6 +47,62 @@ class CS17AssignmentSubmission(Document):
 		self.validate_time_limit()
 		self.validate_not_graded()
 		self.validate_project_acceptance()
+		if self.returned_on and self._edited_by_owner():
+			self.returned_on = None
+
+	def send_back(self, reason: str):
+		reason = (reason or "").strip()
+		if not reason:
+			frappe.throw(_("Say what the student should change."))
+		if self.returned_on:
+			frappe.throw(_("This submission is already sent back."))
+		grade = frappe.db.get_value("CS17 Assignment Grade", {"submission": self.name}, "name")
+		grade_doc = grade and frappe.get_doc("CS17 Assignment Grade", grade)
+		self.returned_on = now_datetime()
+		revision = self.append(
+			"revisions",
+			{
+				"returned_on": self.returned_on,
+				"returned_by": frappe.session.user,
+				"reason": reason,
+				"submitted_at": self.submitted_at,
+				"submission_document": self.submission_document,
+				"submission_url": self.submission_url,
+				"code": self.code,
+			},
+		)
+		if grade_doc and is_published_now(grade_doc, "published_on"):
+			revision.update(
+				{
+					"grade": grade_doc.grade,
+					"marks_obtained": grade_doc.marks_obtained,
+					"graded_by": grade_doc.graded_by,
+					"remarks": grade_doc.remarks,
+				}
+			)
+		if self.submission_document:
+			frappe.db.set_value(
+				"File",
+				{
+					"attached_to_doctype": self.doctype,
+					"attached_to_name": self.name,
+					"file_url": self.submission_document,
+				},
+				"attached_to_field",
+				"revisions",
+			)
+		self.save(ignore_permissions=True)
+		if grade_doc:
+			grade_doc.is_published = 0
+			grade_doc.published_on = None
+			grade_doc.save(ignore_permissions=True)
+		frappe.enqueue(
+			notify_students,
+			assignment=self.assignment,
+			students=[self.student],
+			subject=_("Returned: {0}").format(self.assignment_title),
+			enqueue_after_commit=True,
+		)
 
 	def validate_duplicate(self):
 		duplicate = frappe.db.exists(
@@ -72,14 +133,14 @@ class CS17AssignmentSubmission(Document):
 			frappe.throw(_("This assignment is not open for submission."))
 
 	def validate_deadline(self):
-		if not self._edited_by_owner() or get_attempt(self.assignment, self.student):
+		if self.returned_on or not self._edited_by_owner() or get_attempt(self.assignment, self.student):
 			return
 		due_date = frappe.db.get_value("CS17 Assignment", self.assignment, "due_date")
 		if due_date and frappe.utils.now_datetime() > due_date:
 			frappe.throw(_("The deadline for this assignment has passed."))
 
 	def validate_time_limit(self):
-		if not self._edited_by_owner():
+		if self.returned_on or not self._edited_by_owner():
 			return
 		attempt = get_attempt(self.assignment, self.student)
 		if attempt and frappe.utils.now_datetime() > frappe.utils.add_to_date(
@@ -88,7 +149,7 @@ class CS17AssignmentSubmission(Document):
 			frappe.throw(_("Your time for this assignment is up."))
 
 	def validate_not_graded(self):
-		if self.is_new() or not self._edited_by_owner():
+		if self.is_new() or self.returned_on or not self._edited_by_owner():
 			return
 		grades = frappe.get_all(
 			"CS17 Assignment Grade",

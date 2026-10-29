@@ -79,9 +79,24 @@ export interface CS17Submission {
 	submission_url?: string | null
 	submitted_at: string
 	project?: string | null
+	returned_on?: string | null
 	/** Faculty views only: the raw ToDo assignment JSON array. */
 	_assign?: string | null
 	grade?: CS17Grade | null
+}
+
+export interface SubmissionRevision {
+	name: string
+	returned_on: string
+	reason: string
+	submitted_at: string | null
+	submission_document: string | null
+	submission_url: string | null
+	code: string | null
+	grade: string | null
+	marks_obtained: number
+	graded_by: string | null
+	remarks: string | null
 }
 
 export type AnswerStatus = 'Correct' | 'Half' | 'Incorrect' | ''

@@ -1,0 +1,124 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "creation": "2026-10-29 20:28:24.865452",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "returned_on",
+  "returned_by",
+  "reason",
+  "column_break_work",
+  "submitted_at",
+  "submission_document",
+  "submission_url",
+  "code",
+  "section_break_grade",
+  "grade",
+  "marks_obtained",
+  "graded_by",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "returned_on",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Returned On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "returned_by",
+   "fieldtype": "Link",
+   "label": "Returned By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_work",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "submitted_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Submitted At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submission_document",
+   "fieldtype": "Attach",
+   "label": "Submission Document",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submission_url",
+   "fieldtype": "Data",
+   "label": "Submission URL",
+   "length": 1000,
+   "options": "URL",
+   "read_only": 1
+  },
+  {
+   "fieldname": "code",
+   "fieldtype": "Code",
+   "label": "Code",
+   "options": "Py",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_grade",
+   "fieldtype": "Section Break",
+   "label": "Grade"
+  },
+  {
+   "fieldname": "grade",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Grade",
+   "read_only": 1
+  },
+  {
+   "fieldname": "marks_obtained",
+   "fieldtype": "Float",
+   "label": "Marks Obtained",
+   "read_only": 1
+  },
+  {
+   "fieldname": "graded_by",
+   "fieldtype": "Link",
+   "label": "Graded By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Markdown Editor",
+   "label": "Remarks",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 1,
+ "link_display_mode": "Search",
+ "links": [],
+ "modified": "2026-10-29 20:28:24.865452",
+ "modified_by": "Administrator",
+ "module": "CS17 Portal",
+ "name": "CS17 Submission Revision",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
