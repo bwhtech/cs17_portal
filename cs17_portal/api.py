@@ -2372,20 +2372,54 @@ def copy_assignments(assignments: list | str, cohort: str, quarter: str | None =
 	return copies
 
 
+VOICE_NOTE_EXTENSIONS = {"audio/webm": "webm", "audio/ogg": "ogg", "audio/mp4": "m4a"}
+
+
 @frappe.whitelist(methods=["POST"])
 @rate_limit(limit=5, seconds=60 * 60, methods=["POST"], ip_based=False, user_based=True)
-def submit_feedback(category: str, description: str) -> None:
+def submit_feedback(category: str, description: str = "", voice_note: str | None = None) -> None:
 	cohort = frappe.db.get_value("CS17 Profile", require_current_student(), "cohort")
+	if not description.strip() and not voice_note:
+		frappe.throw(_("Write your feedback or record a voice note."), frappe.MandatoryError)
+	voice_note_file = None
+	if voice_note:
+		extension = VOICE_NOTE_EXTENSIONS.get(voice_note.partition(";")[0].removeprefix("data:"))
+		if not extension:
+			frappe.throw(_("Record your voice note again."))
+		# Inserted unattached: attaching on insert comments on the feedback as the student.
+		voice_note_file = frappe.get_doc(
+			{
+				"doctype": "File",
+				"file_name": f"voice-note.{extension}",
+				"is_private": 1,
+				"content": voice_note,
+				"decode": True,
+			}
+		).insert(ignore_permissions=True)
 	feedback = frappe.get_doc(
-		{"doctype": "CS17 Feedback", "cohort": cohort, "category": category, "description": description}
+		{
+			"doctype": "CS17 Feedback",
+			"cohort": cohort,
+			"category": category,
+			"description": description,
+			"voice_note": voice_note_file and voice_note_file.file_url,
+		}
 	).insert(ignore_permissions=True)
 	# Feedback is anonymous, so the sender must not stay on the record as its owner.
-	frappe.db.set_value(
-		"CS17 Feedback",
-		feedback.name,
-		{"owner": "Administrator", "modified_by": "Administrator"},
-		update_modified=False,
-	)
+	anonymous = {"owner": "Administrator", "modified_by": "Administrator"}
+	frappe.db.set_value("CS17 Feedback", feedback.name, anonymous, update_modified=False)
+	if voice_note_file:
+		frappe.db.set_value(
+			"File",
+			voice_note_file.name,
+			{
+				**anonymous,
+				"attached_to_doctype": "CS17 Feedback",
+				"attached_to_name": feedback.name,
+				"attached_to_field": "voice_note",
+			},
+			update_modified=False,
+		)
 
 
 @frappe.whitelist(methods=["GET"])
