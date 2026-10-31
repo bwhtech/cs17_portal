@@ -50,14 +50,30 @@
 				class="border-t border-outline-gray-1 pt-3"
 				:submission="submission"
 			/>
+			<div
+				class="flex items-center justify-between gap-3 border-t border-outline-gray-1 pt-3"
+			>
+				<p class="flex items-center gap-1.5 text-base text-ink-gray-8">
+					<span
+						class="lucide-history size-4 shrink-0 text-ink-gray-5"
+						aria-hidden="true"
+					/>
+					How the code was written
+				</p>
+				<Button icon-left="lucide-play" label="Replay" @click="replayOpen = true" />
+			</div>
+			<Dialog v-model:open="replayOpen" title="Replay" size="4xl">
+				<CodeReplay :submission="submission" />
+			</Dialog>
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Button, Skeleton, useCall } from 'frappe-ui'
+import { Button, Dialog, Skeleton, useCall } from 'frappe-ui'
 import CodeComments from '@/components/grading/CodeComments.vue'
+import CodeReplay from '@/components/grading/CodeReplay.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import TabLeaves from '@/components/grading/TabLeaves.vue'
 import TimeTaken from '@/components/grading/TimeTaken.vue'
@@ -95,6 +111,7 @@ const tests = computed(() => assignment.data?.test_cases ?? [])
 const runner = usePythonRunner()
 const runs = ref<TestRun[] | null>(null)
 const testing = ref(false)
+const replayOpen = ref(false)
 
 async function check() {
 	if (code.value === null || !tests.value.length || testing.value) return
