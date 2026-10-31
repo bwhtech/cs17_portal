@@ -114,19 +114,33 @@
 								:to="`/faculty/students/${row.student}`"
 								@click.stop
 							/>
-							<button
-								v-if="closestMatchLabels.has(row.name)"
-								type="button"
-								class="flex min-w-0 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
-								:title="closestMatchLabels.get(row.name)"
-								@click.stop="openSimilarCode(row)"
+							<Tooltip
+								v-if="closestMatches.has(row.name)"
+								:text="closestMatches.get(row.name)?.label"
+								:disabled="!isDesktop"
 							>
-								<Badge class="min-w-0" theme="amber" variant="subtle">
-									<span class="truncate">{{
-										closestMatchLabels.get(row.name)
-									}}</span>
-								</Badge>
-							</button>
+								<button
+									type="button"
+									class="flex rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
+									:class="isDesktop ? 'shrink-0' : 'min-w-0'"
+									:aria-label="closestMatches.get(row.name)?.label"
+									@click.stop="openSimilarCode(row)"
+								>
+									<Badge class="min-w-0" theme="amber" variant="subtle">
+										<template #prefix>
+											<span
+												class="lucide-files size-full"
+												aria-hidden="true"
+											/>
+										</template>
+										<span class="truncate">{{
+											isDesktop
+												? closestMatches.get(row.name)?.percent
+												: closestMatches.get(row.name)?.label
+										}}</span>
+									</Badge>
+								</button>
+							</Tooltip>
 						</div>
 					</template>
 
@@ -303,6 +317,7 @@ import {
 	Dropdown,
 	PageHeaderBackButton,
 	toast,
+	Tooltip,
 	useCall,
 	type DropdownActionOption,
 } from 'frappe-ui'
@@ -433,19 +448,25 @@ const similarPairs = computed(() =>
 )
 const similarFailed = useLoadFailed(reactive({ ...toRefs(similar), data: similarPairs }))
 
-const closestMatchLabels = computed(() => {
-	const labels = new Map<string, string>()
+const closestMatches = computed(() => {
+	const matches = new Map<string, { percent: string; label: string }>()
 	for (const { similarity, submissions } of similarPairs.value ?? []) {
 		const [first, second] = submissions
-		const percent = Math.round(similarity * 100)
-		if (!labels.has(first.name)) {
-			labels.set(first.name, `${percent}% like ${second.full_name ?? second.student}`)
+		const percent = `${Math.round(similarity * 100)}%`
+		if (!matches.has(first.name)) {
+			matches.set(first.name, {
+				percent,
+				label: `${percent} like ${second.full_name ?? second.student}`,
+			})
 		}
-		if (!labels.has(second.name)) {
-			labels.set(second.name, `${percent}% like ${first.full_name ?? first.student}`)
+		if (!matches.has(second.name)) {
+			matches.set(second.name, {
+				percent,
+				label: `${percent} like ${first.full_name ?? first.student}`,
+			})
 		}
 	}
-	return labels
+	return matches
 })
 
 watch(assignmentId, () => {
