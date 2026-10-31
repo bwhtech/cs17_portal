@@ -32,7 +32,9 @@ class CS17AISettings(Document):
 		return bool(self.model and self.api_key)
 
 	def models(self) -> list[str]:
-		return list(dict.fromkeys(filter(None, [self.model, *(self.other_models or "").split()])))
+		return list(
+			dict.fromkeys(model for model in [self.model, *(self.other_models or "").split()] if model)
+		)
 
 	def model_to_use(self, model: str | None = None) -> str:
 		model = model or self.model
