@@ -33,7 +33,6 @@ declare module 'vue' {
     AssignmentTable: typeof import('./src/components/assignments/AssignmentTable.vue')['default']
     AssignmentTimingDialog: typeof import('./src/components/faculty/AssignmentTimingDialog.vue')['default']
     AvatarCropper: typeof import('./src/components/settings/AvatarCropper.vue')['default']
-    CheckWithAIButton: typeof import('./src/components/grading/CheckWithAIButton.vue')['default']
     CodeCommentForm: typeof import('./src/components/grading/CodeCommentForm.vue')['default']
     CodeComments: typeof import('./src/components/grading/CodeComments.vue')['default']
     CopyAssignmentsDialog: typeof import('./src/components/faculty/CopyAssignmentsDialog.vue')['default']

@@ -30,7 +30,7 @@
 					v-model="otherModels"
 					type="textarea"
 					label="Other models"
-					description="One per line, as provider/model. Faculty can pick these instead of the default."
+					description="One per line, as provider/model. Faculty can pick one of these in Preferences instead of the default."
 					:rows="3"
 					:error="otherModelsError"
 					@blur="saveOtherModels"

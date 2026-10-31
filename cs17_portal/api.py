@@ -268,13 +268,10 @@ def get_assignment_submissions(assignment: str) -> dict:
 	)
 	if not assignment_doc:
 		frappe.throw(_("Assignment not found"), frappe.DoesNotExistError)
-	ai_settings = frappe.get_cached_doc("CS17 AI Settings")
-	assignment_doc.ai_models = (
-		ai_settings.models()
-		if assignment_doc.submission_type == "Python"
+	assignment_doc.can_check_with_ai = (
+		assignment_doc.submission_type == "Python"
 		and assignment_doc.remarks in ("Grade", "Marks")
-		and ai_settings.is_set_up()
-		else []
+		and frappe.get_cached_doc("CS17 AI Settings").is_set_up()
 	)
 	assignment_doc.students = frappe.get_all(
 		"CS17 Assignment Student",
@@ -350,13 +347,10 @@ def get_submission(submission: str) -> dict:
 	row.marks_obtained = grade.marks_obtained if grade else None
 	row.grade = grade.grade if grade else None
 	row.graded = bool(grade)
-	ai_settings = frappe.get_cached_doc("CS17 AI Settings")
-	row.ai_models = (
-		ai_settings.models()
-		if assignment.submission_type == "Python"
+	row.can_check_with_ai = (
+		assignment.submission_type == "Python"
 		and assignment.remarks in ("Grade", "Marks")
-		and ai_settings.is_set_up()
-		else []
+		and frappe.get_cached_doc("CS17 AI Settings").is_set_up()
 	)
 	return row
 
@@ -467,7 +461,7 @@ def get_current_faculty() -> "frappe._dict":
 	faculty = frappe.db.get_value(
 		"CS17 Profile",
 		{"user": frappe.session.user, "profile_type": "Faculty"},
-		["name", "cohort"],
+		["name", "cohort", "ai_model"],
 		as_dict=True,
 	)
 	if not faculty:
@@ -2474,6 +2468,24 @@ def save_ai_settings(model: str, api_key: str | None = None, other_models: str =
 	return get_ai_settings()
 
 
+@frappe.whitelist(methods=["GET"])
+def get_my_ai_model() -> dict:
+	settings = frappe.get_cached_doc("CS17 AI Settings")
+	return {
+		"models": settings.models() if settings.is_set_up() else [],
+		"model": settings.model_for(get_current_faculty().ai_model),
+	}
+
+
+@frappe.whitelist(methods=["POST"])
+def set_my_ai_model(model: str) -> dict:
+	faculty = get_current_faculty()
+	if model not in frappe.get_cached_doc("CS17 AI Settings").models():
+		frappe.throw(_("{0} is not one of the AI models in Settings.").format(model))
+	frappe.db.set_value("CS17 Profile", faculty.name, "ai_model", model)
+	return get_my_ai_model()
+
+
 STUDENTS_FILE_HEADER = ["first name", "last name", "email", "cohort"]
 
 
@@ -2592,17 +2604,17 @@ Reply with one JSON object and nothing else:
 
 
 @frappe.whitelist(methods=["POST"])
-def check_submission(submission: str, model: str | None = None) -> dict:
-	get_current_faculty()
+def check_submission(submission: str) -> dict:
+	faculty = get_current_faculty()
 	assignment = frappe.db.get_value(ASSIGNMENT_SUBMISSION, submission, "assignment")
 	if not assignment:
 		frappe.throw(_("Submission not found"), frappe.DoesNotExistError)
 
 	require_faculty_for_assignment(assignment)
-	return _ai_grade_draft(submission, model)
+	return _ai_grade_draft(submission, faculty.ai_model)
 
 
-def _ai_grade_draft(submission: str, model: str | None = None) -> dict:
+def _ai_grade_draft(submission: str, model: str | None) -> dict:
 	import litellm
 
 	from cs17_portal.cs17_portal.doctype.cs17_assignment_grade.cs17_assignment_grade import LETTER_GRADES
@@ -2623,7 +2635,6 @@ def _ai_grade_draft(submission: str, model: str | None = None) -> dict:
 	api_key = settings.get_password("api_key", raise_exception=False)
 	if not (settings.model and api_key):
 		frappe.throw(_("Add an AI model and API key in Settings first."))
-	model = settings.model_to_use(model)
 
 	scoring = (
 		{"grades": LETTER_GRADES} if assignment.remarks == "Grade" else {"max_marks": assignment.max_marks}
@@ -2642,7 +2653,11 @@ def _ai_grade_draft(submission: str, model: str | None = None) -> dict:
 	]
 	try:
 		response = litellm.completion(
-			model=model, api_key=api_key, messages=messages, timeout=50, num_retries=1
+			model=settings.model_for(model),
+			api_key=api_key,
+			messages=messages,
+			timeout=50,
+			num_retries=1,
 		)
 	except Exception as error:
 		frappe.log_error(
@@ -2668,7 +2683,7 @@ def _ai_grade_draft(submission: str, model: str | None = None) -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-def check_submissions(submissions: list | str, model: str | None = None) -> dict:
+def check_submissions(submissions: list | str) -> dict:
 	submissions = frappe.parse_json(submissions)
 	require_faculty_for_submissions(submissions)
 	rows = frappe.get_all(
@@ -2688,7 +2703,7 @@ def check_submissions(submissions: list | str, model: str | None = None) -> dict
 	settings = frappe.get_cached_doc("CS17 AI Settings")
 	if not settings.is_set_up():
 		frappe.throw(_("Add an AI model and API key in Settings first."))
-	model = settings.model_to_use(model)
+	model = settings.model_for(get_current_faculty().ai_model)
 
 	graded = set(
 		frappe.get_all(

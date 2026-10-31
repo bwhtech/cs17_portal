@@ -57,7 +57,7 @@ export interface CS17Assignment {
 	/** Only on the faculty list. */
 	submission_count?: number
 	/** Only from `get_assignment_submissions`. */
-	ai_models?: string[]
+	can_check_with_ai?: boolean
 	starter_code?: string | null
 	test_cases?: PythonTestCase[]
 	sample_tests?: PythonTestCase[]
@@ -279,7 +279,7 @@ export interface CohortSubmission {
 	grade: string | null
 	graded: boolean
 	/** Only from `get_submission`. */
-	ai_models?: string[]
+	can_check_with_ai?: boolean
 }
 
 export type PairedSubmission = Pick<CS17Submission, 'name' | 'student' | 'full_name'>
@@ -293,6 +293,12 @@ export interface AISettings {
 	model: string | null
 	other_models: string | null
 	has_api_key: boolean
+}
+
+/** `get_my_ai_model`: the models a faculty can pick, default first, and theirs. */
+export interface FacultyAIModel {
+	models: string[]
+	model: string | null
 }
 
 export interface AIGradeDraft {

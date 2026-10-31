@@ -36,8 +36,5 @@ class CS17AISettings(Document):
 			dict.fromkeys(model for model in [self.model, *(self.other_models or "").split()] if model)
 		)
 
-	def model_to_use(self, model: str | None = None) -> str:
-		model = model or self.model
-		if model not in self.models():
-			frappe.throw(_("{0} is not one of the AI models in Settings.").format(model))
-		return model
+	def model_for(self, preferred: str | None) -> str:
+		return preferred if preferred in self.models() else self.model
