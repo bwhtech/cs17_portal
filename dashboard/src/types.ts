@@ -159,6 +159,7 @@ export interface CS17Grade {
 	assignment_title?: string
 	is_published?: Bool
 	published_on?: string | null
+	voice_remark?: string | null
 }
 
 /** `CS17 Announcement`. */
