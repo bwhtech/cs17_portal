@@ -112,6 +112,10 @@
 							</p>
 							<p class="text-lg text-ink-gray-9">{{ score }}</p>
 						</div>
+						<StudentCodeComments
+							v-if="assignment.submission_type === 'Python'"
+							:submission="submission.name"
+						/>
 						<div v-if="grade.remarks">
 							<p class="text-xs text-ink-gray-5">Remarks</p>
 							<MarkdownText class="mt-0.5" :content="grade.remarks" />
@@ -177,6 +181,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, toRefs, watch } from 'vue'
 import { Button, PageHeaderBackButton, useCall, useList } from 'frappe-ui'
+import StudentCodeComments from '@/components/assignments/StudentCodeComments.vue'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import LoadError from '@/components/common/LoadError.vue'

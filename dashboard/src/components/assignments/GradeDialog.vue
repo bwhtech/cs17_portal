@@ -15,6 +15,7 @@
 				</p>
 				<p class="text-2xl text-ink-gray-9">{{ score }}</p>
 			</div>
+			<StudentCodeComments v-if="grade.submission" :submission="grade.submission" />
 			<div v-if="grade.remarks">
 				<p class="text-xs text-ink-gray-5">Remarks</p>
 				<MarkdownText class="mt-0.5" :content="grade.remarks" />
@@ -27,6 +28,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Dialog } from 'frappe-ui'
+import StudentCodeComments from '@/components/assignments/StudentCodeComments.vue'
 import MarkdownText from '@/components/common/MarkdownText.vue'
 import type { CS17Grade } from '@/types'
 
