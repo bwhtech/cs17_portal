@@ -22,6 +22,11 @@
 				{{ assignment.title }}
 			</h1>
 			<div class="min-w-0 flex-1">
+				<ExplanationRequestCard
+					v-if="submission"
+					:submission="submission.name"
+					class="mb-6"
+				/>
 				<MarkdownText
 					:content="assignment.description"
 					:fallback="
@@ -194,6 +199,7 @@ import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import AnswersDialog from '@/components/answers/AnswersDialog.vue'
 import SubmissionRevisions from '@/components/assignments/SubmissionRevisions.vue'
 import SubmitAssignmentDialog from '@/components/assignments/SubmitAssignmentDialog.vue'
+import ExplanationRequestCard from '@/components/assignments/ExplanationRequestCard.vue'
 import { usePythonAssignment } from '@/components/assignments/pythonEditor'
 import { useScratchAssignment } from '@/components/assignments/scratchEditor'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
