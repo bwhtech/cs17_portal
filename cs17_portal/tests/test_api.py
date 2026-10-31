@@ -896,3 +896,15 @@ class TestSubmitFeedback(FrappeTestCase):
 	def test_faculty_is_refused(self):
 		frappe.set_user(self.faculty_user)
 		self.assertRaises(frappe.PermissionError, api.submit_feedback, "Stay", "Fan is broken")
+
+	def test_voice_note_does_not_record_the_student(self):
+		frappe.set_user(self.student_user)
+		api.submit_feedback("Stay", voice_note="data:audio/webm;codecs=opus;base64,R0tFQkE=")
+
+		voice_note = frappe.get_last_doc("File", filters={"attached_to_field": "voice_note"})
+		self.assertEqual(voice_note.owner, "Administrator")
+		self.assertFalse(frappe.db.exists("Comment", {"reference_name": voice_note.attached_to_name}))
+
+	def test_feedback_needs_text_or_a_voice_note(self):
+		frappe.set_user(self.student_user)
+		self.assertRaises(frappe.MandatoryError, api.submit_feedback, "Food", " ")
