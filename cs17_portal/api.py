@@ -1741,6 +1741,7 @@ def delete_assignment(assignment: str) -> None:
 		frappe.throw(_("Cannot delete an assignment that already has submissions"))
 	frappe.db.set_value("CS17 Project", {"assignment": assignment}, "assignment", None, update_modified=False)
 	frappe.db.delete("CS17 Tab Leave", {"assignment": assignment})
+	frappe.db.delete("CS17 Paste", {"assignment": assignment})
 	frappe.db.delete("CS17 Assignment Attempt", {"assignment": assignment})
 	if frappe.delete_doc("CS17 Assignment", assignment, ignore_permissions=True) is False:
 		frappe.throw(_("Assignment not found"), frappe.DoesNotExistError)

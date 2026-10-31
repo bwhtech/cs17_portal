@@ -12,7 +12,7 @@ from cs17_portal.tests.test_api import make_assignment, make_cohort, make_profil
 
 
 class TestDemoWipe(FrappeTestCase):
-	def test_wipe_deletes_a_demo_students_attempts_and_tab_leaves(self):
+	def test_wipe_deletes_a_demo_students_attempts_tab_leaves_and_pastes(self):
 		cohort = make_cohort("C289TEST")
 		student = make_profile("Student", cohort, make_user("student289@demo.cs17test.com"), "Student 289")
 		assignment = make_assignment(cohort, "Scratch Task 289", "Scratch", 20)
@@ -27,6 +27,9 @@ class TestDemoWipe(FrappeTestCase):
 		frappe.get_doc({"doctype": "CS17 Tab Leave", "assignment": assignment, "student": student}).insert(
 			ignore_permissions=True
 		)
+		frappe.get_doc({"doctype": "CS17 Paste", "assignment": assignment, "student": student}).insert(
+			ignore_permissions=True
+		)
 
 		with (
 			patch.multiple(demo, DOMAIN="@demo.cs17test.com", COHORT_NOW=cohort, COHORT_PAST=cohort),
@@ -37,3 +40,4 @@ class TestDemoWipe(FrappeTestCase):
 
 		self.assertFalse(frappe.db.exists("CS17 Assignment Attempt", {"student": student}))
 		self.assertFalse(frappe.db.exists("CS17 Tab Leave", {"student": student}))
+		self.assertFalse(frappe.db.exists("CS17 Paste", {"student": student}))

@@ -9,7 +9,7 @@
 			class="flex items-center gap-1.5 text-p-sm text-ink-gray-7"
 		>
 			<span class="lucide-eye size-4 shrink-0" aria-hidden="true" />
-			Your teacher can see when you leave this tab.
+			Your teacher can see when you leave this tab or paste code.
 		</p>
 
 		<MarkdownText :content="assignment.description" />

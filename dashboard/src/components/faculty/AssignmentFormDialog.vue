@@ -140,7 +140,7 @@
 						<TestCasesField v-model="draft.test_cases" />
 						<Checkbox
 							v-model="draft.watch_tab_switches"
-							label="Watch for tab switches"
+							label="Watch for tab switches and pastes"
 							description="Students are told. Each time a student leaves the editor's tab shows on the grading page."
 						/>
 						<FormControl
