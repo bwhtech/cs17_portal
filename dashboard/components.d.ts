@@ -97,5 +97,6 @@ declare module 'vue' {
     UnreadAnnouncements: typeof import('./src/components/announcements/UnreadAnnouncements.vue')['default']
     UnreadNotifications: typeof import('./src/components/announcements/UnreadNotifications.vue')['default']
     VoiceNoteRecorder: typeof import('./src/components/feedback/VoiceNoteRecorder.vue')['default']
+    VoiceRemarkPlayer: typeof import('./src/components/assignments/VoiceRemarkPlayer.vue')['default']
   }
 }

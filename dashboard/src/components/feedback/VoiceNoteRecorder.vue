@@ -33,17 +33,17 @@
 		>
 			{{ error || microphoneError }}
 		</p>
-		<p v-else class="text-p-xs text-ink-gray-5">Faculty may recognise your voice.</p>
+		<p v-else-if="description" class="text-p-xs text-ink-gray-5">{{ description }}</p>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from 'vue'
+import { onBeforeUnmount, onDeactivated, ref } from 'vue'
 import { Button, FormLabel } from 'frappe-ui'
 
 const MAX_SECONDS = 5 * 60
 
-defineProps<{ error?: string }>()
+defineProps<{ error?: string; description?: string }>()
 
 const voiceNote = defineModel<string | null>({ required: true })
 
@@ -92,6 +92,10 @@ function clock(total: number): string {
 }
 
 defineExpose({ isRecording })
+
+onDeactivated(() => {
+	if (isRecording.value) recorder?.stop()
+})
 
 onBeforeUnmount(() => {
 	if (recorder) recorder.onstop = null

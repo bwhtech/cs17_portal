@@ -70,6 +70,25 @@ test.describe("Similar code", () => {
 		await expect(page).toHaveURL(new RegExp(`/faculty/submissions/${secondSubmission.name}$`));
 	});
 
+	test("flags a submission with its closest match and opens its pairs", async ({ page }) => {
+		await page.goto(`/dashboard/faculty/assignments/${assignment.name}`);
+		await page.getByRole("button", { name: `100% like ${secondStudent.full_name}` }).click();
+		const dialog = page.getByRole("dialog", {
+			name: `Similar code: ${firstStudent.full_name}`,
+		});
+
+		await expect(dialog.getByRole("link", { name: secondStudent.full_name! })).toBeVisible();
+	});
+
+	test("flags the closest match on the phone cards", async ({ page }) => {
+		await page.setViewportSize({ width: 390, height: 844 });
+		await page.goto(`/dashboard/faculty/assignments/${assignment.name}`);
+
+		await expect(
+			page.getByRole("button", { name: `100% like ${firstStudent.full_name}` })
+		).toBeVisible();
+	});
+
 	test("offers no similar code check on other assignment types", async ({ page, request }) => {
 		const pdfAssignment = await createTestAssignment(request, {
 			cohort: cohort.name,
