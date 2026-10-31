@@ -174,7 +174,7 @@
    "description": "Students are told. Each time a student leaves the editor's tab shows on the grading page.",
    "fieldname": "watch_tab_switches",
    "fieldtype": "Check",
-   "label": "Watch for Tab Switches"
+   "label": "Watch for Tab Switches and Pastes"
   },
   {
    "description": "Leave empty for no limit.",
@@ -226,7 +226,7 @@
    "link_fieldname": "assignment"
   }
  ],
- "modified": "2026-10-30 02:50:44.587886",
+ "modified": "2026-10-31 19:13:17.745122",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",

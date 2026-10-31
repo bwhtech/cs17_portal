@@ -52,6 +52,7 @@ declare module 'vue' {
     PageBody: typeof import('./src/components/common/PageBody.vue')['default']
     PageSkeleton: typeof import('./src/components/common/PageSkeleton.vue')['default']
     PanelLayout: typeof import('./src/components/settings/PanelLayout.vue')['default']
+    Pastes: typeof import('./src/components/grading/Pastes.vue')['default']
     PillToast: typeof import('./src/components/common/PillToast.vue')['default']
     PreferencesSettings: typeof import('./src/components/settings/PreferencesSettings.vue')['default']
     PreviewAnnouncementDialog: typeof import('./src/components/faculty/PreviewAnnouncementDialog.vue')['default']
