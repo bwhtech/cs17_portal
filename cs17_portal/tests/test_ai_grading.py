@@ -31,7 +31,7 @@ class TestCheckSubmission(FrappeTestCase):
 
 		cohort = make_cohort("C180TEST")
 		cls.faculty_user = make_user("faculty180@cs17test.com")
-		make_profile("Faculty", cohort, cls.faculty_user, "Faculty 180")
+		cls.faculty = make_profile("Faculty", cohort, cls.faculty_user, "Faculty 180")
 		cls.student_user = make_user("student180@cs17test.com")
 		student = make_profile("Student", cohort, cls.student_user, "Student 180")
 
@@ -53,16 +53,16 @@ class TestCheckSubmission(FrappeTestCase):
 		self.addCleanup(frappe.set_user, "Administrator")
 		frappe.set_user(self.faculty_user)
 
-	def test_get_assignment_submissions_lists_the_ai_models_for_a_python_assignment(self):
+	def test_get_assignment_submissions_says_a_python_assignment_can_be_checked_with_ai(self):
 		assignment = api.get_assignment_submissions(self.marks_assignment)["assignment"]
 
-		self.assertEqual(assignment.ai_models, ["openai/gpt-5"])
+		self.assertTrue(assignment.can_check_with_ai)
 
 	def test_get_assignment_submissions_says_a_not_graded_assignment_cannot_be_checked_with_ai(self):
 		assignment = make_assignment(make_cohort("C180TEST"), "Python Task 182", "Python", 0)
 		frappe.db.set_value("CS17 Assignment", assignment, {"assignment_type": "Not Graded", "remarks": ""})
 
-		self.assertEqual(api.get_assignment_submissions(assignment)["assignment"].ai_models, [])
+		self.assertFalse(api.get_assignment_submissions(assignment)["assignment"].can_check_with_ai)
 
 	def test_check_submission_keeps_the_marks_within_the_maximum(self):
 		with patch("litellm.completion", return_value=ai_reply('{"marks_obtained": 25, "remarks": "Good"}')):
@@ -93,20 +93,25 @@ class TestCheckSubmission(FrappeTestCase):
 
 		self.assertFalse(frappe.db.exists("CS17 Assignment Grade", {"submission": self.submission}))
 
-	def test_check_submission_uses_the_model_the_faculty_picked(self):
+	def test_check_submission_uses_the_faculty_ai_model(self):
 		set_ai_settings("openai/gpt-5", "sk-test", "anthropic/claude-opus-5-5")
+		api.set_my_ai_model("anthropic/claude-opus-5-5")
+		self.addCleanup(frappe.db.set_value, "CS17 Profile", self.faculty, "ai_model", None)
 		with patch("litellm.completion", return_value=ai_reply("{}")) as completion:
-			api.check_submission(self.submission, "anthropic/claude-opus-5-5")
+			api.check_submission(self.submission)
 
 		self.assertEqual(completion.call_args.kwargs["model"], "anthropic/claude-opus-5-5")
 
-	def test_check_submission_refuses_a_model_that_is_not_in_settings(self):
-		with patch("litellm.completion") as completion:
-			self.assertRaises(
-				frappe.ValidationError, api.check_submission, self.submission, "openai/gpt-5-pro"
-			)
+	def test_check_submission_uses_the_default_once_the_faculty_ai_model_is_removed(self):
+		frappe.db.set_value("CS17 Profile", self.faculty, "ai_model", "anthropic/claude-opus-5-5")
+		self.addCleanup(frappe.db.set_value, "CS17 Profile", self.faculty, "ai_model", None)
+		with patch("litellm.completion", return_value=ai_reply("{}")) as completion:
+			api.check_submission(self.submission)
 
-		completion.assert_not_called()
+		self.assertEqual(completion.call_args.kwargs["model"], "openai/gpt-5")
+
+	def test_set_my_ai_model_refuses_a_model_that_is_not_in_settings(self):
+		self.assertRaises(frappe.ValidationError, api.set_my_ai_model, "openai/gpt-5-pro")
 
 	def test_check_submission_refuses_before_a_model_and_key_are_set(self):
 		set_ai_settings("", "")
@@ -145,10 +150,12 @@ class TestCheckSubmission(FrappeTestCase):
 		self.assertEqual(counts, {"queued": 1, "skipped": 1})
 		self.assertEqual([call.kwargs["submission"] for call in enqueue.call_args_list], [self.submission])
 
-	def test_check_submissions_passes_the_picked_model_to_each_job(self):
+	def test_check_submissions_passes_the_faculty_ai_model_to_each_job(self):
 		set_ai_settings("openai/gpt-5", "sk-test", "anthropic/claude-opus-5-5")
+		api.set_my_ai_model("anthropic/claude-opus-5-5")
+		self.addCleanup(frappe.db.set_value, "CS17 Profile", self.faculty, "ai_model", None)
 		with patch("frappe.enqueue") as enqueue:
-			api.check_submissions([self.submission], "anthropic/claude-opus-5-5")
+			api.check_submissions([self.submission])
 
 		self.assertEqual(enqueue.call_args.kwargs["model"], "anthropic/claude-opus-5-5")
 
