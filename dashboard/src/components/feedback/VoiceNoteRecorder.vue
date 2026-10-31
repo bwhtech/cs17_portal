@@ -1,7 +1,7 @@
 <template>
-	<div class="space-y-2">
+	<div class="flex flex-col gap-2">
 		<FormLabel label="Voice note" />
-		<div class="flex items-center gap-3">
+		<div class="mt-auto flex items-center gap-3">
 			<template v-if="isRecording">
 				<Button label="Stop" icon-left="lucide-square" @click="recorder?.stop()" />
 				<span
