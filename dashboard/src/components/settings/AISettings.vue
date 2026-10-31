@@ -36,7 +36,7 @@
 							: 'The key from the model\'s provider.'
 					"
 					:error="apiKeyError"
-					autocomplete="off"
+					autocomplete="new-password"
 					@blur="saveApiKey"
 				/>
 			</div>
