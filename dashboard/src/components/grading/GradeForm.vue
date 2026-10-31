@@ -68,6 +68,13 @@
 			@click="checkWithAi"
 		/>
 
+		<VoiceNoteRecorder
+			ref="recorder"
+			v-model="voiceRemark"
+			class="col-span-2 md:w-64"
+			:error="voiceRemarkError"
+		/>
+
 		<Button
 			class="col-span-2 w-full md:w-auto"
 			variant="solid"
@@ -88,6 +95,7 @@ import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
 import { gradeForMarks } from '@/lib/grades'
 import { unescapeTags } from '@/lib/markdown'
 import { trySubmit } from '@/lib/trySubmit'
+import VoiceNoteRecorder from '@/components/feedback/VoiceNoteRecorder.vue'
 import { GRADE_SCALE, type AIGradeDraft, type EvaluationType, type GradeBand } from '@/types'
 
 interface SubmissionGrade {
@@ -95,6 +103,7 @@ interface SubmissionGrade {
 	marks_obtained: number | null
 	grade: string | null
 	remarks: string | null
+	voice_remark: string | null
 }
 
 const props = defineProps<{
@@ -123,6 +132,10 @@ const gradeLetter = ref('')
 const remarks = ref('')
 const marksError = ref('')
 const remarksError = ref('')
+const voiceRemark = ref<string | null>(null)
+const voiceRemarkError = ref('')
+const recorder = ref<InstanceType<typeof VoiceNoteRecorder> | null>(null)
+let savedVoiceRemark: string | null = null
 const seeded = ref(false)
 const graded = ref(false)
 
@@ -145,11 +158,15 @@ watch(
 		marks.value = grade?.marks_obtained != null ? String(grade.marks_obtained) : ''
 		gradeLetter.value = grade?.grade ?? ''
 		remarks.value = unescapeTags(grade?.remarks ?? '')
+		savedVoiceRemark = grade?.voice_remark || null
+		voiceRemark.value = savedVoiceRemark
 		graded.value = grade != null
 		seeded.value = true
 	},
 	{ immediate: true },
 )
+
+watch(voiceRemark, () => (voiceRemarkError.value = ''))
 
 watch(
 	() => [seeded.value, props.suggestedMarks] as const,
@@ -187,6 +204,7 @@ const saveCall = useCall<
 		marks_obtained: number | null
 		grade: string | null
 		remarks?: string
+		voice_remark?: string
 	}
 >({
 	url: '/api/v2/method/cs17_portal.api.save_grade',
@@ -215,14 +233,21 @@ async function save() {
 		return
 	}
 	marksError.value = ''
-	remarksError.value = remarksOnly.value && !remarks.value.trim() ? 'Enter the remarks.' : ''
-	if (remarksError.value) return
+	const isRecording = Boolean(recorder.value?.isRecording)
+	voiceRemarkError.value = isRecording ? 'Stop recording before you save.' : ''
+	remarksError.value =
+		remarksOnly.value && !remarks.value.trim() && !voiceRemark.value && !isRecording
+			? 'Enter the remarks or record a voice note.'
+			: ''
+	if (remarksError.value || voiceRemarkError.value) return
 
 	await trySubmit(saveCall, {
 		submission: props.submission,
 		marks_obtained: parsed.value,
 		grade: showGrade.value && gradeLetter.value ? gradeLetter.value : null,
 		remarks: remarks.value.trim() || undefined,
+		voice_remark:
+			voiceRemark.value === savedVoiceRemark ? undefined : (voiceRemark.value ?? ''),
 	})
 
 	if (saveCall.error) {
@@ -230,6 +255,7 @@ async function save() {
 		return
 	}
 
+	savedVoiceRemark = voiceRemark.value
 	graded.value = true
 	toast.success(remarksOnly.value ? 'Remarks saved.' : 'Grade saved.')
 	emit('saved')

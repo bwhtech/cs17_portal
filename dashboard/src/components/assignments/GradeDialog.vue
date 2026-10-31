@@ -19,6 +19,10 @@
 				<p class="text-xs text-ink-gray-5">Remarks</p>
 				<MarkdownText class="mt-0.5" :content="grade.remarks" />
 			</div>
+			<VoiceRemarkPlayer
+				v-if="grade.voice_remark && grade.submission"
+				:submission="grade.submission"
+			/>
 		</div>
 		<p v-else class="text-p-base text-ink-gray-5">No grade posted yet.</p>
 	</Dialog>
@@ -29,6 +33,7 @@ import { computed } from 'vue'
 import { Dialog } from 'frappe-ui'
 import MarkdownText from '@/components/common/MarkdownText.vue'
 import type { CS17Grade } from '@/types'
+import VoiceRemarkPlayer from '@/components/assignments/VoiceRemarkPlayer.vue'
 
 const props = defineProps<{
 	open: boolean

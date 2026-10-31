@@ -116,6 +116,10 @@
 							<p class="text-xs text-ink-gray-5">Remarks</p>
 							<MarkdownText class="mt-0.5" :content="grade.remarks" />
 						</div>
+						<VoiceRemarkPlayer
+							v-if="grade.voice_remark"
+							:submission="submission.name"
+						/>
 					</template>
 				</template>
 
@@ -202,6 +206,7 @@ import type {
 	StudentGradesResponse,
 	SubmissionRevision,
 } from '@/types'
+import VoiceRemarkPlayer from '@/components/assignments/VoiceRemarkPlayer.vue'
 
 const props = defineProps<{ assignmentId: string }>()
 
