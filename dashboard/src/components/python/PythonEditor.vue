@@ -13,11 +13,12 @@
 <script setup lang="ts">
 import { computed, shallowRef } from 'vue'
 import { indentUnit } from '@codemirror/language'
+import type { Extension } from '@codemirror/state'
 import { CodeEditor, CodeEditorContent, CodeKit, loadLanguage } from 'frappe-ui/code-editor'
 
 const code = defineModel<string>({ required: true })
 
-defineProps<{ readOnly?: boolean }>()
+const props = defineProps<{ readOnly?: boolean; extensions?: Extension[] }>()
 
 const emit = defineEmits<{ run: [] }>()
 
@@ -34,5 +35,10 @@ loadLanguage('python').then((extension) => {
 	python.value = extension
 })
 
-const extensions = computed(() => [kit, fourSpaces, python.value ?? []])
+const extensions = computed(() => [
+	kit,
+	fourSpaces,
+	python.value ?? [],
+	...(props.extensions ?? []),
+])
 </script>

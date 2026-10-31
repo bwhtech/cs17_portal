@@ -106,6 +106,9 @@ def wipe():
 	cohorts = [COHORT_NOW, COHORT_PAST]
 
 	exams = frappe.get_all("CS17 Exam", filters={"cohort": ["in", cohorts]}, pluck="name")
+	submissions = frappe.get_all(
+		"CS17 Assignment Submission", filters={"student": ["in", profiles or [""]]}, pluck="name"
+	)
 
 	# Children before parents: grades hang off submissions, submissions off
 	# assignments, and every one of them off a profile. Results come before the
@@ -120,6 +123,7 @@ def wipe():
 		("CS17 Assignment Attempt", {"student": ["in", profiles or [""]]}),
 		("CS17 Tab Leave", {"student": ["in", profiles or [""]]}),
 		("CS17 Paste", {"student": ["in", profiles or [""]]}),
+		("CS17 Code Comment", {"submission": ["in", submissions or [""]]}),
 		("CS17 Assignment", {"cohort": ["in", cohorts]}),
 		("CS17 Announcement", {"cohort": ["in", [*cohorts, None]]}),
 		("CS17 Profile", {"name": ["in", profiles or [""]]}),

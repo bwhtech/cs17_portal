@@ -78,6 +78,19 @@ export interface PythonTestCase {
 	is_hidden?: Bool
 }
 
+/** `CS17 Code Comment`. */
+export interface CodeComment {
+	name: string
+	line: number
+	comment: string
+	owner: string
+}
+
+export interface StudentCodeComment extends Omit<CodeComment, 'owner'> {
+	/** The commented line of the submitted code. */
+	code: string
+}
+
 /** `CS17 Assignment Submission`. */
 export interface CS17Submission {
 	name: string

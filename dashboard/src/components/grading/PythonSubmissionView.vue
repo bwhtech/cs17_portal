@@ -15,7 +15,7 @@
 	<Skeleton v-else-if="code === null || !assignment.data" class="h-full w-full !rounded-none" />
 
 	<div v-else class="grid h-full max-md:overflow-y-auto md:grid-cols-2">
-		<PythonEditor :model-value="code" read-only class="min-h-0 max-md:h-80" />
+		<CodeComments :submission="submission" :code="code" class="min-h-0 max-md:h-80" />
 		<div
 			class="min-h-0 space-y-3 overflow-auto border-outline-gray-1 bg-surface-base p-3 max-md:border-t sm:p-5 md:border-l"
 		>
@@ -57,8 +57,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { Button, Skeleton, useCall } from 'frappe-ui'
+import CodeComments from '@/components/grading/CodeComments.vue'
 import LoadError from '@/components/common/LoadError.vue'
-import PythonEditor from '@/components/python/PythonEditor.vue'
 import TabLeaves from '@/components/grading/TabLeaves.vue'
 import TimeTaken from '@/components/grading/TimeTaken.vue'
 import Pastes from '@/components/grading/Pastes.vue'
