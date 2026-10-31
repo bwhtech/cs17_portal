@@ -45,6 +45,11 @@
 				class="border-t border-outline-gray-1 pt-3"
 				:submission="submission"
 			/>
+			<Pastes
+				v-if="assignment.data?.watch_tab_switches"
+				class="border-t border-outline-gray-1 pt-3"
+				:submission="submission"
+			/>
 		</div>
 	</div>
 </template>
@@ -56,6 +61,7 @@ import CodeComments from '@/components/grading/CodeComments.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import TabLeaves from '@/components/grading/TabLeaves.vue'
 import TimeTaken from '@/components/grading/TimeTaken.vue'
+import Pastes from '@/components/grading/Pastes.vue'
 import TestResults from '@/components/python/TestResults.vue'
 import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
 import { usePythonRunner } from '@/lib/python/runner'

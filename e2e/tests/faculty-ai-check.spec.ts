@@ -68,7 +68,7 @@ test.describe("Faculty AI check", () => {
 		await page.getByRole("button", { name: "Check with AI" }).click();
 
 		await expect(page.getByLabel("Marks obtained")).toHaveValue("15");
-		await expect(page.getByLabel("Remarks")).toHaveValue(DRAFT.remarks);
+		await expect(page.getByLabel("Remarks", { exact: true })).toHaveValue(DRAFT.remarks);
 		expect(savedGrades).toEqual([]);
 	});
 
@@ -85,7 +85,7 @@ test.describe("Faculty AI check", () => {
 		await page.getByRole("button", { name: "Check with AI" }).click();
 
 		await expect(page.getByLabel("Marks (out of 20)")).toHaveValue("15");
-		await expect(page.getByLabel("Remarks")).toHaveValue(DRAFT.remarks);
+		await expect(page.getByLabel("Remarks", { exact: true })).toHaveValue(DRAFT.remarks);
 	});
 
 	test("checks the selected submissions with AI from the bulk bar", async ({ page }) => {

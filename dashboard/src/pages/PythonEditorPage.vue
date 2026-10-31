@@ -114,6 +114,7 @@
 						class="min-h-0 flex-1"
 						:read-only="readOnly"
 						@run="run"
+						@paste="recordPaste"
 					/>
 					<RunPanel
 						v-model:stdin="stdin"
@@ -153,6 +154,7 @@ import { usePythonAssignment } from '@/components/assignments/pythonEditor'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { usePolling } from '@/composables/usePolling'
 import { useProjectsPath } from '@/composables/useProjectsPath'
+import { usePasteWatch } from '@/composables/usePasteWatch'
 import { useTabLeaveWatch } from '@/composables/useTabLeaveWatch'
 import { onBeforeLogout, useSession } from '@/composables/useSession'
 import { useZenMode, useZenOnMount } from '@/composables/useZenMode'
@@ -247,9 +249,14 @@ const canReattempt = computed(
 const python = usePythonAssignment()
 const sampleTests = computed(() => assignment.data?.sample_tests ?? [])
 
+const isWatching = computed(() => Boolean(assignment.data?.watch_tab_switches) && canSubmit.value)
 useTabLeaveWatch(
 	() => props.id,
-	() => Boolean(assignment.data?.watch_tab_switches) && canSubmit.value,
+	() => isWatching.value,
+)
+const recordPaste = usePasteWatch(
+	() => props.id,
+	() => isWatching.value,
 )
 const submitOpen = ref(false)
 

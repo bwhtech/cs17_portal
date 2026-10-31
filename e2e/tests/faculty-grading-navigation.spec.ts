@@ -64,12 +64,14 @@ test.describe("Grading page navigation", () => {
 
 	test("keeps an unsaved remark after moving away and back", async ({ page }) => {
 		await page.goto(`/dashboard/faculty/submissions/${later.name}`);
-		await page.getByLabel("Remarks").fill("Label the axes on the second chart.");
+		await page
+			.getByLabel("Remarks", { exact: true })
+			.fill("Label the axes on the second chart.");
 		await page.getByRole("link", { name: "Next submission" }).click();
 		await expect(page).toHaveURL(new RegExp(`/faculty/submissions/${earlier.name}$`));
 		await page.getByRole("link", { name: "Previous submission" }).click();
 
-		await expect(page.getByLabel("Remarks")).toHaveValue(
+		await expect(page.getByLabel("Remarks", { exact: true })).toHaveValue(
 			"Label the axes on the second chart."
 		);
 	});

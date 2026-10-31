@@ -215,7 +215,7 @@ test.describe("Python assignments", () => {
 		const assignment = await createPythonAssignment(request, 1);
 		await openEditor(page, assignment.name);
 		await expect(
-			page.getByText("Your teacher can see when you leave this tab.")
+			page.getByText("Your teacher can see when you leave this tab or paste code.")
 		).toBeVisible();
 
 		await page.evaluate(() => {
