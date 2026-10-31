@@ -111,6 +111,18 @@ test.describe("Python assignments", () => {
 				console.warn(`Failed to delete tab leave ${leave.name}:`, error);
 			}
 		}
+		const runs = await getList<{ name: string }>(request, "CS17 Code Run", {
+			fields: ["name"],
+			filters: { assignment: ["like", `%-${cohort}-%`] },
+			limit: 200,
+		});
+		for (const run of runs) {
+			try {
+				await deleteDoc(request, "CS17 Code Run", run.name);
+			} catch (error) {
+				console.warn(`Failed to delete code run ${run.name}:`, error);
+			}
+		}
 		await cleanupTestAssignments(request, cohort);
 		for (const faculty of faculties) {
 			try {
