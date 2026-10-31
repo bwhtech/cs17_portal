@@ -38,7 +38,7 @@
 				:icon="isDesktop ? undefined : 'lucide-files'"
 				:tooltip="isDesktop ? undefined : 'Similar code'"
 				label="Similar code"
-				@click="similarCodeOpen = true"
+				@click="openSimilarCode()"
 			/>
 		</template>
 	</AppHeader>
@@ -108,11 +108,26 @@
 					empty="No submissions yet."
 				>
 					<template #cell-student="{ row }">
-						<RowTitle
-							:title="row.full_name ?? row.student"
-							:to="`/faculty/students/${row.student}`"
-							@click.stop
-						/>
+						<div class="flex min-w-0 items-center gap-2">
+							<RowTitle
+								:title="row.full_name ?? row.student"
+								:to="`/faculty/students/${row.student}`"
+								@click.stop
+							/>
+							<button
+								v-if="closestMatchLabels.has(row.name)"
+								type="button"
+								class="flex min-w-0 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
+								:title="closestMatchLabels.get(row.name)"
+								@click.stop="openSimilarCode(row)"
+							>
+								<Badge class="min-w-0" theme="amber" variant="subtle">
+									<span class="truncate">{{
+										closestMatchLabels.get(row.name)
+									}}</span>
+								</Badge>
+							</button>
+						</div>
 					</template>
 
 					<template #cell-status="{ row }">
@@ -271,7 +286,11 @@
 	<SimilarCodeDialog
 		v-if="similarCodeOpen && assignment"
 		v-model:open="similarCodeOpen"
-		:assignment="assignment.name"
+		:pairs="similarPairs"
+		:loading="similar.loading"
+		:failed="similarFailed"
+		:submission="similarCodeSubmission"
+		@retry="similar.reload()"
 	/>
 </template>
 
@@ -321,6 +340,7 @@ import type {
 	CS17Grade,
 	CS17Student,
 	CS17Submission,
+	SimilarPair,
 } from '@/types'
 
 const route = useRoute()
@@ -380,6 +400,53 @@ const sendBackTarget = ref<CS17Submission | null>(null)
 const studentsOpen = ref(false)
 const timingOpen = ref(false)
 const similarCodeOpen = ref(false)
+const similarCodeSubmission = ref<CS17Submission>()
+
+function openSimilarCode(submission?: CS17Submission) {
+	similarCodeSubmission.value = submission
+	similarCodeOpen.value = true
+}
+
+const similar = useCall<SimilarPair[], { assignment: string }>({
+	url: '/api/v2/method/cs17_portal.api.get_similar_submissions',
+	params: () => ({ assignment: assignmentId.value }),
+	immediate: false,
+})
+
+watch(
+	() => assignment.value?.submission_type === 'Python' && assignment.value.name,
+	(pythonAssignment) => {
+		if (pythonAssignment) similar.reload()
+	},
+)
+
+const similarLoadedId = ref('')
+watch(
+	() => similar.data,
+	() => {
+		similarLoadedId.value = assignmentId.value
+	},
+)
+
+const similarPairs = computed(() =>
+	similarLoadedId.value === assignmentId.value ? similar.data : null,
+)
+const similarFailed = useLoadFailed(reactive({ ...toRefs(similar), data: similarPairs }))
+
+const closestMatchLabels = computed(() => {
+	const labels = new Map<string, string>()
+	for (const { similarity, submissions } of similarPairs.value ?? []) {
+		const [first, second] = submissions
+		const percent = Math.round(similarity * 100)
+		if (!labels.has(first.name)) {
+			labels.set(first.name, `${percent}% like ${second.full_name ?? second.student}`)
+		}
+		if (!labels.has(second.name)) {
+			labels.set(second.name, `${percent}% like ${first.full_name ?? first.student}`)
+		}
+	}
+	return labels
+})
 
 watch(assignmentId, () => {
 	selection.value = []

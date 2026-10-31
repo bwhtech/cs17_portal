@@ -1,0 +1,22 @@
+{% if waiting %}
+<p><a href="{{ submissions_link }}">{{ _("Waiting for grading: {0}").format(waiting) }}</a></p>
+{% endif %}
+{% if due_soon %}
+<p class="text-bold">{{ _("Due in the next 7 days") }}</p>
+<ul>
+	{% for assignment in due_soon %}
+	<li><a href="{{ assignment.link }}">{{ assignment.title | e }}</a>, {{ assignment.due }}</li>
+	{% endfor %}
+</ul>
+{% endif %}
+{% if not_submitted %}
+<p class="text-bold">{{ _("Fell due in the last 7 days") }}</p>
+<ul>
+	{% for assignment in not_submitted %}
+	<li>
+		<a href="{{ assignment.link }}">{{ assignment.title | e }}</a>:
+		{{ _("{0} of {1} did not submit").format(assignment.not_submitted, assignment.given) }}
+	</li>
+	{% endfor %}
+</ul>
+{% endif %}

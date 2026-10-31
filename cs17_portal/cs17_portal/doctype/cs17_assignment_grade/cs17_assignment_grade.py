@@ -39,10 +39,11 @@ class CS17AssignmentGrade(Document):
 		published_on: DF.Datetime | None
 		remarks: DF.MarkdownEditor | None
 		submission: DF.Link | None
+		voice_remark: DF.Attach | None
 	# end: auto-generated types
 
 	def before_save(self):
-		grading_fields = ["marks_obtained", "remarks"]
+		grading_fields = ["marks_obtained", "remarks", "voice_remark"]
 		if self.evaluation_type != "Marks":
 			grading_fields.append("grade")
 		if any(self.has_value_changed(field) for field in grading_fields):
@@ -59,8 +60,8 @@ class CS17AssignmentGrade(Document):
 		)
 		if not assignment:
 			return
-		if assignment.assignment_type == "Not Graded" and not self.remarks:
-			frappe.throw(_("Enter the remarks."))
+		if assignment.assignment_type == "Not Graded" and not (self.remarks or self.voice_remark):
+			frappe.throw(_("Enter the remarks or record a voice note."))
 
 		max_marks = flt(assignment.max_marks)
 		if flt(self.marks_obtained) < 0 or flt(self.marks_obtained) > max_marks:

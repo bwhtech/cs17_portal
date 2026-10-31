@@ -21,6 +21,7 @@
   "published_on",
   "marks_obtained",
   "remarks",
+  "voice_remark",
   "evaluation_type"
  ],
  "fields": [
@@ -119,11 +120,17 @@
    "fieldname": "published_on",
    "fieldtype": "Datetime",
    "label": "Publish On"
+  },
+  {
+   "fieldname": "voice_remark",
+   "fieldtype": "Attach",
+   "label": "Voice Remark"
   }
  ],
  "grid_page_length": 50,
+ "link_display_mode": "Search",
  "links": [],
- "modified": "2026-10-18 21:15:23.363800",
+ "modified": "2026-10-31 19:24:50.290481",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Grade",
