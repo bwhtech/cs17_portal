@@ -1,5 +1,5 @@
 <template>
-	<Dialog :open="open" title="Similar code" size="2xl" @update:open="emit('update:open', $event)">
+	<Dialog :open="open" :title="title" size="2xl" @update:open="emit('update:open', $event)">
 		<div class="space-y-4">
 			<p class="text-p-sm text-ink-gray-5">
 				Comments, spacing and the starter code do not count.
@@ -8,16 +8,16 @@
 			<LoadError
 				v-if="failed"
 				title="Could not compare the submissions"
-				:loading="similar.loading"
-				@retry="similar.reload()"
+				:loading="loading"
+				@retry="emit('retry')"
 			/>
 
 			<DataTable
 				v-else
 				:columns="columns"
-				:rows="similar.data ?? []"
+				:rows="rows"
 				:row-key="(pair: SimilarPair) => pair.submissions.map((row) => row.name).join()"
-				:loading="similar.loading && !similar.data"
+				:loading="loading && !pairs"
 				empty="No similar submissions."
 			>
 				<template #cell-student="{ row }">
@@ -41,36 +41,44 @@
 </template>
 
 <script setup lang="ts">
-import { Dialog, useCall } from 'frappe-ui'
+import { computed } from 'vue'
+import { Dialog } from 'frappe-ui'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
-import { useLoadFailed } from '@/composables/useLoadFailed'
-import type { CS17Submission } from '@/types'
+import type { PairedSubmission, SimilarPair } from '@/types'
 
-type PairedSubmission = Pick<CS17Submission, 'name' | 'student' | 'full_name'>
+const props = defineProps<{
+	open: boolean
+	pairs: SimilarPair[] | null
+	loading: boolean
+	failed: boolean
+	submission?: PairedSubmission
+}>()
 
-interface SimilarPair {
-	similarity: number
-	submissions: [PairedSubmission, PairedSubmission]
-}
+const emit = defineEmits<{ 'update:open': [value: boolean]; retry: [] }>()
 
-const props = defineProps<{ open: boolean; assignment: string }>()
+const title = computed(() =>
+	props.submission ? `Similar code: ${studentName(props.submission)}` : 'Similar code',
+)
 
-const emit = defineEmits<{ 'update:open': [value: boolean] }>()
+const rows = computed(() =>
+	(props.pairs ?? []).flatMap((pair): SimilarPair[] => {
+		const [first, second] = pair.submissions
+		if (!props.submission || first.name === props.submission.name) return [pair]
+		if (second.name === props.submission.name)
+			return [{ ...pair, submissions: [second, first] }]
+		return []
+	}),
+)
 
-const similar = useCall<SimilarPair[], { assignment: string }>({
-	url: '/api/v2/method/cs17_portal.api.get_similar_submissions',
-	params: () => ({ assignment: props.assignment }),
-})
-
-const failed = useLoadFailed(similar)
-
-const columns: Column[] = [
-	{ header: 'Student', key: 'student', variant: 'primary' },
-	{ header: 'Similar to', key: 'other' },
+const columns = computed<Column[]>(() => [
+	...(props.submission
+		? []
+		: [{ header: 'Student', key: 'student', variant: 'primary' as const }]),
+	{ header: 'Similar to', key: 'other', variant: props.submission ? 'primary' : 'field' },
 	{ header: 'Similarity', key: 'similarity', width: '6rem', align: 'right' },
-]
+])
 
 function studentName(submission: PairedSubmission): string {
 	return submission.full_name ?? submission.student

@@ -268,6 +268,13 @@ export interface CohortSubmission {
 	can_check_with_ai?: boolean
 }
 
+export type PairedSubmission = Pick<CS17Submission, 'name' | 'student' | 'full_name'>
+
+export interface SimilarPair {
+	similarity: number
+	submissions: [PairedSubmission, PairedSubmission]
+}
+
 export interface AISettings {
 	model: string | null
 	has_api_key: boolean
