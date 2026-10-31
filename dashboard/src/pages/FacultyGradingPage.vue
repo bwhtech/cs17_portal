@@ -66,6 +66,17 @@
 					@click="revisionsOpen = true"
 				/>
 				<Badge
+					v-if="explanationRequest && !explanationRequest.answered_on"
+					label="Explanation requested"
+					theme="amber"
+					variant="subtle"
+				/>
+				<Button
+					v-else-if="explanationRequest !== undefined"
+					label="Ask to explain"
+					@click="askToExplainOpen = true"
+				/>
+				<Badge
 					v-if="detailRow?.returned_on"
 					label="Returned"
 					theme="amber"
@@ -127,6 +138,21 @@
 		</div>
 
 		<div class="shrink-0 border-t border-outline-gray-1 bg-surface-base px-3 py-4 sm:px-5">
+			<ErrorMessage
+				v-if="explanation.error"
+				class="mb-4"
+				message="Could not load the student's explanation."
+			/>
+			<div v-else-if="explanationRequest?.voice_note" class="mb-4">
+				<p class="text-xs text-ink-gray-5">
+					Explanation · {{ formatDateTime(explanationRequest.answered_on) }}
+				</p>
+				<audio
+					:src="explanationRequest.voice_note"
+					controls
+					class="mt-1 h-8 w-full md:max-w-md"
+				/>
+			</div>
 			<KeepAlive>
 				<GradeForm
 					:key="submission.name"
@@ -154,27 +180,41 @@
 			:student-name="submission.full_name"
 			@success="onSaved"
 		/>
+
+		<AskToExplainDialog
+			v-model:open="askToExplainOpen"
+			:submission="submission.name"
+			:student-name="submission.full_name"
+			@success="explanation.reload()"
+		/>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { Badge, Button, Dialog, Skeleton, useCall } from 'frappe-ui'
+import { Badge, Button, Dialog, ErrorMessage, Skeleton, useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import GradeBadge from '@/components/common/GradeBadge.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import SubmissionRevisions from '@/components/assignments/SubmissionRevisions.vue'
+import AskToExplainDialog from '@/components/faculty/AskToExplainDialog.vue'
 import SendBackDialog from '@/components/faculty/SendBackDialog.vue'
 import GradeForm from '@/components/grading/GradeForm.vue'
 import SubmissionPlayer from '@/components/grading/SubmissionPlayer.vue'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { useZenMode, useZenOnMount } from '@/composables/useZenMode'
+import { formatDateTime } from '@/lib/dates'
 import { isRefusal } from '@/lib/frappeError'
 import { isProjectSubmission } from '@/lib/submissionTypes'
 import type { CS17Submission, CohortSubmission, SubmissionRevision } from '@/types'
+
+interface ExplanationRequest {
+	answered_on: string | null
+	voice_note: string | null
+}
 
 const props = defineProps<{ submissionId: string }>()
 
@@ -261,6 +301,18 @@ function gradingRoute(name: string | undefined) {
 
 const sendBackOpen = ref(false)
 const revisionsOpen = ref(false)
+const askToExplainOpen = ref(false)
+
+const explanation = useCall<ExplanationRequest | null, { submission: string }>({
+	url: '/api/v2/method/cs17_portal.explanations.get_explanation_request',
+	method: 'GET',
+	params: () => ({ submission: props.submissionId }),
+	refetch: true,
+})
+
+const explanationRequest = computed(() =>
+	explanation.isFinished && !explanation.error ? explanation.data : undefined,
+)
 
 function onSaved() {
 	detail.reload()
