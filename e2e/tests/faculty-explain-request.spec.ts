@@ -99,7 +99,7 @@ test.describe("Asking a student to explain their code", () => {
 		);
 		await studentPage.getByRole("button", { name: "Stop", exact: true }).click();
 		await studentPage.getByRole("button", { name: "Send", exact: true }).click();
-		await expect(studentPage.getByText(/^Sent /)).toBeVisible();
+		await expect(studentPage.getByText(/Sent \w+ \d+/)).toBeVisible();
 		await context.close();
 
 		await page.goto(`/dashboard/faculty/submissions/${submission.name}`);
