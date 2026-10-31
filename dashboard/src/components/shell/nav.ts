@@ -82,7 +82,7 @@ const faculty: NavConfig = {
 		{
 			label: 'Resources',
 			items: [
-				{ label: 'Faculty Handbook', icon: 'lucide-book-open', href: '/faculty-handbook' },
+				{ label: 'Faculty Handbook', icon: 'lucide-book-open', href: '/teachers-handbook' },
 				{ label: 'Courses', icon: 'lucide-graduation-cap', href: COURSES_URL },
 			],
 		},
