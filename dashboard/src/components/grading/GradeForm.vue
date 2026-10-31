@@ -59,6 +59,24 @@
 			:error="remarksError"
 		/>
 
+		<Dropdown
+			:options="savedRemarkOptions"
+			side="top"
+			@update:open="(open) => open && savedRemarks.reload()"
+		>
+			<Button
+				class="col-span-2 w-full md:w-auto"
+				icon-left="lucide-bookmark"
+				label="Saved remarks"
+				:loading="saveRemarkCall.loading || deleteRemarkCall.loading"
+			/>
+			<template #item-remark="{ item }">
+				<div class="max-w-64 truncate leading-tighter text-ink-gray-7">
+					{{ item.label }}
+				</div>
+			</template>
+		</Dropdown>
+
 		<Button
 			v-if="canCheckWithAi"
 			class="col-span-2 w-full md:w-auto"
@@ -88,7 +106,15 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Button, FormControl, Skeleton, toast, useCall } from 'frappe-ui'
+import {
+	Button,
+	Dropdown,
+	FormControl,
+	Skeleton,
+	toast,
+	useCall,
+	type DropdownOptions,
+} from 'frappe-ui'
 import LoadError from '@/components/common/LoadError.vue'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
@@ -279,5 +305,91 @@ async function checkWithAi() {
 	if (draft.remarks) remarks.value = draft.remarks
 	marksError.value = ''
 	toast.success('AI draft filled in. Review it, then save.')
+}
+
+interface SavedRemark {
+	name: string
+	remark: string
+}
+
+const savedRemarks = useCall<SavedRemark[]>({
+	url: '/api/v2/method/cs17_portal.saved_remarks.get_saved_remarks',
+	method: 'GET',
+})
+
+const saveRemarkCall = useCall<string, { remark: string }>({
+	url: '/api/v2/method/cs17_portal.saved_remarks.save_remark',
+	method: 'POST',
+	immediate: false,
+})
+
+const deleteRemarkCall = useCall<null, { saved_remark: string }>({
+	url: '/api/v2/method/cs17_portal.saved_remarks.delete_saved_remark',
+	method: 'POST',
+	immediate: false,
+})
+
+const savedRemarkOptions = computed<DropdownOptions>(() => {
+	const saved = (savedRemarks.data ?? []).map((row) => ({
+		...row,
+		remark: unescapeTags(row.remark),
+	}))
+	return [
+		{
+			group: 'Saved remarks',
+			hideLabel: true,
+			options: saved.map(({ remark }) => ({
+				label: remark,
+				slot: 'remark',
+				onClick: () => addSavedRemark(remark),
+			})),
+		},
+		{
+			label: 'Save current remarks',
+			icon: 'lucide-bookmark-plus',
+			onClick: saveCurrentRemarks,
+		},
+		{
+			label: 'Delete a saved remark',
+			icon: 'lucide-trash-2',
+			theme: 'red',
+			condition: () => saved.length > 0,
+			submenu: saved.map(({ name, remark }) => ({
+				label: remark,
+				slot: 'remark',
+				onClick: () => deleteSavedRemark(name),
+			})),
+		},
+	]
+})
+
+function addSavedRemark(remark: string) {
+	const current = remarks.value.trimEnd()
+	remarks.value = current ? `${current}\n${remark}` : remark
+	remarksError.value = ''
+}
+
+async function saveCurrentRemarks() {
+	const remark = remarks.value.trim()
+	remarksError.value = remark ? '' : 'Enter the remarks to save.'
+	if (remarksError.value) return
+
+	await trySubmit(saveRemarkCall, { remark })
+	if (saveRemarkCall.error) {
+		toast.error(frappeErrorMessage(saveRemarkCall.error, 'Could not save the remark.'))
+		return
+	}
+	savedRemarks.reload()
+	toast.success('Remark saved')
+}
+
+async function deleteSavedRemark(savedRemark: string) {
+	await trySubmit(deleteRemarkCall, { saved_remark: savedRemark })
+	if (deleteRemarkCall.error) {
+		toast.error(frappeErrorMessage(deleteRemarkCall.error, 'Could not delete the remark.'))
+		return
+	}
+	savedRemarks.reload()
+	toast.success('Remark deleted')
 }
 </script>

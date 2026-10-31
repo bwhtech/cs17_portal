@@ -48,11 +48,11 @@ test.describe("Grade remarks", () => {
 		});
 
 		await page.goto(`/dashboard/faculty/submissions/${submission.name}`);
-		await page.getByLabel("Remarks").fill(REMARKS);
+		await page.getByLabel("Remarks", { exact: true }).fill(REMARKS);
 		await page.getByRole("button", { name: "Save grade" }).click();
 		await expect(page.getByRole("button", { name: "Update grade" })).toBeVisible();
 
 		await page.reload();
-		await expect(page.getByLabel("Remarks")).toHaveValue(REMARKS);
+		await expect(page.getByLabel("Remarks", { exact: true })).toHaveValue(REMARKS);
 	});
 });
