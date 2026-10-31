@@ -17,14 +17,25 @@ class CS17AISettings(Document):
 
 		api_key: DF.Password | None
 		model: DF.Data | None
+		other_models: DF.SmallText | None
 	# end: auto-generated types
 
 	_DOCTYPE_NAME = "CS17 AI Settings"
 
 	def validate(self):
-		provider, _slash, name = (self.model or "").partition("/")
-		if self.model and not (provider and name):
-			frappe.throw(_("Enter the model as provider/model, for example gemini/gemini-3.5-flash."))
+		for model in self.models():
+			provider, _slash, name = model.partition("/")
+			if not (provider and name):
+				frappe.throw(_("Enter each model as provider/model, for example gemini/gemini-3.5-flash."))
 
 	def is_set_up(self) -> bool:
 		return bool(self.model and self.api_key)
+
+	def models(self) -> list[str]:
+		return list(dict.fromkeys(filter(None, [self.model, *(self.other_models or "").split()])))
+
+	def model_to_use(self, model: str | None = None) -> str:
+		model = model or self.model
+		if model not in self.models():
+			frappe.throw(_("{0} is not one of the AI models in Settings.").format(model))
+		return model

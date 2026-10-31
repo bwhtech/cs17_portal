@@ -20,14 +20,16 @@
 				/>
 			</Dropdown>
 
-			<Button
-				v-if="canCheckWithAi && ungradedSubmissions?.length"
+			<CheckWithAIButton
+				v-if="aiModels?.length && ungradedSubmissions?.length"
+				:models="aiModels"
 				label="Check with AI"
 				:icon-left="isDesktop ? 'lucide-sparkles' : undefined"
+				:icon-right="isDesktop && aiModels.length > 1 ? 'lucide-chevron-up' : undefined"
 				:icon="isDesktop ? undefined : 'lucide-sparkles'"
 				:tooltip="isDesktop ? undefined : 'Check with AI'"
 				:loading="aiCheck.loading"
-				@click="confirmAiCheck"
+				@check="confirmAiCheck"
 			/>
 
 			<Button
@@ -55,6 +57,7 @@
 import { computed, h } from 'vue'
 import { Button, Dropdown, dialog, toast, useCall } from 'frappe-ui'
 import FacultyAvatar from '@/components/faculty/FacultyAvatar.vue'
+import CheckWithAIButton from '@/components/grading/CheckWithAIButton.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useFacultyMembers } from '@/composables/useFacultyMembers'
 import { frappeErrorMessage } from '@/lib/frappeError'
@@ -68,7 +71,7 @@ const props = defineProps<{
 	/** How many of the selected submissions have a grade that is still a draft. */
 	draftGrades?: number
 	remarksOnly?: boolean
-	canCheckWithAi?: boolean
+	aiModels?: string[]
 	ungradedSubmissions?: string[]
 }>()
 
@@ -98,7 +101,10 @@ const publish = useCall<number, { submissions: string[] }>({
 	immediate: false,
 })
 
-const aiCheck = useCall<{ queued: number; skipped: number }, { submissions: string[] }>({
+const aiCheck = useCall<
+	{ queued: number; skipped: number },
+	{ submissions: string[]; model: string }
+>({
 	url: '/api/v2/method/cs17_portal.api.check_submissions',
 	method: 'POST',
 	immediate: false,
@@ -124,14 +130,14 @@ function confirmPublish() {
 	})
 }
 
-function confirmAiCheck() {
+function confirmAiCheck(model: string) {
 	const submissions = props.ungradedSubmissions ?? []
 	const count = submissions.length
 	dialog.confirm({
 		title: `Check ${count} ${count === 1 ? 'submission' : 'submissions'} with AI?`,
 		message: 'Each one gets a draft grade for you to review. Nothing is published.',
 		onConfirm: async () => {
-			await trySubmit(aiCheck, { submissions })
+			await trySubmit(aiCheck, { submissions, model })
 			if (aiCheck.error || !aiCheck.data) {
 				toast.error(
 					frappeErrorMessage(aiCheck.error, 'Could not check the submissions with AI.'),

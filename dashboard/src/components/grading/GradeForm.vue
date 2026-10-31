@@ -77,13 +77,14 @@
 			</template>
 		</Dropdown>
 
-		<Button
-			v-if="canCheckWithAi"
+		<CheckWithAIButton
+			v-if="aiModels?.length"
+			:models="aiModels"
 			class="col-span-2 w-full md:w-auto"
 			icon-left="lucide-sparkles"
 			label="Check with AI"
 			:loading="aiCheck.loading"
-			@click="checkWithAi"
+			@check="checkWithAi"
 		/>
 
 		<VoiceNoteRecorder
@@ -122,6 +123,7 @@ import { gradeForMarks } from '@/lib/grades'
 import { unescapeTags } from '@/lib/markdown'
 import { trySubmit } from '@/lib/trySubmit'
 import VoiceNoteRecorder from '@/components/feedback/VoiceNoteRecorder.vue'
+import CheckWithAIButton from '@/components/grading/CheckWithAIButton.vue'
 import { GRADE_SCALE, type AIGradeDraft, type EvaluationType, type GradeBand } from '@/types'
 
 interface SubmissionGrade {
@@ -138,7 +140,7 @@ const props = defineProps<{
 	maxMarks: number
 	evaluationType: EvaluationType | '' | null
 	suggestedMarks?: number | null
-	canCheckWithAi?: boolean
+	aiModels?: string[]
 }>()
 
 const emit = defineEmits<{ saved: [] }>()
@@ -287,14 +289,14 @@ async function save() {
 	emit('saved')
 }
 
-const aiCheck = useCall<AIGradeDraft, { submission: string }>({
+const aiCheck = useCall<AIGradeDraft, { submission: string; model: string }>({
 	url: '/api/v2/method/cs17_portal.api.check_submission',
 	method: 'POST',
 	immediate: false,
 })
 
-async function checkWithAi() {
-	await trySubmit(aiCheck, { submission: props.submission })
+async function checkWithAi(model: string) {
+	await trySubmit(aiCheck, { submission: props.submission, model })
 	if (aiCheck.error || !aiCheck.data) {
 		toast.error(frappeErrorMessage(aiCheck.error, 'Could not check with AI.'))
 		return

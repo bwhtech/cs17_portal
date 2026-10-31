@@ -134,7 +134,7 @@
 					:max-marks="submission.max_marks"
 					:evaluation-type="submission.evaluation_type"
 					:suggested-marks="suggestedMarks"
-					:can-check-with-ai="submission.can_check_with_ai"
+					:ai-models="submission.ai_models"
 					@saved="onSaved"
 				/>
 			</KeepAlive>

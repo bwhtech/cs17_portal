@@ -227,7 +227,7 @@
 					:cohort="assignment.cohort"
 					:draft-grades="selectedDraftGrades"
 					:remarks-only="!isGraded"
-					:can-check-with-ai="assignment.can_check_with_ai"
+					:ai-models="assignment.ai_models"
 					:ungraded-submissions="selectedUngradedSubmissions"
 					@checking="waitForAiDrafts"
 					@done="clearSelection"
@@ -267,7 +267,7 @@
 		:submission="gradeTarget"
 		:evaluation-type="assignment?.remarks ?? 'Marks'"
 		:max-marks="assignment?.max_marks"
-		:can-check-with-ai="assignment?.can_check_with_ai"
+		:ai-models="assignment?.ai_models"
 		@update:open="gradeTarget = null"
 		@success="detail.reload()"
 	/>

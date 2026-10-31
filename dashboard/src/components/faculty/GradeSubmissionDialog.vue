@@ -30,12 +30,13 @@
 				:rows="3"
 			/>
 
-			<div v-if="canCheckWithAi" class="space-y-2">
-				<Button
+			<div v-if="aiModels?.length" class="space-y-2">
+				<CheckWithAIButton
+					:models="aiModels"
 					icon-left="lucide-sparkles"
 					label="Check with AI"
 					:loading="aiCheck.loading"
-					@click="checkWithAi"
+					@check="checkWithAi"
 				/>
 				<ErrorMessage :message="aiCheckError" />
 			</div>
@@ -71,6 +72,7 @@
 import { computed, ref, watch } from 'vue'
 import { Button, Dialog, ErrorMessage, FormControl, Select, toast, useCall } from 'frappe-ui'
 import PublishFields from '@/components/common/PublishFields.vue'
+import CheckWithAIButton from '@/components/grading/CheckWithAIButton.vue'
 import { isPast, toFrappeDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { gradeForMarks } from '@/lib/grades'
@@ -92,7 +94,7 @@ const props = defineProps<{
 	/** The assignment's `remarks` field: `Grade` scores a letter, `Marks` a number. */
 	evaluationType: EvaluationType | ''
 	maxMarks?: number
-	canCheckWithAi?: boolean
+	aiModels?: string[]
 }>()
 
 const emit = defineEmits<{ 'update:open': [value: boolean]; success: [] }>()
@@ -237,16 +239,16 @@ async function handleSave() {
 	emit('update:open', false)
 }
 
-const aiCheck = useCall<AIGradeDraft, { submission: string }>({
+const aiCheck = useCall<AIGradeDraft, { submission: string; model: string }>({
 	url: '/api/v2/method/cs17_portal.api.check_submission',
 	method: 'POST',
 	immediate: false,
 })
 
-async function checkWithAi() {
+async function checkWithAi(model: string) {
 	if (!props.submission) return
 	aiCheckError.value = ''
-	await trySubmit(aiCheck, { submission: props.submission.name })
+	await trySubmit(aiCheck, { submission: props.submission.name, model })
 	if (aiCheck.error || !aiCheck.data) {
 		aiCheckError.value = frappeErrorMessage(aiCheck.error, 'Could not check with AI.')
 		return
