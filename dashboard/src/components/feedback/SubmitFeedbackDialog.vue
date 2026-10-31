@@ -25,6 +25,7 @@
 				<VoiceNoteRecorder
 					ref="recorder"
 					v-model="voiceNote"
+					description="Faculty may recognise your voice."
 					:error="fieldErrors.voiceNote"
 				/>
 

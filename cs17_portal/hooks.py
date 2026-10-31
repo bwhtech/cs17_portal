@@ -163,6 +163,7 @@ scheduler_events = {
 		"cs17_portal.tasks.auto_publish_results",
 	],
 	"hourly": ["cs17_portal.tasks.remind_due_assignments"],
+	"cron": {"0 8 * * 1": ["cs17_portal.tasks.send_faculty_digest"]},
 }
 
 # Testing

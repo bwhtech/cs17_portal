@@ -1083,7 +1083,7 @@ def get_submission_grade(submission: str) -> dict | None:
 	return frappe.db.get_value(
 		"CS17 Assignment Grade",
 		{"submission": submission},
-		["name", "marks_obtained", "grade", "remarks"],
+		["name", "marks_obtained", "grade", "remarks", "voice_remark"],
 		as_dict=True,
 	)
 
@@ -1094,6 +1094,7 @@ def save_grade(
 	marks_obtained: float | None = None,
 	grade: str | None = None,
 	remarks: str | None = None,
+	voice_remark: str | None = None,
 ) -> dict:
 	get_current_faculty()
 	assignment = frappe.db.get_value("CS17 Assignment Submission", submission, "assignment")
@@ -1109,14 +1110,32 @@ def save_grade(
 	grade_doc.marks_obtained = flt(marks_obtained) if evaluation_type == "Marks" else 0
 	grade_doc.grade = grade if evaluation_type == "Grade" else None
 	grade_doc.remarks = remarks
+	previous_voice_remarks = []
+	if voice_remark is not None:
+		if not grade_doc.is_new():
+			previous_voice_remarks = frappe.get_all(
+				"File",
+				filters={
+					"attached_to_doctype": "CS17 Assignment Grade",
+					"attached_to_name": grade_doc.name,
+					"attached_to_field": "voice_remark",
+				},
+				pluck="name",
+			)
+		grade_doc.voice_remark = (
+			insert_voice_note(voice_remark, "voice-remark").file_url if voice_remark else None
+		)
 	if grade_doc.is_new():
 		grade_doc.is_published = 1
 	grade_doc.save(ignore_permissions=True)
+	for file_name in previous_voice_remarks:
+		frappe.delete_doc("File", file_name, ignore_permissions=True)
 	return {
 		"name": grade_doc.name,
 		"marks_obtained": grade_doc.marks_obtained,
 		"grade": grade_doc.grade,
 		"remarks": grade_doc.remarks,
+		"voice_remark": grade_doc.voice_remark,
 		"graded_by": grade_doc.graded_by,
 		"is_published": grade_doc.is_published,
 	}
@@ -1380,6 +1399,7 @@ def get_student_grades() -> dict:
 			"remarks",
 			"is_published",
 			"published_on",
+			"voice_remark",
 		],
 	)
 	grades = [grade for grade in grades if is_published_now(grade, "published_on")]
@@ -2375,27 +2395,29 @@ def copy_assignments(assignments: list | str, cohort: str, quarter: str | None =
 VOICE_NOTE_EXTENSIONS = {"audio/webm": "webm", "audio/ogg": "ogg", "audio/mp4": "m4a"}
 
 
+def insert_voice_note(voice_note: str, file_name: str) -> "Document":
+	extension = VOICE_NOTE_EXTENSIONS.get(voice_note.partition(";")[0].removeprefix("data:"))
+	if not extension:
+		frappe.throw(_("Record your voice note again."))
+	return frappe.get_doc(
+		{
+			"doctype": "File",
+			"file_name": f"{file_name}.{extension}",
+			"is_private": 1,
+			"content": voice_note,
+			"decode": True,
+		}
+	).insert(ignore_permissions=True)
+
+
 @frappe.whitelist(methods=["POST"])
 @rate_limit(limit=5, seconds=60 * 60, methods=["POST"], ip_based=False, user_based=True)
 def submit_feedback(category: str, description: str = "", voice_note: str | None = None) -> None:
 	cohort = frappe.db.get_value("CS17 Profile", require_current_student(), "cohort")
 	if not description.strip() and not voice_note:
 		frappe.throw(_("Write your feedback or record a voice note."), frappe.MandatoryError)
-	voice_note_file = None
-	if voice_note:
-		extension = VOICE_NOTE_EXTENSIONS.get(voice_note.partition(";")[0].removeprefix("data:"))
-		if not extension:
-			frappe.throw(_("Record your voice note again."))
-		# Inserted unattached: attaching on insert comments on the feedback as the student.
-		voice_note_file = frappe.get_doc(
-			{
-				"doctype": "File",
-				"file_name": f"voice-note.{extension}",
-				"is_private": 1,
-				"content": voice_note,
-				"decode": True,
-			}
-		).insert(ignore_permissions=True)
+	# Inserted unattached: attaching on insert comments on the feedback as the student.
+	voice_note_file = voice_note and insert_voice_note(voice_note, "voice-note")
 	feedback = frappe.get_doc(
 		{
 			"doctype": "CS17 Feedback",

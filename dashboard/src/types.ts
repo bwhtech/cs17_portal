@@ -159,6 +159,7 @@ export interface CS17Grade {
 	assignment_title?: string
 	is_published?: Bool
 	published_on?: string | null
+	voice_remark?: string | null
 }
 
 /** `CS17 Announcement`. */
@@ -266,6 +267,13 @@ export interface CohortSubmission {
 	graded: boolean
 	/** Only from `get_submission`. */
 	can_check_with_ai?: boolean
+}
+
+export type PairedSubmission = Pick<CS17Submission, 'name' | 'student' | 'full_name'>
+
+export interface SimilarPair {
+	similarity: number
+	submissions: [PairedSubmission, PairedSubmission]
 }
 
 export interface AISettings {
