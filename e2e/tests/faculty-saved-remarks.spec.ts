@@ -52,7 +52,7 @@ test.describe("Saved remarks", () => {
 			assignment: assignment.name,
 			student: student.name,
 		});
-		const remarks = page.getByLabel("Remarks");
+		const remarks = page.getByLabel("Remarks", { exact: true });
 		const savedRemarks = page.getByRole("button", { name: "Saved remarks" });
 
 		await page.goto(`/dashboard/faculty/submissions/${submission.name}`);
