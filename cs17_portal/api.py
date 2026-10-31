@@ -713,6 +713,17 @@ def save_python_project(project: str, code: str) -> dict:
 	project_doc.code = code
 	project_doc.last_saved_at = now_datetime()
 	project_doc.save(ignore_permissions=True)
+	if project_doc.assignment and project_doc.has_value_changed("code"):
+		frappe.get_doc(
+			{
+				"doctype": "CS17 Code Snapshot",
+				"project": project_doc.name,
+				"assignment": project_doc.assignment,
+				"student": project_doc.profile,
+				"saved_at": project_doc.last_saved_at,
+				"code": code,
+			}
+		).insert(ignore_permissions=True, ignore_links=True)
 	return {"name": project_doc.name, "last_saved_at": project_doc.last_saved_at}
 
 
@@ -1742,6 +1753,7 @@ def delete_assignment(assignment: str) -> None:
 	frappe.db.set_value("CS17 Project", {"assignment": assignment}, "assignment", None, update_modified=False)
 	frappe.db.delete("CS17 Tab Leave", {"assignment": assignment})
 	frappe.db.delete("CS17 Paste", {"assignment": assignment})
+	frappe.db.delete("CS17 Code Snapshot", {"assignment": assignment})
 	frappe.db.delete("CS17 Assignment Attempt", {"assignment": assignment})
 	if frappe.delete_doc("CS17 Assignment", assignment, ignore_permissions=True) is False:
 		frappe.throw(_("Assignment not found"), frappe.DoesNotExistError)
