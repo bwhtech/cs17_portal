@@ -1,6 +1,6 @@
 import frappe
 
-SUBMISSION_FILE_EXTENSIONS = ("SB3", "ZIP", "GZ", "TGZ", "GIF", "WEBP")
+SUBMISSION_FILE_EXTENSIONS = ("SB3", "ZIP", "GZ", "TGZ", "GIF", "WEBP", "WEBM", "OGG", "M4A")
 
 
 def allow_submission_files() -> None:

@@ -15,7 +15,8 @@ class CS17Feedback(Document):
 
 		category: DF.Literal["Food", "Stay", "Other"]
 		cohort: DF.Link | None
-		description: DF.SmallText
+		description: DF.SmallText | None
+		voice_note: DF.Attach | None
 	# end: auto-generated types
 
 	pass

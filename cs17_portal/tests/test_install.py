@@ -15,5 +15,5 @@ class TestInstall(FrappeTestCase):
 
 		self.assertEqual(
 			frappe.db.get_single_value("System Settings", "allowed_file_extensions"),
-			"PDF\nPNG\nZIP\nSB3\nGZ\nTGZ\nGIF\nWEBP",
+			"PDF\nPNG\nZIP\nSB3\nGZ\nTGZ\nGIF\nWEBP\nWEBM\nOGG\nM4A",
 		)

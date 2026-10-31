@@ -7,7 +7,8 @@
  "field_order": [
   "cohort",
   "category",
-  "description"
+  "description",
+  "voice_note"
  ],
  "fields": [
   {
@@ -22,8 +23,7 @@
   {
    "fieldname": "description",
    "fieldtype": "Small Text",
-   "label": "Description",
-   "reqd": 1
+   "label": "Description"
   },
   {
    "fieldname": "cohort",
@@ -33,10 +33,17 @@
    "label": "Cohort",
    "options": "CS17 Cohort",
    "read_only": 1
+  },
+  {
+   "fieldname": "voice_note",
+   "fieldtype": "Attach",
+   "label": "Voice Note",
+   "read_only": 1
   }
  ],
+ "link_display_mode": "Search",
  "links": [],
- "modified": "2026-10-20 11:29:42.504782",
+ "modified": "2026-10-31 17:52:38.057173",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Feedback",
