@@ -461,7 +461,7 @@ def get_current_faculty() -> "frappe._dict":
 	faculty = frappe.db.get_value(
 		"CS17 Profile",
 		{"user": frappe.session.user, "profile_type": "Faculty"},
-		["name", "cohort"],
+		["name", "cohort", "ai_model"],
 		as_dict=True,
 	)
 	if not faculty:
@@ -2449,18 +2449,41 @@ def submit_feedback(category: str, description: str = "", voice_note: str | None
 def get_ai_settings() -> dict:
 	frappe.only_for("System Manager")
 	settings = frappe.get_cached_doc("CS17 AI Settings")
-	return {"model": settings.model, "has_api_key": bool(settings.api_key)}
+	return {
+		"model": settings.model,
+		"other_models": settings.other_models,
+		"has_api_key": bool(settings.api_key),
+	}
 
 
 @frappe.whitelist(methods=["POST"])
-def save_ai_settings(model: str, api_key: str | None = None) -> dict:
+def save_ai_settings(model: str, api_key: str | None = None, other_models: str = "") -> dict:
 	frappe.only_for("System Manager")
 	settings = frappe.get_doc("CS17 AI Settings")
 	settings.model = model
+	settings.other_models = other_models
 	if api_key:
 		settings.api_key = api_key
 	settings.save()
 	return get_ai_settings()
+
+
+@frappe.whitelist(methods=["GET"])
+def get_my_ai_model() -> dict:
+	settings = frappe.get_cached_doc("CS17 AI Settings")
+	return {
+		"models": settings.models() if settings.is_set_up() else [],
+		"model": settings.model_for(get_current_faculty().ai_model),
+	}
+
+
+@frappe.whitelist(methods=["POST"])
+def set_my_ai_model(model: str) -> dict:
+	faculty = get_current_faculty()
+	if model not in frappe.get_cached_doc("CS17 AI Settings").models():
+		frappe.throw(_("{0} is not one of the AI models in Settings.").format(model))
+	frappe.db.set_value("CS17 Profile", faculty.name, "ai_model", model)
+	return get_my_ai_model()
 
 
 STUDENTS_FILE_HEADER = ["first name", "last name", "email", "cohort"]
@@ -2582,16 +2605,16 @@ Reply with one JSON object and nothing else:
 
 @frappe.whitelist(methods=["POST"])
 def check_submission(submission: str) -> dict:
-	get_current_faculty()
+	faculty = get_current_faculty()
 	assignment = frappe.db.get_value(ASSIGNMENT_SUBMISSION, submission, "assignment")
 	if not assignment:
 		frappe.throw(_("Submission not found"), frappe.DoesNotExistError)
 
 	require_faculty_for_assignment(assignment)
-	return _ai_grade_draft(submission)
+	return _ai_grade_draft(submission, faculty.ai_model)
 
 
-def _ai_grade_draft(submission: str) -> dict:
+def _ai_grade_draft(submission: str, model: str | None) -> dict:
 	import litellm
 
 	from cs17_portal.cs17_portal.doctype.cs17_assignment_grade.cs17_assignment_grade import LETTER_GRADES
@@ -2630,7 +2653,11 @@ def _ai_grade_draft(submission: str) -> dict:
 	]
 	try:
 		response = litellm.completion(
-			model=settings.model, api_key=api_key, messages=messages, timeout=50, num_retries=1
+			model=settings.model_for(model),
+			api_key=api_key,
+			messages=messages,
+			timeout=50,
+			num_retries=1,
 		)
 	except Exception as error:
 		frappe.log_error(
@@ -2673,8 +2700,10 @@ def check_submissions(submissions: list | str) -> dict:
 		frappe.throw(_("Only Python submissions can be checked with AI."))
 	if assignment.remarks not in ("Grade", "Marks"):
 		frappe.throw(_("Cannot grade a Not Graded assignment."))
-	if not frappe.get_cached_doc("CS17 AI Settings").is_set_up():
+	settings = frappe.get_cached_doc("CS17 AI Settings")
+	if not settings.is_set_up():
 		frappe.throw(_("Add an AI model and API key in Settings first."))
+	model = settings.model_for(get_current_faculty().ai_model)
 
 	graded = set(
 		frappe.get_all(
@@ -2692,13 +2721,14 @@ def check_submissions(submissions: list | str) -> dict:
 			deduplicate=True,
 			enqueue_after_commit=True,
 			submission=submission,
+			model=model,
 		)
 	return {"queued": len(ungraded), "skipped": len(submissions) - len(ungraded)}
 
 
-def save_ai_grade_draft(submission: str) -> None:
+def save_ai_grade_draft(submission: str, model: str | None = None) -> None:
 	try:
-		draft = _ai_grade_draft(submission)
+		draft = _ai_grade_draft(submission, model)
 	except frappe.ValidationError:
 		return
 	if frappe.db.exists("CS17 Assignment Grade", {"submission": submission}):

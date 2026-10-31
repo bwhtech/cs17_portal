@@ -115,13 +115,15 @@ test.describe("Faculty AI check", () => {
 
 	test("saves the model from the Settings dialog", async ({ page }) => {
 		await page.route("**/cs17_portal.api.get_ai_settings", (route) =>
-			route.fulfill({ json: { data: { model: null, has_api_key: false } } })
+			route.fulfill({
+				json: { data: { model: null, other_models: null, has_api_key: false } },
+			})
 		);
 		const saves: unknown[] = [];
 		await page.route("**/cs17_portal.api.save_ai_settings", (route) => {
 			saves.push(route.request().postDataJSON());
 			return route.fulfill({
-				json: { data: { model: "openai/gpt-5", has_api_key: false } },
+				json: { data: { model: "openai/gpt-5", other_models: null, has_api_key: false } },
 			});
 		});
 
@@ -129,10 +131,32 @@ test.describe("Faculty AI check", () => {
 		await page.locator('[data-slot="sidebar"] button').last().click();
 		await page.getByRole("menuitem", { name: "Settings" }).click();
 		await page.getByRole("tab", { name: "AI check" }).click();
-		await page.getByLabel("Model", { exact: true }).fill("openai/gpt-5");
-		await page.getByLabel("Model", { exact: true }).blur();
+		await page.getByLabel("Default model").fill("openai/gpt-5");
+		await page.getByLabel("Default model").blur();
 
 		await expect(page.getByText("Model saved")).toBeVisible();
-		expect(saves).toEqual([{ model: "openai/gpt-5" }]);
+		expect(saves).toEqual([{ model: "openai/gpt-5", other_models: "" }]);
+	});
+
+	test("saves the faculty's AI model from Preferences", async ({ page }) => {
+		const models = ["openai/gpt-5", "anthropic/claude-opus-5-5"];
+		await page.route(/cs17_portal\.api\.get_my_ai_model/, (route) =>
+			route.fulfill({ json: { data: { models, model: models[0] } } })
+		);
+		const saves: unknown[] = [];
+		await page.route("**/cs17_portal.api.set_my_ai_model", (route) => {
+			saves.push(route.request().postDataJSON());
+			return route.fulfill({ json: { data: { models, model: models[1] } } });
+		});
+
+		await page.goto("/dashboard");
+		await page.locator('[data-slot="sidebar"] button').last().click();
+		await page.getByRole("menuitem", { name: "Settings" }).click();
+		await page.getByRole("tab", { name: "Preferences" }).click();
+		await page.getByRole("combobox").click();
+		await page.getByRole("option", { name: "claude-opus-5-5" }).click();
+
+		await expect(page.getByText("AI model saved")).toBeVisible();
+		expect(saves).toEqual([{ model: models[1] }]);
 	});
 });

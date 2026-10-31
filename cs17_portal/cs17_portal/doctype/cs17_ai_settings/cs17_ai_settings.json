@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "model",
+  "other_models",
   "api_key"
  ],
  "fields": [
@@ -14,19 +15,25 @@
    "description": "As provider/model, for example anthropic/claude-sonnet-5-5 or gemini/gemini-3.5-flash.",
    "fieldname": "model",
    "fieldtype": "Data",
-   "label": "Model"
+   "label": "Default model"
   },
   {
    "fieldname": "api_key",
    "fieldtype": "Password",
    "label": "API Key"
+  },
+  {
+   "description": "One per line, as provider/model. Faculty can pick one of these in Preferences instead of the default.",
+   "fieldname": "other_models",
+   "fieldtype": "Small Text",
+   "label": "Other models"
   }
  ],
  "grid_page_length": 50,
  "issingle": 1,
  "link_display_mode": "Search",
  "links": [],
- "modified": "2026-10-29 00:19:52.763996",
+ "modified": "2026-10-31 22:29:30.125878",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 AI Settings",
