@@ -59,6 +59,12 @@ const routes: RouteRecordRaw[] = [
 		props: true,
 	},
 	{
+		path: '/faculty/assignments/:assignmentId/live',
+		name: 'FacultyLiveLab',
+		component: () => import('@/pages/FacultyLiveLabPage.vue'),
+		props: true,
+	},
+	{
 		path: '/faculty/students/:studentId',
 		name: 'FacultyStudent',
 		component: () => import('@/pages/FacultyStudentPage.vue'),

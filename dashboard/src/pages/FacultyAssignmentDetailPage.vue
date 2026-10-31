@@ -40,6 +40,15 @@
 				label="Similar code"
 				@click="openSimilarCode()"
 			/>
+			<Button
+				v-if="assignment?.submission_type === 'Python'"
+				:variant="isDesktop ? 'subtle' : 'ghost'"
+				:icon-left="isDesktop ? 'lucide-activity' : undefined"
+				:icon="isDesktop ? undefined : 'lucide-activity'"
+				:tooltip="isDesktop ? undefined : 'Live'"
+				label="Live"
+				:route="`/faculty/assignments/${assignment.name}/live`"
+			/>
 		</template>
 	</AppHeader>
 

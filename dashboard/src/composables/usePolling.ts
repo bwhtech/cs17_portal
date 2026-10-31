@@ -1,5 +1,5 @@
 import { computed, onMounted, onUnmounted, reactive, toRefs, watch } from 'vue'
-import { toast, useCall, type UseCallOptions } from 'frappe-ui'
+import { toast, useCall, type BasicParams, type UseCallOptions } from 'frappe-ui'
 import { parseDatetime } from '@/lib/dates'
 import { isRefusal } from '@/lib/frappeError'
 
@@ -46,8 +46,10 @@ export function usePolling(reload: () => unknown, ms: number = DEFAULT_POLL_MS):
 	})
 }
 
-export function usePolledCall<TResponse>(options: UseCallOptions<TResponse>) {
-	const call = useCall<TResponse>(options)
+export function usePolledCall<TResponse, TParams extends BasicParams = undefined>(
+	options: UseCallOptions<TResponse, TParams>,
+) {
+	const call = useCall<TResponse, TParams>(options)
 	const data = computed<TResponse | null>((previous = null) => {
 		if (call.data != null || call.loading) return call.data ?? previous
 		return call.error && !isRefusal(call.error) ? previous : null

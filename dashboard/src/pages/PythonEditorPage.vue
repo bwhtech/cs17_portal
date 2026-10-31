@@ -152,6 +152,7 @@ import RunPanel from '@/components/python/RunPanel.vue'
 import TimeLeft from '@/components/python/TimeLeft.vue'
 import { usePythonAssignment } from '@/components/assignments/pythonEditor'
 import { useBreakpoint } from '@/composables/useBreakpoint'
+import { useCodeRunRecorder } from '@/composables/useCodeRunRecorder'
 import { usePolling } from '@/composables/usePolling'
 import { useProjectsPath } from '@/composables/useProjectsPath'
 import { usePasteWatch } from '@/composables/usePasteWatch'
@@ -257,6 +258,10 @@ useTabLeaveWatch(
 const recordPaste = usePasteWatch(
 	() => props.id,
 	() => isWatching.value,
+)
+const codeRuns = useCodeRunRecorder(
+	() => props.id,
+	() => canSubmit.value,
 )
 const submitOpen = ref(false)
 
@@ -372,6 +377,7 @@ async function run() {
 	panelTab.value = 'output'
 	result.value = await runner.run(code.value, stdin.value)
 	running.value = false
+	codeRuns.recordRun(result.value)
 }
 
 async function runSampleTests() {
@@ -381,6 +387,7 @@ async function runSampleTests() {
 	testRuns.value = null
 	testRuns.value = await runTests(runner, code.value, sampleTests.value)
 	testing.value = false
+	codeRuns.recordTests(testRuns.value)
 }
 
 async function openSubmit() {
