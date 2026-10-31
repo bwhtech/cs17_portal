@@ -55,7 +55,7 @@
 			label="Remarks"
 			:rows="2"
 			placeholder="Feedback for the student (Markdown supported)"
-			:required="remarksOnly"
+			:required="remarksOnly && !voiceRemark"
 			:error="remarksError"
 		/>
 
@@ -89,7 +89,7 @@
 		<VoiceNoteRecorder
 			ref="recorder"
 			v-model="voiceRemark"
-			class="col-span-2 md:w-64"
+			class="col-span-2 md:w-64 md:self-stretch"
 			:error="voiceRemarkError"
 		/>
 
