@@ -15,6 +15,7 @@
   "last_name",
   "cohort",
   "user",
+  "ai_model",
   "primary_phone",
   "alternate_phone",
   "column_break_vxfo",
@@ -114,17 +115,25 @@
    "fieldname": "alternate_phone",
    "fieldtype": "Data",
    "label": "Phone"
+  },
+  {
+   "depends_on": "eval:doc.profile_type==\"Faculty\"",
+   "description": "Check with AI uses this model. Empty uses the default in CS17 AI Settings.",
+   "fieldname": "ai_model",
+   "fieldtype": "Data",
+   "label": "AI model"
   }
  ],
  "grid_page_length": 50,
  "image_field": "profile_picture",
+ "link_display_mode": "Search",
  "links": [
   {
    "link_doctype": "CS17 Assignment Submission",
    "link_fieldname": "student"
   }
  ],
- "modified": "2026-10-12 21:58:25.018597",
+ "modified": "2026-10-31 22:29:29.770895",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Profile",

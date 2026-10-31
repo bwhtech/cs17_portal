@@ -54,6 +54,9 @@ class CS17Project(Document):
 		):
 			frappe.throw(_("This assignment does not watch tab switches."))
 
+	def on_trash(self):
+		frappe.db.delete("CS17 Code Snapshot", {"project": self.name})
+
 
 def get_owner_profile(user: str) -> frappe._dict | None:
 	return frappe.db.get_value(

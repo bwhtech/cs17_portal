@@ -16,15 +16,24 @@
 
 			<div v-else class="space-y-6">
 				<p class="text-p-sm text-ink-gray-5">
-					Faculty use this model to check Python submissions. The AI only drafts the
+					Faculty use these models to check Python submissions. The AI only drafts the
 					grade; faculty review and save it.
 				</p>
 				<FormControl
 					v-model="model"
-					label="Model"
+					label="Default model"
 					description="As provider/model, for example anthropic/claude-sonnet-5-5 or gemini/gemini-3.5-flash."
 					:error="modelError"
 					@blur="saveModel"
+				/>
+				<FormControl
+					v-model="otherModels"
+					type="textarea"
+					label="Other models"
+					description="One per line, as provider/model. Faculty can pick one of these in Preferences instead of the default."
+					:rows="3"
+					:error="otherModelsError"
+					@blur="saveOtherModels"
 				/>
 				<FormControl
 					v-model="apiKey"
@@ -54,12 +63,14 @@ import { frappeErrorMessage } from '@/lib/frappeError'
 import { trySubmit } from '@/lib/trySubmit'
 import type { AISettings } from '@/types'
 
-type AISettingsEdit = { model: string; api_key?: string }
+type AISettingsEdit = { model: string; other_models: string; api_key?: string }
 
 const saved = ref<AISettings | null>(null)
 const model = ref('')
+const otherModels = ref('')
 const apiKey = ref('')
 const modelError = ref('')
+const otherModelsError = ref('')
 const apiKeyError = ref('')
 
 const settings = useCall<AISettings>({
@@ -68,6 +79,7 @@ const settings = useCall<AISettings>({
 	onSuccess: (data) => {
 		saved.value = data
 		model.value = data.model ?? ''
+		otherModels.value = data.other_models ?? ''
 	},
 })
 
@@ -83,7 +95,11 @@ let lastSave: Promise<unknown> = Promise.resolve()
 
 function save(edit: Partial<AISettingsEdit>, fallback: string): Promise<string> {
 	const failure = lastSave.then(async () => {
-		await trySubmit(saveCall, { model: saved.value?.model ?? '', ...edit })
+		await trySubmit(saveCall, {
+			model: saved.value?.model ?? '',
+			other_models: saved.value?.other_models ?? '',
+			...edit,
+		})
 		if (saveCall.error || !saveCall.data) return frappeErrorMessage(saveCall.error, fallback)
 		saved.value = saveCall.data
 		return ''
@@ -97,6 +113,13 @@ async function saveModel() {
 	if (next === (saved.value?.model ?? '')) return
 	modelError.value = await save({ model: next }, 'Could not save the model.')
 	if (!modelError.value) toast.success('Model saved', { id: 'ai-model-saved' })
+}
+
+async function saveOtherModels() {
+	const next = otherModels.value.trim()
+	if (next === (saved.value?.other_models ?? '')) return
+	otherModelsError.value = await save({ other_models: next }, 'Could not save the models.')
+	if (!otherModelsError.value) toast.success('Models saved', { id: 'ai-models-saved' })
 }
 
 async function saveApiKey() {

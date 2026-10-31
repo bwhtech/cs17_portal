@@ -17,6 +17,7 @@ class CS17Profile(Document):
 		from frappe.types import DF
 
 		address: DF.SmallText | None
+		ai_model: DF.Data | None
 		alternate_phone: DF.Data | None
 		blood_group: DF.Literal["O+", "O-", "B+", "B-", "A+", "A-", "AB+", "AB-"]
 		cohort: DF.Link | None

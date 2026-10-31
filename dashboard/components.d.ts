@@ -36,6 +36,7 @@ declare module 'vue' {
     AvatarCropper: typeof import('./src/components/settings/AvatarCropper.vue')['default']
     CodeCommentForm: typeof import('./src/components/grading/CodeCommentForm.vue')['default']
     CodeComments: typeof import('./src/components/grading/CodeComments.vue')['default']
+    CodeReplay: typeof import('./src/components/grading/CodeReplay.vue')['default']
     CopyAssignmentsDialog: typeof import('./src/components/faculty/CopyAssignmentsDialog.vue')['default']
     DataTable: typeof import('./src/components/common/DataTable.vue')['default']
     DeleteAnnouncementDialog: typeof import('./src/components/faculty/DeleteAnnouncementDialog.vue')['default']

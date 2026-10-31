@@ -291,7 +291,14 @@ export interface SimilarPair {
 
 export interface AISettings {
 	model: string | null
+	other_models: string | null
 	has_api_key: boolean
+}
+
+/** `get_my_ai_model`: the models a faculty can pick, default first, and theirs. */
+export interface FacultyAIModel {
+	models: string[]
+	model: string | null
 }
 
 export interface AIGradeDraft {
