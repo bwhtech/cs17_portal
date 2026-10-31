@@ -12,9 +12,10 @@ from cs17_portal import api
 from cs17_portal.tests.test_api import make_assignment, make_cohort, make_profile, make_submission, make_user
 
 
-def set_ai_settings(model: str, api_key: str) -> None:
+def set_ai_settings(model: str, api_key: str, other_models: str = "") -> None:
 	settings = frappe.get_doc("CS17 AI Settings")
 	settings.model = model
+	settings.other_models = other_models
 	settings.api_key = api_key
 	settings.save(ignore_permissions=True)
 
@@ -52,16 +53,16 @@ class TestCheckSubmission(FrappeTestCase):
 		self.addCleanup(frappe.set_user, "Administrator")
 		frappe.set_user(self.faculty_user)
 
-	def test_get_assignment_submissions_says_a_python_assignment_can_be_checked_with_ai(self):
+	def test_get_assignment_submissions_lists_the_ai_models_for_a_python_assignment(self):
 		assignment = api.get_assignment_submissions(self.marks_assignment)["assignment"]
 
-		self.assertTrue(assignment.can_check_with_ai)
+		self.assertEqual(assignment.ai_models, ["openai/gpt-5"])
 
 	def test_get_assignment_submissions_says_a_not_graded_assignment_cannot_be_checked_with_ai(self):
 		assignment = make_assignment(make_cohort("C180TEST"), "Python Task 182", "Python", 0)
 		frappe.db.set_value("CS17 Assignment", assignment, {"assignment_type": "Not Graded", "remarks": ""})
 
-		self.assertFalse(api.get_assignment_submissions(assignment)["assignment"].can_check_with_ai)
+		self.assertEqual(api.get_assignment_submissions(assignment)["assignment"].ai_models, [])
 
 	def test_check_submission_keeps_the_marks_within_the_maximum(self):
 		with patch("litellm.completion", return_value=ai_reply('{"marks_obtained": 25, "remarks": "Good"}')):
@@ -91,6 +92,21 @@ class TestCheckSubmission(FrappeTestCase):
 			api.check_submission(self.submission)
 
 		self.assertFalse(frappe.db.exists("CS17 Assignment Grade", {"submission": self.submission}))
+
+	def test_check_submission_uses_the_model_the_faculty_picked(self):
+		set_ai_settings("openai/gpt-5", "sk-test", "anthropic/claude-opus-5-5")
+		with patch("litellm.completion", return_value=ai_reply("{}")) as completion:
+			api.check_submission(self.submission, "anthropic/claude-opus-5-5")
+
+		self.assertEqual(completion.call_args.kwargs["model"], "anthropic/claude-opus-5-5")
+
+	def test_check_submission_refuses_a_model_that_is_not_in_settings(self):
+		with patch("litellm.completion") as completion:
+			self.assertRaises(
+				frappe.ValidationError, api.check_submission, self.submission, "openai/gpt-5-pro"
+			)
+
+		completion.assert_not_called()
 
 	def test_check_submission_refuses_before_a_model_and_key_are_set(self):
 		set_ai_settings("", "")
@@ -128,6 +144,13 @@ class TestCheckSubmission(FrappeTestCase):
 
 		self.assertEqual(counts, {"queued": 1, "skipped": 1})
 		self.assertEqual([call.kwargs["submission"] for call in enqueue.call_args_list], [self.submission])
+
+	def test_check_submissions_passes_the_picked_model_to_each_job(self):
+		set_ai_settings("openai/gpt-5", "sk-test", "anthropic/claude-opus-5-5")
+		with patch("frappe.enqueue") as enqueue:
+			api.check_submissions([self.submission], "anthropic/claude-opus-5-5")
+
+		self.assertEqual(enqueue.call_args.kwargs["model"], "anthropic/claude-opus-5-5")
 
 	def test_save_ai_grade_draft_saves_an_unpublished_grade(self):
 		with patch("litellm.completion", return_value=ai_reply('{"marks_obtained": 15, "remarks": "Good"}')):
@@ -174,10 +197,16 @@ class TestAISettings(FrappeTestCase):
 	def test_save_ai_settings_refuses_a_model_without_a_provider(self):
 		self.assertRaises(frappe.ValidationError, api.save_ai_settings, ":free", "sk-first")
 
-	def test_get_ai_settings_says_a_key_is_stored_without_returning_it(self):
-		api.save_ai_settings("openai/gpt-5", "sk-first")
+	def test_save_ai_settings_refuses_another_model_without_a_provider(self):
+		self.assertRaises(frappe.ValidationError, api.save_ai_settings, "openai/gpt-5", "sk-first", ":free")
 
-		self.assertEqual(api.get_ai_settings(), {"model": "openai/gpt-5", "has_api_key": True})
+	def test_get_ai_settings_says_a_key_is_stored_without_returning_it(self):
+		api.save_ai_settings("openai/gpt-5", "sk-first", "anthropic/claude-opus-5-5")
+
+		self.assertEqual(
+			api.get_ai_settings(),
+			{"model": "openai/gpt-5", "other_models": "anthropic/claude-opus-5-5", "has_api_key": True},
+		)
 
 	def test_get_ai_settings_refuses_a_user_who_is_not_a_system_manager(self):
 		frappe.set_user(make_user("faculty181@cs17test.com"))

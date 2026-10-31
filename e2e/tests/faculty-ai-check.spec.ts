@@ -13,7 +13,7 @@ const SUBMISSION = {
 	marks_obtained: null,
 	grade: null,
 	graded: false,
-	can_check_with_ai: true,
+	ai_models: ["openai/gpt-5"],
 };
 
 const DRAFT = { marks_obtained: 15, grade: null, remarks: "Reads the input and prints it." };
@@ -27,7 +27,7 @@ const ASSIGNMENT_SUBMISSIONS = {
 		assignment_type: "Graded",
 		remarks: "Marks",
 		max_marks: 20,
-		can_check_with_ai: true,
+		ai_models: ["openai/gpt-5"],
 	},
 	submissions: [SUBMISSION],
 	not_submitted: [],
@@ -72,6 +72,50 @@ test.describe("Faculty AI check", () => {
 		expect(savedGrades).toEqual([]);
 	});
 
+	test("checks with the model picked from the Check with AI menu", async ({ page }) => {
+		await page.route(/cs17_portal\.api\.get_submission\?/, (route) =>
+			route.fulfill({
+				json: {
+					data: {
+						...SUBMISSION,
+						ai_models: ["openai/gpt-5", "anthropic/claude-opus-5-5"],
+					},
+				},
+			})
+		);
+		await page.route("**/cs17_portal.api.get_submission_code*", (route) =>
+			route.fulfill({ json: { data: "print(input())" } })
+		);
+		await page.route(/cs17_portal\.api\.get_assignment\?/, (route) =>
+			route.fulfill({
+				json: {
+					data: {
+						name: SUBMISSION.assignment,
+						title: SUBMISSION.assignment_title,
+						test_cases: [],
+					},
+				},
+			})
+		);
+		await page.route("**/cs17_portal.api.get_submission_grade*", (route) =>
+			route.fulfill({ json: { data: null } })
+		);
+		const checks: unknown[] = [];
+		await page.route("**/cs17_portal.api.check_submission", (route) => {
+			checks.push(route.request().postDataJSON());
+			return route.fulfill({ json: { data: DRAFT } });
+		});
+
+		await page.goto(`/dashboard/faculty/submissions/${SUBMISSION.name}`);
+		await page.getByRole("button", { name: "Check with AI" }).click();
+		await page.getByRole("menuitem", { name: "claude-opus-5-5" }).click();
+
+		await expect(page.getByLabel("Marks obtained")).toHaveValue("15");
+		expect(checks).toEqual([
+			{ submission: SUBMISSION.name, model: "anthropic/claude-opus-5-5" },
+		]);
+	});
+
 	test("fills the assignment page's grade dialog from the AI check", async ({ page }) => {
 		await page.route("**/cs17_portal.api.get_assignment_submissions*", (route) =>
 			route.fulfill({ json: { data: ASSIGNMENT_SUBMISSIONS } })
@@ -110,18 +154,20 @@ test.describe("Faculty AI check", () => {
 		await page.getByRole("button", { name: "Confirm" }).click();
 
 		await expect(page.getByText("Checking 1 submission with AI.")).toBeVisible();
-		expect(checks).toEqual([{ submissions: [SUBMISSION.name] }]);
+		expect(checks).toEqual([{ submissions: [SUBMISSION.name], model: "openai/gpt-5" }]);
 	});
 
 	test("saves the model from the Settings dialog", async ({ page }) => {
 		await page.route("**/cs17_portal.api.get_ai_settings", (route) =>
-			route.fulfill({ json: { data: { model: null, has_api_key: false } } })
+			route.fulfill({
+				json: { data: { model: null, other_models: null, has_api_key: false } },
+			})
 		);
 		const saves: unknown[] = [];
 		await page.route("**/cs17_portal.api.save_ai_settings", (route) => {
 			saves.push(route.request().postDataJSON());
 			return route.fulfill({
-				json: { data: { model: "openai/gpt-5", has_api_key: false } },
+				json: { data: { model: "openai/gpt-5", other_models: null, has_api_key: false } },
 			});
 		});
 
@@ -129,10 +175,10 @@ test.describe("Faculty AI check", () => {
 		await page.locator('[data-slot="sidebar"] button').last().click();
 		await page.getByRole("menuitem", { name: "Settings" }).click();
 		await page.getByRole("tab", { name: "AI check" }).click();
-		await page.getByLabel("Model", { exact: true }).fill("openai/gpt-5");
-		await page.getByLabel("Model", { exact: true }).blur();
+		await page.getByLabel("Default model").fill("openai/gpt-5");
+		await page.getByLabel("Default model").blur();
 
 		await expect(page.getByText("Model saved")).toBeVisible();
-		expect(saves).toEqual([{ model: "openai/gpt-5" }]);
+		expect(saves).toEqual([{ model: "openai/gpt-5", other_models: "" }]);
 	});
 });
