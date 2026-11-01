@@ -47,7 +47,7 @@ test.describe("Faculty AI check", () => {
 					data: {
 						name: SUBMISSION.assignment,
 						title: SUBMISSION.assignment_title,
-						test_cases: [],
+						test_cases: [{ input: "Asha\n", expected_output: "Asha", is_hidden: 0 }],
 					},
 				},
 			})
@@ -55,9 +55,11 @@ test.describe("Faculty AI check", () => {
 		await page.route("**/cs17_portal.api.get_submission_grade*", (route) =>
 			route.fulfill({ json: { data: null } })
 		);
-		await page.route("**/cs17_portal.api.check_submission", (route) =>
-			route.fulfill({ json: { data: DRAFT } })
-		);
+		const checks: unknown[] = [];
+		await page.route("**/cs17_portal.api.check_submission", (route) => {
+			checks.push(route.request().postDataJSON());
+			return route.fulfill({ json: { data: DRAFT } });
+		});
 		const savedGrades: string[] = [];
 		await page.route("**/cs17_portal.api.save_grade", (route) => {
 			savedGrades.push(route.request().postData() ?? "");
@@ -67,14 +69,25 @@ test.describe("Faculty AI check", () => {
 		await page.goto(`/dashboard/faculty/submissions/${SUBMISSION.name}`);
 		await page.getByRole("button", { name: "Check with AI" }).click();
 
-		await expect(page.getByLabel("Marks obtained")).toHaveValue("15");
+		await expect(page.getByLabel("Marks obtained")).toHaveValue("15", { timeout: 60000 });
 		await expect(page.getByLabel("Remarks", { exact: true })).toHaveValue(DRAFT.remarks);
 		expect(savedGrades).toEqual([]);
+		expect(checks).toEqual([
+			{ submission: SUBMISSION.name, test_results: [{ passed: true, output: "Asha\n" }] },
+		]);
 	});
 
 	test("fills the assignment page's grade dialog from the AI check", async ({ page }) => {
 		await page.route("**/cs17_portal.api.get_assignment_submissions*", (route) =>
 			route.fulfill({ json: { data: ASSIGNMENT_SUBMISSIONS } })
+		);
+		await page.route(/cs17_portal\.api\.get_assignment\?/, (route) =>
+			route.fulfill({
+				json: { data: { ...ASSIGNMENT_SUBMISSIONS.assignment, test_cases: [] } },
+			})
+		);
+		await page.route("**/cs17_portal.api.get_submission_code*", (route) =>
+			route.fulfill({ json: { data: "print(input())" } })
 		);
 		await page.route("**/cs17_portal.api.check_submission", (route) =>
 			route.fulfill({ json: { data: DRAFT } })
@@ -91,6 +104,14 @@ test.describe("Faculty AI check", () => {
 	test("checks the selected submissions with AI from the bulk bar", async ({ page }) => {
 		await page.route("**/cs17_portal.api.get_assignment_submissions*", (route) =>
 			route.fulfill({ json: { data: ASSIGNMENT_SUBMISSIONS } })
+		);
+		await page.route(/cs17_portal\.api\.get_assignment\?/, (route) =>
+			route.fulfill({
+				json: { data: { ...ASSIGNMENT_SUBMISSIONS.assignment, test_cases: [] } },
+			})
+		);
+		await page.route("**/cs17_portal.api.get_submission_code*", (route) =>
+			route.fulfill({ json: { data: "print(input())" } })
 		);
 		const checks: unknown[] = [];
 		await page.route("**/cs17_portal.api.check_submissions", (route) => {
@@ -110,7 +131,9 @@ test.describe("Faculty AI check", () => {
 		await page.getByRole("button", { name: "Confirm" }).click();
 
 		await expect(page.getByText("Checking 1 submission with AI.")).toBeVisible();
-		expect(checks).toEqual([{ submissions: [SUBMISSION.name] }]);
+		expect(checks).toEqual([
+			{ submissions: [SUBMISSION.name], test_results: { [SUBMISSION.name]: [] } },
+		]);
 	});
 
 	test("saves the model from the Settings dialog", async ({ page }) => {

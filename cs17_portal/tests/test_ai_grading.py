@@ -47,6 +47,16 @@ class TestCheckSubmission(FrappeTestCase):
 		frappe.db.set_value("CS17 Assignment", grade_assignment, "remarks", "Grade")
 		cls.graded_submission = make_submission(grade_assignment, student, "Student 180", "Python Task 181")
 
+		tested_assignment = frappe.get_doc(
+			"CS17 Assignment", make_assignment(cohort, "Python Task 183", "Python", 20)
+		)
+		tested_assignment.append("test_cases", {"input": "3\n", "expected_output": "9\n"})
+		tested_assignment.save(ignore_permissions=True)
+		frappe.db.set_value("CS17 Assignment", tested_assignment.name, "remarks", "Marks")
+		cls.tested_submission = make_submission(
+			tested_assignment.name, student, "Student 180", "Python Task 183"
+		)
+
 	def setUp(self):
 		set_ai_settings("openai/gpt-5", "sk-test")
 		self.addCleanup(set_ai_settings, "", "")
@@ -66,22 +76,22 @@ class TestCheckSubmission(FrappeTestCase):
 
 	def test_check_submission_keeps_the_marks_within_the_maximum(self):
 		with patch("litellm.completion", return_value=ai_reply('{"marks_obtained": 25, "remarks": "Good"}')):
-			self.assertEqual(api.check_submission(self.submission)["marks_obtained"], 20)
+			self.assertEqual(api.check_submission(self.submission, [])["marks_obtained"], 20)
 
 	def test_check_submission_drops_a_grade_outside_the_letter_grades(self):
 		with patch("litellm.completion", return_value=ai_reply('{"grade": "A+", "remarks": "Good"}')):
-			self.assertIsNone(api.check_submission(self.graded_submission)["grade"])
+			self.assertIsNone(api.check_submission(self.graded_submission, [])["grade"])
 
 	def test_check_submission_keeps_a_letter_grade_when_the_grading_scale_uses_other_letters(self):
 		with (
 			patch("cs17_portal.api.get_grade_bands", return_value=[{"grade": "B1", "min_percent": 0}]),
 			patch("litellm.completion", return_value=ai_reply('{"grade": "B", "remarks": "Good"}')),
 		):
-			self.assertEqual(api.check_submission(self.graded_submission)["grade"], "B")
+			self.assertEqual(api.check_submission(self.graded_submission, [])["grade"], "B")
 
 	def test_check_submission_leaves_the_student_out_of_the_prompt(self):
 		with patch("litellm.completion", return_value=ai_reply("{}")) as completion:
-			api.check_submission(self.submission)
+			api.check_submission(self.submission, [])
 
 		prompt = frappe.as_json(completion.call_args.kwargs["messages"])
 		self.assertNotIn("Student 180", prompt)
@@ -89,16 +99,29 @@ class TestCheckSubmission(FrappeTestCase):
 
 	def test_check_submission_saves_no_grade(self):
 		with patch("litellm.completion", return_value=ai_reply('{"marks_obtained": 15, "remarks": "Good"}')):
-			api.check_submission(self.submission)
+			api.check_submission(self.submission, [])
 
 		self.assertFalse(frappe.db.exists("CS17 Assignment Grade", {"submission": self.submission}))
+
+	def test_check_submission_sends_the_test_results_to_the_model(self):
+		with patch("litellm.completion", return_value=ai_reply("{}")) as completion:
+			api.check_submission(self.tested_submission, [{"passed": False, "output": "6\n"}])
+
+		prompt = completion.call_args.kwargs["messages"][1]["content"].split("\n\n<student_code>")[0]
+		test_case = frappe.parse_json(prompt)["test_cases"][0]
+		self.assertEqual((test_case["passed"], test_case["output"]), (False, "6\n"))
+
+	def test_check_submission_refuses_test_results_that_do_not_match_the_tests(self):
+		self.assertRaisesRegex(
+			frappe.ValidationError, "^Run the tests again", api.check_submission, self.tested_submission, []
+		)
 
 	def test_check_submission_uses_the_faculty_ai_model(self):
 		set_ai_settings("openai/gpt-5", "sk-test", "anthropic/claude-opus-5-5")
 		api.set_my_ai_model("anthropic/claude-opus-5-5")
 		self.addCleanup(frappe.db.set_value, "CS17 Profile", self.faculty, "ai_model", None)
 		with patch("litellm.completion", return_value=ai_reply("{}")) as completion:
-			api.check_submission(self.submission)
+			api.check_submission(self.submission, [])
 
 		self.assertEqual(completion.call_args.kwargs["model"], "anthropic/claude-opus-5-5")
 
@@ -106,7 +129,7 @@ class TestCheckSubmission(FrappeTestCase):
 		frappe.db.set_value("CS17 Profile", self.faculty, "ai_model", "anthropic/claude-opus-5-5")
 		self.addCleanup(frappe.db.set_value, "CS17 Profile", self.faculty, "ai_model", None)
 		with patch("litellm.completion", return_value=ai_reply("{}")) as completion:
-			api.check_submission(self.submission)
+			api.check_submission(self.submission, [])
 
 		self.assertEqual(completion.call_args.kwargs["model"], "openai/gpt-5")
 
@@ -116,7 +139,7 @@ class TestCheckSubmission(FrappeTestCase):
 	def test_check_submission_refuses_before_a_model_and_key_are_set(self):
 		set_ai_settings("", "")
 		with patch("litellm.completion") as completion:
-			self.assertRaises(frappe.ValidationError, api.check_submission, self.submission)
+			self.assertRaises(frappe.ValidationError, api.check_submission, self.submission, [])
 
 		completion.assert_not_called()
 
@@ -128,7 +151,11 @@ class TestCheckSubmission(FrappeTestCase):
 			patch.object(frappe, "log_error"),
 		):
 			self.assertRaisesRegex(
-				frappe.ValidationError, "^The AI model did not answer", api.check_submission, self.submission
+				frappe.ValidationError,
+				"^The AI model did not answer",
+				api.check_submission,
+				self.submission,
+				[],
 			)
 
 	def test_check_submission_says_a_busy_provider_is_busy(self):
@@ -137,7 +164,7 @@ class TestCheckSubmission(FrappeTestCase):
 		)
 		with patch("litellm.completion", side_effect=busy), patch.object(frappe, "log_error"):
 			self.assertRaisesRegex(
-				frappe.ValidationError, "^The AI model is busy", api.check_submission, self.submission
+				frappe.ValidationError, "^The AI model is busy", api.check_submission, self.submission, []
 			)
 
 	def test_check_submissions_queues_a_job_for_each_ungraded_submission_only(self):
@@ -145,7 +172,7 @@ class TestCheckSubmission(FrappeTestCase):
 		self.addCleanup(frappe.delete_doc, "CS17 Assignment Grade", grade, ignore_permissions=True)
 
 		with patch("frappe.enqueue") as enqueue:
-			counts = api.check_submissions([self.submission, self.other_submission])
+			counts = api.check_submissions([self.submission, self.other_submission], {})
 
 		self.assertEqual(counts, {"queued": 1, "skipped": 1})
 		self.assertEqual([call.kwargs["submission"] for call in enqueue.call_args_list], [self.submission])
@@ -155,13 +182,20 @@ class TestCheckSubmission(FrappeTestCase):
 		api.set_my_ai_model("anthropic/claude-opus-5-5")
 		self.addCleanup(frappe.db.set_value, "CS17 Profile", self.faculty, "ai_model", None)
 		with patch("frappe.enqueue") as enqueue:
-			api.check_submissions([self.submission])
+			api.check_submissions([self.submission], {})
 
 		self.assertEqual(enqueue.call_args.kwargs["model"], "anthropic/claude-opus-5-5")
 
+	def test_check_submissions_passes_each_job_its_test_results(self):
+		test_results = {self.tested_submission: [{"passed": True, "output": "9\n"}]}
+		with patch("frappe.enqueue") as enqueue:
+			api.check_submissions([self.tested_submission], test_results)
+
+		self.assertTrue(enqueue.call_args.kwargs["test_cases"][0]["passed"])
+
 	def test_save_ai_grade_draft_saves_an_unpublished_grade(self):
 		with patch("litellm.completion", return_value=ai_reply('{"marks_obtained": 15, "remarks": "Good"}')):
-			api.save_ai_grade_draft(self.submission)
+			api.save_ai_grade_draft(self.submission, [])
 
 		grade = frappe.db.get_value(
 			"CS17 Assignment Grade",
@@ -177,7 +211,7 @@ class TestCheckSubmission(FrappeTestCase):
 		self.addCleanup(frappe.delete_doc, "CS17 Assignment Grade", grade, ignore_permissions=True)
 
 		with patch("litellm.completion", return_value=ai_reply('{"marks_obtained": 15, "remarks": "Good"}')):
-			api.save_ai_grade_draft(self.other_submission)
+			api.save_ai_grade_draft(self.other_submission, [])
 
 		self.assertEqual(frappe.db.get_value("CS17 Assignment Grade", grade, "marks_obtained"), 10)
 
