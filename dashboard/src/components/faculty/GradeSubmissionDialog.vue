@@ -34,7 +34,7 @@
 				<Button
 					icon-left="lucide-sparkles"
 					label="Check with AI"
-					:loading="aiCheck.loading"
+					:loading="testing || aiCheck.loading"
 					@click="checkWithAi"
 				/>
 				<ErrorMessage :message="aiCheckError" />
@@ -71,6 +71,7 @@
 import { computed, ref, watch } from 'vue'
 import { Button, Dialog, ErrorMessage, FormControl, Select, toast, useCall } from 'frappe-ui'
 import PublishFields from '@/components/common/PublishFields.vue'
+import { useSubmissionTests, type TestResult } from '@/composables/useSubmissionTests'
 import { isPast, toFrappeDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { gradeForMarks } from '@/lib/grades'
@@ -89,6 +90,7 @@ const props = defineProps<{
 	open: boolean
 	/** The row being graded. Its `grade`, when set, seeds the form. */
 	submission: CS17Submission | null
+	assignment: string
 	/** The assignment's `remarks` field: `Grade` scores a letter, `Marks` a number. */
 	evaluationType: EvaluationType | ''
 	maxMarks?: number
@@ -237,16 +239,24 @@ async function handleSave() {
 	emit('update:open', false)
 }
 
-const aiCheck = useCall<AIGradeDraft, { submission: string }>({
+const aiCheck = useCall<AIGradeDraft, { submission: string; test_results: TestResult[] }>({
 	url: '/api/v2/method/cs17_portal.api.check_submission',
 	method: 'POST',
 	immediate: false,
 })
 
+const { testResults, testing } = useSubmissionTests()
+
 async function checkWithAi() {
 	if (!props.submission) return
+	const { name } = props.submission
 	aiCheckError.value = ''
-	await trySubmit(aiCheck, { submission: props.submission.name })
+	const results = await testResults(props.assignment, [name])
+	if (!results) {
+		aiCheckError.value = 'Could not run the tests. Try again.'
+		return
+	}
+	await trySubmit(aiCheck, { submission: name, test_results: results[name] })
 	if (aiCheck.error || !aiCheck.data) {
 		aiCheckError.value = frappeErrorMessage(aiCheck.error, 'Could not check with AI.')
 		return

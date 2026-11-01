@@ -233,6 +233,7 @@
 				<SubmissionBulkActions
 					v-if="selection.length"
 					:submissions="selection"
+					:assignment="assignmentId"
 					:cohort="assignment.cohort"
 					:draft-grades="selectedDraftGrades"
 					:remarks-only="!isGraded"
@@ -274,6 +275,7 @@
 		v-if="gradeTarget"
 		:open="Boolean(gradeTarget)"
 		:submission="gradeTarget"
+		:assignment="assignmentId"
 		:evaluation-type="assignment?.remarks ?? 'Marks'"
 		:max-marks="assignment?.max_marks"
 		:can-check-with-ai="assignment?.can_check_with_ai"

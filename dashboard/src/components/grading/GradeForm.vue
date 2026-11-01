@@ -82,7 +82,7 @@
 			class="col-span-2 w-full md:w-auto"
 			icon-left="lucide-sparkles"
 			label="Check with AI"
-			:loading="aiCheck.loading"
+			:loading="testing || aiCheck.loading"
 			@click="checkWithAi"
 		/>
 
@@ -117,6 +117,7 @@ import {
 } from 'frappe-ui'
 import LoadError from '@/components/common/LoadError.vue'
 import { useLoadFailed } from '@/composables/useLoadFailed'
+import { useSubmissionTests, type TestResult } from '@/composables/useSubmissionTests'
 import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
 import { gradeForMarks } from '@/lib/grades'
 import { unescapeTags } from '@/lib/markdown'
@@ -135,6 +136,7 @@ interface SubmissionGrade {
 const props = defineProps<{
 	/** `CS17 Assignment Submission` name. */
 	submission: string
+	assignment: string
 	maxMarks: number
 	evaluationType: EvaluationType | '' | null
 	suggestedMarks?: number | null
@@ -287,14 +289,24 @@ async function save() {
 	emit('saved')
 }
 
-const aiCheck = useCall<AIGradeDraft, { submission: string }>({
+const aiCheck = useCall<AIGradeDraft, { submission: string; test_results: TestResult[] }>({
 	url: '/api/v2/method/cs17_portal.api.check_submission',
 	method: 'POST',
 	immediate: false,
 })
 
+const { testResults, testing } = useSubmissionTests()
+
 async function checkWithAi() {
-	await trySubmit(aiCheck, { submission: props.submission })
+	const results = await testResults(props.assignment, [props.submission])
+	if (!results) {
+		toast.error('Could not run the tests. Try again.')
+		return
+	}
+	await trySubmit(aiCheck, {
+		submission: props.submission,
+		test_results: results[props.submission],
+	})
 	if (aiCheck.error || !aiCheck.data) {
 		toast.error(frappeErrorMessage(aiCheck.error, 'Could not check with AI.'))
 		return
