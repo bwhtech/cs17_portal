@@ -157,6 +157,7 @@
 				<GradeForm
 					:key="submission.name"
 					:submission="submission.name"
+					:assignment="submission.assignment"
 					:max-marks="submission.max_marks"
 					:evaluation-type="submission.evaluation_type"
 					:suggested-marks="suggestedMarks"

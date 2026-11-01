@@ -26,7 +26,7 @@
 				:icon-left="isDesktop ? 'lucide-sparkles' : undefined"
 				:icon="isDesktop ? undefined : 'lucide-sparkles'"
 				:tooltip="isDesktop ? undefined : 'Check with AI'"
-				:loading="aiCheck.loading"
+				:loading="testing || aiCheck.loading"
 				@click="confirmAiCheck"
 			/>
 
@@ -57,6 +57,7 @@ import { Button, Dropdown, dialog, toast, useCall } from 'frappe-ui'
 import FacultyAvatar from '@/components/faculty/FacultyAvatar.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useFacultyMembers } from '@/composables/useFacultyMembers'
+import { useSubmissionTests, type TestResult } from '@/composables/useSubmissionTests'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { trySubmit } from '@/lib/trySubmit'
 import type { FacultyMember } from '@/types'
@@ -64,6 +65,7 @@ import type { FacultyMember } from '@/types'
 const props = defineProps<{
 	/** The selected submission names. */
 	submissions: string[]
+	assignment: string
 	cohort?: string
 	/** How many of the selected submissions have a grade that is still a draft. */
 	draftGrades?: number
@@ -98,11 +100,16 @@ const publish = useCall<number, { submissions: string[] }>({
 	immediate: false,
 })
 
-const aiCheck = useCall<{ queued: number; skipped: number }, { submissions: string[] }>({
+const aiCheck = useCall<
+	{ queued: number; skipped: number },
+	{ submissions: string[]; test_results: Record<string, TestResult[]> }
+>({
 	url: '/api/v2/method/cs17_portal.api.check_submissions',
 	method: 'POST',
 	immediate: false,
 })
+
+const { testResults, testing } = useSubmissionTests()
 
 function confirmPublish() {
 	const count = props.draftGrades
@@ -131,7 +138,12 @@ function confirmAiCheck() {
 		title: `Check ${count} ${count === 1 ? 'submission' : 'submissions'} with AI?`,
 		message: 'Each one gets a draft grade for you to review. Nothing is published.',
 		onConfirm: async () => {
-			await trySubmit(aiCheck, { submissions })
+			const results = await testResults(props.assignment, submissions)
+			if (!results) {
+				toast.error('Could not run the tests. Try again.')
+				return
+			}
+			await trySubmit(aiCheck, { submissions, test_results: results })
 			if (aiCheck.error || !aiCheck.data) {
 				toast.error(
 					frappeErrorMessage(aiCheck.error, 'Could not check the submissions with AI.'),
