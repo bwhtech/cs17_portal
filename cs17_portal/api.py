@@ -1873,17 +1873,11 @@ def get_quarters() -> list:
 
 @frappe.whitelist(methods=["GET"])
 def get_class_report(cohort: str, quarter: str | None = None) -> list:
-	from cs17_portal.cs17_portal.doctype.cs17_assignment_grade.cs17_assignment_grade import (
-		get_grade_for_marks,
-	)
-	from cs17_portal.cs17_portal.doctype.cs17_grading_scale.cs17_grading_scale import get_default_scale
+	return summarize_class_work(get_class_work(cohort, quarter))
 
-	rows = {
-		student.student: frappe._dict(
-			student, given=0, submitted=0, missing=0, late=0, marks_obtained=0, max_marks=0
-		)
-		for student in get_cohort_students(cohort)
-	}
+
+def get_class_work(cohort: str, quarter: str | None = None) -> frappe._dict:
+	students = get_cohort_students(cohort)
 	assignments = [
 		assignment
 		for assignment in frappe.get_all(
@@ -1891,6 +1885,7 @@ def get_class_report(cohort: str, quarter: str | None = None) -> list:
 			filters={"cohort": cohort, "quarter": quarter} if quarter else {"cohort": cohort},
 			fields=[
 				"name",
+				"title",
 				"due_date",
 				"assignment_type",
 				"remarks",
@@ -1917,25 +1912,45 @@ def get_class_report(cohort: str, quarter: str | None = None) -> list:
 			fields=["name", "assignment", "student", "submitted_at"],
 		)
 	}
-	published_marks = {
-		grade.submission: grade.marks_obtained
+	published_grades = {
+		grade.submission: grade
 		for grade in frappe.get_all(
 			"CS17 Assignment Grade",
 			filters={"submission": ("in", [submission.name for submission in submissions.values()])},
-			fields=["submission", "marks_obtained", "is_published", "published_on"],
+			fields=["submission", "marks_obtained", "grade", "is_published", "published_on"],
 		)
 		if is_published_now(grade, "published_on")
 	}
+	return frappe._dict(
+		students=students,
+		assignments=assignments,
+		students_by_assignment=students_by_assignment,
+		submissions=submissions,
+		published_grades=published_grades,
+	)
 
+
+def summarize_class_work(work: frappe._dict) -> list:
+	from cs17_portal.cs17_portal.doctype.cs17_assignment_grade.cs17_assignment_grade import (
+		get_grade_for_marks,
+	)
+	from cs17_portal.cs17_portal.doctype.cs17_grading_scale.cs17_grading_scale import get_default_scale
+
+	rows = {
+		student.student: frappe._dict(
+			student, given=0, submitted=0, missing=0, late=0, marks_obtained=0, max_marks=0
+		)
+		for student in work.students
+	}
 	now = now_datetime()
-	for assignment in assignments:
+	for assignment in work.assignments:
 		by_marks = assignment.assignment_type == "Graded" and assignment.remarks == "Marks"
-		for student in students_by_assignment.get(assignment.name) or rows:
+		for student in work.students_by_assignment.get(assignment.name) or rows:
 			row = rows.get(student)
 			if not row:
 				continue
 			row.given += 1
-			submission = submissions.get((assignment.name, student))
+			submission = work.submissions.get((assignment.name, student))
 			if not submission:
 				if assignment.due_date and assignment.due_date < now:
 					row.missing += 1
@@ -1947,8 +1962,8 @@ def get_class_report(cohort: str, quarter: str | None = None) -> list:
 				and submission.submitted_at > assignment.due_date
 			):
 				row.late += 1
-			if by_marks and submission.name in published_marks:
-				row.marks_obtained += flt(published_marks[submission.name])
+			if by_marks and submission.name in work.published_grades:
+				row.marks_obtained += flt(work.published_grades[submission.name].marks_obtained)
 				row.max_marks += flt(assignment.max_marks)
 
 	scale = get_default_scale()
