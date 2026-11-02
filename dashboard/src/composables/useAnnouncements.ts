@@ -26,7 +26,9 @@ export function provideAnnouncements(): void {
 		immediate: isStudent.value,
 	})
 
-	usePolling(() => (isFaculty.value ? facultyCall.reload() : studentCall.reload()))
+	usePolling(() =>
+		isFaculty.value ? facultyCall.reload() : isStudent.value && studentCall.reload(),
+	)
 
 	const announcements = computed<CS17Announcement[]>((previous = []) => {
 		const call = isFaculty.value ? facultyCall : studentCall

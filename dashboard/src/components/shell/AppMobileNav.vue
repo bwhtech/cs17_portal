@@ -9,7 +9,7 @@
 			:active="isNavItemActive(item, route.path)"
 		>
 			<template
-				v-if="item.to === nav.announcements.to && unread.length"
+				v-if="item.to === nav.announcements?.to && unread.length"
 				#default="{ active }"
 			>
 				<span class="relative">
@@ -71,7 +71,7 @@
 			</button>
 
 			<button
-				v-if="!isFaculty"
+				v-if="!isFaculty && !isGuardian"
 				class="flex items-center gap-3 rounded-4 px-3 py-2.5 text-left text-base text-ink-gray-8 hover:bg-surface-gray-2"
 				@click="openAfterSheet(feedback.open)"
 			>
@@ -97,12 +97,12 @@ import { useSettingsDialog } from '@/composables/useSettingsDialog'
 
 const route = useRoute()
 const router = useRouter()
-const { profile, isFaculty } = useSession()
+const { profile, isFaculty, isGuardian } = useSession()
 
 const { unread } = useAnnouncements()
 
 const sheetOpen = ref(false)
-const nav = computed(() => navConfig(isFaculty.value))
+const nav = computed(() => navConfig(isFaculty.value, isGuardian.value))
 
 /** The sidebar rows that didn't make it into the tab bar. */
 const sheetItems = computed<NavItem[]>(() => {

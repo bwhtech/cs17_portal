@@ -457,7 +457,11 @@ def require_current_student() -> str:
 
 
 def require_current_profile() -> str:
-	name = frappe.db.get_value("CS17 Profile", {"user": frappe.session.user}, "name")
+	name = frappe.db.get_value(
+		"CS17 Profile",
+		{"user": frappe.session.user, "profile_type": ("in", ("Student", "Faculty"))},
+		"name",
+	)
 	if not name:
 		frappe.throw(_("No profile found for current user"), frappe.PermissionError)
 	return name

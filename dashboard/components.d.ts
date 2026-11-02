@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AddGuardianDialog: typeof import('./src/components/guardian/AddGuardianDialog.vue')['default']
     AISettings: typeof import('./src/components/settings/AISettings.vue')['default']
     AlertBanner: typeof import('./src/components/announcements/AlertBanner.vue')['default']
     AnnouncementAlert: typeof import('./src/components/announcements/AnnouncementAlert.vue')['default']
@@ -34,6 +35,7 @@ declare module 'vue' {
     AssignmentTable: typeof import('./src/components/assignments/AssignmentTable.vue')['default']
     AssignmentTimingDialog: typeof import('./src/components/faculty/AssignmentTimingDialog.vue')['default']
     AvatarCropper: typeof import('./src/components/settings/AvatarCropper.vue')['default']
+    ChildCard: typeof import('./src/components/guardian/ChildCard.vue')['default']
     ClassmateReviews: typeof import('./src/components/assignments/ClassmateReviews.vue')['default']
     CodeCommentForm: typeof import('./src/components/grading/CodeCommentForm.vue')['default']
     CodeComments: typeof import('./src/components/grading/CodeComments.vue')['default']
@@ -92,6 +94,7 @@ declare module 'vue' {
     SettingsDialog: typeof import('./src/components/settings/SettingsDialog.vue')['default']
     SimilarCodeDialog: typeof import('./src/components/faculty/SimilarCodeDialog.vue')['default']
     StudentCodeComments: typeof import('./src/components/assignments/StudentCodeComments.vue')['default']
+    StudentGuardians: typeof import('./src/components/guardian/StudentGuardians.vue')['default']
     StudentImport: typeof import('./src/components/settings/StudentImport.vue')['default']
     SubmissionAssignees: typeof import('./src/components/faculty/SubmissionAssignees.vue')['default']
     SubmissionBulkActions: typeof import('./src/components/faculty/SubmissionBulkActions.vue')['default']

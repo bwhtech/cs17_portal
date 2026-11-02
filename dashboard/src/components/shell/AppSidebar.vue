@@ -31,7 +31,7 @@
 				</nav>
 			</template>
 
-			<nav class="mt-4 space-y-0.5">
+			<nav v-if="nav.announcements" class="mt-4 space-y-0.5">
 				<SidebarItem
 					:active="isNavItemActive(nav.announcements, route.path)"
 					:route="nav.announcements.to"
@@ -94,7 +94,7 @@ import { useSettingsDialog } from '@/composables/useSettingsDialog'
 import { STORAGE_KEYS, readJSON, writeJSON } from '@/lib/storage'
 
 const route = useRoute()
-const { profile, isFaculty, cohort, logout } = useSession()
+const { profile, isFaculty, isGuardian, cohort, logout } = useSession()
 const settings = useSettingsDialog()
 const feedback = useFeedbackDialog()
 const { unread } = useAnnouncements()
@@ -102,18 +102,19 @@ const { unread } = useAnnouncements()
 const collapsed = ref(readJSON(STORAGE_KEYS.sidebarCollapsed, false))
 watch(collapsed, (value) => writeJSON(STORAGE_KEYS.sidebarCollapsed, value))
 
-const nav = computed(() => navConfig(isFaculty.value))
+const nav = computed(() => navConfig(isFaculty.value, isGuardian.value))
 // Students are identified by their cohort, faculty simply by the role. The
 // signed-in name sits in the account menu's Settings dialog instead — a long
 // one overruns the header's subtitle line.
 const roleLine = computed(() => {
 	if (isFaculty.value) return 'Faculty'
+	if (isGuardian.value) return 'Guardian'
 	return cohort.value ? `cohort ${cohort.value}` : 'Student'
 })
 
 const accountOptions = [
 	{ label: 'Settings', icon: 'lucide-settings', onClick: () => settings.open() },
-	...(isFaculty.value
+	...(isFaculty.value || isGuardian.value
 		? []
 		: [
 				{
