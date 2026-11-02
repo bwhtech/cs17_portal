@@ -26,6 +26,9 @@ export const STORAGE_KEYS = {
 	celebratedAssignment(assignment: string) {
 		return `cs17-celebrated:${window.current_user}:${assignment}`
 	},
+	unsavedScratchProject(project: string) {
+		return `cs17-unsaved-scratch-project:${window.current_user}:${project}`
+	},
 } as const
 
 export function readJSON<T>(key: string, fallback: T): T {

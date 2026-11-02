@@ -31,6 +31,12 @@
 					label="Live"
 					:route="`/faculty/assignments/${assignment.name}/live`"
 				/>
+				<Button
+					v-if="assignment.submission_type === 'Python'"
+					icon-left="lucide-messages-square"
+					label="Peer review"
+					@click="peerReviewOpen = true"
+				/>
 			</template>
 			<template v-else>
 				<Button
@@ -335,6 +341,12 @@
 		:submission="similarCodeSubmission"
 		@retry="similar.reload()"
 	/>
+
+	<PeerReviewsDialog
+		v-if="peerReviewOpen && assignment"
+		v-model:open="peerReviewOpen"
+		:assignment="assignment.name"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -364,6 +376,7 @@ import AnswerSheetCard from '@/components/faculty/AnswerSheetCard.vue'
 import AssignmentStudentsDialog from '@/components/faculty/AssignmentStudentsDialog.vue'
 import AssignmentTimingDialog from '@/components/faculty/AssignmentTimingDialog.vue'
 import GradeSubmissionDialog from '@/components/faculty/GradeSubmissionDialog.vue'
+import PeerReviewsDialog from '@/components/faculty/PeerReviewsDialog.vue'
 import SendBackDialog from '@/components/faculty/SendBackDialog.vue'
 import SimilarCodeDialog from '@/components/faculty/SimilarCodeDialog.vue'
 import SubmissionAssignees from '@/components/faculty/SubmissionAssignees.vue'
@@ -448,6 +461,7 @@ const studentsOpen = ref(false)
 const timingOpen = ref(false)
 const similarCodeOpen = ref(false)
 const similarCodeSubmission = ref<CS17Submission>()
+const peerReviewOpen = ref(false)
 
 function openSimilarCode(submission?: CS17Submission) {
 	similarCodeSubmission.value = submission
@@ -818,6 +832,11 @@ const moreHeaderActions = computed<DropdownActionOption[]>(() => [
 					label: 'Live',
 					icon: 'lucide-activity',
 					route: `/faculty/assignments/${assignmentId.value}/live`,
+				},
+				{
+					label: 'Peer review',
+					icon: 'lucide-messages-square',
+					onClick: () => (peerReviewOpen.value = true),
 				},
 			]
 		: []),

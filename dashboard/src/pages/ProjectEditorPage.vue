@@ -106,7 +106,9 @@ import { useZenMode, useZenOnMount } from '@/composables/useZenMode'
 import { useProjectsPath } from '@/composables/useProjectsPath'
 import { onBeforeLogout, useSession } from '@/composables/useSession'
 import { frappeErrorMessage } from '@/lib/frappeError'
+import { readIndexedDB, removeIndexedDB, writeIndexedDB } from '@/lib/indexedDB'
 import { arrayBufferToBase64, dataUrlToBase64 } from '@/lib/scratch'
+import { STORAGE_KEYS } from '@/lib/storage'
 import { trySubmit } from '@/lib/trySubmit'
 import type { CS17Project } from '@/types'
 
@@ -116,6 +118,7 @@ const EDITOR_ANSWER_TIMEOUT_MS = 15000
 
 type SaveKind = 'manual' | 'auto'
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
+type LocalCopy = { sb3: ArrayBuffer; lastSavedAt: string | null }
 
 interface SaveProjectParams {
 	project: string
@@ -157,8 +160,9 @@ const assignmentClosed = useCall<boolean, { assignment: string }>({
 })
 
 const readOnly = computed(() => route.query.readonly === '1' || assignmentClosed.data === true)
+const readOnlySettled = computed(() => !presetAssignment.value || assignmentClosed.isFinished)
 
-const saveProject = useCall<{ sb3_file: string }, SaveProjectParams>({
+const saveProject = useCall<{ sb3_file: string; last_saved_at: string }, SaveProjectParams>({
 	url: '/api/v2/method/cs17_portal.api.save_project',
 	method: 'POST',
 	immediate: false,
@@ -172,6 +176,9 @@ let pendingKind: SaveKind | null = null
 let autosaveTimer: ReturnType<typeof setTimeout> | null = null
 let answerTimer: ReturnType<typeof setTimeout> | undefined
 let opened = false
+let lastSavedAt: string | null = null
+let localCopyChecked = false
+let unsavedSb3: ArrayBuffer | null = null
 let saveBeforeLeaveFailed = false
 
 const statusLabel = computed(() => {
@@ -204,10 +211,33 @@ watch(
 	(doc) => {
 		if (!doc || opened) return
 		opened = true
-		if (doc.sb3_file) openSavedProject(doc.sb3_file)
+		lastSavedAt = doc.last_saved_at
+		openProject()
 	},
 	{ immediate: true },
 )
+watch(readOnlySettled, openProject)
+
+async function openProject() {
+	if (!opened || !readOnlySettled.value || localCopyChecked) return
+	localCopyChecked = true
+	const key = STORAGE_KEYS.unsavedScratchProject(props.id)
+	const copy = readOnly.value ? undefined : await readIndexedDB<LocalCopy>(key)
+	if (copy && copy.lastSavedAt === lastSavedAt) {
+		sb3.value = copy.sb3
+		onDirty()
+		return
+	}
+	if (copy) removeIndexedDB(key)
+	if (project.data?.sb3_file) openSavedProject(project.data.sb3_file)
+}
+
+function updateLocalCopy() {
+	if (!localCopyChecked) return
+	const key = STORAGE_KEYS.unsavedScratchProject(props.id)
+	if (unsavedSb3) return writeIndexedDB(key, { sb3: unsavedSb3, lastSavedAt } satisfies LocalCopy)
+	return removeIndexedDB(key)
+}
 
 function clearAutosave() {
 	if (!autosaveTimer) return
@@ -267,6 +297,8 @@ async function onSb3(payload: { sb3: ArrayBuffer; thumbnail?: string }) {
 	clearTimeout(answerTimer)
 	const kind = pendingKind ?? 'manual'
 	pendingKind = null
+	unsavedSb3 = payload.sb3
+	await updateLocalCopy()
 
 	const params: SaveProjectParams = {
 		project: props.id,
@@ -286,6 +318,9 @@ async function onSb3(payload: { sb3: ArrayBuffer; thumbnail?: string }) {
 	}
 
 	status.value = 'saved'
+	lastSavedAt = saved.last_saved_at
+	if (unsavedSb3 === payload.sb3) unsavedSb3 = null
+	updateLocalCopy()
 	// Only a deliberate save refreshes the document, so the grid's "Saved
 	// <when>" is current without every autosave costing a second request.
 	if (kind === 'manual') project.reload()

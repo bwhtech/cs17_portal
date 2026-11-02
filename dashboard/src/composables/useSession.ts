@@ -54,7 +54,11 @@ export async function removeStorageOfOtherUsers(): Promise<void> {
 	removeDraftsOfOtherUsers()
 	const ownNamespace = `ns:${encodeURIComponent(user.value)}:`
 	const otherUsersCache = (await keys()).filter(
-		(key) => typeof key === 'string' && key.startsWith('ns:') && !key.startsWith(ownNamespace),
+		(key) =>
+			typeof key === 'string' &&
+			((key.startsWith('ns:') && !key.startsWith(ownNamespace)) ||
+				(key.startsWith('cs17-unsaved-scratch-project:') &&
+					!key.startsWith(STORAGE_KEYS.unsavedScratchProject('')))),
 	)
 	await delMany(otherUsersCache)
 }
