@@ -38,6 +38,14 @@
 				{{ cohort ? 'No upcoming assignments.' : 'You are not in a cohort yet.' }}
 			</p>
 		</section>
+
+		<TopicProgress
+			:topics="topicProgressCall.data"
+			:failed="topicProgressFailed"
+			class="space-y-4 md:rounded-4 md:border md:border-outline-gray-1 md:bg-surface-base md:p-5"
+		>
+			<h2 class="text-base-medium text-ink-gray-8">By topic</h2>
+		</TopicProgress>
 	</PageBody>
 
 	<GradeDialog v-model:open="gradeOpen" :grade="activeGrade" />
@@ -50,12 +58,14 @@ import { ErrorMessage } from 'frappe-ui'
 import AlertBanner from '@/components/announcements/AlertBanner.vue'
 import AssignmentTable from '@/components/assignments/AssignmentTable.vue'
 import GradeDialog from '@/components/assignments/GradeDialog.vue'
+import TopicProgress, { type TopicProgressRow } from '@/components/reports/TopicProgress.vue'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { usePolledCall, usePolling, usePublishTimer } from '@/composables/usePolling'
 import { useSession } from '@/composables/useSession'
 import { dayjs, formatLongDate, isPast } from '@/lib/dates'
+import { isRefusal } from '@/lib/frappeError'
 import { gradesByAssignment, submissionsByAssignment } from '@/lib/status'
 import type {
 	StudentAnnouncementsResponse,
@@ -86,9 +96,14 @@ const gradesCall = usePolledCall<StudentGradesResponse>({
 	immediate: Boolean(profile.value?.name),
 })
 
+const topicProgressCall = usePolledCall<TopicProgressRow[]>({
+	url: '/api/v2/method/cs17_portal.topic_progress.get_my_topic_progress',
+	immediate: isStudent.value,
+})
+
 // Each student endpoint answers with the next scheduled publish beside its
 // rows, so a publish lands on the second; the interval covers everything else.
-for (const handle of [announcementsCall, assignmentsCall, gradesCall]) {
+for (const handle of [announcementsCall, assignmentsCall, gradesCall, topicProgressCall]) {
 	usePolling(handle.reload)
 }
 usePublishTimer(() => announcementsCall.data?.next_publish_on, announcementsCall.reload)
@@ -116,6 +131,7 @@ const upcoming = computed(() =>
 const loading = computed(() => assignmentsCall.loading && !assignmentsCall.data)
 
 const failed = useLoadFailed(assignmentsCall)
+const topicProgressFailed = useLoadFailed(topicProgressCall, { except: isRefusal })
 
 const gradeAssignment = ref<string | null>(null)
 const gradeOpen = ref(false)
@@ -131,5 +147,6 @@ function openGrade(assignment: string) {
 function reloadSubmissionsAndGrades() {
 	assignmentsCall.reload()
 	gradesCall.reload()
+	topicProgressCall.reload()
 }
 </script>
