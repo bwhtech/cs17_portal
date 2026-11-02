@@ -13,7 +13,10 @@ interface CodeRun {
 export function useCodeRunRecorder(
 	project: () => string,
 	isRecording: () => boolean,
-): { recordRun: (result: RunResult) => void; recordTests: (runs: TestRun[]) => void } {
+): {
+	recordRun: (result: RunResult) => void
+	recordTests: (runs: TestRun[]) => Promise<unknown>
+} {
 	const codeRun = useCall<null, CodeRun & { project: string }>({
 		url: '/api/v2/method/cs17_portal.live_lab.record_code_run',
 		method: 'POST',
@@ -22,8 +25,9 @@ export function useCodeRunRecorder(
 	let recording: Promise<unknown> = Promise.resolve()
 
 	function record(run: CodeRun) {
-		if (!isRecording()) return
-		recording = recording.then(() => trySubmit(codeRun, { project: project(), ...run }))
+		if (isRecording())
+			recording = recording.then(() => trySubmit(codeRun, { project: project(), ...run }))
+		return recording
 	}
 
 	return {
@@ -31,9 +35,9 @@ export function useCodeRunRecorder(
 			if (result.status === 'finished') record(raisedError(result))
 		},
 		recordTests(runs) {
-			if (!runs.some(ran)) return
+			if (!runs.some(ran)) return recording
 			const raised = runs.find(({ result }) => result.status === 'finished' && result.error)
-			record({
+			return record({
 				passed: runs.filter((run) => run.passed).length,
 				total: runs.length,
 				...(raised && raisedError(raised.result)),

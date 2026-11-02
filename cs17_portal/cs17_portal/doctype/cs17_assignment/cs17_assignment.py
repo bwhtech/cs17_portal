@@ -34,9 +34,11 @@ class CS17Assignment(Document):
 		description: DF.TextEditor | None
 		difficulty: DF.Literal["", "Easy", "Medium", "Hard", "Extra hard"]
 		due_date: DF.Datetime | None
+		hint_after_failed_runs: DF.Int
 		is_published: DF.Check
 		late_penalty: DF.Percent
 		late_until: DF.Datetime | None
+		max_hints: DF.Int
 		max_marks: DF.Float
 		naming_series: DF.Literal["GRADED-.{cohort}.-.###", "NOT-GRADED-.{cohort}.-.###"]
 		publish_on: DF.Datetime | None
@@ -67,10 +69,15 @@ class CS17Assignment(Document):
 			self.watch_tab_switches = 0
 			self.time_limit = 0
 			self.attempts_allowed = 0
+			self.hint_after_failed_runs = 0
 		if cint(self.time_limit) < 0:
 			frappe.throw(_("The time limit cannot be negative."))
 		if cint(self.attempts_allowed) < 0:
 			frappe.throw(_("The number of attempts cannot be negative."))
+		if cint(self.hint_after_failed_runs) < 0:
+			frappe.throw(_("The failed checks before a hint cannot be negative."))
+		if self.hint_after_failed_runs and cint(self.max_hints) < 1:
+			frappe.throw(_("Allow at least one hint per student, or turn hints off."))
 		self._validate_late_work()
 		if self.assignment_type == "Not Graded":
 			self.max_marks = 0

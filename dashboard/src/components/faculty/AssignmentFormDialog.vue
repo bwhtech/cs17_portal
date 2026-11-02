@@ -185,6 +185,23 @@
 							min="1"
 							step="1"
 						/>
+						<FormControl
+							v-model="draft.hint_after_failed_runs"
+							type="number"
+							label="Offer a hint after this many failed checks"
+							description="Leave empty for no hints. Hints need an AI model in Settings."
+							min="1"
+							step="1"
+						/>
+						<FormControl
+							v-if="Number(draft.hint_after_failed_runs) > 0"
+							v-model="draft.max_hints"
+							type="number"
+							label="Hints per student"
+							min="1"
+							step="1"
+							:error="errors.max_hints"
+						/>
 					</template>
 
 					<div class="space-y-2">
@@ -327,6 +344,8 @@ function emptyDraft(): AssignmentDraft {
 		late_until: '',
 		late_penalty: '',
 		rubric: [],
+		hint_after_failed_runs: '',
+		max_hints: '3',
 	}
 }
 
@@ -346,12 +365,16 @@ const loadFailed = ref(false)
 const published = ref(false)
 
 const errors = reactive<
-	Record<'title' | 'cohort' | 'due_date' | 'max_marks' | 'publishOn' | 'form', string>
+	Record<
+		'title' | 'cohort' | 'due_date' | 'max_marks' | 'max_hints' | 'publishOn' | 'form',
+		string
+	>
 >({
 	title: '',
 	cohort: '',
 	due_date: '',
 	max_marks: '',
+	max_hints: '',
 	publishOn: '',
 	form: '',
 })
@@ -496,6 +519,10 @@ async function loadExisting(name: string) {
 			criterion: row.criterion,
 			marks: String(row.marks),
 		})),
+		hint_after_failed_runs: existing.hint_after_failed_runs
+			? String(existing.hint_after_failed_runs)
+			: '',
+		max_hints: String(existing.max_hints ?? 3),
 	} satisfies AssignmentDraft)
 	publishMode.value = existing.publish_on ? 'schedule' : 'draft'
 	publishOn.value = existing.publish_on ?? ''
@@ -517,6 +544,7 @@ function isDirty(): boolean {
 			draft.rubric.length ||
 			draft.watch_tab_switches ||
 			draft.time_limit ||
+			draft.hint_after_failed_runs ||
 			(draft.cohort && !facultyCohort.value) ||
 			draft.quarter ||
 			draft.topic ||
@@ -533,6 +561,7 @@ function clearErrors() {
 	errors.cohort = ''
 	errors.due_date = ''
 	errors.max_marks = ''
+	errors.max_hints = ''
 	errors.publishOn = ''
 	errors.form = ''
 	rubricErrors.value = []
@@ -552,6 +581,13 @@ function validate(): boolean {
 	if (publishMode.value === 'schedule' && !publishOn.value) {
 		errors.publishOn = 'Pick a publish date.'
 	}
+	if (
+		draft.submission_type === 'Python' &&
+		Number(draft.hint_after_failed_runs) > 0 &&
+		!(Number(draft.max_hints) >= 1)
+	) {
+		errors.max_hints = 'Allow at least one hint.'
+	}
 	if (evaluationType.value === 'Marks') {
 		rubricErrors.value = draft.rubric.map((row) => ({
 			criterion: row.criterion.trim() ? '' : 'Name the criterion.',
@@ -563,6 +599,7 @@ function validate(): boolean {
 		errors.cohort ||
 		errors.due_date ||
 		errors.max_marks ||
+		errors.max_hints ||
 		errors.publishOn ||
 		rubricErrors.value.some((row) => row.criterion || row.marks)
 	)
@@ -610,6 +647,8 @@ async function handleSubmit() {
 						marks: Number(row.marks),
 					}))
 				: [],
+		hint_after_failed_runs: Number(draft.hint_after_failed_runs) || 0,
+		max_hints: Number(draft.max_hints) || 0,
 		publish: publishMode.value,
 		publish_on: toFrappeDatetime(publishOn.value),
 	}

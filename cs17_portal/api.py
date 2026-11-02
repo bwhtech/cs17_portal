@@ -183,6 +183,8 @@ def create_assignment(
 	late_until: str | None = None,
 	late_penalty: float | None = None,
 	rubric: list | str | None = None,
+	hint_after_failed_runs: int | None = None,
+	max_hints: int | None = None,
 ) -> str:
 	faculty = get_current_faculty()
 	if faculty.cohort and faculty.cohort != cohort:
@@ -209,6 +211,8 @@ def create_assignment(
 		late_until=late_until,
 		late_penalty=late_penalty,
 		rubric=rubric,
+		hint_after_failed_runs=hint_after_failed_runs,
+		max_hints=max_hints,
 	)
 	assignment.naming_series = _naming_series(assignment_type)
 	_apply_publish_state(assignment, publish, publish_on)
@@ -1676,6 +1680,8 @@ def update_assignment(
 	late_until: str | None = None,
 	late_penalty: float | None = None,
 	rubric: list | str | None = None,
+	hint_after_failed_runs: int | None = None,
+	max_hints: int | None = None,
 ) -> str:
 	require_faculty_for_assignment(assignment)
 	faculty = get_current_faculty()
@@ -1709,6 +1715,8 @@ def update_assignment(
 		late_until=late_until,
 		late_penalty=late_penalty,
 		rubric=rubric,
+		hint_after_failed_runs=hint_after_failed_runs,
+		max_hints=max_hints,
 	)
 	if publish is not None:
 		_apply_publish_state(doc, publish, publish_on)
@@ -1739,6 +1747,8 @@ def _set_assignment_fields(
 	late_until: str | None = None,
 	late_penalty: float | None = None,
 	rubric: list | str | None = None,
+	hint_after_failed_runs: int | None = None,
+	max_hints: int | None = None,
 ) -> None:
 	doc.update(
 		{
@@ -1768,6 +1778,10 @@ def _set_assignment_fields(
 		doc.late_until = late_until
 	if late_penalty is not None:
 		doc.late_penalty = late_penalty
+	if hint_after_failed_runs is not None:
+		doc.hint_after_failed_runs = hint_after_failed_runs
+	if max_hints is not None:
+		doc.max_hints = max_hints
 	if test_cases is not None:
 		doc.set(
 			"test_cases",
@@ -1822,6 +1836,8 @@ def get_assignment(assignment: str) -> dict | None:
 			"difficulty",
 			"late_until",
 			"late_penalty",
+			"hint_after_failed_runs",
+			"max_hints",
 			"modified",
 		],
 		as_dict=True,
@@ -1848,6 +1864,7 @@ def delete_assignment(assignment: str) -> None:
 		frappe.throw(_("Cannot delete an assignment that already has submissions"))
 	frappe.db.set_value("CS17 Project", {"assignment": assignment}, "assignment", None, update_modified=False)
 	frappe.db.delete("CS17 Code Run", {"assignment": assignment})
+	frappe.db.delete("CS17 Hint", {"assignment": assignment})
 	frappe.db.delete("CS17 Tab Leave", {"assignment": assignment})
 	frappe.db.delete("CS17 Paste", {"assignment": assignment})
 	frappe.db.delete("CS17 Code Snapshot", {"assignment": assignment})
@@ -2523,6 +2540,8 @@ def copy_assignments(assignments: list | str, cohort: str, quarter: str | None =
 				topic=source.topic,
 				difficulty=source.difficulty,
 				rubric=source.rubric,
+				hint_after_failed_runs=source.hint_after_failed_runs,
+				max_hints=source.max_hints,
 			)
 		)
 	return copies

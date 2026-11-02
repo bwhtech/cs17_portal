@@ -107,6 +107,7 @@
 					v-if="assignment.data"
 					class="shrink-0 border-outline-gray-1 px-3 py-4 max-lg:border-b sm:px-5 lg:w-[38%] lg:overflow-y-auto lg:border-r"
 					:assignment="assignment.data"
+					:hints="hints"
 				/>
 				<div class="flex min-h-0 flex-1 flex-col max-lg:min-h-[36rem]">
 					<PythonEditor
@@ -126,7 +127,17 @@
 						:test-runs="testRuns"
 						:testing="testing"
 						celebrate
-					/>
+					>
+						<template v-if="hints" #hints>
+							<PythonHints
+								:hints="hints.hints"
+								:max-hints="hints.max_hints"
+								:can-ask="canSubmit && hints.unlocked"
+								:asking="askingForHint"
+								@ask="askForHint"
+							/>
+						</template>
+					</RunPanel>
 				</div>
 			</div>
 		</div>
@@ -149,11 +160,13 @@ import EmptyState from '@/components/common/EmptyState.vue'
 import SubmitProjectDialog from '@/components/projects/SubmitProjectDialog.vue'
 import ProblemPanel from '@/components/python/ProblemPanel.vue'
 import PythonEditor from '@/components/python/PythonEditor.vue'
+import PythonHints, { type HintState } from '@/components/python/PythonHints.vue'
 import RunPanel from '@/components/python/RunPanel.vue'
 import TimeLeft from '@/components/python/TimeLeft.vue'
 import { usePythonAssignment } from '@/components/assignments/pythonEditor'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useCodeRunRecorder } from '@/composables/useCodeRunRecorder'
+import { toTestResult, type TestResult } from '@/composables/useSubmissionTests'
 import { usePolling } from '@/composables/usePolling'
 import { useProjectsPath } from '@/composables/useProjectsPath'
 import { usePasteWatch } from '@/composables/usePasteWatch'
@@ -212,6 +225,13 @@ const assignmentClosed = useCall<boolean, { assignment: string }>({
 	immediate: false,
 })
 
+const hintState = useCall<HintState | { enabled: false }, { assignment: string }>({
+	url: '/api/v2/method/cs17_portal.hints.get_hint_state',
+	params: () => ({ assignment: assignmentName.value ?? '' }),
+	immediate: false,
+})
+const hints = computed(() => (hintState.data?.enabled ? hintState.data : null))
+
 watch(
 	assignmentName,
 	(name) => {
@@ -219,6 +239,7 @@ watch(
 		assignment.reload()
 		timing.reload()
 		assignmentClosed.reload()
+		hintState.reload()
 	},
 	{ immediate: true },
 )
@@ -371,6 +392,7 @@ const running = ref(false)
 
 const testRuns = ref<TestRun[] | null>(null)
 const testing = ref(false)
+let testedCode: string | null = null
 
 async function run() {
 	if (running.value || testing.value) return
@@ -386,9 +408,53 @@ async function runSampleTests() {
 	testing.value = true
 	panelTab.value = 'tests'
 	testRuns.value = null
-	testRuns.value = await runTests(runner, code.value, sampleTests.value)
+	testedCode = code.value
+	testRuns.value = await runTests(runner, testedCode, sampleTests.value)
 	testing.value = false
-	codeRuns.recordTests(testRuns.value)
+	await codeRuns.recordTests(testRuns.value)
+	if (hints.value) hintState.reload()
+}
+
+const hintCall = useCall<
+	{ hint: string; asked_at: string },
+	{ assignment: string; project: string; code: string; test_results: TestResult[] }
+>({
+	url: '/api/v2/method/cs17_portal.hints.ask_for_hint',
+	method: 'POST',
+	immediate: false,
+})
+const askingForHint = ref(false)
+
+async function askForHint() {
+	if (askingForHint.value || running.value || testing.value || !assignmentName.value) return
+	askingForHint.value = true
+	if (testedCode !== code.value) await runSampleTests()
+	const testResults = testResultsForHint()
+	if (testResults) {
+		await trySubmit(hintCall, {
+			assignment: assignmentName.value,
+			project: props.id,
+			code: testedCode ?? code.value,
+			test_results: testResults,
+		})
+		if (hintCall.error) toast.error(frappeErrorMessage(hintCall.error, 'Could not get a hint.'))
+		else hintState.reload()
+	}
+	askingForHint.value = false
+}
+
+function testResultsForHint(): TestResult[] | null {
+	const runs = testRuns.value ?? []
+	if (runs.every((run) => run.passed)) {
+		toast.info('Your program passes every example.')
+		return null
+	}
+	try {
+		return runs.map(toTestResult)
+	} catch {
+		toast.error('Python did not start. Run the tests again, then ask for a hint.')
+		return null
+	}
 }
 
 async function openSubmit() {

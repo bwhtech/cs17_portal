@@ -56,7 +56,7 @@ export function useSubmissionTests(): {
 	return { testResults, testing }
 }
 
-function toTestResult({ result, passed }: TestRun): TestResult {
+export function toTestResult({ result, passed }: TestRun): TestResult {
 	if (result.status === 'finished') {
 		return { passed, output: [result.stdout, result.error].filter(Boolean).join('\n') }
 	}

@@ -12,6 +12,11 @@
 			Your teacher can see when you leave this tab or paste code.
 		</p>
 
+		<p v-if="hintNotice" class="flex items-center gap-1.5 text-p-sm text-ink-gray-7">
+			<span class="lucide-lightbulb size-4 shrink-0" aria-hidden="true" />
+			{{ hintNotice }}
+		</p>
+
 		<MarkdownText :content="assignment.description" />
 
 		<section v-if="assignment.sample_tests?.length" class="space-y-4">
@@ -32,10 +37,18 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import MarkdownText from '@/components/common/MarkdownText.vue'
 import ProgramText from '@/components/python/ProgramText.vue'
+import type { HintState } from '@/components/python/PythonHints.vue'
 import { formatDateTime } from '@/lib/dates'
 import type { CS17Assignment } from '@/types'
 
-defineProps<{ assignment: CS17Assignment }>()
+const props = defineProps<{ assignment: CS17Assignment; hints?: HintState | null }>()
+
+const hintNotice = computed(() => {
+	if (!props.hints) return ''
+	const { max_hints: hints, after_failed_runs: checks } = props.hints
+	return `You can ask for up to ${hints} ${hints === 1 ? 'hint' : 'hints'} after ${checks} failed ${checks === 1 ? 'check' : 'checks'}. Your teacher sees the hints you use.`
+})
 </script>
