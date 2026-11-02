@@ -133,13 +133,16 @@ type SavedProfile = Pick<
 const FULL_NAME_MAX_LENGTH = 140
 const NAME_MAX_LENGTH = Math.floor((FULL_NAME_MAX_LENGTH - 1) / 2)
 
-const { profile, isFaculty, cohort, logout } = useSession()
+const { profile, isFaculty, isGuardian, cohort, logout } = useSession()
 
 const avatar = computed(() => ({
 	image: profile.value?.profile_picture ?? undefined,
 	label: profile.value?.full_name ?? '',
 }))
-const roleLine = computed(() => (cohort.value ? `cohort ${cohort.value}` : 'Student'))
+const roleLine = computed(() => {
+	if (isGuardian.value) return 'Guardian'
+	return cohort.value ? `cohort ${cohort.value}` : 'Student'
+})
 
 const firstName = ref(profile.value?.first_name ?? '')
 const lastName = ref(profile.value?.last_name ?? '')

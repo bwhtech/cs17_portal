@@ -16,6 +16,7 @@
   "cohort",
   "user",
   "ai_model",
+  "students",
   "primary_phone",
   "alternate_phone",
   "column_break_vxfo",
@@ -30,7 +31,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Profile Type",
-   "options": "Student\nFaculty",
+   "options": "Student\nFaculty\nGuardian",
    "reqd": 1
   },
   {
@@ -122,6 +123,13 @@
    "fieldname": "ai_model",
    "fieldtype": "Data",
    "label": "AI model"
+  },
+  {
+   "depends_on": "eval:doc.profile_type==\"Guardian\"",
+   "fieldname": "students",
+   "fieldtype": "Table",
+   "label": "Students",
+   "options": "CS17 Guardian Student"
   }
  ],
  "grid_page_length": 50,
@@ -133,7 +141,7 @@
    "link_fieldname": "student"
   }
  ],
- "modified": "2026-10-31 22:29:29.770895",
+ "modified": "2026-11-02 21:43:58.773962",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Profile",

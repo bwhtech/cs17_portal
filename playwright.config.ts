@@ -4,6 +4,8 @@ import path from "path";
 const authFile = path.join(__dirname, "e2e", ".auth", "user.json");
 const studentAuthFile = path.join(__dirname, "e2e", ".auth", "student.json");
 const facultyAuthFile = path.join(__dirname, "e2e", ".auth", "faculty.json");
+const guardianAuthFile = path.join(__dirname, "e2e", ".auth", "guardian.json");
+const guardianSpecs = /guardian-dashboard\.spec\.ts/;
 const studentSpecs =
 	/(student-submission|student-theme|student-results|student-assignment-title|student-service-worker|student-notifications|python-assignments|python-time-limit|editor-failed-save|python-self-hosted|python-local-copy|python-paste-log|student-explain-request|student-late-work|student-topic-progress|student-project-gallery|student-celebration|student-python-hints|student-peer-review|scratch-local-copy)\.spec\.ts/;
 const facultySpecs =
@@ -65,7 +67,7 @@ export default defineConfig({
 		},
 		{
 			name: "chromium",
-			testIgnore: [studentSpecs, facultySpecs],
+			testIgnore: [studentSpecs, facultySpecs, guardianSpecs],
 			use: {
 				...devices["Desktop Chrome"],
 				storageState: authFile,
@@ -116,8 +118,36 @@ export default defineConfig({
 			dependencies: ["faculty-setup"],
 		},
 		{
+			name: "guardian-setup",
+			testMatch: /guardian\.setup\.ts/,
+			use: {
+				...devices["Desktop Chrome"],
+				launchOptions: {
+					args: [`--host-resolver-rules=MAP ${SITE_DOMAIN} 127.0.0.1`],
+				},
+			},
+			dependencies: ["setup"],
+			teardown: "guardian-teardown",
+		},
+		{
+			name: "guardian-teardown",
+			testMatch: /guardian\.teardown\.ts/,
+		},
+		{
+			name: "chromium-guardian",
+			testMatch: guardianSpecs,
+			use: {
+				...devices["Desktop Chrome"],
+				storageState: guardianAuthFile,
+				launchOptions: {
+					args: [`--host-resolver-rules=MAP ${SITE_DOMAIN} 127.0.0.1`],
+				},
+			},
+			dependencies: ["guardian-setup"],
+		},
+		{
 			name: "firefox",
-			testIgnore: [studentSpecs, facultySpecs],
+			testIgnore: [studentSpecs, facultySpecs, guardianSpecs],
 			use: {
 				...devices["Desktop Firefox"],
 				storageState: authFile,
@@ -126,7 +156,7 @@ export default defineConfig({
 		},
 		{
 			name: "webkit",
-			testIgnore: [studentSpecs, facultySpecs],
+			testIgnore: [studentSpecs, facultySpecs, guardianSpecs],
 			use: {
 				...devices["Desktop Safari"],
 				storageState: authFile,

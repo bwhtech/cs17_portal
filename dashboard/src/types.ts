@@ -14,7 +14,7 @@ export interface CS17Profile {
 	full_name: string
 	first_name: string
 	last_name: string
-	profile_type: 'Student' | 'Faculty'
+	profile_type: 'Student' | 'Faculty' | 'Guardian'
 	cohort: string | null
 	profile_picture: string | null
 }

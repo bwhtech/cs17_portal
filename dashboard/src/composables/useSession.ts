@@ -25,6 +25,7 @@ const user: Ref<string | null> = ref(
 const isGuest = computed(() => user.value === null)
 const isFaculty = computed(() => profile.value?.profile_type === 'Faculty')
 const isStudent = computed(() => profile.value?.profile_type === 'Student')
+const isGuardian = computed(() => profile.value?.profile_type === 'Guardian')
 const cohort = computed(() => profile.value?.cohort ?? null)
 
 const logoutGuards = new Set<() => boolean | Promise<boolean>>()
@@ -68,10 +69,11 @@ export function useSession(): {
 	isGuest: ComputedRef<boolean>
 	isFaculty: ComputedRef<boolean>
 	isStudent: ComputedRef<boolean>
+	isGuardian: ComputedRef<boolean>
 	cohort: ComputedRef<string | null>
 	logout: () => Promise<void>
 } {
-	return { profile, user, isGuest, isFaculty, isStudent, cohort, logout }
+	return { profile, user, isGuest, isFaculty, isStudent, isGuardian, cohort, logout }
 }
 
 /**

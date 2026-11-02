@@ -1,0 +1,35 @@
+{% for child in children %}
+<p class="text-bold"><a href="{{ child.link }}">{{ child.full_name | e }}</a></p>
+{% if child.due %}
+<p>{{ _("Due in the next 7 days") }}</p>
+<ul>
+	{% for assignment in child.due[:5] %}
+	<li>{{ assignment.title | e }}, {{ assignment.due }}</li>
+	{% endfor %}
+	{% if child.due | length > 5 %}
+	<li><a href="{{ child.link }}">{{ _("{0} more").format(child.due | length - 5) }}</a></li>
+	{% endif %}
+</ul>
+{% endif %}
+{% if child.missing %}
+<p>{{ _("Missing") }}</p>
+<ul>
+	{% for assignment in child.missing[:5] %}
+	<li>{{ assignment.title | e }}, {{ _("was due {0}").format(assignment.due) }}</li>
+	{% endfor %}
+	{% if child.missing | length > 5 %}
+	<li><a href="{{ child.link }}">{{ _("{0} more").format(child.missing | length - 5) }}</a></li>
+	{% endif %}
+</ul>
+{% endif %}
+{% if child.graded %}
+<p>{{ _("Graded in the last 7 days") }}</p>
+<ul>
+	{% for assignment in child.graded %}
+	<li>
+		{{ assignment.title | e }}{% if assignment.grade.evaluation_type == "Marks" %}: {{ "%g" | format(assignment.grade.marks_obtained) }} / {{ "%g" | format(assignment.max_marks) }}{% elif assignment.grade.grade %}: {{ assignment.grade.grade | e }}{% endif %}
+	</li>
+	{% endfor %}
+</ul>
+{% endif %}
+{% endfor %}

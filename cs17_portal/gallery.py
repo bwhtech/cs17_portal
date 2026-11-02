@@ -23,7 +23,10 @@ SHARED_PROJECT_FIELDS = [
 
 def get_gallery_filters() -> list:
 	viewer = frappe.db.get_value(
-		"CS17 Profile", {"user": frappe.session.user}, ["profile_type", "cohort"], as_dict=True
+		"CS17 Profile",
+		{"user": frappe.session.user, "profile_type": ("in", ("Student", "Faculty"))},
+		["profile_type", "cohort"],
+		as_dict=True,
 	)
 	if not viewer or (viewer.profile_type == "Student" and not viewer.cohort):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
