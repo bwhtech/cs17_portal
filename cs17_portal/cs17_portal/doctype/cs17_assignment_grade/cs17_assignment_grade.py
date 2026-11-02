@@ -14,6 +14,7 @@ from cs17_portal.cs17_portal.doctype.cs17_grading_scale.cs17_grading_scale impor
 from cs17_portal.cs17_portal.doctype.cs17_result_assignment_score.cs17_result_assignment_score import (
 	get_assignment_score,
 )
+from cs17_portal.rubric import get_rubric
 
 LETTER_GRADES = ("A", "B", "C", "D", "E")
 
@@ -72,9 +73,16 @@ class CS17AssignmentGrade(Document):
 			frappe.throw(_("Marks must be between 0 and {0}.").format(max_marks))
 
 		if assignment.remarks == "Marks":
+			self.validate_rubric_marks_given()
 			self.grade = get_grade_for_marks(flt(self.marks_obtained), max_marks, get_default_scale())
 		elif self.grade and self.grade not in LETTER_GRADES:
 			frappe.throw(_("Grade must be one of {0}.").format(", ".join(LETTER_GRADES)))
+
+	def validate_rubric_marks_given(self):
+		if self.rubric_scores or not (self.is_published or self.published_on):
+			return
+		if get_rubric(self.assignment):
+			frappe.throw(_("Enter the rubric marks for {0} before publishing.").format(self.full_name))
 
 	def validate_rubric_scores(self):
 		if not self.rubric_scores:
