@@ -3,13 +3,17 @@
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
-from frappe.utils import add_to_date, now_datetime
+from frappe.utils import add_to_date, get_datetime, now_datetime
 
 from cs17_portal import api
 from cs17_portal.cs17_portal.doctype.cs17_assignment_submission.cs17_assignment_submission import (
 	submit_assignment,
 )
 from cs17_portal.tests.test_api import make_cohort, make_profile, make_user
+
+
+def from_now(**kwargs) -> str:
+	return str(add_to_date(now_datetime(), **kwargs))
 
 
 class TestLateWork(FrappeTestCase):
@@ -48,7 +52,7 @@ class TestLateWork(FrappeTestCase):
 			"Loops practice",
 			self.cohort,
 			"",
-			late_until=add_to_date(now_datetime(), days=1),
+			late_until=from_now(days=1),
 		)
 
 	def test_late_work_must_end_after_the_due_date(self):
@@ -58,8 +62,8 @@ class TestLateWork(FrappeTestCase):
 			api.create_assignment,
 			"Loops practice",
 			self.cohort,
-			add_to_date(now_datetime(), days=2),
-			late_until=add_to_date(now_datetime(), days=1),
+			from_now(days=2),
+			late_until=from_now(days=1),
 		)
 
 	def test_late_penalty_cannot_pass_100(self):
@@ -69,18 +73,18 @@ class TestLateWork(FrappeTestCase):
 			api.create_assignment,
 			"Loops practice",
 			self.cohort,
-			add_to_date(now_datetime(), days=1),
-			late_until=add_to_date(now_datetime(), days=2),
+			from_now(days=1),
+			late_until=from_now(days=2),
 			late_penalty=120,
 		)
 
 	def test_no_late_work_clears_the_penalty(self):
-		due_date = add_to_date(now_datetime(), days=1)
+		due_date = from_now(days=1)
 		assignment = api.create_assignment(
 			"Loops practice",
 			self.cohort,
 			due_date,
-			late_until=add_to_date(now_datetime(), days=2),
+			late_until=from_now(days=2),
 			late_penalty=10,
 		)
 
@@ -89,8 +93,8 @@ class TestLateWork(FrappeTestCase):
 		self.assertEqual(frappe.db.get_value("CS17 Assignment", assignment, "late_penalty"), 0)
 
 	def test_faculty_open_late_work_on_a_published_assignment(self):
-		due_date = add_to_date(now_datetime(), hours=-1)
-		late_until = add_to_date(now_datetime(), days=1)
+		due_date = from_now(hours=-1)
+		late_until = from_now(days=1)
 		assignment = self.make_assignment(due_date, None)
 		frappe.set_user(self.faculty_user)
 
@@ -98,28 +102,22 @@ class TestLateWork(FrappeTestCase):
 
 		frappe.set_user(self.student_user)
 		details = api.get_student_assignment(assignment)
-		self.assertEqual((details.late_until, details.late_penalty), (late_until, 10))
+		self.assertEqual((details.late_until, details.late_penalty), (get_datetime(late_until), 10))
 
 	def test_assignment_stays_open_until_late_work_ends(self):
-		assignment = self.make_assignment(
-			add_to_date(now_datetime(), hours=-1), add_to_date(now_datetime(), days=1)
-		)
+		assignment = self.make_assignment(from_now(hours=-1), from_now(days=1))
 
 		self.assertFalse(api.is_assignment_closed(assignment))
 
 	def test_submission_in_the_late_window_is_accepted(self):
-		assignment = self.make_assignment(
-			add_to_date(now_datetime(), hours=-1), add_to_date(now_datetime(), days=1)
-		)
+		assignment = self.make_assignment(from_now(hours=-1), from_now(days=1))
 
 		submit_assignment(assignment, "https://example.com/loops")
 
 		self.assertTrue(frappe.db.exists("CS17 Assignment Submission", {"assignment": assignment}))
 
 	def test_submission_after_late_work_ends_is_refused(self):
-		assignment = self.make_assignment(
-			add_to_date(now_datetime(), days=-2), add_to_date(now_datetime(), days=-1)
-		)
+		assignment = self.make_assignment(from_now(days=-2), from_now(days=-1))
 
 		self.assertRaisesRegex(
 			frappe.ValidationError,
@@ -131,8 +129,8 @@ class TestLateWork(FrappeTestCase):
 
 	def test_timed_attempt_in_the_late_window_ends_when_late_work_ends(self):
 		assignment = self.make_assignment(
-			add_to_date(now_datetime(), hours=-1),
-			add_to_date(now_datetime(), minutes=10),
+			from_now(hours=-1),
+			from_now(minutes=10),
 			submission_type="Python",
 			time_limit=30,
 		)
@@ -144,8 +142,8 @@ class TestLateWork(FrappeTestCase):
 
 	def test_timed_assignment_can_be_attempted_again_in_the_late_window(self):
 		assignment = self.make_assignment(
-			add_to_date(now_datetime(), hours=-1),
-			add_to_date(now_datetime(), days=1),
+			from_now(hours=-1),
+			from_now(days=1),
 			submission_type="Python",
 			time_limit=30,
 			attempts_allowed=2,
@@ -155,7 +153,7 @@ class TestLateWork(FrappeTestCase):
 			"CS17 Assignment Attempt",
 			{"assignment": assignment, "student": self.student},
 			"started_at",
-			add_to_date(now_datetime(), minutes=-31),
+			from_now(minutes=-31),
 		)
 
 		self.assertEqual(api.get_student_assignment(assignment).next_attempt, 2)

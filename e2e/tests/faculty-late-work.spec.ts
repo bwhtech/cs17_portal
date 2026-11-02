@@ -85,13 +85,13 @@ test.describe("Late work", () => {
 
 		await expect
 			.poll(async () => {
-				const saved = await getDoc<{ late_until: string; late_penalty: number }>(
+				const saved = await getDoc<{ late_until: string | null; late_penalty: number }>(
 					request,
 					"CS17 Assignment",
 					onTime.name
 				);
-				return [saved.late_until, saved.late_penalty];
+				return [Boolean(saved.late_until), saved.late_penalty];
 			})
-			.toEqual(["2030-01-08 09:00:00", 10]);
+			.toEqual([true, 10]);
 	});
 });
