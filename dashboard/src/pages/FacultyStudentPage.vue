@@ -104,6 +104,14 @@
 				</DataTable>
 			</section>
 
+			<TopicProgress
+				:topics="topicProgress.data"
+				:failed="topicProgressFailed"
+				class="space-y-3"
+			>
+				<h2 class="text-lg font-semibold text-ink-gray-8">By topic</h2>
+			</TopicProgress>
+
 			<section class="space-y-3">
 				<h2 class="text-lg font-semibold text-ink-gray-8">Results</h2>
 
@@ -164,6 +172,7 @@ import EmptyState from '@/components/common/EmptyState.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
+import TopicProgress, { type TopicProgressRow } from '@/components/reports/TopicProgress.vue'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { formatDateTime, isPast } from '@/lib/dates'
@@ -202,6 +211,13 @@ const student = computed(() =>
 const failed = useLoadFailed(reactive({ ...toRefs(overview), data: student }), {
 	except: isRefusal,
 })
+
+const topicProgress = useCall<TopicProgressRow[], { student: string }>({
+	url: '/api/v2/method/cs17_portal.topic_progress.get_student_topic_progress',
+	params: () => ({ student: props.studentId }),
+	refetch: true,
+})
+const topicProgressFailed = useLoadFailed(topicProgress)
 
 const assignmentColumns: Column[] = [
 	{ header: 'Assignment', key: 'title', variant: 'primary' },

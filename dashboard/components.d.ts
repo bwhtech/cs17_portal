@@ -97,6 +97,7 @@ declare module 'vue' {
     TimeLeft: typeof import('./src/components/python/TimeLeft.vue')['default']
     TimeTaken: typeof import('./src/components/grading/TimeTaken.vue')['default']
     ToastHost: typeof import('./src/components/common/ToastHost.vue')['default']
+    TopicProgress: typeof import('./src/components/reports/TopicProgress.vue')['default']
     TopicSelect: typeof import('./src/components/faculty/TopicSelect.vue')['default']
     UnreadAnnouncements: typeof import('./src/components/announcements/UnreadAnnouncements.vue')['default']
     UnreadNotifications: typeof import('./src/components/announcements/UnreadNotifications.vue')['default']
