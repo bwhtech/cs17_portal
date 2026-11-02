@@ -1,13 +1,14 @@
 <template>
 	<AppHeader title="Reports">
 		<template #actions>
-			<Button
-				v-if="rows.length"
-				:icon-left="isDesktop ? 'lucide-download' : undefined"
-				:icon="isDesktop ? undefined : 'lucide-download'"
-				label="Download"
-				:href="downloadUrl"
-			/>
+			<Dropdown v-if="rows.length" :options="downloadOptions" align="end">
+				<Button
+					:icon-left="isDesktop ? 'lucide-download' : undefined"
+					:icon="isDesktop ? undefined : 'lucide-download'"
+					:tooltip="isDesktop ? undefined : 'Download'"
+					label="Download"
+				/>
+			</Dropdown>
 		</template>
 	</AppHeader>
 
@@ -75,7 +76,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Button, Select, useCall } from 'frappe-ui'
+import { Button, Dropdown, Select, useCall } from 'frappe-ui'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import PageBody from '@/components/common/PageBody.vue'
@@ -146,9 +147,14 @@ function retry() {
 	else report.reload()
 }
 
-const downloadUrl = computed(
-	() => `/api/method/cs17_portal.api.download_class_report?${new URLSearchParams(params.value)}`,
-)
+function download(method: string) {
+	window.location.href = `/api/method/${method}?${new URLSearchParams(params.value)}`
+}
+
+const downloadOptions = [
+	{ label: 'Summary', onClick: () => download('cs17_portal.api.download_class_report') },
+	{ label: 'All marks', onClick: () => download('cs17_portal.gradebook.download_gradebook') },
+]
 
 const { isDesktop } = useBreakpoint()
 
