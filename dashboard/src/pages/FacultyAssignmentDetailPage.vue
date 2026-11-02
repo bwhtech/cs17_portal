@@ -3,52 +3,40 @@
 		<template #left-mobile>
 			<PageHeaderBackButton fallback-route="/faculty/assignments" />
 		</template>
-		<template #actions>
-			<Button
-				v-if="assignment"
-				:variant="isDesktop ? 'subtle' : 'ghost'"
-				:icon-left="isDesktop ? 'lucide-users' : undefined"
-				:icon="isDesktop ? undefined : 'lucide-users'"
-				:tooltip="isDesktop ? undefined : 'Students'"
-				label="Students"
-				@click="studentsOpen = true"
-			/>
-			<Button
-				v-if="assignment"
-				:variant="isDesktop ? 'subtle' : 'ghost'"
-				:icon-left="isDesktop ? 'lucide-clock' : undefined"
-				:icon="isDesktop ? undefined : 'lucide-clock'"
-				:tooltip="isDesktop ? undefined : 'Timing'"
-				label="Timing"
-				@click="timingOpen = true"
-			/>
-			<Button
-				v-if="assignment"
-				:variant="isDesktop ? 'subtle' : 'ghost'"
-				:icon-left="isDesktop ? 'lucide-link' : undefined"
-				:icon="isDesktop ? undefined : 'lucide-link'"
-				:tooltip="isDesktop ? undefined : 'Copy submission link'"
-				label="Copy submission link"
-				@click="copySubmissionLink"
-			/>
-			<Button
-				v-if="assignment?.submission_type === 'Python'"
-				:variant="isDesktop ? 'subtle' : 'ghost'"
-				:icon-left="isDesktop ? 'lucide-files' : undefined"
-				:icon="isDesktop ? undefined : 'lucide-files'"
-				:tooltip="isDesktop ? undefined : 'Similar code'"
-				label="Similar code"
-				@click="openSimilarCode()"
-			/>
-			<Button
-				v-if="assignment?.submission_type === 'Python'"
-				:variant="isDesktop ? 'subtle' : 'ghost'"
-				:icon-left="isDesktop ? 'lucide-activity' : undefined"
-				:icon="isDesktop ? undefined : 'lucide-activity'"
-				:tooltip="isDesktop ? undefined : 'Live'"
-				label="Live"
-				:route="`/faculty/assignments/${assignment.name}/live`"
-			/>
+		<template v-if="assignment" #actions>
+			<template v-if="isDesktop">
+				<Button icon-left="lucide-users" label="Students" @click="studentsOpen = true" />
+				<Button icon-left="lucide-clock" label="Timing" @click="timingOpen = true" />
+				<Button
+					icon-left="lucide-link"
+					label="Copy submission link"
+					@click="copySubmissionLink"
+				/>
+				<Button
+					v-if="assignment.submission_type === 'Python'"
+					icon-left="lucide-files"
+					label="Similar code"
+					@click="openSimilarCode()"
+				/>
+				<Button
+					v-if="assignment.submission_type === 'Python'"
+					icon-left="lucide-activity"
+					label="Live"
+					:route="`/faculty/assignments/${assignment.name}/live`"
+				/>
+			</template>
+			<template v-else>
+				<Button
+					variant="ghost"
+					icon="lucide-link"
+					tooltip="Copy submission link"
+					label="Copy submission link"
+					@click="copySubmissionLink"
+				/>
+				<Dropdown :options="moreHeaderActions" align="end">
+					<Button variant="ghost" icon="lucide-ellipsis" aria-label="More actions" />
+				</Dropdown>
+			</template>
 		</template>
 	</AppHeader>
 
@@ -741,6 +729,21 @@ async function copySubmissionLink() {
 		toast.error('Could not copy link.')
 	}
 }
+
+const moreHeaderActions = computed<DropdownActionOption[]>(() => [
+	{ label: 'Students', icon: 'lucide-users', onClick: () => (studentsOpen.value = true) },
+	{ label: 'Timing', icon: 'lucide-clock', onClick: () => (timingOpen.value = true) },
+	...(assignment.value?.submission_type === 'Python'
+		? [
+				{ label: 'Similar code', icon: 'lucide-files', onClick: () => openSimilarCode() },
+				{
+					label: 'Live',
+					icon: 'lucide-activity',
+					route: `/faculty/assignments/${assignmentId.value}/live`,
+				},
+			]
+		: []),
+])
 
 watch(
 	() => assignment.value?.title,
