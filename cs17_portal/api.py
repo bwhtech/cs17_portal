@@ -646,7 +646,15 @@ def list_my_projects() -> list:
 	projects = frappe.get_all(
 		"CS17 Project",
 		filters={"profile": profile},
-		fields=["name", "project_title", "project_type", "assignment", "thumbnail", "last_saved_at"],
+		fields=[
+			"name",
+			"project_title",
+			"project_type",
+			"assignment",
+			"thumbnail",
+			"last_saved_at",
+			"is_shared",
+		],
 		order_by="creation desc",
 	)
 	_attach_submitted_flags(projects)
@@ -714,6 +722,15 @@ def save_project(
 		names = []
 	if "project.json" not in names:
 		frappe.throw(_("This file is not a Scratch project."))
+	if (
+		thumbnail_filename
+		and thumbnail_content
+		and not (
+			thumbnail_filename.endswith(".png")
+			and decode_file_content(thumbnail_content).startswith(b"\x89PNG\r\n\x1a\n")
+		)
+	):
+		frappe.throw(_("The thumbnail must be a PNG image."))
 
 	replace_project_file(project_doc, "sb3_file", filename, content)
 	if thumbnail_filename and thumbnail_content:

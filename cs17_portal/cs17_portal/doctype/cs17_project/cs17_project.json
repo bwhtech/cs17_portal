@@ -12,6 +12,7 @@
   "assignment",
   "column_break_main",
   "last_saved_at",
+  "is_shared",
   "section_break_files",
   "sb3_file",
   "thumbnail",
@@ -85,11 +86,18 @@
    "fieldtype": "Code",
    "label": "Code",
    "options": "Py"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_shared",
+   "fieldtype": "Check",
+   "label": "Shared with class"
   }
  ],
  "grid_page_length": 50,
+ "link_display_mode": "Search",
  "links": [],
- "modified": "2026-10-18 21:15:23.737598",
+ "modified": "2026-11-02 20:53:33.868151",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Project",

@@ -34,6 +34,13 @@
 		</router-link>
 
 		<Badge
+			v-if="project.is_shared"
+			class="absolute left-2 top-2"
+			label="Shared"
+			theme="blue"
+			variant="subtle"
+		/>
+		<Badge
 			v-if="project.is_submitted"
 			class="absolute right-2 top-2"
 			label="Submitted"
@@ -55,29 +62,48 @@
 import { computed, ref } from 'vue'
 import { Badge, Button, Dropdown } from 'frappe-ui'
 import { projectEditorPath, useProjectsPath } from '@/composables/useProjectsPath'
+import { useSession } from '@/composables/useSession'
 import { formatDateTime } from '@/lib/dates'
 import type { CS17Project } from '@/types'
 
-const props = defineProps<{ project: CS17Project }>()
+const props = defineProps<{ project: CS17Project & { is_shared?: 0 | 1 } }>()
 
 const emit = defineEmits<{
 	rename: [project: CS17Project]
 	delete: [project: CS17Project]
+	share: [project: CS17Project]
+	unshare: [project: CS17Project]
 }>()
 
 const projectsPath = useProjectsPath()
+const { isStudent } = useSession()
 
 const thumbnailFailed = ref(false)
 
-const actions = [
+const shareAction = computed(() =>
+	props.project.is_shared
+		? {
+				label: 'Stop sharing',
+				icon: 'lucide-eye-off',
+				onClick: () => emit('unshare', props.project),
+			}
+		: {
+				label: 'Share with class',
+				icon: 'lucide-share-2',
+				onClick: () => emit('share', props.project),
+			},
+)
+
+const actions = computed(() => [
 	{ label: 'Rename', icon: 'lucide-pencil', onClick: () => emit('rename', props.project) },
+	...(isStudent.value && !props.project.assignment ? [shareAction.value] : []),
 	{
 		label: 'Delete',
 		icon: 'lucide-trash-2',
 		theme: 'red' as const,
 		onClick: () => emit('delete', props.project),
 	},
-]
+])
 
 // A project exists before it holds anything: `create_project` inserts the
 // document and the editor only attaches an `.sb3` on the first save.

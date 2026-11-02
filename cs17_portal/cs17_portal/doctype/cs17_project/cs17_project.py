@@ -18,6 +18,7 @@ class CS17Project(Document):
 
 		assignment: DF.Link | None
 		code: DF.Code | None
+		is_shared: DF.Check
 		last_saved_at: DF.Datetime | None
 		profile: DF.Link
 		project_title: DF.Data
@@ -25,6 +26,10 @@ class CS17Project(Document):
 		sb3_file: DF.Attach | None
 		thumbnail: DF.AttachImage | None
 	# end: auto-generated types
+
+	def validate(self):
+		if self.is_shared and self.assignment:
+			frappe.throw(_("Work for an assignment cannot be shared."))
 
 	def record_tab_leave(self):
 		self._require_watched_assignment()

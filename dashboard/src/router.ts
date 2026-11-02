@@ -16,6 +16,7 @@ const routes: RouteRecordRaw[] = [
 		props: true,
 	},
 	{ path: '/projects', name: 'Projects', component: () => import('@/pages/ProjectsPage.vue') },
+	{ path: '/gallery', name: 'Gallery', component: () => import('@/pages/GalleryPage.vue') },
 	{
 		path: '/projects/:id/edit',
 		name: 'ProjectEditor',
@@ -74,6 +75,11 @@ const routes: RouteRecordRaw[] = [
 		path: '/faculty/projects',
 		name: 'FacultyProjects',
 		component: () => import('@/pages/ProjectsPage.vue'),
+	},
+	{
+		path: '/faculty/gallery',
+		name: 'FacultyGallery',
+		component: () => import('@/pages/GalleryPage.vue'),
 	},
 	{
 		path: '/faculty/projects/:id/edit',
