@@ -66,6 +66,10 @@
 				<template v-else>{{ row.grade }}</template>
 			</template>
 		</DataTable>
+
+		<TopicProgress :topics="topicProgress.data" :failed="topicProgressFailed" class="space-y-3">
+			<h2 class="text-lg font-semibold text-ink-gray-8">By topic</h2>
+		</TopicProgress>
 	</PageBody>
 </template>
 
@@ -76,6 +80,7 @@ import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
+import TopicProgress, { type TopicProgressRow } from '@/components/reports/TopicProgress.vue'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useLoadFailed } from '@/composables/useLoadFailed'
@@ -146,4 +151,13 @@ const downloadUrl = computed(
 )
 
 const { isDesktop } = useBreakpoint()
+
+const topicProgress = useCall<TopicProgressRow[], { cohort: string; quarter?: string }>({
+	url: '/api/v2/method/cs17_portal.topic_progress.get_class_topic_progress',
+	method: 'GET',
+	params: () => params.value,
+	immediate: false,
+	refetch: true,
+})
+const topicProgressFailed = useLoadFailed(topicProgress)
 </script>
