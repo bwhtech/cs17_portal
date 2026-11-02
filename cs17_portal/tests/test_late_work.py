@@ -9,7 +9,9 @@ from cs17_portal import api
 from cs17_portal.cs17_portal.doctype.cs17_assignment_submission.cs17_assignment_submission import (
 	submit_assignment,
 )
+from cs17_portal.gradebook import download_gradebook
 from cs17_portal.tests.test_api import make_cohort, make_profile, make_user
+from cs17_portal.tests.test_gradebook import read_csv
 
 
 def from_now(**kwargs) -> str:
@@ -157,3 +159,38 @@ class TestLateWork(FrappeTestCase):
 		)
 
 		self.assertEqual(api.get_student_assignment(assignment).next_attempt, 2)
+
+
+class TestLateWorkInReports(FrappeTestCase):
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+
+		cls.cohort = make_cohort("C981TEST")
+		cls.faculty_user = make_user("faculty981@cs17test.com")
+		make_profile("Faculty", cls.cohort, cls.faculty_user, "Kavita Rao")
+		make_profile("Student", cls.cohort, make_user("student981@cs17test.com"), "Diya Menon")
+		frappe.set_user(cls.faculty_user)
+		api.create_assignment(
+			"Loops practice",
+			cls.cohort,
+			from_now(days=-1),
+			assignment_type="Graded",
+			remarks="Marks",
+			max_marks=10,
+			publish="now",
+			late_until=from_now(days=1),
+		)
+		frappe.set_user("Administrator")
+
+	def setUp(self):
+		self.addCleanup(frappe.set_user, "Administrator")
+		frappe.set_user(self.faculty_user)
+
+	def test_class_report_does_not_count_work_missing_while_late_work_is_taken(self):
+		self.assertEqual(api.get_class_report(self.cohort)[0].missing, 0)
+
+	def test_gradebook_does_not_mark_work_missing_while_late_work_is_taken(self):
+		download_gradebook(self.cohort)
+
+		self.assertEqual(read_csv()[1][:2], ["Diya Menon", ""])
