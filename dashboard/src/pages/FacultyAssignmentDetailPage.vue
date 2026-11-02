@@ -170,9 +170,18 @@
 					</template>
 
 					<template #cell-submitted="{ row }">
-						<span v-if="row.submitted_at" class="text-ink-gray-6">{{
-							formatDateTime(row.submitted_at)
-						}}</span>
+						<span v-if="row.submitted_at" class="flex min-w-0 items-center gap-1.5">
+							<span class="truncate text-ink-gray-6">{{
+								formatDateTime(row.submitted_at)
+							}}</span>
+							<Badge
+								v-if="isLate(row.submitted_at, assignment.due_date)"
+								class="shrink-0"
+								label="Late"
+								theme="red"
+								variant="subtle"
+							/>
+						</span>
 						<span v-else class="text-ink-gray-5">—</span>
 					</template>
 
@@ -357,6 +366,7 @@ import { usePolling } from '@/composables/usePolling'
 import { formatDateTime, isPast } from '@/lib/dates'
 import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
 import { formatGrade } from '@/lib/grades'
+import { isLate } from '@/lib/status'
 import { previewKind } from '@/lib/submissionTypes'
 import { trySubmit } from '@/lib/trySubmit'
 import type {
@@ -613,10 +623,10 @@ const metaRows = computed(() => {
 const columns = computed<Column[]>(() => [
 	{ header: 'Student', key: 'student', variant: 'primary' },
 	{ header: 'Status', key: 'status', width: '6.5rem' },
-	{ header: 'Submitted', key: 'submitted', width: '8rem' },
+	{ header: 'Submitted', key: 'submitted', width: '10rem' },
 	{ header: 'Assigned to', key: 'assignees', width: '9rem' },
 	{ header: isGraded.value ? 'Grade' : 'Remarks', key: 'grade', width: '10rem' },
-	{ header: '', key: 'actions', variant: 'actions', width: '16rem', align: 'right' },
+	{ header: '', key: 'actions', variant: 'actions', width: '14rem', align: 'right' },
 ])
 
 function gradeActionLabel(row: CS17Submission): string {

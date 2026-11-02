@@ -21,7 +21,7 @@
 	     foot of the workspace, so every line it saves goes to the player. -->
 	<form
 		v-else
-		class="grid grid-cols-2 gap-3 md:flex md:items-end md:gap-4"
+		class="grid grid-cols-2 gap-3 md:flex md:flex-wrap md:items-end md:gap-4"
 		novalidate
 		@submit.prevent="save"
 	>
@@ -38,6 +38,12 @@
 			:max="maxMarks"
 			step="any"
 		/>
+		<p
+			v-if="latePenaltyLine"
+			class="col-span-2 text-p-sm text-ink-gray-7 md:order-last md:basis-full"
+		>
+			{{ latePenaltyLine }}
+		</p>
 
 		<FormControl
 			v-if="showGrade"
@@ -141,6 +147,8 @@ const props = defineProps<{
 	evaluationType: EvaluationType | '' | null
 	suggestedMarks?: number | null
 	canCheckWithAi?: boolean
+	submittedLate?: boolean
+	latePenalty?: number | null
 }>()
 
 const emit = defineEmits<{ saved: [] }>()
@@ -404,4 +412,12 @@ async function deleteSavedRemark(savedRemark: string) {
 	savedRemarks.reload()
 	toast.success('Remark deleted')
 }
+
+const latePenaltyLine = computed(() => {
+	const penalty = props.submittedLate ? props.latePenalty : 0
+	const parsed = readMarks()
+	if (!penalty || !('value' in parsed) || parsed.value === null) return ''
+	const afterPenalty = Math.round(parsed.value * (100 - penalty)) / 100
+	return `Submitted late. ${penalty}% penalty: ${afterPenalty} of ${props.maxMarks}.`
+})
 </script>

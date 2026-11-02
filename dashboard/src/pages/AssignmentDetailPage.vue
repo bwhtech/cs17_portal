@@ -60,6 +60,12 @@
 					>
 						{{ formatDateTime(assignment.due_date) }}
 					</p>
+					<p v-if="acceptsLateWork" class="text-sm text-ink-gray-8">
+						Late work accepted until {{ formatDateTime(assignment.late_until) }}
+						<template v-if="assignment.late_penalty">
+							· {{ assignment.late_penalty }}% off
+						</template>
+					</p>
 				</div>
 
 				<div>
@@ -79,7 +85,13 @@
 
 				<template v-if="submission">
 					<div>
-						<p class="text-xs text-ink-gray-5">Submitted</p>
+						<p class="text-xs text-ink-gray-5">
+							{{
+								isLate(submission.submitted_at, assignment.due_date)
+									? 'Submitted late'
+									: 'Submitted'
+							}}
+						</p>
 						<p class="text-base text-ink-green-6">
 							{{ formatDateTime(submission.submitted_at) }}
 						</p>
@@ -133,7 +145,7 @@
 				</template>
 
 				<p v-else-if="isClosed" class="text-sm text-ink-gray-5">
-					{{ isOverdue ? 'Deadline passed' : 'Time is up' }}
+					{{ deadlinePassed ? 'Deadline passed' : 'Time is up' }}
 				</p>
 				<Button
 					v-else
@@ -208,6 +220,7 @@ import { useSession } from '@/composables/useSession'
 import { answerCounts } from '@/lib/answers'
 import { formatDateTime, isPast } from '@/lib/dates'
 import { isRefusal } from '@/lib/frappeError'
+import { isLate } from '@/lib/status'
 import { isProjectSubmission } from '@/lib/submissionTypes'
 import type {
 	AnswerSummary,
@@ -294,8 +307,20 @@ const score = computed(() => {
 })
 
 const isOverdue = computed(() => isPast(assignment.value?.due_date))
+const deadlinePassed = computed(() =>
+	isPast(assignment.value?.late_until || assignment.value?.due_date),
+)
 const isClosed = computed(
-	() => !submission.value?.returned_on && (isOverdue.value || isPast(assignment.value?.ends_at)),
+	() =>
+		!submission.value?.returned_on &&
+		(deadlinePassed.value || isPast(assignment.value?.ends_at)),
+)
+const acceptsLateWork = computed(
+	() =>
+		isOverdue.value &&
+		!deadlinePassed.value &&
+		!isPast(assignment.value?.ends_at) &&
+		!grade.value,
 )
 
 const revisions = useCall<SubmissionRevision[], { submission: string }>({

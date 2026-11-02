@@ -16,6 +16,8 @@ from frappe.rate_limiter import rate_limit
 from frappe.utils import add_to_date, cint, cstr, flt, get_datetime, getdate, now_datetime
 
 if TYPE_CHECKING:
+	from datetime import datetime
+
 	from frappe.model.document import Document
 
 ASSIGNMENT_SUBMISSION = "CS17 Assignment Submission"
@@ -178,6 +180,8 @@ def create_assignment(
 	attempts_allowed: int | None = None,
 	topic: str | None = None,
 	difficulty: str | None = None,
+	late_until: str | None = None,
+	late_penalty: float | None = None,
 ) -> str:
 	faculty = get_current_faculty()
 	if faculty.cohort and faculty.cohort != cohort:
@@ -201,6 +205,8 @@ def create_assignment(
 		attempts_allowed,
 		topic=topic,
 		difficulty=difficulty,
+		late_until=late_until,
+		late_penalty=late_penalty,
 	)
 	assignment.naming_series = _naming_series(assignment_type)
 	_apply_publish_state(assignment, publish, publish_on)
@@ -263,6 +269,8 @@ def get_assignment_submissions(assignment: str) -> dict:
 			"time_limit",
 			"attempts_allowed",
 			"difficulty",
+			"late_until",
+			"late_penalty",
 		],
 		as_dict=True,
 	)
@@ -336,7 +344,10 @@ def get_submission(submission: str) -> dict:
 
 	require_faculty_for_assignment(row.assignment)
 	assignment = frappe.db.get_value(
-		"CS17 Assignment", row.assignment, ["submission_type", "max_marks", "remarks"], as_dict=True
+		"CS17 Assignment",
+		row.assignment,
+		["submission_type", "max_marks", "remarks", "due_date", "late_penalty"],
+		as_dict=True,
 	)
 	grade = frappe.db.get_value(
 		"CS17 Assignment Grade", {"submission": submission}, ["marks_obtained", "grade"], as_dict=True
@@ -344,6 +355,8 @@ def get_submission(submission: str) -> dict:
 	row.submission_type = assignment.submission_type
 	row.max_marks = assignment.max_marks
 	row.evaluation_type = assignment.remarks
+	row.due_date = assignment.due_date
+	row.late_penalty = assignment.late_penalty
 	row.marks_obtained = grade.marks_obtained if grade else None
 	row.grade = grade.grade if grade else None
 	row.graded = bool(grade)
@@ -917,8 +930,8 @@ def is_assignment_closed(assignment: str, student: str | None = None) -> bool:
 	)
 	if submission and submission.returned_on:
 		return False
-	due_date = frappe.db.get_value("CS17 Assignment", assignment, "due_date")
-	if due_date and now_datetime() > due_date:
+	deadline = get_deadline(assignment)
+	if deadline and now_datetime() > deadline:
 		return True
 	attempt = get_attempt(assignment, student)
 	if attempt and now_datetime() > attempt.ends_at:
@@ -933,20 +946,31 @@ def is_assignment_closed(assignment: str, student: str | None = None) -> bool:
 	return any(is_published_now(grade, "published_on") for grade in grades)
 
 
+def get_deadline(assignment: str) -> "datetime | None":
+	timing = frappe.db.get_value("CS17 Assignment", assignment, ["late_until", "due_date"], as_dict=True)
+	return timing and (timing.late_until or timing.due_date)
+
+
 def get_attempt(assignment: str, student: str) -> frappe._dict | None:
 	attempt = frappe.db.get_value(
 		"CS17 Assignment Attempt",
 		{"assignment": assignment, "student": student},
-		["started_at", "assignment.time_limit as time_limit", "assignment.due_date as due_date"],
+		[
+			"started_at",
+			"assignment.time_limit as time_limit",
+			"assignment.due_date as due_date",
+			"assignment.late_until as late_until",
+		],
 		as_dict=True,
 		order_by="started_at desc",
 	)
 	if not (attempt and attempt.time_limit):
 		return None
 	ends_at = add_to_date(attempt.started_at, minutes=attempt.time_limit)
+	deadline = attempt.late_until or attempt.due_date
 	return frappe._dict(
 		started_at=attempt.started_at,
-		ends_at=min(ends_at, attempt.due_date) if attempt.due_date else ends_at,
+		ends_at=min(ends_at, deadline) if deadline else ends_at,
 	)
 
 
@@ -955,7 +979,8 @@ def get_next_attempts(assignments: list, student: str) -> dict[str, int]:
 	timed = [
 		assignment.name
 		for assignment in assignments
-		if assignment.time_limit and not (assignment.due_date and now > assignment.due_date)
+		if assignment.time_limit
+		and not (assignment.due_date and now > (assignment.late_until or assignment.due_date))
 	]
 	if not timed:
 		return {}
@@ -1228,6 +1253,7 @@ def get_student_assignments() -> dict:
 			"name",
 			"title",
 			"due_date",
+			"late_until",
 			"max_marks",
 			"assignment_type",
 			"submission_type",
@@ -1287,6 +1313,8 @@ def get_student_assignment(assignment: str) -> dict:
 			"title",
 			"description",
 			"due_date",
+			"late_until",
+			"late_penalty",
 			"max_marks",
 			"assignment_type",
 			"submission_type",
@@ -1603,6 +1631,8 @@ def update_assignment(
 	modified: str | None = None,
 	topic: str | None = None,
 	difficulty: str | None = None,
+	late_until: str | None = None,
+	late_penalty: float | None = None,
 ) -> str:
 	require_faculty_for_assignment(assignment)
 	faculty = get_current_faculty()
@@ -1633,6 +1663,8 @@ def update_assignment(
 		attempts_allowed,
 		topic=topic,
 		difficulty=difficulty,
+		late_until=late_until,
+		late_penalty=late_penalty,
 	)
 	if publish is not None:
 		_apply_publish_state(doc, publish, publish_on)
@@ -1660,6 +1692,8 @@ def _set_assignment_fields(
 	attempts_allowed: int | None = None,
 	topic: str | None = None,
 	difficulty: str | None = None,
+	late_until: str | None = None,
+	late_penalty: float | None = None,
 ) -> None:
 	doc.update(
 		{
@@ -1685,6 +1719,10 @@ def _set_assignment_fields(
 		doc.time_limit = time_limit
 	if attempts_allowed is not None:
 		doc.attempts_allowed = attempts_allowed
+	if late_until is not None:
+		doc.late_until = late_until
+	if late_penalty is not None:
+		doc.late_penalty = late_penalty
 	if test_cases is not None:
 		doc.set(
 			"test_cases",
@@ -1727,6 +1765,8 @@ def get_assignment(assignment: str) -> dict | None:
 			"attempts_allowed",
 			"topic",
 			"difficulty",
+			"late_until",
+			"late_penalty",
 			"modified",
 		],
 		as_dict=True,
@@ -2253,7 +2293,12 @@ def set_assignment_students(assignment: str, students: list | str) -> None:
 
 @frappe.whitelist(methods=["POST"])
 def set_assignment_timing(
-	assignment: str, due_date: str, time_limit: int, attempts_allowed: int | None = None
+	assignment: str,
+	due_date: str,
+	time_limit: int,
+	attempts_allowed: int | None = None,
+	late_until: str | None = None,
+	late_penalty: float | None = None,
 ) -> None:
 	require_faculty_for_assignment(assignment)
 	doc = frappe.get_doc("CS17 Assignment", assignment)
@@ -2261,6 +2306,10 @@ def set_assignment_timing(
 	doc.time_limit = time_limit
 	if attempts_allowed is not None:
 		doc.attempts_allowed = attempts_allowed
+	if late_until is not None:
+		doc.late_until = late_until
+	if late_penalty is not None:
+		doc.late_penalty = late_penalty
 	doc.save(ignore_permissions=True)
 
 

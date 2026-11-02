@@ -8,7 +8,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import now_datetime
 
-from cs17_portal.api import get_attempt, given_to, is_published_now, require_current_student
+from cs17_portal.api import get_attempt, get_deadline, given_to, is_published_now, require_current_student
 from cs17_portal.cs17_portal.doctype.cs17_assignment.cs17_assignment import notify_students
 from cs17_portal.cs17_portal.doctype.cs17_project.cs17_project import get_owner_profile
 
@@ -138,8 +138,8 @@ class CS17AssignmentSubmission(Document):
 	def validate_deadline(self):
 		if self.returned_on or not self._edited_by_owner() or get_attempt(self.assignment, self.student):
 			return
-		due_date = frappe.db.get_value("CS17 Assignment", self.assignment, "due_date")
-		if due_date and frappe.utils.now_datetime() > due_date:
+		deadline = get_deadline(self.assignment)
+		if deadline and frappe.utils.now_datetime() > deadline:
 			frappe.throw(_("The deadline for this assignment has passed."))
 
 	def validate_time_limit(self):
