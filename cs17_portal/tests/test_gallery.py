@@ -11,6 +11,7 @@ from cs17_portal.tests.test_api import make_cohort, make_profile, make_user
 from cs17_portal.tests.test_submission_archive import make_zip
 
 MAZE_GAME = make_zip({"project.json": b'{"targets": []}'})
+PAGE_WITH_SCRIPT = b"<script>alert(document.cookie)</script>"
 
 
 class TestGallery(FrappeTestCase):
@@ -107,3 +108,29 @@ class TestGallery(FrappeTestCase):
 		frappe.set_user(self.other_faculty_user)
 
 		self.assertRaises(frappe.PermissionError, gallery.unshare_project, project)
+
+	def test_html_thumbnail_is_refused_on_save(self):
+		frappe.set_user(self.student_user)
+		project = api.create_project("Maze game")["name"]
+
+		self.assertRaisesRegex(
+			frappe.ValidationError,
+			"The thumbnail must be a PNG image.",
+			api.save_project,
+			project,
+			"project.sb3",
+			base64.b64encode(MAZE_GAME).decode(),
+			"thumbnail.html",
+			base64.b64encode(PAGE_WITH_SCRIPT).decode(),
+		)
+
+	def test_stored_html_thumbnail_is_not_served(self):
+		project = self.share_maze_game()
+		thumbnail = api.attach_private_file(
+			"CS17 Project", project, "thumbnail", "thumbnail.html", PAGE_WITH_SCRIPT
+		)
+		frappe.db.set_value("CS17 Project", project, "thumbnail", thumbnail.file_url)
+
+		frappe.set_user(self.classmate_user)
+
+		self.assertRaises(frappe.DoesNotExistError, gallery.get_shared_thumbnail, project)
