@@ -115,6 +115,27 @@ class TestRubric(FrappeTestCase):
 		self.assertEqual((grade.marks_obtained, grade.remarks), (0, draft["remarks"]))
 		self.assertEqual(self.get_scores(submission), [])
 
+	def test_publish_grades_refuses_a_draft_without_criterion_marks(self):
+		submission = self.make_submission()
+		api.grade_submission(submission, remarks="The loop stops one step early.", rubric_scores=[])
+
+		self.assertRaisesRegex(
+			frappe.ValidationError,
+			"Enter the rubric marks for Aarav Sharma before publishing",
+			api.publish_grades,
+			[submission],
+		)
+
+	def test_publish_grades_publishes_a_rubric_grade(self):
+		submission = self.make_submission()
+		api.grade_submission(submission, rubric_scores=SCORES)
+
+		api.publish_grades([submission])
+
+		self.assertEqual(
+			frappe.db.get_value("CS17 Assignment Grade", {"submission": submission}, "is_published"), 1
+		)
+
 	def test_student_sees_the_criterion_marks_of_a_published_grade(self):
 		submission = self.make_submission()
 		api.save_grade(submission, rubric_scores=SCORES)
