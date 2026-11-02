@@ -46,6 +46,7 @@ declare module 'vue' {
     EmptyState: typeof import('./src/components/common/EmptyState.vue')['default']
     ExplanationRequestCard: typeof import('./src/components/assignments/ExplanationRequestCard.vue')['default']
     FacultyAvatar: typeof import('./src/components/faculty/FacultyAvatar.vue')['default']
+    FlawlessCelebration: typeof import('./src/components/python/FlawlessCelebration.vue')['default']
     GalleryCard: typeof import('./src/components/gallery/GalleryCard.vue')['default']
     GalleryProjectDialog: typeof import('./src/components/gallery/GalleryProjectDialog.vue')['default']
     GalleryPythonView: typeof import('./src/components/gallery/GalleryPythonView.vue')['default']

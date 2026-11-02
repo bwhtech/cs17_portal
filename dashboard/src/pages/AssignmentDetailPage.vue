@@ -197,6 +197,11 @@
 			@success="onSubmitted"
 		/>
 	</PageBody>
+
+	<FlawlessCelebration
+		v-if="grade && assignment?.submission_type === 'Python'"
+		:assignment="assignmentId"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -231,6 +236,7 @@ import type {
 	SubmissionRevision,
 } from '@/types'
 import VoiceRemarkPlayer from '@/components/assignments/VoiceRemarkPlayer.vue'
+import FlawlessCelebration from '@/components/python/FlawlessCelebration.vue'
 
 const props = defineProps<{ assignmentId: string }>()
 
