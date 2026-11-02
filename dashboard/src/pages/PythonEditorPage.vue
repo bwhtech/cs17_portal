@@ -125,6 +125,7 @@
 						:show-tests="sampleTests.length > 0"
 						:test-runs="testRuns"
 						:testing="testing"
+						celebrate
 					/>
 				</div>
 			</div>
