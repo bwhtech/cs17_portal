@@ -1927,6 +1927,7 @@ def get_class_work(cohort: str, quarter: str | None = None) -> frappe._dict:
 				"name",
 				"title",
 				"due_date",
+				"late_until",
 				"assignment_type",
 				"remarks",
 				"max_marks",
@@ -1992,7 +1993,7 @@ def summarize_class_work(work: frappe._dict) -> list:
 			row.given += 1
 			submission = work.submissions.get((assignment.name, student))
 			if not submission:
-				if assignment.due_date and assignment.due_date < now:
+				if assignment.due_date and (assignment.late_until or assignment.due_date) < now:
 					row.missing += 1
 				continue
 			row.submitted += 1
