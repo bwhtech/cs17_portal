@@ -23,6 +23,7 @@ function topicRow(page: Page, topic: string) {
 }
 
 let cohort: CS17Cohort;
+let otherCohort: CS17Cohort;
 let student: CS17Profile;
 let topic: { name: string };
 
@@ -30,6 +31,7 @@ test.describe("Progress by topic", () => {
 	test.beforeAll(async ({ request }) => {
 		await ensureSessionFaculty(request);
 		cohort = await createTestCohort(request);
+		otherCohort = await createTestCohort(request);
 		student = await createTestProfile(request, { cohort: cohort.name });
 		topic = await createDoc(request, "CS17 Topic", { topic_name: `Loops ${cohort.name}` });
 		const assignment = await createDoc<CS17Assignment>(request, "CS17 Assignment", {
@@ -62,6 +64,7 @@ test.describe("Progress by topic", () => {
 		await deleteDoc(request, "CS17 Topic", topic.name);
 		await deleteTestProfile(request, student.name);
 		await deleteDoc(request, "CS17 Cohort", cohort.name);
+		await deleteDoc(request, "CS17 Cohort", otherCohort.name);
 	});
 
 	test("the class report shows the class average per topic", async ({ page }) => {
