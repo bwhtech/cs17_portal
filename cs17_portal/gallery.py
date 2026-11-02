@@ -71,9 +71,18 @@ def get_shared_project(project: str) -> dict:
 @frappe.whitelist(methods=["GET"])
 def get_shared_thumbnail(project: str) -> None:
 	thumbnail = require_shared_project(project, ["thumbnail"]).thumbnail
-	frappe.response.filename, frappe.response.filecontent = read_project_file(project, thumbnail)
-	frappe.response.type = "download"
-	frappe.response.display_content_as = "inline"
+	file_name, content = read_project_file(project, thumbnail)
+	if not file_name.endswith(".png"):
+		frappe.throw(_("This project has no thumbnail."), frappe.DoesNotExistError)
+	frappe.response.update(
+		{
+			"type": "download",
+			"filename": file_name,
+			"filecontent": content,
+			"content_type": "image/png",
+			"display_content_as": "inline",
+		}
+	)
 
 
 @frappe.whitelist(methods=["POST"])
