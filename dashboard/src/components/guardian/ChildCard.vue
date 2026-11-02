@@ -10,7 +10,7 @@
 			<div class="min-w-0 flex-1">
 				<h2 class="truncate text-base-medium text-ink-gray-8">
 					<RouterLink
-						:to="`/guardian/students/${child.student}`"
+						:to="childRoute"
 						class="rounded-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
 					>
 						{{ child.full_name }}
@@ -30,7 +30,7 @@
 			<h3 class="text-sm text-ink-gray-5">{{ list.title }}</h3>
 			<ul v-if="list.rows.length" class="divide-y divide-outline-gray-1">
 				<li
-					v-for="row in list.rows"
+					v-for="row in list.rows.slice(0, LIST_LIMIT)"
 					:key="row.name"
 					class="flex items-baseline justify-between gap-3 py-1.5 text-base"
 				>
@@ -39,6 +39,13 @@
 				</li>
 			</ul>
 			<p v-else class="text-p-sm text-ink-gray-5">{{ list.empty }}</p>
+			<RouterLink
+				v-if="list.rows.length > LIST_LIMIT"
+				:to="childRoute"
+				class="inline-block rounded-2 text-sm text-ink-gray-5 hover:text-ink-gray-8 focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
+			>
+				{{ list.rows.length - LIST_LIMIT }} more →
+			</RouterLink>
 		</section>
 	</article>
 </template>
@@ -61,7 +68,11 @@ export interface GuardianChildSummary extends GuardianChild {
 	graded: GuardianAssignment[]
 }
 
+const LIST_LIMIT = 5
+
 const props = defineProps<{ child: GuardianChildSummary }>()
+
+const childRoute = computed(() => `/guardian/students/${props.child.student}`)
 
 const lists = computed(() => [
 	{
