@@ -1,4 +1,4 @@
-import { isPast } from '@/lib/dates'
+import { isPast, parseDatetime } from '@/lib/dates'
 import type { CS17Assignment, CS17Grade, CS17Submission } from '@/types'
 
 /**
@@ -11,19 +11,27 @@ export type AssignmentStatus = 'Pending' | 'Returned' | 'Submitted' | 'Closed'
 /**
  * The ladder, in order: work sent back is Returned until it is submitted again;
  * a graded assignment is done with; a submission that has not been graded yet
- * is Submitted; a passed due date closes an assignment that was never
+ * is Submitted; a passed deadline closes an assignment that was never
  * submitted to; everything else is still open.
  */
 export function assignmentStatus(
-	assignment: Pick<CS17Assignment, 'due_date'>,
+	assignment: Pick<CS17Assignment, 'due_date' | 'late_until'>,
 	submission?: CS17Submission | null,
 	grade?: CS17Grade | null,
 ): AssignmentStatus {
 	if (submission?.returned_on) return 'Returned'
 	if (grade) return 'Closed'
 	if (submission) return 'Submitted'
-	if (isPast(assignment.due_date)) return 'Closed'
+	if (isPast(assignment.late_until || assignment.due_date)) return 'Closed'
 	return 'Pending'
+}
+
+export function isLate(submittedAt?: string | null, dueDate?: string | null): boolean {
+	return Boolean(
+		submittedAt &&
+			dueDate &&
+			parseDatetime(submittedAt).valueOf() > parseDatetime(dueDate).valueOf(),
+	)
 }
 
 /** Badge theme for each rung, so the three surfaces also agree on color. */

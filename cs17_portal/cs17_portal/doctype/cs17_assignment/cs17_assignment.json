@@ -23,6 +23,8 @@
   "column_break_vtqn",
   "publish_on",
   "due_date",
+  "late_until",
+  "late_penalty",
   "description",
   "python_section",
   "starter_code",
@@ -212,6 +214,17 @@
    "fieldtype": "Select",
    "label": "Difficulty",
    "options": "\nEasy\nMedium\nHard\nExtra hard"
+  },
+  {
+   "fieldname": "late_until",
+   "fieldtype": "Datetime",
+   "label": "Accept late work until"
+  },
+  {
+   "depends_on": "late_until",
+   "fieldname": "late_penalty",
+   "fieldtype": "Percent",
+   "label": "Late penalty"
   }
  ],
  "grid_page_length": 50,
@@ -226,7 +239,7 @@
    "link_fieldname": "assignment"
   }
  ],
- "modified": "2026-10-31 19:13:17.745122",
+ "modified": "2026-11-02 20:03:26.705417",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",

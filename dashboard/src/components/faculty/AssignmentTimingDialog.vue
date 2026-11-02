@@ -7,6 +7,23 @@
 				:model-value="dueDate"
 				@update:model-value="dueDate = $event ?? ''"
 			/>
+			<DateTimePicker
+				label="Accept late work until"
+				placeholder="Pick a date and time"
+				description="Leave empty to close at the due date."
+				:model-value="lateUntil"
+				@update:model-value="lateUntil = $event ?? ''"
+			/>
+			<FormControl
+				v-if="lateUntil"
+				v-model="latePenalty"
+				type="number"
+				label="Late penalty (%)"
+				description="Nothing is taken off for you. Grading shows the marks after the penalty."
+				min="0"
+				max="100"
+				step="any"
+			/>
 			<FormControl
 				v-if="assignment.submission_type === 'Python'"
 				v-model="timeLimit"
@@ -66,18 +83,27 @@ const timeLimit = ref(props.assignment.time_limit ? String(props.assignment.time
 const attemptsAllowed = ref(
 	props.assignment.attempts_allowed ? String(props.assignment.attempts_allowed) : '',
 )
+const lateUntil = ref(props.assignment.late_until ?? '')
+const latePenalty = ref(props.assignment.late_penalty ? String(props.assignment.late_penalty) : '')
 const error = ref('')
 
 const save = useCall<
 	null,
-	{ assignment: string; due_date: string; time_limit: number; attempts_allowed: number }
+	{
+		assignment: string
+		due_date: string
+		time_limit: number
+		attempts_allowed: number
+		late_until: string
+		late_penalty: number
+	}
 >({
 	url: '/api/v2/method/cs17_portal.api.set_assignment_timing',
 	method: 'POST',
 	immediate: false,
 })
 
-watch([dueDate, timeLimit, attemptsAllowed], () => {
+watch([dueDate, timeLimit, attemptsAllowed, lateUntil, latePenalty], () => {
 	error.value = ''
 })
 
@@ -87,6 +113,8 @@ async function handleSave() {
 		due_date: toFrappeDatetime(dueDate.value),
 		time_limit: Number(timeLimit.value) || 0,
 		attempts_allowed: Number(attemptsAllowed.value) || 0,
+		late_until: toFrappeDatetime(lateUntil.value),
+		late_penalty: Number(latePenalty.value) || 0,
 	})
 	if (save.error) {
 		error.value = frappeErrorMessage(save.error, 'Could not save the timing.')
