@@ -65,6 +65,8 @@ export interface AssignmentDraft {
 	watch_tab_switches: boolean
 	time_limit: string
 	attempts_allowed: string
+	late_until: string
+	late_penalty: string
 }
 
 const props = defineProps<{ draft: AssignmentDraft }>()
@@ -76,6 +78,12 @@ const evaluationType = computed(() =>
 const metaRows = computed(() => {
 	const rows = [
 		{ label: 'Due', value: formatDateTime(props.draft.due_date) || '—' },
+		...(props.draft.late_until
+			? [{ label: 'Late work accepted until', value: formatDateTime(props.draft.late_until) }]
+			: []),
+		...(props.draft.late_until && Number(props.draft.late_penalty) > 0
+			? [{ label: 'Late penalty', value: `${props.draft.late_penalty}%` }]
+			: []),
 		{ label: 'Evaluation Type', value: evaluationType.value || '—' },
 	]
 	if (evaluationType.value === 'Marks') {

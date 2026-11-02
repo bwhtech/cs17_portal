@@ -32,7 +32,11 @@ export function usePythonAssignment(): {
 		const current = options.readOnly
 			? null
 			: await trySubmit(details, { assignment: assignment.name })
-		if (current?.time_limit && !current.started_at && !isPast(current.due_date)) {
+		if (
+			current?.time_limit &&
+			!current.started_at &&
+			!isPast(current.late_until || current.due_date)
+		) {
 			dialog.confirm({
 				title: 'Start the clock?',
 				message: `You will have ${current.time_limit} ${current.time_limit === 1 ? 'minute' : 'minutes'}. The clock does not stop once it starts, even if you leave the page. When time is up, your code is submitted.`,

@@ -118,6 +118,25 @@
 						@update:model-value="draft.due_date = $event ?? ''"
 					/>
 
+					<DateTimePicker
+						label="Accept late work until"
+						placeholder="Pick a date and time"
+						description="Leave empty to close at the due date."
+						:model-value="draft.late_until"
+						@update:model-value="draft.late_until = $event ?? ''"
+					/>
+
+					<FormControl
+						v-if="draft.late_until"
+						v-model="draft.late_penalty"
+						type="number"
+						label="Late penalty (%)"
+						description="Nothing is taken off for you. Grading shows the marks after the penalty."
+						min="0"
+						max="100"
+						step="any"
+					/>
+
 					<FormControl
 						v-model="draft.description"
 						type="textarea"
@@ -297,6 +316,8 @@ function emptyDraft(): AssignmentDraft {
 		watch_tab_switches: false,
 		time_limit: '',
 		attempts_allowed: '',
+		late_until: '',
+		late_penalty: '',
 	}
 }
 
@@ -449,6 +470,8 @@ async function loadExisting(name: string) {
 		watch_tab_switches: Boolean(existing.watch_tab_switches),
 		time_limit: existing.time_limit ? String(existing.time_limit) : '',
 		attempts_allowed: existing.attempts_allowed ? String(existing.attempts_allowed) : '',
+		late_until: existing.late_until ?? '',
+		late_penalty: existing.late_penalty ? String(existing.late_penalty) : '',
 	} satisfies AssignmentDraft)
 	publishMode.value = existing.publish_on ? 'schedule' : 'draft'
 	publishOn.value = existing.publish_on ?? ''
@@ -474,6 +497,7 @@ function isDirty(): boolean {
 			draft.topic ||
 			draft.difficulty ||
 			draft.due_date ||
+			draft.late_until ||
 			publishMode.value !== 'draft' ||
 			publishOn.value,
 	)
@@ -544,6 +568,8 @@ async function handleSubmit() {
 		watch_tab_switches: draft.watch_tab_switches ? 1 : 0,
 		time_limit: Number(draft.time_limit) || 0,
 		attempts_allowed: Number(draft.attempts_allowed) || 0,
+		late_until: toFrappeDatetime(draft.late_until),
+		late_penalty: Number(draft.late_penalty) || 0,
 		publish: publishMode.value,
 		publish_on: toFrappeDatetime(publishOn.value),
 	}

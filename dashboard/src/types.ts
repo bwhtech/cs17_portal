@@ -70,6 +70,8 @@ export interface CS17Assignment {
 	ends_at?: string
 	/** The server's clock, sent with a timed assignment. */
 	now?: string
+	late_until?: string | null
+	late_penalty?: number
 }
 
 export interface PythonTestCase {

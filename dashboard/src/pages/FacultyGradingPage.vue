@@ -77,6 +77,13 @@
 					@click="askToExplainOpen = true"
 				/>
 				<Badge
+					v-if="submittedLate"
+					label="Late"
+					theme="red"
+					variant="subtle"
+					:title="`Submitted ${formatDateTime(detailRow?.submitted_at)}`"
+				/>
+				<Badge
 					v-if="detailRow?.returned_on"
 					label="Returned"
 					theme="amber"
@@ -162,6 +169,8 @@
 					:evaluation-type="submission.evaluation_type"
 					:suggested-marks="suggestedMarks"
 					:can-check-with-ai="submission.can_check_with_ai"
+					:submitted-late="submittedLate"
+					:late-penalty="detailRow?.late_penalty"
 					@saved="onSaved"
 				/>
 			</KeepAlive>
@@ -209,8 +218,9 @@ import { useLoadFailed } from '@/composables/useLoadFailed'
 import { useZenMode, useZenOnMount } from '@/composables/useZenMode'
 import { formatDateTime } from '@/lib/dates'
 import { isRefusal } from '@/lib/frappeError'
+import { isLate } from '@/lib/status'
 import { isProjectSubmission } from '@/lib/submissionTypes'
-import type { CS17Submission, CohortSubmission, SubmissionRevision } from '@/types'
+import type { CS17Assignment, CS17Submission, CohortSubmission, SubmissionRevision } from '@/types'
 
 interface ExplanationRequest {
 	answered_on: string | null
@@ -242,7 +252,8 @@ const cohortSubmissions = useCall<CohortSubmission[]>({
 
 const detail = useCall<
 	CohortSubmission &
-		Pick<CS17Submission, 'submission_document' | 'submission_url' | 'returned_on'>,
+		Pick<CS17Submission, 'submission_document' | 'submission_url' | 'returned_on'> &
+		Pick<CS17Assignment, 'due_date' | 'late_penalty'>,
 	{ submission: string }
 >({
 	url: '/api/v2/method/cs17_portal.api.get_submission',
@@ -348,5 +359,9 @@ watch(
 		])
 	},
 	{ immediate: true },
+)
+
+const submittedLate = computed(() =>
+	isLate(detailRow.value?.submitted_at, detailRow.value?.due_date),
 )
 </script>

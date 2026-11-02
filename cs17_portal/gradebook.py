@@ -42,7 +42,7 @@ def _get_mark(
 		return None
 	submission = work.submissions.get((assignment.name, student))
 	if not submission:
-		return _("Missing") if assignment.due_date < now else None
+		return _("Missing") if (assignment.late_until or assignment.due_date) < now else None
 	grade = work.published_grades.get(submission.name)
 	if not grade:
 		return None

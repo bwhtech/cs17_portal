@@ -32,6 +32,8 @@ class CS17Assignment(Document):
 		difficulty: DF.Literal["", "Easy", "Medium", "Hard", "Extra hard"]
 		due_date: DF.Datetime | None
 		is_published: DF.Check
+		late_penalty: DF.Percent
+		late_until: DF.Datetime | None
 		max_marks: DF.Float
 		naming_series: DF.Literal["GRADED-.{cohort}.-.###", "NOT-GRADED-.{cohort}.-.###"]
 		publish_on: DF.Datetime | None
@@ -65,6 +67,7 @@ class CS17Assignment(Document):
 			frappe.throw(_("The time limit cannot be negative."))
 		if cint(self.attempts_allowed) < 0:
 			frappe.throw(_("The number of attempts cannot be negative."))
+		self._validate_late_work()
 		if self.assignment_type == "Not Graded":
 			self.max_marks = 0
 			self.remarks = ""
@@ -76,6 +79,17 @@ class CS17Assignment(Document):
 		self._validate_evaluation_type_locked()
 		self._validate_max_marks_not_below_marks_given()
 		self._validate_students()
+
+	def _validate_late_work(self):
+		if not self.late_until:
+			self.late_penalty = 0
+			return
+		if not self.due_date:
+			frappe.throw(_("Set a due date before accepting late work."))
+		if get_datetime(self.late_until) <= get_datetime(self.due_date):
+			frappe.throw(_("Late work must be accepted until a time after the due date."))
+		if not 0 <= flt(self.late_penalty) <= 100:
+			frappe.throw(_("The late penalty must be between 0 and 100."))
 
 	def _validate_publishable(self):
 		if not (self.is_published or self.publish_on):
