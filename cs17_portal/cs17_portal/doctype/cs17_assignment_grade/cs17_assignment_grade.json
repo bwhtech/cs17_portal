@@ -20,6 +20,7 @@
   "column_break_lrax",
   "published_on",
   "marks_obtained",
+  "rubric_scores",
   "remarks",
   "voice_remark",
   "evaluation_type"
@@ -125,12 +126,19 @@
    "fieldname": "voice_remark",
    "fieldtype": "Attach",
    "label": "Voice Remark"
+  },
+  {
+   "depends_on": "eval:doc.evaluation_type==\"Marks\"",
+   "fieldname": "rubric_scores",
+   "fieldtype": "Table",
+   "label": "Rubric Scores",
+   "options": "CS17 Rubric Score"
   }
  ],
  "grid_page_length": 50,
  "link_display_mode": "Search",
  "links": [],
- "modified": "2026-10-31 19:24:50.290481",
+ "modified": "2026-11-02 20:55:23.016461",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment Grade",

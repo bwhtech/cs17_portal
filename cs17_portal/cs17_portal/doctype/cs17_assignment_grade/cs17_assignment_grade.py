@@ -27,6 +27,8 @@ class CS17AssignmentGrade(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
+		from cs17_portal.cs17_portal.doctype.cs17_rubric_score.cs17_rubric_score import CS17RubricScore
+
 		assignment: DF.Link
 		assignment_title: DF.Data | None
 		evaluation_type: DF.Data | None
@@ -38,6 +40,7 @@ class CS17AssignmentGrade(Document):
 		naming_series: DF.Literal["GRADE-.{assignment}.-.###"]
 		published_on: DF.Datetime | None
 		remarks: DF.MarkdownEditor | None
+		rubric_scores: DF.Table[CS17RubricScore]
 		submission: DF.Link | None
 		voice_remark: DF.Attach | None
 	# end: auto-generated types
@@ -63,6 +66,7 @@ class CS17AssignmentGrade(Document):
 		if assignment.assignment_type == "Not Graded" and not (self.remarks or self.voice_remark):
 			frappe.throw(_("Enter the remarks or record a voice note."))
 
+		self.validate_rubric_scores()
 		max_marks = flt(assignment.max_marks)
 		if flt(self.marks_obtained) < 0 or flt(self.marks_obtained) > max_marks:
 			frappe.throw(_("Marks must be between 0 and {0}.").format(max_marks))
@@ -71,6 +75,31 @@ class CS17AssignmentGrade(Document):
 			self.grade = get_grade_for_marks(flt(self.marks_obtained), max_marks, get_default_scale())
 		elif self.grade and self.grade not in LETTER_GRADES:
 			frappe.throw(_("Grade must be one of {0}.").format(", ".join(LETTER_GRADES)))
+
+	def validate_rubric_scores(self):
+		if not self.rubric_scores:
+			return
+		for row in self.rubric_scores:
+			if not 0 <= flt(row.marks) <= flt(row.max_marks):
+				frappe.throw(
+					_("Marks for {0} must be between 0 and {1}.").format(row.criterion, flt(row.max_marks))
+				)
+		self.marks_obtained = sum(flt(row.marks) for row in self.rubric_scores)
+
+	def set_rubric_scores(self, rubric: list, rubric_scores: list) -> None:
+		"""Score the grade by the assignment's rubric: one row per criterion in rubric order, or none yet."""
+		criteria = [row.criterion for row in rubric]
+		if rubric_scores and [score.get("criterion") for score in rubric_scores] != criteria:
+			frappe.throw(_("The rubric has changed. Reload the page and grade again."))
+		if rubric:
+			self.marks_obtained = 0
+		self.set(
+			"rubric_scores",
+			[
+				{"criterion": row.criterion, "marks": flt(score.get("marks")), "max_marks": row.marks}
+				for row, score in zip(rubric, rubric_scores, strict=False)
+			],
+		)
 
 	def validate_duplicate(self):
 		if not self.submission:

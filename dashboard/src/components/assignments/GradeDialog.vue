@@ -14,6 +14,11 @@
 					{{ isLetterGrade ? 'Grade' : 'Marks Obtained' }}
 				</p>
 				<p class="text-2xl text-ink-gray-9">{{ score }}</p>
+				<RubricScores
+					v-if="grade.rubric_scores?.length"
+					class="mt-2"
+					:scores="grade.rubric_scores"
+				/>
 			</div>
 			<StudentCodeComments v-if="grade.submission" :submission="grade.submission" />
 			<div v-if="grade.remarks">
@@ -32,6 +37,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Dialog } from 'frappe-ui'
+import RubricScores from '@/components/assignments/RubricScores.vue'
 import StudentCodeComments from '@/components/assignments/StudentCodeComments.vue'
 import MarkdownText from '@/components/common/MarkdownText.vue'
 import type { CS17Grade } from '@/types'

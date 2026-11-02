@@ -20,6 +20,7 @@
   "difficulty",
   "submission_type",
   "max_marks",
+  "rubric",
   "column_break_vtqn",
   "publish_on",
   "due_date",
@@ -225,6 +226,13 @@
    "fieldname": "late_penalty",
    "fieldtype": "Percent",
    "label": "Late penalty"
+  },
+  {
+   "depends_on": "eval:doc.assignment_type === \"Graded\" && doc.remarks === \"Marks\"",
+   "fieldname": "rubric",
+   "fieldtype": "Table",
+   "label": "Rubric",
+   "options": "CS17 Rubric Criterion"
   }
  ],
  "grid_page_length": 50,
@@ -239,7 +247,7 @@
    "link_fieldname": "assignment"
   }
  ],
- "modified": "2026-11-02 20:03:26.705417",
+ "modified": "2026-11-02 20:55:22.884781",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",

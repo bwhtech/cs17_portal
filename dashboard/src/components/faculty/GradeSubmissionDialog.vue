@@ -8,6 +8,13 @@
 				placeholder="Select a grade"
 				:options="gradeOptions"
 			/>
+			<RubricMarksFields
+				v-else-if="isMarks && rubric?.length"
+				v-model="criterionMarks"
+				:rubric="rubric"
+				:errors="criterionErrors"
+				:grade="marksGrade"
+			/>
 			<FormControl
 				v-else-if="isMarks"
 				v-model="marks"
@@ -71,11 +78,19 @@
 import { computed, ref, watch } from 'vue'
 import { Button, Dialog, ErrorMessage, FormControl, Select, toast, useCall } from 'frappe-ui'
 import PublishFields from '@/components/common/PublishFields.vue'
+import RubricMarksFields from '@/components/grading/RubricMarksFields.vue'
 import { useSubmissionTests, type TestResult } from '@/composables/useSubmissionTests'
 import { isPast, toFrappeDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { gradeForMarks } from '@/lib/grades'
 import { unescapeTags } from '@/lib/markdown'
+import {
+	rubricMarksErrors,
+	rubricScores,
+	rubricTotal,
+	savedRubricMarks,
+	type RubricCriterion,
+} from '@/lib/rubric'
 import { trySubmit } from '@/lib/trySubmit'
 import {
 	GRADE_SCALE,
@@ -95,6 +110,7 @@ const props = defineProps<{
 	evaluationType: EvaluationType | ''
 	maxMarks?: number
 	canCheckWithAi?: boolean
+	rubric?: RubricCriterion[]
 }>()
 
 const emit = defineEmits<{ 'update:open': [value: boolean]; success: [] }>()
@@ -111,12 +127,14 @@ const gradeOptions = [
 
 const grade = ref('')
 const marks = ref('')
+const criterionMarks = ref<string[]>([])
 const remarks = ref('')
 const publishMode = ref<PublishMode>('draft')
 const publishOn = ref('')
 const published = ref(false)
 /** Validation, kept under the field it belongs to rather than sent to a toast. */
 const fieldError = ref('')
+const criterionErrors = ref<string[]>([])
 const remarksError = ref('')
 const publishOnError = ref('')
 /** Whatever the API answered with. */
@@ -139,7 +157,8 @@ const bands = useCall<GradeBand[]>({
 })
 
 const marksGrade = computed(() => {
-	const letter = gradeForMarks(bands.data ?? [], marks.value, props.maxMarks)
+	const typed = props.rubric?.length ? String(rubricTotal(criterionMarks.value)) : marks.value
+	const letter = gradeForMarks(bands.data ?? [], typed, props.maxMarks)
 	return letter ? `Grade ${letter}` : ''
 })
 
@@ -152,6 +171,7 @@ const save = useCall<
 		remarks?: string
 		publish: PublishMode
 		publish_on: string
+		rubric_scores?: ReturnType<typeof rubricScores>
 	}
 >({
 	url: '/api/v2/method/cs17_portal.api.grade_submission',
@@ -167,6 +187,7 @@ watch(
 		const existing = submission?.grade
 		grade.value = existing?.grade ?? ''
 		marks.value = existing?.marks_obtained == null ? '' : String(existing.marks_obtained)
+		criterionMarks.value = savedRubricMarks(props.rubric ?? [], existing?.rubric_scores)
 		remarks.value = unescapeTags(existing?.remarks ?? '')
 		published.value = Boolean(existing?.is_published) || isPast(existing?.published_on)
 		if (published.value) {
@@ -180,6 +201,7 @@ watch(
 			publishOn.value = ''
 		}
 		fieldError.value = ''
+		criterionErrors.value = []
 		remarksError.value = ''
 		publishOnError.value = ''
 		saveError.value = ''
@@ -192,6 +214,10 @@ watch(marks, () => {
 	fieldError.value = ''
 })
 
+watch(criterionMarks, () => {
+	criterionErrors.value = []
+})
+
 watch(remarks, () => {
 	remarksError.value = ''
 })
@@ -201,7 +227,7 @@ watch([publishMode, publishOn], () => {
 })
 
 function validate(): string | null {
-	if (isMarks.value) {
+	if (isMarks.value && !props.rubric?.length) {
 		const value = Number(marks.value)
 		if (marks.value.trim() === '' || Number.isNaN(value) || value < 0) {
 			return 'Please enter valid marks.'
@@ -217,10 +243,17 @@ async function handleSave() {
 	if (!props.submission) return
 	saveError.value = ''
 	fieldError.value = validate() ?? ''
+	criterionErrors.value = rubricMarksErrors(props.rubric ?? [], criterionMarks.value)
 	remarksError.value = remarksOnly.value && !remarks.value.trim() ? 'Enter the remarks.' : ''
 	publishOnError.value =
 		publishMode.value === 'schedule' && !publishOn.value ? 'Pick a publish date.' : ''
-	if (fieldError.value || remarksError.value || publishOnError.value) return
+	if (
+		fieldError.value ||
+		criterionErrors.value.some(Boolean) ||
+		remarksError.value ||
+		publishOnError.value
+	)
+		return
 
 	await trySubmit(save, {
 		submission: props.submission.name,
@@ -229,6 +262,9 @@ async function handleSave() {
 		remarks: remarks.value.trim() || undefined,
 		publish: publishMode.value,
 		publish_on: toFrappeDatetime(publishOn.value),
+		rubric_scores: props.rubric?.length
+			? rubricScores(props.rubric, criterionMarks.value)
+			: undefined,
 	})
 
 	if (save.error) {
