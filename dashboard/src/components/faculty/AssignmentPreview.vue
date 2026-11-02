@@ -67,6 +67,7 @@ export interface AssignmentDraft {
 	attempts_allowed: string
 	late_until: string
 	late_penalty: string
+	rubric: { criterion: string; marks: string }[]
 }
 
 const props = defineProps<{ draft: AssignmentDraft }>()

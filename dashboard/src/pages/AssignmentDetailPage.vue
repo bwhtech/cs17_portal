@@ -128,6 +128,11 @@
 								{{ isLetterGrade ? 'Grade' : 'Marks Obtained' }}
 							</p>
 							<p class="text-lg text-ink-gray-9">{{ score }}</p>
+							<RubricScores
+								v-if="grade.rubric_scores?.length"
+								class="mt-2"
+								:scores="grade.rubric_scores"
+							/>
 						</div>
 						<StudentCodeComments
 							v-if="assignment.submission_type === 'Python'"
@@ -208,6 +213,7 @@
 import { computed, reactive, ref, toRefs, watch } from 'vue'
 import { Button, PageHeaderBackButton, useCall, useList } from 'frappe-ui'
 import StudentCodeComments from '@/components/assignments/StudentCodeComments.vue'
+import RubricScores from '@/components/assignments/RubricScores.vue'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import LoadError from '@/components/common/LoadError.vue'

@@ -182,6 +182,7 @@ def create_assignment(
 	difficulty: str | None = None,
 	late_until: str | None = None,
 	late_penalty: float | None = None,
+	rubric: list | str | None = None,
 ) -> str:
 	faculty = get_current_faculty()
 	if faculty.cohort and faculty.cohort != cohort:
@@ -207,6 +208,7 @@ def create_assignment(
 		difficulty=difficulty,
 		late_until=late_until,
 		late_penalty=late_penalty,
+		rubric=rubric,
 	)
 	assignment.naming_series = _naming_series(assignment_type)
 	_apply_publish_state(assignment, publish, publish_on)
@@ -252,6 +254,8 @@ def given_to(student: str) -> list:
 
 @frappe.whitelist(methods=["GET"])
 def get_assignment_submissions(assignment: str) -> dict:
+	from cs17_portal.rubric import attach_rubric_scores, get_rubric
+
 	require_faculty_for_assignment(assignment)
 	assignment_doc = frappe.db.get_value(
 		"CS17 Assignment",
@@ -287,6 +291,7 @@ def get_assignment_submissions(assignment: str) -> dict:
 		pluck="student",
 		order_by="idx asc",
 	)
+	assignment_doc.rubric = get_rubric(assignment)
 	submissions = frappe.get_all(
 		"CS17 Assignment Submission",
 		filters={"assignment": assignment},
@@ -305,6 +310,8 @@ def get_assignment_submissions(assignment: str) -> dict:
 		order_by="submitted_at desc",
 	)
 	_attach_grades(submissions)
+	if assignment_doc.rubric:
+		attach_rubric_scores([submission.grade for submission in submissions if submission.grade])
 	not_submitted = frappe.get_all(
 		"CS17 Profile",
 		filters=[
@@ -375,7 +382,7 @@ def _attach_grades(submissions: list) -> None:
 	grades = frappe.get_all(
 		"CS17 Assignment Grade",
 		filters=[["submission", "in", names]],
-		fields=["submission", "grade", "marks_obtained", "remarks", "is_published", "published_on"],
+		fields=["name", "submission", "grade", "marks_obtained", "remarks", "is_published", "published_on"],
 	)
 	grade_by_submission = {grade["submission"]: grade for grade in grades}
 	for submission in submissions:
@@ -398,12 +405,16 @@ def grade_submission(
 	remarks: str | None = None,
 	publish: str | None = None,
 	publish_on: str | None = None,
+	rubric_scores: list | str | None = None,
 ) -> dict:
+	from cs17_portal.rubric import get_rubric
+
 	get_current_faculty()
 	sub_doc = frappe.get_doc("CS17 Assignment Submission", submission)
 	require_faculty_for_assignment(sub_doc.assignment)
 	evaluation_type = frappe.db.get_value("CS17 Assignment", sub_doc.assignment, "remarks")
-	if evaluation_type == "Marks" and marks_obtained is None:
+	rubric = get_rubric(sub_doc.assignment)
+	if evaluation_type == "Marks" and (rubric_scores if rubric else marks_obtained) is None:
 		frappe.throw(_("Enter the marks."))
 	doc = _get_or_new_grade(submission, sub_doc.assignment)
 	doc.update(
@@ -414,6 +425,7 @@ def grade_submission(
 			"remarks": remarks,
 		}
 	)
+	doc.set_rubric_scores(rubric, frappe.parse_json(rubric_scores) or [])
 	if publish == "schedule" and is_published_now(doc, "published_on"):
 		frappe.throw(_("A published grade can no longer be scheduled"))
 	if publish is not None:
@@ -1110,18 +1122,23 @@ def list_cohort_submissions(limit: int | None = None) -> list:
 
 @frappe.whitelist(methods=["GET"])
 def get_submission_grade(submission: str) -> dict | None:
+	from cs17_portal.rubric import attach_rubric_scores
+
 	get_current_faculty()
 	assignment = frappe.db.get_value("CS17 Assignment Submission", submission, "assignment")
 	if not assignment:
 		frappe.throw(_("Submission not found"), frappe.DoesNotExistError)
 
 	require_faculty_for_assignment(assignment)
-	return frappe.db.get_value(
+	grade = frappe.db.get_value(
 		"CS17 Assignment Grade",
 		{"submission": submission},
 		["name", "marks_obtained", "grade", "remarks", "voice_remark"],
 		as_dict=True,
 	)
+	if grade:
+		attach_rubric_scores([grade])
+	return grade
 
 
 @frappe.whitelist(methods=["POST"])
@@ -1131,7 +1148,10 @@ def save_grade(
 	grade: str | None = None,
 	remarks: str | None = None,
 	voice_remark: str | None = None,
+	rubric_scores: list | str | None = None,
 ) -> dict:
+	from cs17_portal.rubric import get_rubric
+
 	get_current_faculty()
 	assignment = frappe.db.get_value("CS17 Assignment Submission", submission, "assignment")
 	if not assignment:
@@ -1140,10 +1160,12 @@ def save_grade(
 	require_faculty_for_assignment(assignment)
 
 	evaluation_type = frappe.db.get_value("CS17 Assignment", assignment, "remarks")
-	if evaluation_type == "Marks" and marks_obtained is None:
+	rubric = get_rubric(assignment)
+	if evaluation_type == "Marks" and (rubric_scores if rubric else marks_obtained) is None:
 		frappe.throw(_("Enter the marks."))
 	grade_doc = _get_or_new_grade(submission, assignment)
 	grade_doc.marks_obtained = flt(marks_obtained) if evaluation_type == "Marks" else 0
+	grade_doc.set_rubric_scores(rubric, frappe.parse_json(rubric_scores) or [])
 	grade_doc.grade = grade if evaluation_type == "Grade" else None
 	grade_doc.remarks = remarks
 	previous_voice_remarks = []
@@ -1416,6 +1438,8 @@ def reattempt_python_assignment(assignment: str) -> dict:
 
 @frappe.whitelist(methods=["GET"])
 def get_student_grades() -> dict:
+	from cs17_portal.rubric import attach_rubric_scores
+
 	student = require_current_student()
 	submissions = frappe.get_all(
 		"CS17 Assignment Submission",
@@ -1442,6 +1466,7 @@ def get_student_grades() -> dict:
 		],
 	)
 	grades = [grade for grade in grades if is_published_now(grade, "published_on")]
+	attach_rubric_scores(grades)
 	upcoming = frappe.get_all(
 		"CS17 Assignment Grade",
 		filters=[
@@ -1633,6 +1658,7 @@ def update_assignment(
 	difficulty: str | None = None,
 	late_until: str | None = None,
 	late_penalty: float | None = None,
+	rubric: list | str | None = None,
 ) -> str:
 	require_faculty_for_assignment(assignment)
 	faculty = get_current_faculty()
@@ -1665,6 +1691,7 @@ def update_assignment(
 		difficulty=difficulty,
 		late_until=late_until,
 		late_penalty=late_penalty,
+		rubric=rubric,
 	)
 	if publish is not None:
 		_apply_publish_state(doc, publish, publish_on)
@@ -1694,6 +1721,7 @@ def _set_assignment_fields(
 	difficulty: str | None = None,
 	late_until: str | None = None,
 	late_penalty: float | None = None,
+	rubric: list | str | None = None,
 ) -> None:
 	doc.update(
 		{
@@ -1735,6 +1763,14 @@ def _set_assignment_fields(
 				for test_case in frappe.parse_json(test_cases)
 			],
 		)
+	if rubric is not None:
+		doc.set(
+			"rubric",
+			[
+				{"criterion": row.get("criterion"), "marks": row.get("marks")}
+				for row in frappe.parse_json(rubric)
+			],
+		)
 	if assignment_type == "Graded":
 		doc.max_marks = max_marks
 		doc.remarks = remarks
@@ -1742,6 +1778,8 @@ def _set_assignment_fields(
 
 @frappe.whitelist(methods=["GET"])
 def get_assignment(assignment: str) -> dict | None:
+	from cs17_portal.rubric import get_rubric
+
 	require_faculty_for_assignment(assignment)
 	assignment_doc = frappe.db.get_value(
 		"CS17 Assignment",
@@ -1773,6 +1811,7 @@ def get_assignment(assignment: str) -> dict | None:
 	)
 	if assignment_doc:
 		assignment_doc.test_cases = get_test_cases(assignment)
+		assignment_doc.rubric = get_rubric(assignment)
 	return assignment_doc
 
 
@@ -2466,6 +2505,7 @@ def copy_assignments(assignments: list | str, cohort: str, quarter: str | None =
 				attempts_allowed=source.attempts_allowed,
 				topic=source.topic,
 				difficulty=source.difficulty,
+				rubric=source.rubric,
 			)
 		)
 	return copies
@@ -2836,6 +2876,7 @@ def save_ai_grade_draft(submission: str, test_cases: list, model: str | None = N
 		marks_obtained=draft["marks_obtained"],
 		remarks=draft["remarks"],
 		publish="draft",
+		rubric_scores=[],
 	)
 
 

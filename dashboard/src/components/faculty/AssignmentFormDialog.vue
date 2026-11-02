@@ -101,14 +101,20 @@
 						/>
 					</div>
 
-					<FormControl
-						v-if="evaluationType === 'Marks'"
-						v-model="draft.max_marks"
-						type="number"
-						label="Max Marks"
-						min="0"
-						:error="errors.max_marks"
-					/>
+					<template v-if="evaluationType === 'Marks'">
+						<FormControl
+							v-model="draft.max_marks"
+							type="number"
+							label="Max Marks"
+							min="0"
+							:disabled="draft.rubric.length > 0"
+							:description="
+								draft.rubric.length ? 'The total of the rubric.' : undefined
+							"
+							:error="errors.max_marks"
+						/>
+						<RubricField v-model="draft.rubric" :errors="rubricErrors" />
+					</template>
 
 					<DateTimePicker
 						label="Due Date"
@@ -252,6 +258,7 @@ import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import PublishFields from '@/components/common/PublishFields.vue'
 import AssignmentPreview, { type AssignmentDraft } from '@/components/faculty/AssignmentPreview.vue'
 import DeleteAssignmentDialog from '@/components/faculty/DeleteAssignmentDialog.vue'
+import RubricField from '@/components/faculty/RubricField.vue'
 import TestCasesField from '@/components/faculty/TestCasesField.vue'
 import TopicSelect from '@/components/faculty/TopicSelect.vue'
 import PythonEditor from '@/components/python/PythonEditor.vue'
@@ -259,6 +266,7 @@ import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useSession } from '@/composables/useSession'
 import { isPast, toFrappeDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
+import { rubricTotal } from '@/lib/rubric'
 import { STORAGE_KEYS, readJSON, removeKey, writeJSON } from '@/lib/storage'
 import { trySubmit } from '@/lib/trySubmit'
 import {
@@ -318,6 +326,7 @@ function emptyDraft(): AssignmentDraft {
 		attempts_allowed: '',
 		late_until: '',
 		late_penalty: '',
+		rubric: [],
 	}
 }
 
@@ -346,6 +355,7 @@ const errors = reactive<
 	publishOn: '',
 	form: '',
 })
+const rubricErrors = ref<{ criterion: string; marks: string }[]>([])
 
 const cohortOptions = computed(() => [
 	...(facultyCohort.value ? [] : [{ label: 'No cohort', value: '' }]),
@@ -395,6 +405,16 @@ const updateCall = useCall<string, Record<string, unknown>>({
 })
 
 watch(() => [props.open, props.draftName], initialize)
+
+watch(
+	() =>
+		evaluationType.value === 'Marks' && draft.rubric.length
+			? rubricTotal(draft.rubric.map((row) => row.marks))
+			: null,
+	(total) => {
+		if (total !== null) draft.max_marks = String(total)
+	},
+)
 
 // Any edit clears the last verdict — validation and server errors alike —
 // so a message never outlives the field it was about.
@@ -472,6 +492,10 @@ async function loadExisting(name: string) {
 		attempts_allowed: existing.attempts_allowed ? String(existing.attempts_allowed) : '',
 		late_until: existing.late_until ?? '',
 		late_penalty: existing.late_penalty ? String(existing.late_penalty) : '',
+		rubric: (existing.rubric ?? []).map((row) => ({
+			criterion: row.criterion,
+			marks: String(row.marks),
+		})),
 	} satisfies AssignmentDraft)
 	publishMode.value = existing.publish_on ? 'schedule' : 'draft'
 	publishOn.value = existing.publish_on ?? ''
@@ -490,6 +514,7 @@ function isDirty(): boolean {
 			draft.description.trim() ||
 			draft.starter_code.trim() ||
 			draft.test_cases.length ||
+			draft.rubric.length ||
 			draft.watch_tab_switches ||
 			draft.time_limit ||
 			(draft.cohort && !facultyCohort.value) ||
@@ -510,6 +535,7 @@ function clearErrors() {
 	errors.max_marks = ''
 	errors.publishOn = ''
 	errors.form = ''
+	rubricErrors.value = []
 }
 
 /** A draft may be half-finished; publishing is what makes the fields required. */
@@ -526,12 +552,19 @@ function validate(): boolean {
 	if (publishMode.value === 'schedule' && !publishOn.value) {
 		errors.publishOn = 'Pick a publish date.'
 	}
+	if (evaluationType.value === 'Marks') {
+		rubricErrors.value = draft.rubric.map((row) => ({
+			criterion: row.criterion.trim() ? '' : 'Name the criterion.',
+			marks: Number(row.marks) > 0 ? '' : 'Give it marks above 0.',
+		}))
+	}
 	return !(
 		errors.title ||
 		errors.cohort ||
 		errors.due_date ||
 		errors.max_marks ||
-		errors.publishOn
+		errors.publishOn ||
+		rubricErrors.value.some((row) => row.criterion || row.marks)
 	)
 }
 
@@ -570,6 +603,13 @@ async function handleSubmit() {
 		attempts_allowed: Number(draft.attempts_allowed) || 0,
 		late_until: toFrappeDatetime(draft.late_until),
 		late_penalty: Number(draft.late_penalty) || 0,
+		rubric:
+			evaluationType.value === 'Marks'
+				? draft.rubric.map((row) => ({
+						criterion: row.criterion.trim(),
+						marks: Number(row.marks),
+					}))
+				: [],
 		publish: publishMode.value,
 		publish_on: toFrappeDatetime(publishOn.value),
 	}

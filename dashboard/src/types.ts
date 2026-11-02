@@ -72,6 +72,7 @@ export interface CS17Assignment {
 	now?: string
 	late_until?: string | null
 	late_penalty?: number
+	rubric?: { criterion: string; marks: number }[]
 }
 
 export interface PythonTestCase {
@@ -175,6 +176,8 @@ export interface CS17Grade {
 	is_published?: Bool
 	published_on?: string | null
 	voice_remark?: string | null
+	/** The criteria as they were when graded. */
+	rubric_scores?: { criterion: string; marks: number; max_marks: number }[]
 }
 
 /** `CS17 Announcement`. */

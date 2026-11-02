@@ -23,6 +23,9 @@ class CS17Assignment(Document):
 		from cs17_portal.cs17_portal.doctype.cs17_python_test_case.cs17_python_test_case import (
 			CS17PythonTestCase,
 		)
+		from cs17_portal.cs17_portal.doctype.cs17_rubric_criterion.cs17_rubric_criterion import (
+			CS17RubricCriterion,
+		)
 
 		answer_sheet: DF.JSON | None
 		assignment_type: DF.Literal["Graded", "Not Graded"]
@@ -39,6 +42,7 @@ class CS17Assignment(Document):
 		publish_on: DF.Datetime | None
 		quarter: DF.Link | None
 		remarks: DF.Literal["Grade", "Marks"]
+		rubric: DF.Table[CS17RubricCriterion]
 		show_answers: DF.Check
 		starter_code: DF.Code | None
 		students: DF.Table[CS17AssignmentStudent]
@@ -73,6 +77,7 @@ class CS17Assignment(Document):
 			self.remarks = ""
 		elif not self.remarks:
 			frappe.throw(_("Choose an Evaluation Type, Grade or Marks, for a graded assignment"))
+		self._validate_rubric()
 		self.is_published = cint(self.is_published)
 		self._validate_publishable()
 		self._validate_stays_published()
@@ -90,6 +95,16 @@ class CS17Assignment(Document):
 			frappe.throw(_("Late work must be accepted until a time after the due date."))
 		if not 0 <= flt(self.late_penalty) <= 100:
 			frappe.throw(_("The late penalty must be between 0 and 100."))
+
+	def _validate_rubric(self):
+		if not self.rubric:
+			return
+		if self.assignment_type != "Graded" or self.remarks != "Marks":
+			frappe.throw(_("Only an assignment graded with marks can have a rubric."))
+		for row in self.rubric:
+			if flt(row.marks) <= 0:
+				frappe.throw(_("Give {0} marks above 0.").format(row.criterion))
+		self.max_marks = sum(flt(row.marks) for row in self.rubric)
 
 	def _validate_publishable(self):
 		if not (self.is_published or self.publish_on):

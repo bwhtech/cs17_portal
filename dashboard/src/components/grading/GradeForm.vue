@@ -13,8 +13,8 @@
 		v-else-if="!seeded"
 		class="!py-0"
 		title="Could not load the grade"
-		:loading="existing.loading"
-		@retry="existing.reload()"
+		:loading="existing.loading || rubricCall.loading"
+		@retry="reload"
 	/>
 
 	<!-- Two columns on a phone, one row from `md`: the form is pinned to the
@@ -25,8 +25,16 @@
 		novalidate
 		@submit.prevent="save"
 	>
+		<RubricMarksFields
+			v-if="showMarks && rubric.length"
+			v-model="criterionMarks"
+			class="col-span-2 md:basis-full"
+			:rubric="rubric"
+			:errors="criterionErrors"
+			:grade="marksGrade"
+		/>
 		<FormControl
-			v-if="showMarks"
+			v-else-if="showMarks"
 			v-model="marks"
 			class="col-span-2 md:w-36"
 			type="number"
@@ -127,8 +135,17 @@ import { useSubmissionTests, type TestResult } from '@/composables/useSubmission
 import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
 import { gradeForMarks } from '@/lib/grades'
 import { unescapeTags } from '@/lib/markdown'
+import {
+	rubricMarksErrors,
+	rubricScores,
+	rubricTotal,
+	savedRubricMarks,
+	type RubricCriterion,
+	type RubricScore,
+} from '@/lib/rubric'
 import { trySubmit } from '@/lib/trySubmit'
 import VoiceNoteRecorder from '@/components/feedback/VoiceNoteRecorder.vue'
+import RubricMarksFields from '@/components/grading/RubricMarksFields.vue'
 import { GRADE_SCALE, type AIGradeDraft, type EvaluationType, type GradeBand } from '@/types'
 
 interface SubmissionGrade {
@@ -137,6 +154,7 @@ interface SubmissionGrade {
 	grade: string | null
 	remarks: string | null
 	voice_remark: string | null
+	rubric_scores?: RubricScore[]
 }
 
 const props = defineProps<{
@@ -182,16 +200,38 @@ const existing = useCall<SubmissionGrade | null, { submission: string }>({
 	refetch: true,
 })
 
-const failed = useLoadFailed(existing, { except: isRefusal })
+const rubricCall = useCall<RubricCriterion[], { assignment: string }>({
+	url: '/api/v2/method/cs17_portal.rubric.get_assignment_rubric',
+	method: 'GET',
+	params: () => ({ assignment: props.assignment }),
+	immediate: showMarks.value,
+})
+
+const rubric = computed(() => rubricCall.data ?? [])
+const criterionMarks = ref<string[]>([])
+const criterionErrors = ref<string[]>([])
+const typedMarks = computed(() =>
+	rubric.value.length ? String(rubricTotal(criterionMarks.value)) : marks.value,
+)
+
+const gradeFailed = useLoadFailed(existing, { except: isRefusal })
+const rubricFailed = useLoadFailed(rubricCall, { except: isRefusal })
+const failed = computed(() => gradeFailed.value || rubricFailed.value)
+
+function reload() {
+	existing.reload()
+	if (showMarks.value) rubricCall.reload()
+}
 
 // `isFinished`, not `data`: an ungraded submission answers with `null`, which
 // never changes the data ref and so would never fire a watcher on it.
 watch(
-	() => existing.isFinished,
+	() => existing.isFinished && (!showMarks.value || rubricCall.isFinished),
 	(finished) => {
-		if (!finished || seeded.value || existing.error) return
+		if (!finished || seeded.value || existing.error || rubricCall.error) return
 		const grade = existing.data
 		marks.value = grade?.marks_obtained != null ? String(grade.marks_obtained) : ''
+		criterionMarks.value = savedRubricMarks(rubric.value, grade?.rubric_scores)
 		gradeLetter.value = grade?.grade ?? ''
 		remarks.value = unescapeTags(grade?.remarks ?? '')
 		savedVoiceRemark = grade?.voice_remark || null
@@ -203,6 +243,7 @@ watch(
 )
 
 watch(voiceRemark, () => (voiceRemarkError.value = ''))
+watch(criterionMarks, () => (criterionErrors.value = []))
 
 watch(
 	() => [seeded.value, props.suggestedMarks] as const,
@@ -229,7 +270,7 @@ watch(
 )
 
 const marksGrade = computed(() => {
-	const letter = gradeForMarks(bands.data ?? [], marks.value, props.maxMarks)
+	const letter = gradeForMarks(bands.data ?? [], typedMarks.value, props.maxMarks)
 	return letter ? `Grade ${letter}` : ''
 })
 
@@ -241,6 +282,7 @@ const saveCall = useCall<
 		grade: string | null
 		remarks?: string
 		voice_remark?: string
+		rubric_scores?: ReturnType<typeof rubricScores>
 	}
 >({
 	url: '/api/v2/method/cs17_portal.api.save_grade',
@@ -250,7 +292,7 @@ const saveCall = useCall<
 
 /** `null` for "no marks", a number otherwise — or an error message. */
 function readMarks(): { value: number | null } | { error: string } {
-	const raw = marks.value.trim()
+	const raw = typedMarks.value.trim()
 	if (!showMarks.value) return { value: null }
 	if (raw === '') return { error: 'Enter the marks.' }
 	const value = Number(raw)
@@ -263,6 +305,8 @@ function readMarks(): { value: number | null } | { error: string } {
 }
 
 async function save() {
+	criterionErrors.value = rubricMarksErrors(rubric.value, criterionMarks.value)
+	if (criterionErrors.value.some(Boolean)) return
 	const parsed = readMarks()
 	if ('error' in parsed) {
 		marksError.value = parsed.error
@@ -284,6 +328,9 @@ async function save() {
 		remarks: remarks.value.trim() || undefined,
 		voice_remark:
 			voiceRemark.value === savedVoiceRemark ? undefined : (voiceRemark.value ?? ''),
+		rubric_scores: rubric.value.length
+			? rubricScores(rubric.value, criterionMarks.value)
+			: undefined,
 	})
 
 	if (saveCall.error) {
