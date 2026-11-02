@@ -3,52 +3,47 @@
 		<template #left-mobile>
 			<PageHeaderBackButton fallback-route="/faculty/assignments" />
 		</template>
-		<template #actions>
-			<Button
-				v-if="assignment"
-				:variant="isDesktop ? 'subtle' : 'ghost'"
-				:icon-left="isDesktop ? 'lucide-users' : undefined"
-				:icon="isDesktop ? undefined : 'lucide-users'"
-				:tooltip="isDesktop ? undefined : 'Students'"
-				label="Students"
-				@click="studentsOpen = true"
-			/>
-			<Button
-				v-if="assignment"
-				:variant="isDesktop ? 'subtle' : 'ghost'"
-				:icon-left="isDesktop ? 'lucide-clock' : undefined"
-				:icon="isDesktop ? undefined : 'lucide-clock'"
-				:tooltip="isDesktop ? undefined : 'Timing'"
-				label="Timing"
-				@click="timingOpen = true"
-			/>
-			<Button
-				v-if="assignment"
-				:variant="isDesktop ? 'subtle' : 'ghost'"
-				:icon-left="isDesktop ? 'lucide-link' : undefined"
-				:icon="isDesktop ? undefined : 'lucide-link'"
-				:tooltip="isDesktop ? undefined : 'Copy submission link'"
-				label="Copy submission link"
-				@click="copySubmissionLink"
-			/>
-			<Button
-				v-if="assignment?.submission_type === 'Python'"
-				:variant="isDesktop ? 'subtle' : 'ghost'"
-				:icon-left="isDesktop ? 'lucide-files' : undefined"
-				:icon="isDesktop ? undefined : 'lucide-files'"
-				:tooltip="isDesktop ? undefined : 'Similar code'"
-				label="Similar code"
-				@click="openSimilarCode()"
-			/>
-			<Button
-				v-if="assignment?.submission_type === 'Python'"
-				:variant="isDesktop ? 'subtle' : 'ghost'"
-				:icon-left="isDesktop ? 'lucide-activity' : undefined"
-				:icon="isDesktop ? undefined : 'lucide-activity'"
-				:tooltip="isDesktop ? undefined : 'Live'"
-				label="Live"
-				:route="`/faculty/assignments/${assignment.name}/live`"
-			/>
+		<template v-if="assignment" #actions>
+			<template v-if="isDesktop">
+				<Button icon-left="lucide-users" label="Students" @click="studentsOpen = true" />
+				<Button icon-left="lucide-clock" label="Timing" @click="timingOpen = true" />
+				<Button
+					icon-left="lucide-link"
+					label="Copy submission link"
+					@click="copySubmissionLink"
+				/>
+				<Button
+					v-if="assignment.submission_type === 'Python'"
+					icon-left="lucide-files"
+					label="Similar code"
+					@click="openSimilarCode()"
+				/>
+				<Button
+					v-if="canRunTests"
+					icon-left="lucide-list-checks"
+					label="Run tests"
+					:loading="testing"
+					@click="testSubmissions"
+				/>
+				<Button
+					v-if="assignment.submission_type === 'Python'"
+					icon-left="lucide-activity"
+					label="Live"
+					:route="`/faculty/assignments/${assignment.name}/live`"
+				/>
+			</template>
+			<template v-else>
+				<Button
+					variant="ghost"
+					icon="lucide-link"
+					tooltip="Copy submission link"
+					label="Copy submission link"
+					@click="copySubmissionLink"
+				/>
+				<Dropdown :options="moreHeaderActions" align="end">
+					<Button variant="ghost" icon="lucide-ellipsis" aria-label="More actions" />
+				</Dropdown>
+			</template>
 		</template>
 	</AppHeader>
 
@@ -102,10 +97,13 @@
 			/>
 
 			<section class="space-y-3">
-				<h2 class="text-lg font-semibold text-ink-gray-8">
-					Submissions ({{ submissions.length.toLocaleString() }} of
-					{{ rows.length.toLocaleString() }})
-				</h2>
+				<div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+					<h2 class="text-lg font-semibold text-ink-gray-8">
+						Submissions ({{ submissions.length.toLocaleString() }} of
+						{{ rows.length.toLocaleString() }})
+					</h2>
+					<p class="text-sm text-ink-gray-5" aria-live="polite">{{ testProgress }}</p>
+				</div>
 
 				<DataTable
 					v-model:selection="selection"
@@ -150,7 +148,17 @@
 									</Badge>
 								</button>
 							</Tooltip>
+							<TestScoreBadge
+								v-if="isDesktop && testScores[row.name]"
+								class="shrink-0"
+								v-bind="testScores[row.name]"
+							/>
 						</div>
+					</template>
+
+					<template #cell-tests="{ row }">
+						<TestScoreBadge v-if="testScores[row.name]" v-bind="testScores[row.name]" />
+						<span v-else class="text-ink-gray-5">—</span>
 					</template>
 
 					<template #cell-status="{ row }">
@@ -359,10 +367,12 @@ import SendBackDialog from '@/components/faculty/SendBackDialog.vue'
 import SimilarCodeDialog from '@/components/faculty/SimilarCodeDialog.vue'
 import SubmissionAssignees from '@/components/faculty/SubmissionAssignees.vue'
 import SubmissionBulkActions from '@/components/faculty/SubmissionBulkActions.vue'
+import TestScoreBadge from '@/components/faculty/TestScoreBadge.vue'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { usePolling } from '@/composables/usePolling'
+import { useSubmissionTests } from '@/composables/useSubmissionTests'
 import { formatDateTime, isPast } from '@/lib/dates'
 import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
 import { formatGrade } from '@/lib/grades'
@@ -449,12 +459,54 @@ const similar = useCall<SimilarPair[], { assignment: string }>({
 	immediate: false,
 })
 
+const assignmentTests = useCall<CS17Assignment | null, { assignment: string }>({
+	url: '/api/v2/method/cs17_portal.api.get_assignment',
+	params: () => ({ assignment: assignmentId.value }),
+	immediate: false,
+})
+
 watch(
 	() => assignment.value?.submission_type === 'Python' && assignment.value.name,
 	(pythonAssignment) => {
-		if (pythonAssignment) similar.reload()
+		if (pythonAssignment) {
+			similar.reload()
+			assignmentTests.reload()
+		}
 	},
 )
+
+const canRunTests = computed(
+	() =>
+		submissions.value.length > 0 &&
+		assignmentTests.data?.name === assignmentId.value &&
+		Boolean(assignmentTests.data.test_cases?.length),
+)
+
+const { testResults, testing } = useSubmissionTests()
+const testScores = ref<Record<string, { passed: number; total: number }>>({})
+const submissionsToTest = ref(0)
+const testedCount = computed(() => Object.keys(testScores.value).length)
+const testProgress = computed(() =>
+	testing.value
+		? `Running ${Math.min(testedCount.value + 1, submissionsToTest.value)} of ${submissionsToTest.value}`
+		: '',
+)
+
+async function testSubmissions() {
+	if (testing.value) return
+	const tested = assignmentId.value
+	const names = submissions.value.map((row) => row.name)
+	testScores.value = {}
+	submissionsToTest.value = names.length
+	const allResults = await testResults(tested, names, (submission, results) => {
+		if (assignmentId.value !== tested) return
+		testScores.value[submission] = {
+			passed: results.filter((result) => result.passed).length,
+			total: results.length,
+		}
+	})
+	if (!allResults) toast.error('Could not run the tests. Try again.')
+}
 
 const similarLoadedId = ref('')
 watch(
@@ -493,6 +545,7 @@ const closestMatches = computed(() => {
 watch(assignmentId, () => {
 	selection.value = []
 	aiDraftsPending.value = []
+	testScores.value = {}
 })
 
 function openPreview(row: CS17Submission) {
@@ -622,6 +675,9 @@ const metaRows = computed(() => {
 
 const columns = computed<Column[]>(() => [
 	{ header: 'Student', key: 'student', variant: 'primary' },
+	...(!isDesktop.value && (testing.value || testedCount.value)
+		? [{ header: 'Tests', key: 'tests' }]
+		: []),
 	{ header: 'Status', key: 'status', width: '6.5rem' },
 	{ header: 'Submitted', key: 'submitted', width: '10rem' },
 	{ header: 'Assigned to', key: 'assignees', width: '9rem' },
@@ -741,6 +797,30 @@ async function copySubmissionLink() {
 		toast.error('Could not copy link.')
 	}
 }
+
+const moreHeaderActions = computed<DropdownActionOption[]>(() => [
+	{ label: 'Students', icon: 'lucide-users', onClick: () => (studentsOpen.value = true) },
+	{ label: 'Timing', icon: 'lucide-clock', onClick: () => (timingOpen.value = true) },
+	...(assignment.value?.submission_type === 'Python'
+		? [
+				{ label: 'Similar code', icon: 'lucide-files', onClick: () => openSimilarCode() },
+				...(canRunTests.value
+					? [
+							{
+								label: 'Run tests',
+								icon: 'lucide-list-checks',
+								onClick: testSubmissions,
+							},
+						]
+					: []),
+				{
+					label: 'Live',
+					icon: 'lucide-activity',
+					route: `/faculty/assignments/${assignmentId.value}/live`,
+				},
+			]
+		: []),
+])
 
 watch(
 	() => assignment.value?.title,
