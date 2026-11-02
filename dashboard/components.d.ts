@@ -46,6 +46,7 @@ declare module 'vue' {
     EmptyState: typeof import('./src/components/common/EmptyState.vue')['default']
     ExplanationRequestCard: typeof import('./src/components/assignments/ExplanationRequestCard.vue')['default']
     FacultyAvatar: typeof import('./src/components/faculty/FacultyAvatar.vue')['default']
+    FlawlessCelebration: typeof import('./src/components/python/FlawlessCelebration.vue')['default']
     GradeBadge: typeof import('./src/components/common/GradeBadge.vue')['default']
     GradeDialog: typeof import('./src/components/assignments/GradeDialog.vue')['default']
     GradeForm: typeof import('./src/components/grading/GradeForm.vue')['default']
