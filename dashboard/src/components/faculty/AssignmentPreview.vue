@@ -68,6 +68,8 @@ export interface AssignmentDraft {
 	late_until: string
 	late_penalty: string
 	rubric: { criterion: string; marks: string }[]
+	hint_after_failed_runs: string
+	max_hints: string
 }
 
 const props = defineProps<{ draft: AssignmentDraft }>()
@@ -93,6 +95,13 @@ const metaRows = computed(() => {
 	if (props.draft.submission_type === 'Python' && Number(props.draft.time_limit) > 0) {
 		rows.push({ label: 'Time Limit', value: `${props.draft.time_limit} min` })
 		rows.push({ label: 'Attempts', value: props.draft.attempts_allowed || '1' })
+	}
+	const failedChecks = Number(props.draft.hint_after_failed_runs)
+	if (props.draft.submission_type === 'Python' && failedChecks > 0) {
+		rows.push({
+			label: 'Hints',
+			value: `Up to ${props.draft.max_hints} after ${failedChecks} failed ${failedChecks === 1 ? 'check' : 'checks'}`,
+		})
 	}
 	return rows
 })

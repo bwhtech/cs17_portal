@@ -50,6 +50,7 @@
 				class="border-t border-outline-gray-1 pt-3"
 				:submission="submission"
 			/>
+			<HintsUsed class="border-t border-outline-gray-1 pt-3" :submission="submission" />
 			<div
 				class="flex items-center justify-between gap-3 border-t border-outline-gray-1 pt-3"
 			>
@@ -78,6 +79,7 @@ import LoadError from '@/components/common/LoadError.vue'
 import TabLeaves from '@/components/grading/TabLeaves.vue'
 import TimeTaken from '@/components/grading/TimeTaken.vue'
 import Pastes from '@/components/grading/Pastes.vue'
+import HintsUsed from '@/components/grading/HintsUsed.vue'
 import TestResults from '@/components/python/TestResults.vue'
 import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
 import { usePythonRunner } from '@/lib/python/runner'

@@ -62,8 +62,9 @@
 		<TabPanel
 			v-if="showTests"
 			value="tests"
-			class="min-h-0 flex-1 overflow-auto px-3 py-3 sm:px-5"
+			class="min-h-0 flex-1 space-y-3 overflow-auto px-3 py-3 sm:px-5"
 		>
+			<slot name="hints" />
 			<TestResults
 				:runs="testRuns ?? null"
 				:running="testing"

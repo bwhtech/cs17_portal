@@ -73,6 +73,8 @@ export interface CS17Assignment {
 	late_until?: string | null
 	late_penalty?: number
 	rubric?: { criterion: string; marks: number }[]
+	hint_after_failed_runs?: number
+	max_hints?: number
 }
 
 export interface PythonTestCase {
