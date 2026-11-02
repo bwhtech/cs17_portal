@@ -13,6 +13,7 @@ export function useSubmissionTests(): {
 	testResults: (
 		assignment: string,
 		submissions: string[],
+		onTested?: (submission: string, results: TestResult[]) => void,
 	) => Promise<Record<string, TestResult[]> | null>
 	testing: Ref<boolean>
 } {
@@ -28,7 +29,11 @@ export function useSubmissionTests(): {
 	})
 	const testing = ref(false)
 
-	async function testResults(assignment: string, submissions: string[]) {
+	async function testResults(
+		assignment: string,
+		submissions: string[],
+		onTested?: (submission: string, results: TestResult[]) => void,
+	) {
 		testing.value = true
 		const runner = new PythonRunner()
 		try {
@@ -37,6 +42,7 @@ export function useSubmissionTests(): {
 			for (const submission of submissions) {
 				const code = (await program.submit({ submission })) ?? ''
 				results[submission] = (await runTests(runner, code, tests)).map(toTestResult)
+				onTested?.(submission, results[submission])
 			}
 			return results
 		} catch {
