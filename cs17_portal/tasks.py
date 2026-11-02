@@ -4,6 +4,8 @@ from frappe.query_builder.functions import Count
 from frappe.utils import add_to_date, format_datetime, get_url, getdate, now_datetime
 from frappe.utils.background_jobs import defer_enqueue_after_commit
 
+from cs17_portal.guardian import get_child_assignments, get_children, is_due_this_week, is_missing
+
 
 def auto_publish_assignments():
 	_publish_due("CS17 Assignment", "publish_on", "Scheduled assignment not published")
@@ -221,4 +223,56 @@ def send_faculty_digest():
 					"due_soon": due_soon,
 					"not_submitted": not_submitted,
 				},
+			)
+
+
+def send_guardian_digest():
+	guardians = frappe.get_all(
+		"CS17 Profile",
+		filters=[["profile_type", "=", "Guardian"], ["user.enabled", "=", 1], ["user.email", "is", "set"]],
+		fields=["name", "user", "user.email as email"],
+	)
+	opted_out = frappe.get_all(
+		"Notification Settings",
+		filters={"name": ["in", [guardian.user for guardian in guardians]], "enable_email_notifications": 0},
+		pluck="name",
+	)
+	guardians = [guardian for guardian in guardians if guardian.user not in opted_out]
+	if not guardians:
+		return
+
+	now = now_datetime()
+	week_ago = add_to_date(now, days=-7)
+	weeks = {}
+	weeks_by_guardian = {}
+	for child in get_children([guardian.name for guardian in guardians]):
+		if child.student not in weeks:
+			assignments = get_child_assignments(child)
+			for assignment in assignments:
+				assignment.due = assignment.due_date and format_datetime(assignment.due_date, "MMM d, h:mm a")
+			weeks[child.student] = frappe._dict(
+				full_name=child.full_name,
+				link=get_url(f"/dashboard/guardian/students/{child.student}"),
+				due=[assignment for assignment in assignments if is_due_this_week(assignment, now)],
+				missing=[assignment for assignment in assignments if is_missing(assignment, now)],
+				graded=[
+					assignment
+					for assignment in assignments
+					if assignment.grade and assignment.grade.published_at > week_ago
+				],
+			)
+		weeks_by_guardian.setdefault(child.guardian, []).append(weeks[child.student])
+
+	for guardian in guardians:
+		children = [
+			week
+			for week in weeks_by_guardian.get(guardian.name, [])
+			if week.due or week.missing or week.graded
+		]
+		if children:
+			frappe.sendmail(
+				recipients=[guardian.email],
+				subject=_("This week at CS17"),
+				template="guardian_digest",
+				args={"children": children},
 			)

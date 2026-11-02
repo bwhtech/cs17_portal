@@ -125,6 +125,19 @@ const routes: RouteRecordRaw[] = [
 		component: () => import('@/pages/FacultyResultDetailPage.vue'),
 		props: true,
 	},
+
+	// Guardian
+	{
+		path: '/guardian',
+		name: 'GuardianDashboard',
+		component: () => import('@/pages/GuardianDashboardPage.vue'),
+	},
+	{
+		path: '/guardian/students/:studentId',
+		name: 'GuardianStudent',
+		component: () => import('@/pages/GuardianStudentPage.vue'),
+		props: true,
+	},
 	{
 		// Hidden sandbox rendering every shared contract. Not linked from anywhere.
 		path: '/dev',
@@ -147,13 +160,17 @@ function isFacultyRoute(path: string): boolean {
 	return path === '/faculty' || path.startsWith('/faculty/')
 }
 
+function isGuardianRoute(path: string): boolean {
+	return path === '/guardian' || path.startsWith('/guardian/')
+}
+
 /**
  * Auth and role live here rather than in the layouts, so a page never mounts
  * for someone who should not be looking at it. Boot data is on `window`
  * before the app is created, so this needs no request and never waits.
  */
 router.beforeEach((to) => {
-	const { isGuest, isFaculty } = useSession()
+	const { isGuest, isFaculty, isGuardian } = useSession()
 
 	if (isGuest.value) {
 		// The router's base is stripped from `fullPath`, so it goes back on for
@@ -166,6 +183,8 @@ router.beforeEach((to) => {
 	// The sandbox renders shared components, so it belongs to neither tree.
 	if (to.name === 'Dev') return true
 
+	if (isGuardian.value) return isGuardianRoute(to.path) || '/guardian'
+	if (isGuardianRoute(to.path)) return '/'
 	if (isFaculty.value && !isFacultyRoute(to.path)) return '/faculty'
 	if (!isFaculty.value && isFacultyRoute(to.path)) return '/'
 	return true

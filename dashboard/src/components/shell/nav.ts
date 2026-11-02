@@ -23,7 +23,7 @@ export interface NavSection {
 export interface NavConfig {
 	sections: NavSection[]
 	/** Rendered below a divider, apart from the sections. */
-	announcements: NavItem
+	announcements?: NavItem
 	/** The four tabs of the mobile nav; the fifth is the profile sheet. */
 	mobile: NavItem[]
 }
@@ -105,7 +105,18 @@ const faculty: NavConfig = {
 	],
 }
 
-export function navConfig(isFaculty: boolean): NavConfig {
+const guardian: NavConfig = {
+	sections: [
+		{
+			label: 'Workspace',
+			items: [{ label: 'Dashboard', icon: 'lucide-layout-dashboard', to: '/guardian' }],
+		},
+	],
+	mobile: [{ label: 'Dashboard', icon: 'lucide-layout-dashboard', to: '/guardian' }],
+}
+
+export function navConfig(isFaculty: boolean, isGuardian = false): NavConfig {
+	if (isGuardian) return guardian
 	return isFaculty ? faculty : student
 }
 
