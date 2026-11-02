@@ -17,6 +17,7 @@ import {
 import { callMethod, deleteDoc } from "../helpers/frappe";
 
 let cohort: CS17Cohort;
+let otherCohort: CS17Cohort;
 let student: CS17Profile;
 let assignment: CS17Assignment;
 
@@ -24,6 +25,7 @@ test.describe("Gradebook download", () => {
 	test.beforeAll(async ({ request }) => {
 		await ensureSessionFaculty(request);
 		cohort = await createTestCohort(request);
+		otherCohort = await createTestCohort(request);
 		student = await createTestProfile(request, { cohort: cohort.name });
 		assignment = await createTestAssignment(request, {
 			cohort: cohort.name,
@@ -46,6 +48,7 @@ test.describe("Gradebook download", () => {
 		await cleanupTestAssignments(request, cohort.name);
 		await deleteTestProfile(request, student.name);
 		await deleteDoc(request, "CS17 Cohort", cohort.name);
+		await deleteDoc(request, "CS17 Cohort", otherCohort.name);
 	});
 
 	test("All marks downloads each assignment's published grade", async ({ page }) => {
