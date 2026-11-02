@@ -2,10 +2,10 @@
 	<Dialog
 		:open="open"
 		:title="project.project_title"
-		:message="project.student_name"
 		size="6xl"
 		@update:open="emit('update:open', $event)"
 	>
+		<p class="mb-3 text-p-base text-ink-gray-7">{{ project.student_name }}</p>
 		<div class="h-[70vh] overflow-hidden rounded-4 border border-outline-gray-1">
 			<div
 				v-if="!opening && (failed || sharedProject.error)"
