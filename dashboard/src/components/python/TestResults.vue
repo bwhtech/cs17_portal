@@ -12,6 +12,8 @@
 				v-for="(run, index) in runs"
 				:key="index"
 				class="rounded-4 border border-outline-gray-1"
+				:class="{ 'turns-green': solved }"
+				:style="solved ? { animationDelay: `${index * CASCADE_STEP_MS}ms` } : undefined"
 			>
 				<div class="flex items-center gap-2 px-3 py-2">
 					<span
@@ -36,12 +38,19 @@
 					<ProgramText label="Output" v-bind="output(run.result)" />
 				</div>
 			</div>
+			<blockquote
+				v-if="solved"
+				class="zen-line text-p-sm italic text-ink-gray-5"
+				:style="{ animationDelay: `${runs.length * CASCADE_STEP_MS}ms` }"
+			>
+				{{ ZEN_OF_PYTHON[zenLine] }}
+			</blockquote>
 		</template>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Badge } from 'frappe-ui'
 import ProgramText from '@/components/python/ProgramText.vue'
 import type { RunResult } from '@/lib/python/runner'
@@ -51,11 +60,46 @@ const props = defineProps<{
 	runs: TestRun[] | null
 	running?: boolean
 	idleText: string
+	celebrate?: boolean
 }>()
+
+const CASCADE_STEP_MS = 90
+const ZEN_OF_PYTHON = [
+	'Beautiful is better than ugly.',
+	'Explicit is better than implicit.',
+	'Simple is better than complex.',
+	'Complex is better than complicated.',
+	'Flat is better than nested.',
+	'Sparse is better than dense.',
+	'Readability counts.',
+	"Special cases aren't special enough to break the rules.",
+	'Although practicality beats purity.',
+	'Errors should never pass silently.',
+	'Unless explicitly silenced.',
+	'In the face of ambiguity, refuse the temptation to guess.',
+	'There should be one-- and preferably only one --obvious way to do it.',
+	"Although that way may not be obvious at first unless you're Dutch.",
+	'Now is better than never.',
+	'Although never is often better than *right* now.',
+	"If the implementation is hard to explain, it's a bad idea.",
+	'If the implementation is easy to explain, it may be a good idea.',
+	"Namespaces are one honking great idea -- let's do more of those!",
+]
 
 const passedCount = computed(() => props.runs?.filter((run) => run.passed).length ?? 0)
 const allPassed = computed(
 	() => Boolean(props.runs?.length) && passedCount.value === props.runs?.length,
+)
+const solved = computed(() => props.celebrate && allPassed.value)
+
+const zenLine = ref(Math.floor(Math.random() * ZEN_OF_PYTHON.length))
+watch(
+	() => props.runs,
+	() => {
+		if (!solved.value) return
+		const skip = 1 + Math.floor(Math.random() * (ZEN_OF_PYTHON.length - 1))
+		zenLine.value = (zenLine.value + skip) % ZEN_OF_PYTHON.length
+	},
 )
 
 function verdict(run: TestRun): string {
@@ -79,3 +123,26 @@ function output(result: RunResult): { text: string; isError: boolean } {
 	return { text: 'Could not start Python.', isError: true }
 }
 </script>
+
+<style scoped>
+@media (prefers-reduced-motion: no-preference) {
+	@keyframes turns-green {
+		to {
+			border-color: var(--outline-green-2);
+			background-color: var(--surface-green-1);
+		}
+	}
+	@keyframes zen-line-in {
+		from {
+			opacity: 0;
+			transform: translateY(2px);
+		}
+	}
+	.turns-green {
+		animation: turns-green 240ms ease-out both;
+	}
+	.zen-line {
+		animation: zen-line-in 300ms ease-out both;
+	}
+}
+</style>

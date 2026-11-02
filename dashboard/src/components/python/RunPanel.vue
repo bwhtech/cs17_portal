@@ -67,6 +67,7 @@
 			<TestResults
 				:runs="testRuns ?? null"
 				:running="testing"
+				:celebrate="celebrate"
 				idle-text="Run the tests to check your program against the examples."
 			/>
 		</TabPanel>
@@ -86,6 +87,7 @@ const props = defineProps<{
 	showTests?: boolean
 	testRuns?: TestRun[] | null
 	testing?: boolean
+	celebrate?: boolean
 }>()
 
 const stdin = defineModel<string>('stdin', { required: true })
