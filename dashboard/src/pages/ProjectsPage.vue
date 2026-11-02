@@ -43,6 +43,8 @@
 				:project="project"
 				@rename="promptForRename"
 				@delete="confirmDelete"
+				@share="setShared($event, true)"
+				@unshare="setShared($event, false)"
 			/>
 		</div>
 	</PageBody>
@@ -91,6 +93,18 @@ const renameProject = useCall<{ name: string }, { project: string; project_title
 
 const deleteProject = useCall<null, { project: string }>({
 	url: '/api/v2/method/cs17_portal.api.delete_project',
+	method: 'POST',
+	immediate: false,
+})
+
+const shareProject = useCall<null, { project: string }>({
+	url: '/api/v2/method/cs17_portal.gallery.share_project',
+	method: 'POST',
+	immediate: false,
+})
+
+const unshareProject = useCall<null, { project: string }>({
+	url: '/api/v2/method/cs17_portal.gallery.unshare_project',
 	method: 'POST',
 	immediate: false,
 })
@@ -203,5 +217,21 @@ function confirmDelete(project: CS17Project) {
 			projectList.reload()
 		},
 	})
+}
+
+async function setShared(project: CS17Project, shared: boolean) {
+	const call = shared ? shareProject : unshareProject
+	await trySubmit(call, { project: project.name })
+	if (call.error) {
+		toast.error(
+			frappeErrorMessage(
+				call.error,
+				shared ? 'Could not share the project.' : 'Could not stop sharing.',
+			),
+		)
+		return
+	}
+	toast.success(shared ? 'Project shared' : 'Sharing stopped')
+	projectList.reload()
 }
 </script>

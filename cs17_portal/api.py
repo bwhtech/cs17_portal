@@ -634,7 +634,15 @@ def list_my_projects() -> list:
 	projects = frappe.get_all(
 		"CS17 Project",
 		filters={"profile": profile},
-		fields=["name", "project_title", "project_type", "assignment", "thumbnail", "last_saved_at"],
+		fields=[
+			"name",
+			"project_title",
+			"project_type",
+			"assignment",
+			"thumbnail",
+			"last_saved_at",
+			"is_shared",
+		],
 		order_by="creation desc",
 	)
 	_attach_submitted_flags(projects)
