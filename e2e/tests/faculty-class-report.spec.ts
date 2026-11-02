@@ -1,3 +1,4 @@
+import { readFile } from "fs/promises";
 import { test, expect } from "@playwright/test";
 import {
 	CS17Cohort,
@@ -61,8 +62,10 @@ test.describe("Class report", () => {
 			onTimeStudent.full_name!,
 		]);
 
-		const href = await page.getByRole("link", { name: "Download" }).getAttribute("href");
-		const lines = (await (await page.request.get(href!)).text()).split(/\r?\n/);
+		await page.getByRole("button", { name: "Download", exact: true }).click();
+		const download = page.waitForEvent("download");
+		await page.getByRole("menuitem", { name: "Summary" }).click();
+		const lines = (await readFile(await (await download).path(), "utf8")).split(/\r?\n/);
 		expect(lines[1]).toContain(behindStudent.full_name!);
 		expect(lines[2]).toContain(onTimeStudent.full_name!);
 	});
