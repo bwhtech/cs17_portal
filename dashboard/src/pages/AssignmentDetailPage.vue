@@ -35,6 +35,10 @@
 							: undefined
 					"
 				/>
+				<template v-if="submission && assignment.submission_type === 'Python'">
+					<PeerReviewCard :assignment="assignment.name" class="mt-6" />
+					<ClassmateReviews :assignment="assignment.name" class="mt-6" />
+				</template>
 				<section v-if="revisions.data?.length" class="mt-6">
 					<h2 class="text-base-medium text-ink-gray-8">Earlier attempts</h2>
 					<SubmissionRevisions
@@ -223,6 +227,8 @@ import AnswersDialog from '@/components/answers/AnswersDialog.vue'
 import SubmissionRevisions from '@/components/assignments/SubmissionRevisions.vue'
 import SubmitAssignmentDialog from '@/components/assignments/SubmitAssignmentDialog.vue'
 import ExplanationRequestCard from '@/components/assignments/ExplanationRequestCard.vue'
+import PeerReviewCard from '@/components/assignments/PeerReviewCard.vue'
+import ClassmateReviews from '@/components/assignments/ClassmateReviews.vue'
 import { usePythonAssignment } from '@/components/assignments/pythonEditor'
 import { useScratchAssignment } from '@/components/assignments/scratchEditor'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
