@@ -38,15 +38,15 @@ export function vivaSections(questions: VivaQuestion[]): string[] {
 	return [...new Set(questions.map((question) => question.section))]
 }
 
-/** One question per section: the one asked least so far, the earlier one on a tie. */
+/** One question per section, at random from those asked least so far. */
 export function pickQuestions(questions: VivaQuestion[]): Record<string, string> {
-	const picks: Record<string, VivaQuestion> = {}
-	for (const question of questions) {
-		const pick = picks[question.section]
-		if (!pick || question.asked < pick.asked) picks[question.section] = question
-	}
 	return Object.fromEntries(
-		Object.entries(picks).map(([section, question]) => [section, question.name]),
+		vivaSections(questions).map((section) => {
+			const inSection = questions.filter((question) => question.section === section)
+			const fewest = Math.min(...inSection.map((question) => question.asked))
+			const choices = inSection.filter((question) => question.asked === fewest)
+			return [section, choices[Math.floor(Math.random() * choices.length)].name]
+		}),
 	)
 }
 

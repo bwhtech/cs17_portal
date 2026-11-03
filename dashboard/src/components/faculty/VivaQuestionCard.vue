@@ -1,17 +1,12 @@
 <template>
 	<section class="space-y-3 rounded-4 border border-outline-gray-1 p-4">
-		<div class="flex items-start justify-between gap-3">
-			<div class="min-w-0">
-				<h3 class="break-words text-base font-medium text-ink-gray-9">
-					{{ question.section }}
-				</h3>
-				<p class="text-sm text-ink-gray-5">
-					{{ question.marks }} {{ question.marks === 1 ? 'mark' : 'marks' }}
-				</p>
-			</div>
-			<Dropdown v-if="swapOptions.length" :options="swapOptions">
-				<Button label="Swap" icon-left="lucide-shuffle" />
-			</Dropdown>
+		<div>
+			<h3 class="break-words text-base font-medium text-ink-gray-9">
+				{{ question.section }}
+			</h3>
+			<p class="text-sm text-ink-gray-5">
+				{{ question.marks }} {{ question.marks === 1 ? 'mark' : 'marks' }}
+			</p>
 		</div>
 
 		<p
@@ -49,16 +44,15 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Button, Dropdown, TabButtons } from 'frappe-ui'
+import { Button, TabButtons } from 'frappe-ui'
 import type { VivaQuestion } from '@/lib/viva'
 
 const props = defineProps<{
 	question: VivaQuestion
-	sectionQuestions: VivaQuestion[]
 	marks?: number
 }>()
 
-const emit = defineEmits<{ 'update:marks': [value: number]; swap: [question: string] }>()
+const emit = defineEmits<{ 'update:marks': [value: number] }>()
 
 const showAnswer = ref(false)
 
@@ -67,14 +61,5 @@ const markOptions = computed(() =>
 		label: String(value),
 		value,
 	})),
-)
-
-const swapOptions = computed(() =>
-	props.sectionQuestions
-		.filter((question) => question.name !== props.question.name)
-		.map((question) => ({
-			label: `${(question.code || question.question).split('\n')[0]} · asked ${question.asked}`,
-			onClick: () => emit('swap', question.name),
-		})),
 )
 </script>

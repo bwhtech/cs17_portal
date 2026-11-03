@@ -149,9 +149,9 @@ Each student gets one question from every section. On save the viva refuses a se
 questions carry different marks, and one question per section must add up to the component's max
 marks, so every student's viva is out of the same total.
 
-Faculty run it from `/dashboard/faculty/vivas`. Opening a student picks the least asked question in
-each section, earlier rows first on a tie, so consecutive students get different questions; the
-examiner can swap any of them. Saving writes one `CS17 Viva Mark` per question asked (unique on
+Faculty run it from `/dashboard/faculty/vivas`. Opening a student picks one question in each section
+at random from those asked least so far, so the questions spread evenly and the next one cannot
+be guessed; the examiner does not choose them. Saving writes one `CS17 Viva Mark` per question asked (unique on
 viva, student, question) and the total into that student's `CS17 Subject Marks` component, which
 re-saves the result like any other marks change. Marking a student again replaces their rows.
 

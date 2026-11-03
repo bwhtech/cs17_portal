@@ -10,12 +10,8 @@
 				v-for="section in sections"
 				:key="`${resetCount}:${picks[section]}`"
 				:question="questionsByName[picks[section]]"
-				:section-questions="
-					viva.questions.filter((question) => question.section === section)
-				"
 				:marks="marks[picks[section]]"
 				@update:marks="marks[picks[section]] = $event"
-				@swap="swap(section, $event)"
 			/>
 			<ErrorMessage
 				v-if="missingMessage || saveError"
@@ -96,10 +92,6 @@ watch(
 	},
 	{ immediate: true },
 )
-
-function swap(section: string, question: string) {
-	picks.value[section] = question
-}
 
 async function save() {
 	attempted.value = true
