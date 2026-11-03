@@ -185,6 +185,7 @@ def create_assignment(
 	rubric: list | str | None = None,
 	hint_after_failed_runs: int | None = None,
 	max_hints: int | None = None,
+	submit_saved_work: int | None = None,
 ) -> str:
 	faculty = get_current_faculty()
 	if faculty.cohort and faculty.cohort != cohort:
@@ -213,6 +214,7 @@ def create_assignment(
 		rubric=rubric,
 		hint_after_failed_runs=hint_after_failed_runs,
 		max_hints=max_hints,
+		submit_saved_work=submit_saved_work,
 	)
 	assignment.naming_series = _naming_series(assignment_type)
 	_apply_publish_state(assignment, publish, publish_on)
@@ -760,6 +762,12 @@ def save_python_project(project: str, code: str) -> dict:
 	project_doc = require_owned_project(project)
 	if project_doc.project_type != "Python":
 		frappe.throw(_("This is not a Python project."))
+	if project_doc.assignment and (
+		exam := frappe.db.get_value("CS17 Assignment", project_doc.assignment, "coding_exam")
+	):
+		from cs17_portal.coding_exam import require_open_question
+
+		require_open_question(exam, project_doc.assignment, project_doc.profile, is_saving=True)
 	project_doc.code = code
 	project_doc.last_saved_at = now_datetime()
 	project_doc.save(ignore_permissions=True)
@@ -832,7 +840,12 @@ def submit_scratch_project(assignment: str, project: str) -> dict:
 @rate_limit(key="project", limit=30, seconds=60, methods=["POST"], ip_based=False)
 def submit_python_project(assignment: str, project: str) -> dict:
 	student = require_current_student()
-	project_doc = require_owned_project(project)
+	return submit_python_code(assignment, student, require_owned_project(project))
+
+
+def submit_python_code(
+	assignment: str, student: str, project_doc: "Document", ignore_deadline: bool = False
+) -> dict:
 	if not (project_doc.code or "").strip():
 		frappe.throw(_("Write some code before submitting."))
 	if project_doc.assignment != assignment:
@@ -840,7 +853,8 @@ def submit_python_project(assignment: str, project: str) -> dict:
 
 	submission = _get_or_new_submission(assignment, student)
 	submission.flags.ignore_permissions = True
-	submission.update({"project": project, "code": project_doc.code, "submitted_at": now_datetime()})
+	submission.flags.ignore_deadline = ignore_deadline
+	submission.update({"project": project_doc.name, "code": project_doc.code, "submitted_at": now_datetime()})
 	submission.save()
 	return {"name": submission.name}
 
@@ -959,6 +973,10 @@ def _get_or_new_submission(assignment: str, student: str) -> "frappe.model.docum
 @with_current_student
 def is_assignment_closed(assignment: str, student: str | None = None) -> bool:
 	"""True once the student can no longer revise: deadline or time limit passed, or grade published."""
+	if exam := frappe.db.get_value("CS17 Assignment", assignment, "coding_exam"):
+		from cs17_portal.coding_exam import question_closed_reason
+
+		return bool(question_closed_reason(exam, assignment, student))
 	submission = frappe.db.get_value(
 		ASSIGNMENT_SUBMISSION,
 		{"assignment": assignment, "student": student},
@@ -989,6 +1007,10 @@ def get_deadline(assignment: str) -> "datetime | None":
 
 
 def get_attempt(assignment: str, student: str) -> frappe._dict | None:
+	if exam := frappe.db.get_value("CS17 Assignment", assignment, "coding_exam"):
+		from cs17_portal.coding_exam import get_question_attempt
+
+		return get_question_attempt(exam, student)
 	attempt = frappe.db.get_value(
 		"CS17 Assignment Attempt",
 		{"assignment": assignment, "student": student},
@@ -1003,12 +1025,17 @@ def get_attempt(assignment: str, student: str) -> frappe._dict | None:
 	)
 	if not (attempt and attempt.time_limit):
 		return None
-	ends_at = add_to_date(attempt.started_at, minutes=attempt.time_limit)
-	deadline = attempt.late_until or attempt.due_date
 	return frappe._dict(
 		started_at=attempt.started_at,
-		ends_at=min(ends_at, deadline) if deadline else ends_at,
+		ends_at=time_limit_ends_at(
+			attempt.started_at, attempt.time_limit, attempt.late_until or attempt.due_date
+		),
 	)
+
+
+def time_limit_ends_at(started_at: "datetime", time_limit: int, deadline: "datetime | None") -> "datetime":
+	ends_at = add_to_date(started_at, minutes=time_limit)
+	return min(ends_at, deadline) if deadline else ends_at
 
 
 def get_next_attempts(assignments: list, student: str) -> dict[str, int]:
@@ -1294,7 +1321,7 @@ def get_student_assignments() -> dict:
 	now = now_datetime()
 	assignments = frappe.get_all(
 		"CS17 Assignment",
-		filters={"cohort": cohort},
+		filters={"cohort": cohort, "coding_exam": ["is", "not set"]},
 		or_filters=given_to(student),
 		fields=[
 			"name",
@@ -1338,7 +1365,12 @@ def get_student_assignments() -> dict:
 		assignment.next_attempt = next_attempts.get(assignment.name)
 	upcoming = frappe.get_all(
 		"CS17 Assignment",
-		filters=[["cohort", "=", cohort], ["is_published", "=", 0], ["publish_on", ">", now]],
+		filters=[
+			["cohort", "=", cohort],
+			["is_published", "=", 0],
+			["publish_on", ">", now],
+			["coding_exam", "is", "not set"],
+		],
 		or_filters=given_to(student),
 		fields=["publish_on"],
 		order_by="publish_on asc",
@@ -1371,12 +1403,19 @@ def get_student_assignment(assignment: str) -> dict:
 			"watch_tab_switches",
 			"time_limit",
 			"attempts_allowed",
+			"coding_exam",
 		],
 		limit=1,
 	)
-	if not (assignments and is_published_now(assignments[0])):
+	details = assignments[0] if assignments else None
+	if details and details.coding_exam:
+		from cs17_portal.coding_exam import can_read_question
+
+		is_open = can_read_question(details.coding_exam, assignment, student)
+	else:
+		is_open = details and is_published_now(details)
+	if not is_open:
 		frappe.throw(_("Assignment not found"), frappe.DoesNotExistError)
-	details = assignments[0]
 	if details.time_limit and not frappe.db.get_value(
 		ASSIGNMENT_SUBMISSION, {"assignment": assignment, "student": student}, "returned_on"
 	):
@@ -1686,6 +1725,7 @@ def update_assignment(
 	rubric: list | str | None = None,
 	hint_after_failed_runs: int | None = None,
 	max_hints: int | None = None,
+	submit_saved_work: int | None = None,
 ) -> str:
 	require_faculty_for_assignment(assignment)
 	faculty = get_current_faculty()
@@ -1721,6 +1761,7 @@ def update_assignment(
 		rubric=rubric,
 		hint_after_failed_runs=hint_after_failed_runs,
 		max_hints=max_hints,
+		submit_saved_work=submit_saved_work,
 	)
 	if publish is not None:
 		_apply_publish_state(doc, publish, publish_on)
@@ -1753,6 +1794,7 @@ def _set_assignment_fields(
 	rubric: list | str | None = None,
 	hint_after_failed_runs: int | None = None,
 	max_hints: int | None = None,
+	submit_saved_work: int | None = None,
 ) -> None:
 	doc.update(
 		{
@@ -1786,6 +1828,8 @@ def _set_assignment_fields(
 		doc.hint_after_failed_runs = hint_after_failed_runs
 	if max_hints is not None:
 		doc.max_hints = max_hints
+	if submit_saved_work is not None:
+		doc.submit_saved_work = submit_saved_work
 	if test_cases is not None:
 		doc.set(
 			"test_cases",
@@ -1842,6 +1886,7 @@ def get_assignment(assignment: str) -> dict | None:
 			"late_penalty",
 			"hint_after_failed_runs",
 			"max_hints",
+			"submit_saved_work",
 			"modified",
 		],
 		as_dict=True,

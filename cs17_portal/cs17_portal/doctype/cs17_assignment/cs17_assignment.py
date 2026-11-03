@@ -30,6 +30,7 @@ class CS17Assignment(Document):
 		answer_sheet: DF.JSON | None
 		assignment_type: DF.Literal["Graded", "Not Graded"]
 		attempts_allowed: DF.Int
+		coding_exam: DF.Link | None
 		cohort: DF.Link | None
 		description: DF.TextEditor | None
 		difficulty: DF.Literal["", "Easy", "Medium", "Hard", "Extra hard"]
@@ -49,6 +50,7 @@ class CS17Assignment(Document):
 		starter_code: DF.Code | None
 		students: DF.Table[CS17AssignmentStudent]
 		submission_type: DF.Literal["Any", "PDF", "URL", "Image", "ZIP", "Scratch", "Python"]
+		submit_saved_work: DF.Check
 		test_cases: DF.Table[CS17PythonTestCase]
 		time_limit: DF.Int
 		title: DF.Data

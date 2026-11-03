@@ -1,10 +1,16 @@
+from typing import TYPE_CHECKING
+
 import frappe
 from frappe import _
 from frappe.query_builder.functions import Count
 from frappe.utils import add_to_date, format_datetime, get_url, getdate, now_datetime
 from frappe.utils.background_jobs import defer_enqueue_after_commit
 
+from cs17_portal.api import ASSIGNMENT_SUBMISSION, submit_python_code, time_limit_ends_at
 from cs17_portal.guardian import get_child_assignments, get_children, is_due_this_week, is_missing
+
+if TYPE_CHECKING:
+	from datetime import datetime
 
 
 def auto_publish_assignments():
@@ -84,6 +90,7 @@ def remind_due_assignments():
 			["is_published", "=", 1],
 			["due_date", ">", add_to_date(hour, hours=23)],
 			["due_date", "<=", add_to_date(hour, hours=24)],
+			["coding_exam", "is", "not set"],
 		],
 		pluck="name",
 	)
@@ -276,3 +283,109 @@ def send_guardian_digest():
 				template="guardian_digest",
 				args={"children": children},
 			)
+
+
+def submit_saved_work_when_time_is_up():
+	now = now_datetime()
+	for name, modified in frappe.get_all(
+		"CS17 Coding Exam Attempt",
+		filters=[["finished_on", "is", "not set"], ["paused_at", "is", "not set"], ["ends_at", "<", now]],
+		fields=["name", "modified"],
+		as_list=True,
+	):
+		frappe.db.savepoint("finish_exam_attempt")
+		try:
+			frappe.get_doc("CS17 Coding Exam Attempt", name).finish()
+		except Exception:
+			frappe.db.rollback(save_point="finish_exam_attempt")
+			_log_error_once(
+				"Exam work not submitted when time was up", "CS17 Coding Exam Attempt", name, modified
+			)
+
+	latest_attempts = {}
+	for attempt in frappe.get_all(
+		"CS17 Assignment Attempt",
+		filters=[
+			["assignment.submit_saved_work", "=", 1],
+			["assignment.time_limit", ">", 0],
+			["started_at", ">", add_to_date(now, days=-1)],
+		],
+		fields=[
+			"name",
+			"modified",
+			"assignment",
+			"student",
+			"started_at",
+			"assignment.time_limit as time_limit",
+			"assignment.due_date as due_date",
+			"assignment.late_until as late_until",
+		],
+		order_by="started_at desc",
+	):
+		latest_attempts.setdefault((attempt.assignment, attempt.student), attempt)
+	timed_out = [
+		attempt
+		for attempt in latest_attempts.values()
+		if time_limit_ends_at(attempt.started_at, attempt.time_limit, attempt.late_until or attempt.due_date)
+		< now
+	]
+	if not timed_out:
+		return
+
+	assignments = [attempt.assignment for attempt in timed_out]
+	students = [attempt.student for attempt in timed_out]
+	submitted_at = {
+		(submission.assignment, submission.student): submission.submitted_at
+		for submission in frappe.get_all(
+			ASSIGNMENT_SUBMISSION,
+			filters={"assignment": ["in", assignments], "student": ["in", students]},
+			fields=["assignment", "student", "submitted_at"],
+		)
+	}
+	projects = {
+		(project.assignment, project.profile): project
+		for project in frappe.get_all(
+			"CS17 Project",
+			filters={
+				"assignment": ["in", assignments],
+				"profile": ["in", students],
+				"project_type": "Python",
+			},
+			fields=["name", "assignment", "profile", "last_saved_at"],
+			order_by="creation asc",
+		)
+	}
+	for attempt in timed_out:
+		project = projects.get((attempt.assignment, attempt.student))
+		submitted = submitted_at.get((attempt.assignment, attempt.student))
+		if not (project and project.last_saved_at and project.last_saved_at >= attempt.started_at):
+			continue
+		if submitted and submitted >= attempt.started_at:
+			continue
+		frappe.db.savepoint("submit_saved_work")
+		try:
+			project_doc = frappe.get_doc("CS17 Project", project.name)
+			if (project_doc.code or "").strip():
+				submit_python_code(attempt.assignment, attempt.student, project_doc, ignore_deadline=True)
+		except Exception:
+			frappe.db.rollback(save_point="submit_saved_work")
+			_log_error_once(
+				"Saved work not submitted when time was up",
+				"CS17 Assignment Attempt",
+				attempt.name,
+				attempt.modified,
+			)
+
+
+def _log_error_once(title: str, doctype: str, name: str, modified: "datetime") -> None:
+	if not frappe.get_all(
+		"Error Log",
+		filters={
+			"method": title,
+			"reference_doctype": doctype,
+			"reference_name": name,
+			"creation": (">", modified),
+		},
+		limit=1,
+	):
+		frappe.log_error(title=title, reference_doctype=doctype, reference_name=name)

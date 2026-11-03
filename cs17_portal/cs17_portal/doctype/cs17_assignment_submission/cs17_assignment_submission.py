@@ -130,13 +130,26 @@ class CS17AssignmentSubmission(Document):
 			"CS17 Assignment",
 			filters={"name": self.assignment, "cohort": student.cohort},
 			or_filters=given_to(self.student),
-			fields=["is_published", "publish_on"],
+			fields=["is_published", "publish_on", "coding_exam"],
 		)
-		if not (assignments and is_published_now(assignments[0])):
+		if assignments and assignments[0].coding_exam:
+			is_open = frappe.db.exists(
+				"CS17 Coding Exam Attempt", {"exam": assignments[0].coding_exam, "student": self.student}
+			)
+		else:
+			is_open = assignments and is_published_now(assignments[0])
+		if not is_open:
 			frappe.throw(_("This assignment is not open for submission."))
 
 	def validate_deadline(self):
-		if self.returned_on or not self._edited_by_owner() or get_attempt(self.assignment, self.student):
+		if self.flags.ignore_deadline or not self._edited_by_owner():
+			return
+		if exam := frappe.db.get_value("CS17 Assignment", self.assignment, "coding_exam"):
+			from cs17_portal.coding_exam import require_open_question
+
+			require_open_question(exam, self.assignment, self.student)
+			return
+		if self.returned_on or get_attempt(self.assignment, self.student):
 			return
 		deadline = get_deadline(self.assignment)
 		if deadline and frappe.utils.now_datetime() > deadline:
@@ -172,13 +185,13 @@ class CS17AssignmentSubmission(Document):
 		assignment = frappe.db.get_value(
 			"CS17 Assignment",
 			self.assignment,
-			["submission_type", "is_published", "publish_on"],
+			["submission_type", "is_published", "publish_on", "coding_exam"],
 			as_dict=True,
 		)
 		project_type = frappe.db.get_value("CS17 Project", self.project, "project_type")
 		if not assignment or assignment.submission_type != project_type:
 			frappe.throw(_("This assignment does not accept {0} projects.").format(project_type))
-		if not is_published_now(assignment):
+		if not (assignment.coding_exam or is_published_now(assignment)):
 			frappe.throw(_("This assignment is not open for submission."))
 
 
