@@ -185,6 +185,12 @@
 							min="1"
 							step="1"
 						/>
+						<Checkbox
+							v-if="draft.time_limit"
+							v-model="draft.submit_saved_work"
+							label="Submit saved work when time is up"
+							description="A student who runs out of time without submitting gets their saved code submitted."
+						/>
 						<FormControl
 							v-model="draft.hint_after_failed_runs"
 							type="number"
@@ -289,6 +295,7 @@ import { trySubmit } from '@/lib/trySubmit'
 import {
 	DIFFICULTIES,
 	SUBMISSION_TYPES,
+	type Bool,
 	type CS17Assignment,
 	type EvaluationType,
 	type PublishMode,
@@ -341,6 +348,7 @@ function emptyDraft(): AssignmentDraft {
 		watch_tab_switches: false,
 		time_limit: '',
 		attempts_allowed: '',
+		submit_saved_work: false,
 		late_until: '',
 		late_penalty: '',
 		rubric: [],
@@ -409,7 +417,10 @@ const evaluationType = computed({
 	},
 })
 
-const existingCall = useCall<CS17Assignment | null, { assignment: string }>({
+const existingCall = useCall<
+	(CS17Assignment & { submit_saved_work?: Bool }) | null,
+	{ assignment: string }
+>({
 	url: '/api/v2/method/cs17_portal.api.get_assignment',
 	method: 'GET',
 	immediate: false,
@@ -513,6 +524,7 @@ async function loadExisting(name: string) {
 		watch_tab_switches: Boolean(existing.watch_tab_switches),
 		time_limit: existing.time_limit ? String(existing.time_limit) : '',
 		attempts_allowed: existing.attempts_allowed ? String(existing.attempts_allowed) : '',
+		submit_saved_work: Boolean(existing.submit_saved_work),
 		late_until: existing.late_until ?? '',
 		late_penalty: existing.late_penalty ? String(existing.late_penalty) : '',
 		rubric: (existing.rubric ?? []).map((row) => ({
@@ -638,6 +650,7 @@ async function handleSubmit() {
 		watch_tab_switches: draft.watch_tab_switches ? 1 : 0,
 		time_limit: Number(draft.time_limit) || 0,
 		attempts_allowed: Number(draft.attempts_allowed) || 0,
+		submit_saved_work: draft.submit_saved_work ? 1 : 0,
 		late_until: toFrappeDatetime(draft.late_until),
 		late_penalty: Number(draft.late_penalty) || 0,
 		rubric:
