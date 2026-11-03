@@ -99,9 +99,10 @@ const width = ref(0)
 const snake = useTemplateRef<SVGPathElement>('snake')
 const dots = useTemplateRef<SVGCircleElement[]>('dots')
 
-const caption = computed(
-	() =>
-		`Flawless. Every test, even the hidden ones.${celebration.value?.first_try ? ' First try.' : ''}`,
+const caption = computed(() =>
+	reducedMotion.value
+		? 'Every test, even the hidden ones.'
+		: `Flawless. Every test, even the hidden ones.${celebration.value?.first_try ? ' First try.' : ''}`,
 )
 
 const track = computed(() => {
