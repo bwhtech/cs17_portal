@@ -101,7 +101,7 @@
 						@click="openDraft(row.name, row.statusLabel === 'Scheduled')"
 					/>
 					<Button
-						v-if="!row.is_published"
+						v-if="!row.is_published && !row.coding_exam"
 						:label="row.publish_on ? 'Reschedule' : 'Publish'"
 						@click="publishTarget = row"
 					/>
@@ -178,6 +178,7 @@ import type { CS17Assignment } from '@/types'
 
 /** A row plus the badge ladder, resolved once instead of three times in the cell. */
 interface AssignmentRow extends CS17Assignment {
+	coding_exam?: string | null
 	statusLabel: 'Published' | 'Scheduled' | 'Draft'
 	statusTheme: 'green' | 'amber' | 'gray'
 	/** The scheduled publish time, shown under the Scheduled badge. */

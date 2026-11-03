@@ -118,6 +118,7 @@ def get_faculty_assignments(cohort: str | None = None) -> list:
 			"publish_on",
 			"topic",
 			"difficulty",
+			"coding_exam",
 		],
 		order_by="due_date desc, creation desc",
 	)
