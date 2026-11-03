@@ -207,4 +207,45 @@ test.describe("Editor after a failed save", () => {
 		);
 		expect(stageVariables).toContain("kept");
 	});
+
+	test("the Scratch editor waits for a running save before it saves again", async ({ page }) => {
+		await page.clock.install();
+		await openProjectWithUnsavedEdit(page);
+		let saves = 0;
+		let running = 0;
+		let overlapped = false;
+		let release = () => {};
+		const held = new Promise<void>((resolve) => (release = resolve));
+		await page.route("**/cs17_portal.api.save_project*", async (route) => {
+			saves += 1;
+			if (running > 0) overlapped = true;
+			running += 1;
+			await held;
+			const response = await route.fetch();
+			running -= 1;
+			await route.fulfill({ response });
+		});
+		await page.getByRole("button", { name: "Save", exact: true }).click();
+		await expect.poll(() => saves).toBe(1);
+
+		await page.evaluate(() => {
+			(window as any).editorChanged = new Promise<void>((resolve) =>
+				window.addEventListener("message", (event) => {
+					if (event.data?.type === "dirty") resolve();
+				})
+			);
+		});
+		await page
+			.getByTitle("Scratch editor")
+			.contentFrame()
+			.locator("html")
+			.evaluate(() => (window as any).cs17vm.runtime.emitProjectChanged());
+		await page.evaluate(() => (window as any).editorChanged);
+		await page.clock.fastForward(15_000);
+		release();
+
+		await expect.poll(() => saves).toBe(2);
+		await expect(page.getByText("Saved", { exact: true })).toBeVisible();
+		expect(overlapped).toBe(false);
+	});
 });
