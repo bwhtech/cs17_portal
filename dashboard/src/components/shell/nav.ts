@@ -78,6 +78,7 @@ const faculty: NavConfig = {
 				{ label: 'Assignments', icon: 'lucide-clipboard-list', to: '/faculty/assignments' },
 				{ label: 'Exams', icon: 'lucide-timer', to: '/faculty/exams' },
 				{ label: 'Results', icon: 'lucide-award', to: '/faculty/results' },
+				{ label: 'Viva', icon: 'lucide-mic', to: '/faculty/vivas' },
 				{ label: 'Projects', icon: 'lucide-blocks', to: '/faculty/projects' },
 				{ label: 'Gallery', icon: 'lucide-images', to: '/faculty/gallery' },
 				{ label: 'Reports', icon: 'lucide-chart-column', to: '/faculty/reports' },
