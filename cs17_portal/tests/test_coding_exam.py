@@ -44,9 +44,13 @@ class TestCodingExam(FrappeTestCase):
 		)
 
 	def make_exam(
-		self, question_order: str = "Any order", can_go_back: int = 0, opens_on: str | None = None
+		self,
+		question_order: str = "Any order",
+		can_go_back: int = 0,
+		opens_on: str | None = None,
+		questions: list[str] | None = None,
 	) -> tuple[str, list[str]]:
-		questions = [self.make_question("Loops practice"), self.make_question("Number guessing")]
+		questions = questions or [self.make_question("Loops practice"), self.make_question("Number guessing")]
 		exam = coding_exam.save_coding_exam(
 			title="Python midterm",
 			cohort=self.cohort,
@@ -149,9 +153,27 @@ class TestCodingExam(FrappeTestCase):
 			add_to_date(ends_at, minutes=5),
 		)
 
+	def test_an_exam_refuses_a_published_assignment(self):
+		question = self.make_question("Loops practice")
+		api.publish_assignment(question)
+
+		self.assertRaisesRegex(
+			frappe.ValidationError, "^Use a draft assignment", self.make_exam, questions=[question]
+		)
+
+	def test_an_exam_question_cannot_be_published(self):
+		_, questions = self.make_exam()
+
+		self.assertRaisesRegex(
+			frappe.ValidationError,
+			"^This assignment is a coding exam question",
+			api.publish_assignment,
+			questions[0],
+		)
+
 	def test_a_question_is_left_out_of_the_assignment_list(self):
 		_, questions = self.make_exam()
-		api.publish_assignment(questions[0])
+		frappe.db.set_value("CS17 Assignment", questions[0], "is_published", 1)
 		frappe.set_user(self.student_user)
 
 		self.assertNotIn(questions[0], [row.name for row in api.get_student_assignments()["assignments"]])
