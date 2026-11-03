@@ -171,7 +171,7 @@ def get_child_assignments(child: frappe._dict) -> list:
 		assignment
 		for assignment in frappe.get_all(
 			"CS17 Assignment",
-			filters={"cohort": child.cohort},
+			filters={"cohort": child.cohort, "coding_exam": ["is", "not set"]},
 			or_filters=given_to(child.student),
 			fields=[
 				"name",

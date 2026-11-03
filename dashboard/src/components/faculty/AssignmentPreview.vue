@@ -65,6 +65,7 @@ export interface AssignmentDraft {
 	watch_tab_switches: boolean
 	time_limit: string
 	attempts_allowed: string
+	submit_saved_work: boolean
 	late_until: string
 	late_penalty: string
 	rubric: { criterion: string; marks: string }[]

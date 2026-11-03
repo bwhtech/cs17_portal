@@ -39,6 +39,7 @@ const student: NavConfig = {
 			items: [
 				{ label: 'Dashboard', icon: 'lucide-layout-dashboard', to: '/', exact: true },
 				{ label: 'Assignments', icon: 'lucide-clipboard-list', to: '/assignments' },
+				{ label: 'Exams', icon: 'lucide-timer', to: '/exams' },
 				{ label: 'Projects', icon: 'lucide-blocks', to: '/projects' },
 				{ label: 'Gallery', icon: 'lucide-images', to: '/gallery' },
 				{ label: 'Results', icon: 'lucide-award', to: '/results' },

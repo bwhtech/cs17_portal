@@ -164,7 +164,8 @@ scheduler_events = {
 	],
 	"hourly": ["cs17_portal.tasks.remind_due_assignments"],
 	"cron": {
-		"0 8 * * 1": ["cs17_portal.tasks.send_faculty_digest", "cs17_portal.tasks.send_guardian_digest"]
+		"* * * * *": ["cs17_portal.tasks.submit_saved_work_when_time_is_up"],
+		"0 8 * * 1": ["cs17_portal.tasks.send_faculty_digest", "cs17_portal.tasks.send_guardian_digest"],
 	},
 }
 

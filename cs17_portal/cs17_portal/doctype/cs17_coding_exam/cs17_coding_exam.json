@@ -1,0 +1,147 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "creation": "2026-11-03 07:40:59.135607",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "cohort",
+  "quarter",
+  "is_published",
+  "column_break_window",
+  "opens_on",
+  "last_start_on",
+  "closes_on",
+  "duration_minutes",
+  "question_order",
+  "can_go_back",
+  "section_break_questions",
+  "instructions",
+  "banner",
+  "questions"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cohort",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Cohort",
+   "options": "CS17 Cohort",
+   "reqd": 1
+  },
+  {
+   "fieldname": "quarter",
+   "fieldtype": "Link",
+   "label": "Quarter",
+   "options": "CS17 Quarter"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_published",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Published"
+  },
+  {
+   "fieldname": "column_break_window",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "opens_on",
+   "fieldtype": "Datetime",
+   "label": "Opens On",
+   "reqd": 1
+  },
+  {
+   "fieldname": "last_start_on",
+   "fieldtype": "Datetime",
+   "label": "Last Start On",
+   "reqd": 1
+  },
+  {
+   "fieldname": "closes_on",
+   "fieldtype": "Datetime",
+   "label": "Closes On",
+   "reqd": 1
+  },
+  {
+   "fieldname": "duration_minutes",
+   "fieldtype": "Int",
+   "label": "Duration (Minutes)",
+   "reqd": 1
+  },
+  {
+   "default": "Any order",
+   "fieldname": "question_order",
+   "fieldtype": "Select",
+   "label": "Question Order",
+   "options": "Any order\nOne by one",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.question_order == \"One by one\"",
+   "fieldname": "can_go_back",
+   "fieldtype": "Check",
+   "label": "Can Go Back"
+  },
+  {
+   "fieldname": "section_break_questions",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "instructions",
+   "fieldtype": "Text Editor",
+   "label": "Instructions"
+  },
+  {
+   "fieldname": "banner",
+   "fieldtype": "Small Text",
+   "label": "Banner"
+  },
+  {
+   "fieldname": "questions",
+   "fieldtype": "Table",
+   "label": "Questions",
+   "options": "CS17 Coding Exam Question"
+  }
+ ],
+ "grid_page_length": 50,
+ "link_display_mode": "Search",
+ "links": [],
+ "modified": "2026-11-03 07:40:59.135607",
+ "modified_by": "Administrator",
+ "module": "CS17 Portal",
+ "name": "CS17 Coding Exam",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
