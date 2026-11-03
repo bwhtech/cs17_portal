@@ -249,11 +249,11 @@
 										data-card-heading
 										class="flex min-w-0 flex-1 items-center text-base font-medium text-ink-gray-8 [&>.truncate]:line-clamp-2 [&>.truncate]:whitespace-normal [&>.truncate]:break-words"
 									>
-										<slot
-											v-if="primaryColumn"
-											:name="`cell-${primaryColumn.key}`"
-											:row="row"
-										/>
+										<template v-if="primaryColumn">
+											<slot :name="`cell-${primaryColumn.key}`" :row="row">{{
+												cellText(row, primaryColumn)
+											}}</slot>
+										</template>
 									</div>
 								</div>
 
