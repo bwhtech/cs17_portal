@@ -34,10 +34,12 @@ function tick() {
 	emit('end')
 }
 
-const clock = computed(
-	() =>
-		`${String(Math.floor(seconds.value / 60)).padStart(2, '0')}:${String(seconds.value % 60).padStart(2, '0')}`,
-)
+const clock = computed(() => {
+	const hours = Math.floor(seconds.value / 3600)
+	const minutes = String(Math.floor((seconds.value % 3600) / 60)).padStart(2, '0')
+	const rest = String(seconds.value % 60).padStart(2, '0')
+	return hours ? `${hours}:${minutes}:${rest}` : `${minutes}:${rest}`
+})
 
 onBeforeUnmount(() => clearInterval(timer))
 </script>
