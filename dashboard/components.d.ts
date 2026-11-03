@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AddExamTimeDialog: typeof import('./src/components/exams/faculty/AddExamTimeDialog.vue')['default']
     AddGuardianDialog: typeof import('./src/components/guardian/AddGuardianDialog.vue')['default']
     AISettings: typeof import('./src/components/settings/AISettings.vue')['default']
     AlertBanner: typeof import('./src/components/announcements/AlertBanner.vue')['default']
@@ -40,6 +41,7 @@ declare module 'vue' {
     CodeCommentForm: typeof import('./src/components/grading/CodeCommentForm.vue')['default']
     CodeComments: typeof import('./src/components/grading/CodeComments.vue')['default']
     CodeReplay: typeof import('./src/components/grading/CodeReplay.vue')['default']
+    CodingExamFormDialog: typeof import('./src/components/exams/faculty/CodingExamFormDialog.vue')['default']
     CopyAssignmentsDialog: typeof import('./src/components/faculty/CopyAssignmentsDialog.vue')['default']
     DataTable: typeof import('./src/components/common/DataTable.vue')['default']
     DeleteAnnouncementDialog: typeof import('./src/components/faculty/DeleteAnnouncementDialog.vue')['default']
@@ -48,9 +50,12 @@ declare module 'vue' {
     DistributeNextAssignmentsDialog: typeof import('./src/components/faculty/DistributeNextAssignmentsDialog.vue')['default']
     EmptyState: typeof import('./src/components/common/EmptyState.vue')['default']
     ExamCard: typeof import('./src/components/exams/ExamCard.vue')['default']
+    ExamChangeLog: typeof import('./src/components/exams/faculty/ExamChangeLog.vue')['default']
+    ExamCloseTimeDialog: typeof import('./src/components/exams/faculty/ExamCloseTimeDialog.vue')['default']
     ExamOverview: typeof import('./src/components/exams/ExamOverview.vue')['default']
     ExamQuestionEditor: typeof import('./src/components/exams/ExamQuestionEditor.vue')['default']
     ExamQuestionList: typeof import('./src/components/exams/ExamQuestionList.vue')['default']
+    ExamQuestionsField: typeof import('./src/components/exams/faculty/ExamQuestionsField.vue')['default']
     ExamWorkspace: typeof import('./src/components/exams/ExamWorkspace.vue')['default']
     ExplanationRequestCard: typeof import('./src/components/assignments/ExplanationRequestCard.vue')['default']
     FacultyAvatar: typeof import('./src/components/faculty/FacultyAvatar.vue')['default']
