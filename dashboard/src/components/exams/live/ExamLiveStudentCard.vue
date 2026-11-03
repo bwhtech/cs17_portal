@@ -1,7 +1,9 @@
 <template>
 	<li class="space-y-3 rounded-4 border border-outline-gray-1 bg-surface-base p-4">
 		<div class="flex items-center justify-between gap-2">
-			<p class="min-w-0 truncate text-base font-medium text-ink-gray-8">{{ name }}</p>
+			<p class="min-w-0 truncate text-base font-medium text-ink-gray-8" :title="name">
+				{{ name }}
+			</p>
 			<div class="flex shrink-0 items-center gap-1">
 				<Badge
 					v-if="student.alerts"
@@ -21,7 +23,10 @@
 				:key="question.assignment"
 				class="flex items-center gap-2 text-sm"
 			>
-				<span class="min-w-0 flex-1 truncate text-ink-gray-7">
+				<span
+					class="min-w-0 flex-1 truncate text-ink-gray-7"
+					:title="titleOf(question.assignment)"
+				>
 					{{ index + 1 }}. {{ titleOf(question.assignment) }}
 				</span>
 				<span
