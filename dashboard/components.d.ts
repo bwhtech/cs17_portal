@@ -123,6 +123,8 @@ declare module 'vue' {
     TopicSelect: typeof import('./src/components/faculty/TopicSelect.vue')['default']
     UnreadAnnouncements: typeof import('./src/components/announcements/UnreadAnnouncements.vue')['default']
     UnreadNotifications: typeof import('./src/components/announcements/UnreadNotifications.vue')['default']
+    VivaQuestionCard: typeof import('./src/components/faculty/VivaQuestionCard.vue')['default']
+    VivaStudentDialog: typeof import('./src/components/faculty/VivaStudentDialog.vue')['default']
     VoiceNoteRecorder: typeof import('./src/components/feedback/VoiceNoteRecorder.vue')['default']
     VoiceRemarkPlayer: typeof import('./src/components/assignments/VoiceRemarkPlayer.vue')['default']
   }
