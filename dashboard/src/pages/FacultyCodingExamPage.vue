@@ -7,6 +7,12 @@
 			<template v-if="isDesktop">
 				<Button icon-left="lucide-pencil" label="Edit" @click="formOpen = true" />
 				<Button
+					v-if="exam.is_published"
+					icon-left="lucide-activity"
+					label="Live"
+					:route="`/faculty/exams/${exam.name}/live`"
+				/>
+				<Button
 					v-if="running.length"
 					icon-left="lucide-timer"
 					label="Add time"
@@ -588,6 +594,15 @@ const headerActions = computed<DropdownActionOption[]>(() => [
 		? [{ label: 'Publish', icon: 'lucide-send', onClick: confirmPublish }]
 		: []),
 	{ label: 'Edit', icon: 'lucide-pencil', onClick: () => (formOpen.value = true) },
+	...(exam.value?.is_published
+		? [
+				{
+					label: 'Live',
+					icon: 'lucide-activity',
+					route: `/faculty/exams/${exam.value.name}/live`,
+				},
+			]
+		: []),
 	...(running.value.length
 		? [
 				{ label: 'Add time', icon: 'lucide-timer', onClick: () => openAddTime() },
