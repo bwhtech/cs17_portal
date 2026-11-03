@@ -12,6 +12,8 @@ export const SCRATCH_MESSAGE = {
 	dirty: 'dirty',
 } as const
 
+const NARROW_FRAME = '(max-width: 1023px)'
+
 const READONLY_CSS = `
 	.blocklyToolboxDiv, .blocklyFlyout, .blocklyFlyoutButton,
 	.blocklyZoom, .blocklyScrollbarVertical, .blocklyScrollbarHorizontal,
@@ -22,6 +24,10 @@ const READONLY_CSS = `
 	[class*="extension-button-container_"],
 	.sa-find-bar { display: none !important; }
 	.blocklyBlockCanvas { pointer-events: none !important; }
+	@media ${NARROW_FRAME} {
+		[class*="stage-wrapper_full-screen_"] [class*="stage_stage-wrapper_"] { min-width: 0 !important; }
+		[class*="stage-header_unselect-wrapper_"] { display: none !important; }
+	}
 `
 
 export function applyScratchDefaults(): void {
@@ -52,6 +58,20 @@ export function applyScratchReadOnly(iframe: HTMLIFrameElement | null): void {
 	style.textContent = READONLY_CSS
 	doc.head.appendChild(style)
 	doc.addEventListener('contextmenu', (event) => event.preventDefault(), true)
+	doc.defaultView
+		?.matchMedia(NARROW_FRAME)
+		.addEventListener('change', (event) => setFullScreen(doc, event.matches))
+}
+
+// The editor needs 1024px; in a narrower frame only its full screen stage fits.
+export function fitScratchToFrame(iframe: HTMLIFrameElement | null): void {
+	const doc = iframe?.contentDocument
+	if (doc?.defaultView?.matchMedia(NARROW_FRAME).matches) setFullScreen(doc, true)
+}
+
+function setFullScreen(doc: Document, fullScreen: boolean) {
+	if (Boolean(doc.querySelector('[class*="stage-wrapper_full-screen_"]')) === fullScreen) return
+	doc.querySelector<HTMLElement>('[class*="stage-header_stage-button_"]')?.click()
 }
 
 interface ScratchRuntime {
