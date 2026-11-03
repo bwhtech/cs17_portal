@@ -1,11 +1,12 @@
 <template>
-	<div class="grid grid-cols-2 items-end gap-3 md:flex md:flex-wrap md:gap-4">
+	<div
+		class="grid grid-cols-2 items-end gap-3 md:grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] md:gap-4"
+	>
 		<FormControl
 			v-for="(row, index) in rubric"
 			:key="index"
-			class="md:w-40"
 			type="number"
-			:label="`${row.criterion}, out of ${row.marks}`"
+			:label="`${row.criterion}, out\u00a0of\u00a0${row.marks}`"
 			:model-value="marks[index]"
 			:error="errors[index]"
 			min="0"
@@ -13,7 +14,7 @@
 			step="any"
 			@update:model-value="update(index, String($event ?? ''))"
 		/>
-		<p class="col-span-2 text-p-sm text-ink-gray-7 md:basis-full">
+		<p class="col-span-full text-p-sm text-ink-gray-7">
 			Total {{ rubricTotal(marks) }} of {{ rubricTotal(rubric.map((row) => row.marks)) }}
 			<template v-if="grade">· {{ grade }}</template>
 		</p>
