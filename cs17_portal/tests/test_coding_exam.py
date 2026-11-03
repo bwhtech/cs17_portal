@@ -184,6 +184,15 @@ class TestCodingExam(FrappeTestCase):
 
 		self.assertNotIn(questions[0], [row.name for row in api.get_student_assignments()["assignments"]])
 
+	def test_the_student_page_lists_the_questions_of_a_started_exam(self):
+		exam, questions = self.make_exam()
+		self.start(exam)
+		frappe.set_user(self.faculty_user)
+
+		self.assertIn(
+			questions[0], [row.name for row in api.get_student_overview(self.student)["assignments"]]
+		)
+
 	def test_a_question_is_closed_before_the_exam_starts(self):
 		_, questions = self.make_exam()
 		frappe.set_user(self.student_user)

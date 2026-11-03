@@ -2380,10 +2380,18 @@ def get_student_overview(student: str) -> dict:
 			"watch_tab_switches",
 			"is_published",
 			"publish_on",
+			"coding_exam",
 		],
 		order_by="due_date desc, creation desc",
 	)
-	assignments = [assignment for assignment in assignments if is_published_now(assignment)]
+	started_exams = set(
+		frappe.get_all("CS17 Coding Exam Attempt", filters={"student": student}, pluck="exam")
+	)
+	assignments = [
+		assignment
+		for assignment in assignments
+		if is_published_now(assignment) or assignment.coding_exam in started_exams
+	]
 	submissions = frappe.get_all(
 		ASSIGNMENT_SUBMISSION,
 		filters={"student": student},
