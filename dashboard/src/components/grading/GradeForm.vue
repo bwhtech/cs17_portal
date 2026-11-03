@@ -138,8 +138,8 @@ import { unescapeTags } from '@/lib/markdown'
 import {
 	rubricMarksErrors,
 	rubricScores,
-	rubricTotal,
 	savedRubricMarks,
+	typedRubricTotal,
 	type RubricCriterion,
 	type RubricScore,
 } from '@/lib/rubric'
@@ -211,7 +211,7 @@ const rubric = computed(() => rubricCall.data ?? [])
 const criterionMarks = ref<string[]>([])
 const criterionErrors = ref<string[]>([])
 const typedMarks = computed(() =>
-	rubric.value.length ? String(rubricTotal(criterionMarks.value)) : marks.value,
+	rubric.value.length ? typedRubricTotal(criterionMarks.value) : marks.value,
 )
 
 const gradeFailed = useLoadFailed(existing, { except: isRefusal })

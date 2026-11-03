@@ -14,16 +14,17 @@
 			step="any"
 			@update:model-value="update(index, String($event ?? ''))"
 		/>
-		<p class="col-span-full text-p-sm text-ink-gray-7">
-			Total {{ rubricTotal(marks) }} of {{ rubricTotal(rubric.map((row) => row.marks)) }}
+		<p v-if="total" class="col-span-full text-p-sm text-ink-gray-7">
+			Total {{ total }} of {{ rubricTotal(rubric.map((row) => row.marks)) }}
 			<template v-if="grade">· {{ grade }}</template>
 		</p>
 	</div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { FormControl } from 'frappe-ui'
-import { rubricTotal, type RubricCriterion } from '@/lib/rubric'
+import { rubricTotal, typedRubricTotal, type RubricCriterion } from '@/lib/rubric'
 
 const props = defineProps<{
 	rubric: RubricCriterion[]
@@ -32,6 +33,8 @@ const props = defineProps<{
 }>()
 
 const marks = defineModel<string[]>({ required: true })
+
+const total = computed(() => typedRubricTotal(marks.value))
 
 function update(index: number, value: string) {
 	marks.value = props.rubric.map((_, position) =>
