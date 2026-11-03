@@ -9,7 +9,13 @@
 				@click="run"
 			/>
 		</div>
-		<PythonEditor :model-value="code" class="min-h-0 flex-1" read-only @run="run" />
+		<PythonEditor
+			:model-value="code"
+			class="min-h-0 flex-1"
+			read-only
+			:extensions="wrapLines"
+			@run="run"
+		/>
 		<RunPanel
 			v-model:stdin="stdin"
 			v-model:tab="panelTab"
@@ -22,12 +28,15 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { EditorView } from '@codemirror/view'
 import { Button } from 'frappe-ui'
 import PythonEditor from '@/components/python/PythonEditor.vue'
 import RunPanel from '@/components/python/RunPanel.vue'
 import { usePythonRunner, type RunResult } from '@/lib/python/runner'
 
 const props = defineProps<{ code: string }>()
+
+const wrapLines = [EditorView.lineWrapping]
 
 const runner = usePythonRunner()
 const stdin = ref('')
