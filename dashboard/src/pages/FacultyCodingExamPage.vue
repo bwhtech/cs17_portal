@@ -103,6 +103,8 @@
 							</li>
 						</ol>
 					</section>
+
+					<SafeExamBrowserSetup v-if="exam.require_seb" :start-url="exam.seb_start_url" />
 				</div>
 
 				<div class="w-full shrink-0 md:w-64">
@@ -264,6 +266,7 @@ import AddExamTimeDialog from '@/components/exams/faculty/AddExamTimeDialog.vue'
 import CodingExamFormDialog from '@/components/exams/faculty/CodingExamFormDialog.vue'
 import ExamChangeLog from '@/components/exams/faculty/ExamChangeLog.vue'
 import ExamCloseTimeDialog from '@/components/exams/faculty/ExamCloseTimeDialog.vue'
+import SafeExamBrowserSetup from '@/components/exams/faculty/SafeExamBrowserSetup.vue'
 import {
 	formatMinutes,
 	type CodingExam,

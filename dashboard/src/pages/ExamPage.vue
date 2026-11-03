@@ -21,6 +21,20 @@
 				@retry="examCall.reload()"
 			/>
 
+			<EmptyState
+				v-else-if="sebRequired"
+				icon="lucide-shield-check"
+				title="Open this exam in Safe Exam Browser."
+				description="Open the exam file or link your teacher gave you. It starts Safe Exam Browser on this exam; sign in there if asked."
+			>
+				<template #action>
+					<Button
+						label="Get Safe Exam Browser"
+						href="https://safeexambrowser.org/download_en.html"
+					/>
+				</template>
+			</EmptyState>
+
 			<PageSkeleton v-else-if="loading" :blocks="2" />
 
 			<p v-else-if="!exam" class="text-p-base text-ink-gray-5">Exam not found.</p>
@@ -32,8 +46,9 @@
 
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import { PageHeaderBackButton } from 'frappe-ui'
+import { Button, PageHeaderBackButton } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
@@ -59,6 +74,11 @@ usePolling(examCall.reload, EXAM_POLL_MS)
 const exam = computed(() => examCall.data ?? null)
 const loading = computed(() => examCall.loading && !examCall.data)
 const failed = useLoadFailed(examCall, { except: isRefusal })
+const sebRequired = computed<boolean>((previous = false) =>
+	examCall.loading
+		? previous
+		: (examCall.error as { type?: string } | null)?.type === 'SafeExamBrowserRequiredError',
+)
 
 watch(
 	() => exam.value?.title,

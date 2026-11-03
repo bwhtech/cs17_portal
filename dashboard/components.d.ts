@@ -104,6 +104,7 @@ declare module 'vue' {
     RubricMarksFields: typeof import('./src/components/grading/RubricMarksFields.vue')['default']
     RubricScores: typeof import('./src/components/assignments/RubricScores.vue')['default']
     RunPanel: typeof import('./src/components/python/RunPanel.vue')['default']
+    SafeExamBrowserSetup: typeof import('./src/components/exams/faculty/SafeExamBrowserSetup.vue')['default']
     ScratchFrame: typeof import('./src/components/scratch/ScratchFrame.vue')['default']
     SendBackDialog: typeof import('./src/components/faculty/SendBackDialog.vue')['default']
     SettingsDialog: typeof import('./src/components/settings/SettingsDialog.vue')['default']

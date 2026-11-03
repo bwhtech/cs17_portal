@@ -18,6 +18,7 @@ from cs17_portal.coding_exam import (
 from cs17_portal.cs17_portal.doctype.cs17_assignment_submission.cs17_assignment_submission import (
 	AUTO_SUBMIT_GRACE_SECONDS,
 )
+from cs17_portal.exam_seb import require_safe_exam_browser
 
 if TYPE_CHECKING:
 	from datetime import datetime
@@ -51,6 +52,7 @@ def record_exam_event(
 ) -> None:
 	student = require_current_student()
 	exam_doc = get_student_exam(exam, student)
+	require_safe_exam_browser(exam)
 	attempt = get_attempt_doc(exam, student)
 	if reason := attempt_closed_reason(attempt, AUTO_SUBMIT_GRACE_SECONDS):
 		frappe.throw(reason)

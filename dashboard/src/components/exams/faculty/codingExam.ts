@@ -63,6 +63,7 @@ export interface CodingExam {
 	has_seb_key: boolean
 	is_published: 0 | 1
 	has_attempts: boolean
+	seb_start_url: string
 	questions: CodingExamQuestion[]
 	changes: CodingExamChange[]
 }

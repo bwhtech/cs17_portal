@@ -9,6 +9,7 @@ from frappe.utils import (
 	flt,
 	format_datetime,
 	get_datetime,
+	get_url,
 	now_datetime,
 	time_diff_in_seconds,
 )
@@ -24,6 +25,7 @@ from cs17_portal.api import (
 from cs17_portal.cs17_portal.doctype.cs17_assignment_submission.cs17_assignment_submission import (
 	AUTO_SUBMIT_GRACE_SECONDS,
 )
+from cs17_portal.exam_seb import require_safe_exam_browser
 
 if TYPE_CHECKING:
 	from datetime import datetime
@@ -69,6 +71,7 @@ def get_my_coding_exams() -> list:
 def get_my_coding_exam(exam: str) -> dict:
 	student = require_current_student()
 	exam_doc = get_student_exam(exam, student)
+	require_safe_exam_browser(exam)
 	attempt = get_attempt_doc(exam, student)
 	if attempt and not attempt.finished_on:
 		from cs17_portal.exam_activity import record_second_login
@@ -101,6 +104,7 @@ def get_my_coding_exam(exam: str) -> dict:
 def start_coding_exam(exam: str) -> dict:
 	student = require_current_student()
 	exam_doc = get_student_exam(exam, student)
+	require_safe_exam_browser(exam)
 	now = now_datetime()
 	if now < get_datetime(exam_doc.opens_on):
 		frappe.throw(_("This exam is not open yet."))
@@ -117,6 +121,7 @@ def start_coding_exam(exam: str) -> dict:
 def open_exam_question(exam: str, assignment: str) -> dict:
 	student = require_current_student()
 	exam_doc = get_student_exam(exam, student)
+	require_safe_exam_browser(exam)
 	attempt = get_attempt_doc(exam, student)
 	if not attempt or attempt.finished_on:
 		frappe.throw(attempt_closed_reason(attempt))
@@ -130,6 +135,7 @@ def open_exam_question(exam: str, assignment: str) -> dict:
 def skip_exam_question(exam: str, assignment: str) -> None:
 	student = require_current_student()
 	exam_doc = get_student_exam(exam, student)
+	require_safe_exam_browser(exam)
 	if exam_doc.question_order != "One by one":
 		frappe.throw(_("Questions can be skipped only in a one by one exam."))
 	attempt = get_attempt_doc(exam, student)
@@ -146,6 +152,7 @@ def skip_exam_question(exam: str, assignment: str) -> None:
 def finish_coding_exam(exam: str) -> None:
 	student = require_current_student()
 	get_student_exam(exam, student)
+	require_safe_exam_browser(exam)
 	attempt = get_attempt_doc(exam, student)
 	if reason := attempt_closed_reason(attempt):
 		frappe.throw(reason)
@@ -228,6 +235,7 @@ def get_coding_exam(exam: str) -> dict:
 		"has_seb_key": bool(exam_doc.seb_browser_exam_key),
 		"is_published": exam_doc.is_published,
 		"has_attempts": bool(frappe.db.exists(ATTEMPT, {"exam": exam})),
+		"seb_start_url": get_url(f"/dashboard/exams/{exam}"),
 		"questions": [
 			{
 				"assignment": row.assignment,
@@ -724,6 +732,7 @@ def question_closed_reason(exam: str, assignment: str, student: str, grace_secon
 
 
 def require_open_question(exam: str, assignment: str, student: str, is_saving: bool = False) -> None:
+	require_safe_exam_browser(exam)
 	if reason := question_closed_reason(
 		exam, assignment, student, AUTO_SUBMIT_GRACE_SECONDS if is_saving else 0
 	):
@@ -731,6 +740,7 @@ def require_open_question(exam: str, assignment: str, student: str, is_saving: b
 
 
 def can_read_question(exam: str, assignment: str, student: str) -> bool:
+	require_safe_exam_browser(exam)
 	attempt = get_attempt_doc(exam, student)
 	if not attempt:
 		return False
