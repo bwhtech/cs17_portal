@@ -7,6 +7,8 @@
 			<p class="mt-1 text-sm text-ink-gray-5">{{ today }}</p>
 		</div>
 
+		<ExamCard v-for="exam in comingExams" :key="exam.name" :exam="exam" />
+
 		<AlertBanner :announcements="announcements" />
 
 		<!-- The card outline only earns its keep on a wide screen; below `md`
@@ -58,6 +60,8 @@ import { ErrorMessage } from 'frappe-ui'
 import AlertBanner from '@/components/announcements/AlertBanner.vue'
 import AssignmentTable from '@/components/assignments/AssignmentTable.vue'
 import GradeDialog from '@/components/assignments/GradeDialog.vue'
+import ExamCard from '@/components/exams/ExamCard.vue'
+import type { CodingExamSummary } from '@/components/exams/codingExam'
 import TopicProgress, { type TopicProgressRow } from '@/components/reports/TopicProgress.vue'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
@@ -101,9 +105,20 @@ const topicProgressCall = usePolledCall<TopicProgressRow[]>({
 	immediate: isStudent.value,
 })
 
+const examsCall = usePolledCall<CodingExamSummary[]>({
+	url: '/api/v2/method/cs17_portal.coding_exam.get_my_coding_exams',
+	immediate: isStudent.value,
+})
+
 // Each student endpoint answers with the next scheduled publish beside its
 // rows, so a publish lands on the second; the interval covers everything else.
-for (const handle of [announcementsCall, assignmentsCall, gradesCall, topicProgressCall]) {
+for (const handle of [
+	announcementsCall,
+	assignmentsCall,
+	gradesCall,
+	topicProgressCall,
+	examsCall,
+]) {
 	usePolling(handle.reload)
 }
 usePublishTimer(() => announcementsCall.data?.next_publish_on, announcementsCall.reload)
@@ -111,6 +126,11 @@ usePublishTimer(() => assignmentsCall.data?.next_publish_on, assignmentsCall.rel
 usePublishTimer(() => gradesCall.data?.next_publish_on, gradesCall.reload)
 
 const announcements = computed(() => announcementsCall.data?.announcements ?? [])
+const comingExams = computed(() =>
+	(examsCall.data ?? [])
+		.filter((exam) => ['in_progress', 'open', 'upcoming'].includes(exam.state))
+		.sort((a, b) => dayjs(a.opens_on).valueOf() - dayjs(b.opens_on).valueOf()),
+)
 const assignments = computed(() => assignmentsCall.data?.assignments ?? [])
 const submissions = computed(() => assignments.value.flatMap((row) => row.submission ?? []))
 
