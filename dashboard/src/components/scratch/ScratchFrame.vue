@@ -28,6 +28,7 @@ import {
 	SCRATCH_TARGET_ORIGIN,
 	applyScratchDefaults,
 	applyScratchReadOnly,
+	fitScratchToFrame,
 	scratchRuntime,
 } from '@/lib/scratch'
 
@@ -99,6 +100,7 @@ function onEditorBooted() {
 	bootedDocument = frame.value?.contentDocument ?? null
 	loaded = false
 	pendingRequests = 0
+	if (props.readOnly) fitScratchToFrame(frame.value)
 	loadProject()
 	if (props.blank && !loaded) {
 		projectDocument = bootedDocument
@@ -146,7 +148,9 @@ watch(() => props.sb3, loadProject)
 watch(
 	() => props.readOnly,
 	(readOnly) => {
-		if (readOnly && frameLoaded.value) applyScratchReadOnly(frame.value)
+		if (!readOnly || !frameLoaded.value) return
+		applyScratchReadOnly(frame.value)
+		fitScratchToFrame(frame.value)
 	},
 )
 
