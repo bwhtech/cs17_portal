@@ -15,6 +15,7 @@ class CS17CodingExamAttemptQuestion(Document):
 		from frappe.types import DF
 
 		assignment: DF.Link
+		locked_on: DF.Datetime | None
 		parent: DF.Data
 		parentfield: DF.Data
 		parenttype: DF.Data

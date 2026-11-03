@@ -9,6 +9,7 @@
  "field_order": [
   "assignment",
   "skipped_on",
+  "locked_on",
   "reopened_on"
  ],
  "fields": [
@@ -31,13 +32,19 @@
    "fieldtype": "Datetime",
    "in_list_view": 1,
    "label": "Reopened On"
+  },
+  {
+   "fieldname": "locked_on",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Locked On"
   }
  ],
  "grid_page_length": 50,
  "istable": 1,
  "link_display_mode": "Search",
  "links": [],
- "modified": "2026-11-03 07:40:58.996439",
+ "modified": "2026-11-03 08:40:47.089124",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Coding Exam Attempt Question",

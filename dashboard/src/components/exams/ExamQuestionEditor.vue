@@ -79,6 +79,7 @@
 				v-if="problem"
 				class="shrink-0 border-outline-gray-1 px-3 py-4 max-lg:border-b sm:px-5 lg:w-[38%] lg:overflow-y-auto lg:border-r"
 				:assignment="problem"
+				@copy="emit('copyQuestion')"
 			/>
 			<div class="flex min-h-0 flex-1 flex-col max-lg:min-h-[36rem]">
 				<PythonEditor
@@ -139,7 +140,7 @@ const props = defineProps<{
 	canComeBack?: boolean
 }>()
 
-const emit = defineEmits<{ changed: [] }>()
+const emit = defineEmits<{ changed: []; copyQuestion: [] }>()
 
 const { isDesktop } = useBreakpoint()
 

@@ -766,8 +766,10 @@ def save_python_project(project: str, code: str) -> dict:
 		exam := frappe.db.get_value("CS17 Assignment", project_doc.assignment, "coding_exam")
 	):
 		from cs17_portal.coding_exam import require_open_question
+		from cs17_portal.exam_activity import record_code_jump
 
 		require_open_question(exam, project_doc.assignment, project_doc.profile, is_saving=True)
+		record_code_jump(exam, project_doc, code)
 	project_doc.code = code
 	project_doc.last_saved_at = now_datetime()
 	project_doc.save(ignore_permissions=True)

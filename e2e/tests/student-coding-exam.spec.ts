@@ -42,6 +42,12 @@ function codingExam(overrides: Record<string, unknown> = {}) {
 		now: NOW,
 		attempt: RUNNING,
 		questions: [question(LOOPS, "in_progress"), question(GUESSING, "not_started")],
+		rules: {
+			require_fullscreen: 0,
+			count_window_switches: 0,
+			paste_rule: "Allow",
+			watch_copy: 0,
+		},
 		...overrides,
 	};
 }
