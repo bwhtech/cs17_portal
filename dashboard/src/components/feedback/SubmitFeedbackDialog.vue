@@ -17,7 +17,6 @@
 					type="textarea"
 					label="Description"
 					placeholder="Write your feedback"
-					description="Faculty see your name."
 					:rows="6"
 					:error="fieldErrors.description"
 				/>
