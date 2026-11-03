@@ -64,7 +64,7 @@
 
 		<FormControl
 			v-model="remarks"
-			class="col-span-2 md:flex-1"
+			class="col-span-2 md:min-w-64 md:flex-1"
 			type="textarea"
 			label="Remarks"
 			:rows="2"
@@ -108,7 +108,7 @@
 		/>
 
 		<Button
-			class="col-span-2 w-full md:w-auto"
+			class="col-span-2 w-full md:ml-auto md:w-auto"
 			variant="solid"
 			theme="gray"
 			type="submit"
@@ -138,8 +138,8 @@ import { unescapeTags } from '@/lib/markdown'
 import {
 	rubricMarksErrors,
 	rubricScores,
-	rubricTotal,
 	savedRubricMarks,
+	typedRubricTotal,
 	type RubricCriterion,
 	type RubricScore,
 } from '@/lib/rubric'
@@ -211,7 +211,7 @@ const rubric = computed(() => rubricCall.data ?? [])
 const criterionMarks = ref<string[]>([])
 const criterionErrors = ref<string[]>([])
 const typedMarks = computed(() =>
-	rubric.value.length ? String(rubricTotal(criterionMarks.value)) : marks.value,
+	rubric.value.length ? typedRubricTotal(criterionMarks.value) : marks.value,
 )
 
 const gradeFailed = useLoadFailed(existing, { except: isRefusal })

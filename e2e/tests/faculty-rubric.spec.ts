@@ -79,6 +79,18 @@ test.describe("Rubric grading", () => {
 		).toBeVisible();
 	});
 
+	test("shows no total before a criterion mark", async ({ page }) => {
+		await page.goto(`/dashboard/faculty/assignments/${assignment.name}`);
+		await page
+			.locator(LIST_ROW, { hasText: student.full_name })
+			.getByRole("button", { name: "Grade", exact: true })
+			.click();
+
+		const dialog = page.getByRole("dialog");
+		await expect(dialog.getByLabel("Logic, out of 5", { exact: true })).toBeVisible();
+		await expect(dialog.getByText(/Total \d/)).toHaveCount(0);
+	});
+
 	test("refuses more than a criterion's marks on its field", async ({ page }) => {
 		await page.goto(`/dashboard/faculty/submissions/${submission.name}`);
 		await page.getByLabel("Logic, out of 5", { exact: true }).fill("6");

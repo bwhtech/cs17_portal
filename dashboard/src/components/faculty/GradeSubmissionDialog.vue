@@ -87,8 +87,8 @@ import { unescapeTags } from '@/lib/markdown'
 import {
 	rubricMarksErrors,
 	rubricScores,
-	rubricTotal,
 	savedRubricMarks,
+	typedRubricTotal,
 	type RubricCriterion,
 } from '@/lib/rubric'
 import { trySubmit } from '@/lib/trySubmit'
@@ -157,7 +157,7 @@ const bands = useCall<GradeBand[]>({
 })
 
 const marksGrade = computed(() => {
-	const typed = props.rubric?.length ? String(rubricTotal(criterionMarks.value)) : marks.value
+	const typed = props.rubric?.length ? typedRubricTotal(criterionMarks.value) : marks.value
 	const letter = gradeForMarks(bands.data ?? [], typed, props.maxMarks)
 	return letter ? `Grade ${letter}` : ''
 })

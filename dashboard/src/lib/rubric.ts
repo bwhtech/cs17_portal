@@ -9,6 +9,10 @@ export function rubricTotal(marks: (string | number)[]): number {
 	)
 }
 
+export function typedRubricTotal(marks: string[]): string {
+	return marks.some((mark) => mark.trim()) ? String(rubricTotal(marks)) : ''
+}
+
 /** Each criterion's saved marks, or empty where the rubric has changed since. */
 export function savedRubricMarks(rubric: RubricCriterion[], scores: RubricScore[] = []): string[] {
 	return rubric.map((row, index) =>
