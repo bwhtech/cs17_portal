@@ -22,7 +22,7 @@
 			<span
 				v-if="statusLabel"
 				class="shrink-0 text-sm"
-				:class="[statusClass, status === 'error' && !readOnly ? '' : 'hidden sm:inline']"
+				:class="[statusClass, readOnly || status === 'error' ? '' : 'hidden sm:inline']"
 			>
 				{{ statusLabel }}
 			</span>
