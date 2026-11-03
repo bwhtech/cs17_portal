@@ -321,7 +321,9 @@ function validate(): boolean {
 	else if (draft.last_start_on && !isBefore(draft.last_start_on, draft.closes_on, true)) {
 		errors.closes_on = 'Make it no earlier than the last start time.'
 	}
-	if (!draft.questions.length) errors.questions = 'Add at least one question.'
+	if (draft.is_published && !draft.questions.length) {
+		errors.questions = 'Add at least one question to publish.'
+	}
 	markErrors.value = draft.questions.map((question) =>
 		Number(question.marks) > 0 ? '' : 'Above 0.',
 	)

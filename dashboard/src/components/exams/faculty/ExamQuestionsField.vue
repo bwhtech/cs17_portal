@@ -1,11 +1,11 @@
 <template>
 	<div class="space-y-2">
-		<FormLabel label="Questions" required />
+		<FormLabel label="Questions" />
 		<p class="text-p-sm text-ink-gray-5">
 			{{
 				hasAttempts
 					? 'Students have started, so the questions stay as they are. You can still change the marks.'
-					: 'Marks assignments in Python with test cases and no submissions yet. Students see them in this order.'
+					: 'Draft Python assignments of the cohort with test cases, so students have not seen them. Students get them in this order.'
 			}}
 		</p>
 
