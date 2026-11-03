@@ -20,19 +20,29 @@ class CS17CodingExam(Document):
 			CS17CodingExamQuestion,
 		)
 
+		alert_kinds: DF.SmallText | None
 		banner: DF.SmallText | None
 		can_go_back: DF.Check
 		closes_on: DF.Datetime
 		cohort: DF.Link
+		count_window_switches: DF.Check
 		duration_minutes: DF.Int
 		instructions: DF.TextEditor | None
 		is_published: DF.Check
 		last_start_on: DF.Datetime
+		leave_action: DF.Literal["Flag", "Lock question", "Submit exam"]
+		leave_limit: DF.Int
+		leave_seconds: DF.Int
 		opens_on: DF.Datetime
+		paste_rule: DF.Literal["Allow", "Log", "Block outside code"]
 		quarter: DF.Link | None
 		question_order: DF.Literal["Any order", "One by one"]
 		questions: DF.Table[CS17CodingExamQuestion]
+		require_fullscreen: DF.Check
+		require_seb: DF.Check
+		seb_browser_exam_key: DF.Password | None
 		title: DF.Data
+		watch_copy: DF.Check
 	# end: auto-generated types
 
 	def validate(self):
@@ -46,6 +56,7 @@ class CS17CodingExam(Document):
 			frappe.throw(_("Add at least one question before publishing the exam."))
 		self._validate_questions()
 		self._validate_started_exam_kept()
+		self._validate_rules()
 
 	def _validate_questions(self):
 		names = [row.assignment for row in self.questions]
@@ -112,6 +123,16 @@ class CS17CodingExam(Document):
 			)
 		if previous.is_published and not self.is_published:
 			frappe.throw(_("Students have started this exam, so it cannot be unpublished."))
+
+	def _validate_rules(self):
+		if cint(self.leave_limit) < 0 or cint(self.leave_seconds) < 0:
+			frappe.throw(_("The leave limits cannot be below 0."))
+		kinds = frappe.get_meta("CS17 Exam Event").get_options("kind").split("\n")
+		for kind in (self.alert_kinds or "").splitlines():
+			if kind.strip() and kind.strip() not in kinds:
+				frappe.throw(_("{0} is not a kind of exam alert.").format(kind.strip()))
+		if self.require_seb and not self.seb_browser_exam_key:
+			frappe.throw(_("Add the Browser Exam Key to require Safe Exam Browser."))
 
 	def on_update(self):
 		self._link_questions()

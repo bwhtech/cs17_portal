@@ -73,6 +73,10 @@ def get_my_coding_exam(exam: str) -> dict:
 	exam_doc = get_student_exam(exam, student)
 	require_safe_exam_browser(exam)
 	attempt = get_attempt_doc(exam, student)
+	if attempt and not attempt.finished_on:
+		from cs17_portal.exam_activity import record_second_login
+
+		record_second_login(exam, student, attempt.started_at)
 	return {
 		"name": exam_doc.name,
 		"title": exam_doc.title,
@@ -87,6 +91,12 @@ def get_my_coding_exam(exam: str) -> dict:
 		"now": now_datetime(),
 		"attempt": attempt and attempt_details(attempt, exam_doc.closes_on),
 		"questions": get_questions(exam_doc, attempt) if attempt else [],
+		"rules": {
+			"require_fullscreen": exam_doc.require_fullscreen,
+			"count_window_switches": exam_doc.count_window_switches,
+			"paste_rule": exam_doc.paste_rule,
+			"watch_copy": exam_doc.watch_copy,
+		},
 	}
 
 
@@ -213,6 +223,16 @@ def get_coding_exam(exam: str) -> dict:
 		"question_order": exam_doc.question_order,
 		"can_go_back": exam_doc.can_go_back,
 		"banner": exam_doc.banner,
+		"require_fullscreen": exam_doc.require_fullscreen,
+		"count_window_switches": exam_doc.count_window_switches,
+		"paste_rule": exam_doc.paste_rule,
+		"watch_copy": exam_doc.watch_copy,
+		"leave_limit": exam_doc.leave_limit,
+		"leave_seconds": exam_doc.leave_seconds,
+		"leave_action": exam_doc.leave_action,
+		"alert_kinds": exam_doc.alert_kinds,
+		"require_seb": exam_doc.require_seb,
+		"has_seb_key": bool(exam_doc.seb_browser_exam_key),
 		"is_published": exam_doc.is_published,
 		"has_attempts": bool(frappe.db.exists(ATTEMPT, {"exam": exam})),
 		"seb_start_url": get_url(f"/dashboard/exams/{exam}"),
@@ -256,6 +276,16 @@ def save_coding_exam(
 	instructions: str = "",
 	can_go_back: int = 0,
 	is_published: int = 0,
+	require_fullscreen: int | None = None,
+	count_window_switches: int | None = None,
+	paste_rule: str | None = None,
+	watch_copy: int | None = None,
+	leave_limit: int | None = None,
+	leave_seconds: int | None = None,
+	leave_action: str | None = None,
+	alert_kinds: str | None = None,
+	require_seb: int | None = None,
+	seb_browser_exam_key: str | None = None,
 ) -> str:
 	faculty = get_current_faculty()
 	if faculty.cohort and faculty.cohort != cohort:
@@ -276,6 +306,19 @@ def save_coding_exam(
 			"is_published": is_published,
 		}
 	)
+	rules = {
+		"require_fullscreen": require_fullscreen,
+		"count_window_switches": count_window_switches,
+		"paste_rule": paste_rule,
+		"watch_copy": watch_copy,
+		"leave_limit": leave_limit,
+		"leave_seconds": leave_seconds,
+		"leave_action": leave_action,
+		"alert_kinds": alert_kinds,
+		"require_seb": require_seb,
+		"seb_browser_exam_key": seb_browser_exam_key,
+	}
+	exam_doc.update({field: value for field, value in rules.items() if value is not None})
 	exam_doc.set(
 		"questions",
 		[
@@ -618,14 +661,16 @@ def get_questions(exam_doc: "Document", attempt: "Document") -> list:
 					step.reopened_on,
 					row.assignment in projects,
 				),
+				is_locked_by_rule=is_locked_by_rule(step),
 			)
 		)
 	current = next(
 		(index for index, question in enumerate(questions) if question.state not in PASSED), len(questions)
 	)
 	for index, question in enumerate(questions):
-		question.is_locked = exam_doc.question_order == "One by one" and (
-			index > current or (question.state in PASSED and not exam_doc.can_go_back)
+		question.is_locked = question.is_locked_by_rule or (
+			exam_doc.question_order == "One by one"
+			and (index > current or (question.state in PASSED and not exam_doc.can_go_back))
 		)
 	return questions
 
@@ -705,8 +750,15 @@ def can_read_question(exam: str, assignment: str, student: str) -> bool:
 
 
 def is_question_locked(exam_doc: "Document", attempt: "Document", assignment: str) -> bool:
-	return (
+	step = next((row for row in attempt.questions if row.assignment == assignment), frappe._dict())
+	return is_locked_by_rule(step) or (
 		exam_doc.question_order == "One by one" and get_exam_question(exam_doc, attempt, assignment).is_locked
+	)
+
+
+def is_locked_by_rule(step: frappe._dict) -> bool:
+	return bool(step.locked_on) and not (
+		step.reopened_on and get_datetime(step.locked_on) <= get_datetime(step.reopened_on)
 	)
 
 

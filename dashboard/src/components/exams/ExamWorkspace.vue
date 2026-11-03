@@ -1,5 +1,8 @@
 <template>
-	<div class="flex h-full flex-col overflow-hidden bg-surface-base md:absolute md:inset-0">
+	<div
+		class="flex h-full flex-col overflow-hidden bg-surface-base md:absolute md:inset-0"
+		:inert="isOutOfFullscreen"
+	>
 		<div
 			class="flex min-h-12 shrink-0 items-center gap-2 border-b border-outline-gray-1 px-3 sm:px-5"
 		>
@@ -55,7 +58,12 @@
 				/>
 			</div>
 
-			<div class="min-h-0 flex-1">
+			<div
+				class="min-h-0 flex-1"
+				@copy="rememberCopy"
+				@cut="rememberCopy"
+				@paste.capture="checkPaste"
+			>
 				<KeepAlive>
 					<ExamQuestionEditor
 						v-if="activeQuestion && activeProject && !activeQuestion.is_locked"
@@ -70,6 +78,7 @@
 						:can-skip="isOneByOne && !isPassed(activeQuestion)"
 						:can-come-back="canComeBack"
 						@changed="emit('changed')"
+						@copy-question="recordCopyQuestion"
 					/>
 				</KeepAlive>
 
@@ -83,9 +92,11 @@
 					icon="lucide-lock"
 					title="This question is locked"
 					:description="
-						isPassed(activeQuestion)
-							? 'Going back is off for this exam.'
-							: 'It opens after you submit or skip the question before it.'
+						activeQuestion.is_locked_by_rule
+							? 'The exam rules locked it after you left the exam. Your teacher can reopen it.'
+							: isPassed(activeQuestion)
+								? 'Going back is off for this exam.'
+								: 'It opens after you submit or skip the question before it.'
 					"
 				/>
 				<LoadError
@@ -99,6 +110,35 @@
 				</div>
 			</div>
 		</div>
+
+		<Teleport to="body">
+			<div
+				v-if="isOutOfFullscreen"
+				class="fixed inset-0 z-20 flex items-center justify-center bg-surface-base px-4"
+			>
+				<EmptyState
+					icon="lucide-maximize"
+					title="This exam runs in full screen."
+					:description="
+						!canFullscreen
+							? 'This browser cannot show it in full screen. Open the exam on a computer.'
+							: hasLeftFullscreen
+								? 'You left full screen. Your teacher can see this.'
+								: undefined
+					"
+				>
+					<template v-if="canFullscreen" #action>
+						<Button
+							variant="solid"
+							:label="
+								hasLeftFullscreen ? 'Return to full screen' : 'Enter full screen'
+							"
+							@click="enterFullscreen"
+						/>
+					</template>
+				</EmptyState>
+			</div>
+		</Teleport>
 	</div>
 </template>
 
@@ -128,6 +168,13 @@ import {
 	type ExamQuestion,
 } from '@/components/exams/codingExam'
 import TimeLeft from '@/components/python/TimeLeft.vue'
+import {
+	useExamEvents,
+	useExamFullscreen,
+	useExamLeaveWatch,
+	useExamScreenWatch,
+} from '@/composables/useExamActivity'
+import { PASTE_TOAST_ID } from '@/composables/usePasteWatch'
 import { useZenOnMount } from '@/composables/useZenMode'
 import { parseDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
@@ -274,5 +321,66 @@ async function finish() {
 	}
 	toast.success('Exam finished')
 	emit('changed')
+}
+
+const rules = computed(() => props.exam.rules)
+const isWatching = computed(() => !isPaused.value && !isTimeUp.value)
+const recordEvent = useExamEvents(
+	() => props.exam.name,
+	() => activeAssignment.value,
+)
+useExamLeaveWatch(
+	recordEvent,
+	() => isWatching.value,
+	() => Boolean(rules.value.count_window_switches),
+)
+useExamScreenWatch(recordEvent, () => isWatching.value)
+
+const canFullscreen = document.fullscreenEnabled
+const isFullscreenRequired = computed(
+	() => Boolean(rules.value.require_fullscreen) && isWatching.value,
+)
+const { isFullscreen, hasLeftFullscreen, enterFullscreen } = useExamFullscreen(
+	recordEvent,
+	() => isFullscreenRequired.value,
+)
+const isOutOfFullscreen = computed(() => isFullscreenRequired.value && !isFullscreen.value)
+
+const copiedInEditor = new Set<string>()
+
+function isInEditor(target: EventTarget | null) {
+	return target instanceof Element && Boolean(target.closest('.cm-editor'))
+}
+
+function clipboardText(event: ClipboardEvent) {
+	return (event.clipboardData?.getData('text/plain') ?? '').replace(/\r\n/g, '\n')
+}
+
+function rememberCopy(event: ClipboardEvent) {
+	if (!isInEditor(event.target)) return
+	const text = clipboardText(event) || (document.getSelection()?.toString() ?? '')
+	if (text) copiedInEditor.add(text)
+}
+
+function checkPaste(event: ClipboardEvent) {
+	const pasteRule = rules.value.paste_rule
+	if (!isWatching.value || pasteRule === 'Allow' || !isInEditor(event.target)) return
+	const text = clipboardText(event)
+	if (!text || copiedInEditor.has(text)) return
+	const lines = text.replace(/\n$/, '').split('\n').length
+	const detail = `${lines} ${lines === 1 ? 'line' : 'lines'}`
+	if (pasteRule === 'Log') {
+		recordEvent('paste', { detail })
+		toast.warning('You pasted code. Your teacher can see this.', { id: PASTE_TOAST_ID })
+		return
+	}
+	event.preventDefault()
+	event.stopPropagation()
+	recordEvent('paste_blocked', { detail })
+	toast.error('Only code copied in this exam can be pasted.')
+}
+
+function recordCopyQuestion() {
+	if (isWatching.value && rules.value.watch_copy) recordEvent('copy_question')
 }
 </script>
