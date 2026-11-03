@@ -29,6 +29,9 @@ export const STORAGE_KEYS = {
 	unsavedScratchProject(project: string) {
 		return `cs17-unsaved-scratch-project:${window.current_user}:${project}`
 	},
+	get examAlertSound() {
+		return `cs17-exam-alert-sound:${window.current_user}`
+	},
 } as const
 
 export function readJSON<T>(key: string, fallback: T): T {
