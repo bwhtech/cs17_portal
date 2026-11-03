@@ -2,12 +2,11 @@ import runnerSource from './runner.py?raw'
 
 const workerSource = `
 onmessage = ({ data: files }) => {
-	fetch = async (url) => {
+	self.fetch = async (url) => {
 		const name = String(url).split('/').pop()
 		const type = name.endsWith('.wasm') ? 'application/wasm' : files[name].type
 		return new Response(files[name], { headers: { 'Content-Type': type } })
 	}
-	importScripts(URL.createObjectURL(files['pyodide.js']), URL.createObjectURL(files['pyodide.asm.js']))
 	const runProgram = loadPyodide({ indexURL: location.href }).then((pyodide) => {
 		pyodide.runPython(${JSON.stringify(runnerSource)})
 		return pyodide.globals.get('run_program')
@@ -36,15 +35,21 @@ const CSP = [
  * runs submissions while grading, and without this the code could call the
  * portal's API with the faculty session. The page fetches Pyodide's files and
  * posts them in, and the worker answers Pyodide's own requests from them.
+ * Pyodide's scripts go into the worker's own script, because Firefox refuses
+ * `importScripts` of a blob URL made in an opaque origin.
  */
 export const sandboxDocument = `<!doctype html>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="${CSP}">
 <script>
-const worker = new Worker(URL.createObjectURL(new Blob([${JSON.stringify(workerSource)}], { type: 'text/javascript' })))
-worker.onmessage = ({ data }) => parent.postMessage(data, '*')
-worker.onerror = (event) => parent.postMessage({ type: 'failed', message: event.message }, '*')
-addEventListener('message', (event) => {
-	if (event.source === parent) worker.postMessage(event.data)
+let worker
+addEventListener('message', ({ source, data }) => {
+	if (source !== parent) return
+	if (worker) return worker.postMessage(data)
+	const script = [data['pyodide.js'], '\\n', data['pyodide.asm.js'], '\\n', ${JSON.stringify(workerSource)}]
+	worker = new Worker(URL.createObjectURL(new Blob(script, { type: 'text/javascript' })))
+	worker.onmessage = (event) => parent.postMessage(event.data, '*')
+	worker.onerror = (event) => parent.postMessage({ type: 'failed', message: event.message }, '*')
+	worker.postMessage(data)
 })
 </script>`
