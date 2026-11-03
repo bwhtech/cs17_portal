@@ -1,0 +1,73 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "creation": "2026-11-03 08:09:02.492193",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section",
+  "marks",
+  "question",
+  "code",
+  "answer"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "description": "Each student gets one question from every section.",
+   "fieldname": "section",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Section",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "marks",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Marks",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "columns": 4,
+   "fieldname": "question",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Question",
+   "reqd": 1
+  },
+  {
+   "fieldname": "code",
+   "fieldtype": "Code",
+   "label": "Code",
+   "options": "Py"
+  },
+  {
+   "columns": 3,
+   "description": "Only the examiner sees this.",
+   "fieldname": "answer",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Answer",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 1,
+ "link_display_mode": "Search",
+ "links": [],
+ "modified": "2026-11-03 08:09:02.492193",
+ "modified_by": "Administrator",
+ "module": "CS17 Portal",
+ "name": "CS17 Viva Question",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

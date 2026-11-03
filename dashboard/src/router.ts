@@ -149,6 +149,17 @@ const routes: RouteRecordRaw[] = [
 		component: () => import('@/pages/FacultyResultDetailPage.vue'),
 		props: true,
 	},
+	{
+		path: '/faculty/vivas',
+		name: 'FacultyVivas',
+		component: () => import('@/pages/FacultyVivasPage.vue'),
+	},
+	{
+		path: '/faculty/vivas/:vivaId',
+		name: 'FacultyViva',
+		component: () => import('@/pages/FacultyVivaPage.vue'),
+		props: true,
+	},
 
 	// Guardian
 	{

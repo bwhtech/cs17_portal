@@ -140,6 +140,24 @@ derived from them, so moving them would silently invalidate entered marks. The e
 `grading_scale` is frozen once the exam has any marks or any result, and a pattern's components,
 their names and weightages, are frozen once a marks document uses the pattern.
 
+### CS17 Viva (+ CS17 Viva Question, CS17 Viva Mark)
+An oral exam for one part of one subject in one exam: `exam`, `subject` and `component`, the
+pattern component the marks go into (`Total` when the subject has no pattern). The questions table
+holds every question with its `section`, text, optional `code`, `answer` and `marks`.
+
+Each student gets one question from every section. On save the viva refuses a section whose
+questions carry different marks, and one question per section must add up to the component's max
+marks, so every student's viva is out of the same total.
+
+Faculty run it from `/dashboard/faculty/vivas`. Opening a student picks the least asked question in
+each section, earlier rows first on a tie, so consecutive students get different questions; the
+examiner can swap any of them. Saving writes one `CS17 Viva Mark` per question asked (unique on
+viva, student, question) and the total into that student's `CS17 Subject Marks` component, which
+re-saves the result like any other marks change. Marking a student again replaces their rows.
+
+Once any student has marks, the viva's exam, subject and component are locked, and a question that
+has been asked can no longer be removed or change its section or marks.
+
 ### CS17 Result (+ CS17 Result Subject Score)
 One student's rolled-up result for one exam. Named `RES-{exam}-###`.
 
@@ -316,7 +334,8 @@ assignment and grade pages do: a result becomes visible when `auto_publish_resul
 
 ## Not yet built
 
-- Faculty UI in the `dashboard` SPA. Entering marks and publishing results is desk-only.
+- Faculty UI in the `dashboard` SPA. Entering marks and publishing results is desk-only, except
+  viva marks. Setting up a viva and its questions is desk-only too.
 - Tests for what a grading scale refuses on save (overlapping bands, a gap at 0 or 100, a repeated
   grade), and for the exam lock after publish beyond adding a subject: removing one, or changing
   its max marks, pattern or grading scale, is refused by the same check but only the add is tested.

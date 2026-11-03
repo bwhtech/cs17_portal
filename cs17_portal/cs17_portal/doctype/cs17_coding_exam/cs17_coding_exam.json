@@ -21,7 +21,20 @@
   "section_break_questions",
   "instructions",
   "banner",
-  "questions"
+  "questions",
+  "section_break_rules",
+  "require_fullscreen",
+  "count_window_switches",
+  "paste_rule",
+  "watch_copy",
+  "column_break_leave",
+  "leave_limit",
+  "leave_seconds",
+  "leave_action",
+  "alert_kinds",
+  "section_break_seb",
+  "require_seb",
+  "seb_browser_exam_key"
  ],
  "fields": [
   {
@@ -115,12 +128,92 @@
    "fieldtype": "Table",
    "label": "Questions",
    "options": "CS17 Coding Exam Question"
+  },
+  {
+   "fieldname": "section_break_rules",
+   "fieldtype": "Section Break",
+   "label": "Rules"
+  },
+  {
+   "default": "0",
+   "fieldname": "require_fullscreen",
+   "fieldtype": "Check",
+   "label": "Require Full Screen"
+  },
+  {
+   "default": "0",
+   "description": "Count leaving the browser window as well as leaving the tab.",
+   "fieldname": "count_window_switches",
+   "fieldtype": "Check",
+   "label": "Count Window Switches"
+  },
+  {
+   "default": "Allow",
+   "fieldname": "paste_rule",
+   "fieldtype": "Select",
+   "label": "Paste Rule",
+   "options": "Allow\nLog\nBlock outside code"
+  },
+  {
+   "default": "0",
+   "fieldname": "watch_copy",
+   "fieldtype": "Check",
+   "label": "Watch Copying the Question"
+  },
+  {
+   "fieldname": "column_break_leave",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Leaves before the leave action. 0 means off.",
+   "fieldname": "leave_limit",
+   "fieldtype": "Int",
+   "label": "Leave Limit"
+  },
+  {
+   "default": "0",
+   "description": "Seconds away in total before the leave action. 0 means off.",
+   "fieldname": "leave_seconds",
+   "fieldtype": "Int",
+   "label": "Leave Seconds"
+  },
+  {
+   "default": "Flag",
+   "fieldname": "leave_action",
+   "fieldtype": "Select",
+   "label": "Leave Action",
+   "options": "Flag\nLock question\nSubmit exam"
+  },
+  {
+   "description": "One event kind per line. Empty means all.",
+   "fieldname": "alert_kinds",
+   "fieldtype": "Small Text",
+   "label": "Alert Kinds"
+  },
+  {
+   "fieldname": "section_break_seb",
+   "fieldtype": "Section Break",
+   "label": "Safe Exam Browser"
+  },
+  {
+   "default": "0",
+   "fieldname": "require_seb",
+   "fieldtype": "Check",
+   "label": "Require Safe Exam Browser"
+  },
+  {
+   "depends_on": "require_seb",
+   "description": "From SEB Config Tool, Exam tab. Several keys: separate them with a space.",
+   "fieldname": "seb_browser_exam_key",
+   "fieldtype": "Password",
+   "label": "Browser Exam Key"
   }
  ],
  "grid_page_length": 50,
  "link_display_mode": "Search",
  "links": [],
- "modified": "2026-11-03 07:40:59.135607",
+ "modified": "2026-11-03 08:40:46.728372",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Coding Exam",

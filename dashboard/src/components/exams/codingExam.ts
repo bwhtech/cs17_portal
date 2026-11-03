@@ -28,6 +28,14 @@ export interface ExamQuestion {
 	project: string | null
 	state: QuestionState
 	is_locked: Bool | boolean
+	is_locked_by_rule: boolean
+}
+
+export interface ExamRules {
+	require_fullscreen: Bool
+	count_window_switches: Bool
+	paste_rule: 'Allow' | 'Log' | 'Block outside code'
+	watch_copy: Bool
 }
 
 export interface CodingExam {
@@ -44,6 +52,7 @@ export interface CodingExam {
 	now: string
 	attempt: ExamAttempt | null
 	questions: ExamQuestion[]
+	rules: ExamRules
 }
 
 export const EXAM_POLL_MS = 10_000
