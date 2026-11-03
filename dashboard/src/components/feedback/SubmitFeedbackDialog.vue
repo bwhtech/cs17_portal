@@ -17,7 +17,6 @@
 					type="textarea"
 					label="Description"
 					placeholder="Write your feedback"
-					description="Faculty don't see your name."
 					:rows="6"
 					:error="fieldErrors.description"
 				/>
@@ -25,7 +24,6 @@
 				<VoiceNoteRecorder
 					ref="recorder"
 					v-model="voiceNote"
-					description="Faculty may recognise your voice."
 					:error="fieldErrors.voiceNote"
 				/>
 
