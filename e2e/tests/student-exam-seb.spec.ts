@@ -79,5 +79,6 @@ test.describe("Student exam in Safe Exam Browser", () => {
 
 		await expect(page.getByText(MESSAGE)).toBeVisible({ timeout: 20000 });
 		await expect(finish).toBeHidden();
+		expect(await page.getByText("Could not refresh this page.").isVisible()).toBe(false);
 	});
 });

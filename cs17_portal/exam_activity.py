@@ -119,7 +119,7 @@ def apply_leave_rule(exam_doc: "Document", attempt: "Document", assignment: str 
 	)
 	seconds_away = sum(flt(seconds) for seconds in away)
 	if leave_limit and len(away) >= leave_limit:
-		reason = _("{0} leaves").format(len(away))
+		reason = _("1 leave") if len(away) == 1 else _("{0} leaves").format(len(away))
 	elif leave_seconds and seconds_away >= leave_seconds:
 		reason = _("{0} s away").format(cint(seconds_away))
 	else:

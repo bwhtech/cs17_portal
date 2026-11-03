@@ -33,7 +33,10 @@
 					icon="lucide-users"
 					title="No students in this cohort yet"
 				/>
-				<ul v-else class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+				<ul
+					v-else
+					class="grid grid-cols-[repeat(auto-fill,minmax(min(20rem,100%),1fr))] gap-3"
+				>
 					<ExamLiveStudentCard
 						v-for="student in live.data.students"
 						:key="student.student"

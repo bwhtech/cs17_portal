@@ -55,7 +55,8 @@ export function usePolledCall<TResponse, TParams extends BasicParams = undefined
 		return call.error && !isRefusal(call.error) ? previous : null
 	})
 	watch([data, () => call.error], ([rows, error]) => {
-		if (error && rows != null) toast.error('Could not refresh this page.', { id: 'reload-failed' })
+		if (error && rows != null && !isRefusal(error))
+			toast.error('Could not refresh this page.', { id: 'reload-failed' })
 	})
 	return reactive({ ...toRefs(call), data })
 }
