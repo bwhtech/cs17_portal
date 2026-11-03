@@ -62,7 +62,8 @@ test.describe("Similar code", () => {
 
 	test("lists near identical code and links to the grading page", async ({ page }) => {
 		await page.goto(`/dashboard/faculty/assignments/${assignment.name}`);
-		await page.getByRole("button", { name: "Similar code" }).click();
+		await page.getByRole("button", { name: "More actions" }).click();
+		await page.getByRole("menuitem", { name: "Similar code" }).click();
 		const dialog = page.getByRole("dialog");
 		await expect(dialog.getByText("100%")).toBeVisible();
 		await dialog.getByRole("link", { name: secondStudent.full_name! }).click();
@@ -97,6 +98,6 @@ test.describe("Similar code", () => {
 		await page.goto(`/dashboard/faculty/assignments/${pdfAssignment.name}`);
 		await expect(page.getByRole("button", { name: "Copy submission link" })).toBeVisible();
 
-		await expect(page.getByRole("button", { name: "Similar code" })).toHaveCount(0);
+		await expect(page.getByRole("button", { name: "More actions" })).toHaveCount(0);
 	});
 });

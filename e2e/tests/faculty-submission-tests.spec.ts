@@ -67,7 +67,8 @@ test.describe("Submission tests", () => {
 
 	test("runs every submission against the tests", async ({ page }) => {
 		await page.goto(`/dashboard/faculty/assignments/${ASSIGNMENT.name}`);
-		await page.getByRole("button", { name: "Run tests" }).click();
+		await page.getByRole("button", { name: "More actions" }).click();
+		await page.getByRole("menuitem", { name: "Run tests" }).click();
 
 		await expect(row(page, "Aarav Sharma").getByTitle("2 of 2 tests passed")).toBeVisible({
 			timeout: 60000,
@@ -77,7 +78,9 @@ test.describe("Submission tests", () => {
 
 	test("shows the new results when run again after the tests change", async ({ page }) => {
 		await page.goto(`/dashboard/faculty/assignments/${ASSIGNMENT.name}`);
-		const runTests = page.getByRole("button", { name: "Run tests" });
+		const moreActions = page.getByRole("button", { name: "More actions" });
+		const runTests = page.getByRole("menuitem", { name: "Run tests" });
+		await moreActions.click();
 		await runTests.click();
 		await expect(row(page, "Diya Patel").getByTitle("1 of 2 tests passed")).toBeVisible({
 			timeout: 60000,
@@ -87,6 +90,7 @@ test.describe("Submission tests", () => {
 			...TWO_TESTS,
 			{ input: "Meera\n", expected_output: "Hello, Meera", is_hidden: 0 },
 		];
+		await moreActions.click();
 		await runTests.click();
 
 		await expect(row(page, "Diya Patel").getByTitle("1 of 3 tests passed")).toBeVisible();

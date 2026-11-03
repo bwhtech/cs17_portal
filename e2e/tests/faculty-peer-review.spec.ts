@@ -92,7 +92,8 @@ test.describe("Peer review", () => {
 		const assignment = await closedAssignment(request);
 
 		await page.goto(`/dashboard/faculty/assignments/${assignment.name}`);
-		await page.getByRole("button", { name: "Peer review", exact: true }).click();
+		await page.getByRole("button", { name: "More actions" }).click();
+		await page.getByRole("menuitem", { name: "Peer review", exact: true }).click();
 		const dialog = page.getByRole("dialog", { name: "Peer review" });
 		await dialog.getByRole("button", { name: "Start", exact: true }).click();
 
@@ -153,7 +154,8 @@ test.describe("Peer review", () => {
 		}
 
 		await page.goto(`/dashboard/faculty/assignments/${assignment.name}`);
-		await page.getByRole("button", { name: "Peer review", exact: true }).click();
+		await page.getByRole("button", { name: "More actions" }).click();
+		await page.getByRole("menuitem", { name: "Peer review", exact: true }).click();
 		const dialog = page.getByRole("dialog", { name: "Peer review" });
 		await dialog
 			.getByRole("button", { name: "Share reviews with students", exact: true })
