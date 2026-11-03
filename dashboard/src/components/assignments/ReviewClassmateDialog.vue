@@ -1,7 +1,9 @@
 <template>
 	<Dialog :open="open" :title="title" size="5xl" @update:open="emit('update:open', $event)">
 		<div class="space-y-4">
-			<div class="h-[60vh] overflow-hidden rounded-4 border border-outline-gray-1">
+			<div
+				class="h-[75vh] overflow-hidden rounded-4 border border-outline-gray-1 md:h-[60vh]"
+			>
 				<div
 					v-if="failed || isRefusal(code.error)"
 					class="flex h-full items-center justify-center p-6 text-center"
