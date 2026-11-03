@@ -54,9 +54,23 @@ class CS17CodingExam(Document):
 			for assignment in frappe.get_all(
 				"CS17 Assignment",
 				filters={"name": ["in", names]},
-				fields=["name", "title", "cohort", "submission_type", "coding_exam"],
+				fields=[
+					"name",
+					"title",
+					"cohort",
+					"submission_type",
+					"coding_exam",
+					"is_published",
+					"publish_on",
+				],
 			)
 		}
+		added = [name for name in names if assignments[name].coding_exam != self.name]
+		submitted = set(
+			frappe.get_all(
+				"CS17 Assignment Submission", filters={"assignment": ["in", added]}, pluck="assignment"
+			)
+		)
 		with_tests = set(
 			frappe.get_all(
 				"CS17 Python Test Case",
@@ -80,6 +94,10 @@ class CS17CodingExam(Document):
 				frappe.throw(_("{0} has no test cases.").format(assignment.title))
 			if assignment.coding_exam not in (None, "", self.name):
 				frappe.throw(_("{0} is already in another exam.").format(assignment.title))
+			if row.assignment in added and (
+				assignment.is_published or assignment.publish_on or row.assignment in submitted
+			):
+				frappe.throw(_("Use a draft assignment as an exam question, so students have not seen it."))
 			if flt(row.marks) <= 0:
 				frappe.throw(_("Give {0} marks above 0.").format(assignment.title))
 

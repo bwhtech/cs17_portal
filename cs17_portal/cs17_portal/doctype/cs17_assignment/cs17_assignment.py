@@ -118,6 +118,8 @@ class CS17Assignment(Document):
 	def _validate_publishable(self):
 		if not (self.is_published or self.publish_on):
 			return
+		if self.coding_exam:
+			frappe.throw(_("This assignment is a coding exam question, so it opens only through the exam."))
 		if not self.cohort:
 			frappe.throw(_("A cohort is required to publish an assignment"))
 		if not self.due_date:

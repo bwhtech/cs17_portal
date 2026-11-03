@@ -286,10 +286,27 @@ def get_exam_question_choices(cohort: str, exam: str | None = None) -> list:
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	assignments = frappe.get_all(
 		"CS17 Assignment",
-		filters={"cohort": cohort, "submission_type": "Python"},
+		filters={
+			"cohort": cohort,
+			"submission_type": "Python",
+			"is_published": 0,
+			"publish_on": ["is", "not set"],
+		},
 		or_filters=[["coding_exam", "is", "not set"], ["coding_exam", "=", exam or ""]],
-		fields=["name", "title", "max_marks"],
+		fields=["name", "title", "max_marks", "coding_exam"],
 		order_by="creation desc",
+	)
+	submitted = set(
+		frappe.get_all(
+			ASSIGNMENT_SUBMISSION,
+			filters={
+				"assignment": [
+					"in",
+					[assignment.name for assignment in assignments if not assignment.coding_exam],
+				]
+			},
+			pluck="assignment",
+		)
 	)
 	test_counts = Counter(
 		frappe.get_all(
@@ -304,7 +321,7 @@ def get_exam_question_choices(cohort: str, exam: str | None = None) -> list:
 	)
 	choices = []
 	for assignment in assignments:
-		if test_counts[assignment.name]:
+		if test_counts[assignment.name] and assignment.name not in submitted:
 			assignment.test_count = test_counts[assignment.name]
 			choices.append(assignment)
 	return choices
