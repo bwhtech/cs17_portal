@@ -40,6 +40,7 @@
 			</div>
 			<blockquote
 				v-if="solved"
+				ref="zenLineElement"
 				class="zen-line text-p-sm italic text-ink-gray-5"
 				:style="{ animationDelay: `${runs.length * CASCADE_STEP_MS}ms` }"
 			>
@@ -50,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
 import { Badge } from 'frappe-ui'
 import ProgramText from '@/components/python/ProgramText.vue'
 import type { RunResult } from '@/lib/python/runner'
@@ -93,12 +94,20 @@ const allPassed = computed(
 const solved = computed(() => props.celebrate && allPassed.value)
 
 const zenLine = ref(Math.floor(Math.random() * ZEN_OF_PYTHON.length))
+const zenLineElement = useTemplateRef<HTMLElement>('zenLineElement')
 watch(
 	() => props.runs,
-	() => {
+	async () => {
 		if (!solved.value) return
 		const skip = 1 + Math.floor(Math.random() * (ZEN_OF_PYTHON.length - 1))
 		zenLine.value = (zenLine.value + skip) % ZEN_OF_PYTHON.length
+		await nextTick()
+		zenLineElement.value?.scrollIntoView({
+			block: 'nearest',
+			behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+				? 'auto'
+				: 'smooth',
+		})
 	},
 )
 
