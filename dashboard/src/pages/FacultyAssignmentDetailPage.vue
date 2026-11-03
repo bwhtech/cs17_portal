@@ -117,12 +117,17 @@
 					:rows="rows"
 					:row-key="(row: CS17Submission) => row.name"
 					:is-row-selectable="isSubmitted"
+					:row-height="closestMatches.size || testedCount ? 60 : 44"
 					selectable
 					empty="No submissions yet."
 				>
 					<template #cell-student="{ row }">
-						<div class="flex min-w-0 items-center gap-2">
+						<div
+							class="flex min-w-0 items-center gap-2"
+							:class="isDesktop && 'flex-wrap gap-y-1'"
+						>
 							<RowTitle
+								:class="isDesktop && 'basis-full'"
 								:title="row.full_name ?? row.student"
 								:to="`/faculty/students/${row.student}`"
 								@click.stop
