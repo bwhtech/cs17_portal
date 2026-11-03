@@ -110,6 +110,8 @@ test.describe("Celebrating a solved question", () => {
 		await page.goto(`/dashboard/assignments/${assignment.name}/submission`);
 
 		await expect(page.getByText("Flawless, first try", { exact: true })).toBeVisible();
-		await expect(page.getByText(CAPTION)).toBeVisible();
+		await expect(
+			page.getByText("Every test, even the hidden ones.", { exact: true })
+		).toBeVisible();
 	});
 });
