@@ -2631,7 +2631,6 @@ def submit_feedback(category: str, description: str = "", voice_note: str | None
 	cohort = frappe.db.get_value("CS17 Profile", require_current_student(), "cohort")
 	if not description.strip() and not voice_note:
 		frappe.throw(_("Write your feedback or record a voice note."), frappe.MandatoryError)
-	# Inserted unattached: attaching on insert comments on the feedback as the student.
 	voice_note_file = voice_note and insert_voice_note(voice_note, "voice-note")
 	feedback = frappe.get_doc(
 		{
@@ -2642,15 +2641,11 @@ def submit_feedback(category: str, description: str = "", voice_note: str | None
 			"voice_note": voice_note_file and voice_note_file.file_url,
 		}
 	).insert(ignore_permissions=True)
-	# Feedback is anonymous, so the sender must not stay on the record as its owner.
-	anonymous = {"owner": "Administrator", "modified_by": "Administrator"}
-	frappe.db.set_value("CS17 Feedback", feedback.name, anonymous, update_modified=False)
 	if voice_note_file:
 		frappe.db.set_value(
 			"File",
 			voice_note_file.name,
 			{
-				**anonymous,
 				"attached_to_doctype": "CS17 Feedback",
 				"attached_to_name": feedback.name,
 				"attached_to_field": "voice_note",
