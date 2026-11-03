@@ -173,6 +173,7 @@ const status = ref<SaveStatus>('idle')
 const submitOpen = ref(false)
 
 let pendingKind: SaveKind | null = null
+let queuedKind: SaveKind | null = null
 let autosaveTimer: ReturnType<typeof setTimeout> | null = null
 let answerTimer: ReturnType<typeof setTimeout> | undefined
 let opened = false
@@ -262,6 +263,10 @@ watch(readOnly, (value) => {
 function requestSave(kind: SaveKind) {
 	if (readOnly.value) return false
 	clearAutosave()
+	if (status.value === 'saving') {
+		queuedKind = kind
+		return true
+	}
 	if (!frame.value?.requestSb3()) {
 		if (kind === 'manual') toast.error('The project is not loaded. Nothing was saved.')
 		return false
@@ -275,6 +280,13 @@ function requestSave(kind: SaveKind) {
 	}, EDITOR_ANSWER_TIMEOUT_MS)
 	return true
 }
+
+watch(status, (value) => {
+	if (value === 'saving' || !queuedKind) return
+	const kind = queuedKind
+	queuedKind = null
+	requestSave(kind)
+})
 
 function saveEnded() {
 	return new Promise<boolean>((resolve) => {
