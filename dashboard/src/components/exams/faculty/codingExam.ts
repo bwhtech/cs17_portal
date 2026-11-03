@@ -49,6 +49,7 @@ export interface CodingExam {
 	banner: string | null
 	is_published: 0 | 1
 	has_attempts: boolean
+	seb_start_url: string
 	questions: CodingExamQuestion[]
 	changes: CodingExamChange[]
 }

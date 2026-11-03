@@ -15,5 +15,10 @@ export function frappeErrorMessage(error: unknown, fallback: string): string {
 
 export function isRefusal(error: unknown): boolean {
 	const type = (error as { type?: string } | null)?.type
-	return ['DoesNotExistError', 'PermissionError', 'ValidationError'].includes(type ?? '')
+	return [
+		'DoesNotExistError',
+		'PermissionError',
+		'SafeExamBrowserRequiredError',
+		'ValidationError',
+	].includes(type ?? '')
 }
