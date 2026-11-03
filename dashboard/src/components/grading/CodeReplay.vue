@@ -32,23 +32,26 @@
 				:icon="playing ? 'lucide-pause' : 'lucide-play'"
 				:aria-label="playing ? 'Pause' : 'Play'"
 				:tooltip="playing ? 'Pause' : 'Play'"
+				:disabled="!lastIndex"
 				@click="togglePlay"
 			/>
 			<div class="relative flex-1 pt-7">
 				<div
-					v-for="marker in markers"
-					:key="marker.key"
-					class="absolute top-0 -translate-x-1/2"
-					:style="{ left: trackPosition(marker.index) }"
+					v-for="group in markerGroups"
+					:key="group.index"
+					class="absolute top-0 flex -translate-x-1/2"
+					:style="{ left: trackPosition(group.index) }"
 				>
 					<Button
+						v-for="marker in group.markers"
+						:key="marker.icon"
 						variant="ghost"
 						size="sm"
 						:icon="marker.icon"
 						class="!text-ink-amber-7"
 						:aria-label="marker.text"
 						:tooltip="marker.text"
-						@click="jumpTo(marker.index)"
+						@click="jumpTo(group.index)"
 					/>
 				</div>
 				<input
@@ -56,8 +59,9 @@
 					type="range"
 					min="0"
 					:max="lastIndex"
+					:disabled="!lastIndex"
 					aria-label="Replay position"
-					class="h-8 w-full cursor-pointer rounded-1 [accent-color:var(--ink-gray-8)] focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
+					class="block h-7 w-full cursor-pointer rounded-1 disabled:cursor-default [accent-color:var(--ink-gray-8)] focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
 					@input="pause"
 				/>
 			</div>
@@ -134,13 +138,25 @@ const markers = computed(() =>
 		.map((event) => {
 			const after = savedAt.value.findIndex((saved) => saved >= event.time)
 			return {
-				key: `${event.icon}-${event.at}`,
 				icon: event.icon,
 				text: `${event.label} at ${timeOf(event.at)}`,
 				index: after === -1 ? lastIndex.value : after,
 			}
 		}),
 )
+
+const markerGroups = computed(() => {
+	const groups = new Map<number, Map<string, string[]>>()
+	for (const { index, icon, text } of markers.value) {
+		const icons = groups.get(index) ?? new Map<string, string[]>()
+		icons.set(icon, [...(icons.get(icon) ?? []), text])
+		groups.set(index, icons)
+	}
+	return [...groups].map(([index, icons]) => ({
+		index,
+		markers: [...icons].map(([icon, texts]) => ({ icon, text: texts.join(' · ') })),
+	}))
+})
 
 const latestMarker = computed(() =>
 	markers.value.filter((marker) => marker.index <= index.value).at(-1),
