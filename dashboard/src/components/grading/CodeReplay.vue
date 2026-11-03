@@ -32,6 +32,7 @@
 				:icon="playing ? 'lucide-pause' : 'lucide-play'"
 				:aria-label="playing ? 'Pause' : 'Play'"
 				:tooltip="playing ? 'Pause' : 'Play'"
+				:disabled="!lastIndex"
 				@click="togglePlay"
 			/>
 			<div class="relative flex-1 pt-7">
@@ -56,8 +57,9 @@
 					type="range"
 					min="0"
 					:max="lastIndex"
+					:disabled="!lastIndex"
 					aria-label="Replay position"
-					class="h-8 w-full cursor-pointer rounded-1 [accent-color:var(--ink-gray-8)] focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
+					class="h-8 w-full cursor-pointer rounded-1 disabled:cursor-default [accent-color:var(--ink-gray-8)] focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
 					@input="pause"
 				/>
 			</div>
