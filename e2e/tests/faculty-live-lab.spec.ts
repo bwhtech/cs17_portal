@@ -66,7 +66,8 @@ test.describe("Live lab", () => {
 		page,
 	}) => {
 		await page.goto(`/dashboard/faculty/assignments/${assignment.name}`);
-		await page.getByRole("link", { name: "Live", exact: true }).click();
+		await page.getByRole("button", { name: "More actions" }).click();
+		await page.getByRole("menuitem", { name: "Live", exact: true }).click();
 		const card = page.getByRole("listitem").filter({ hasText: firstStudent.full_name! });
 
 		await expect(card.getByText("1 of 2 tests passed")).toBeVisible();

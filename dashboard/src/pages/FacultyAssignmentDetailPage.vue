@@ -12,31 +12,9 @@
 					label="Copy submission link"
 					@click="copySubmissionLink"
 				/>
-				<Button
-					v-if="assignment.submission_type === 'Python'"
-					icon-left="lucide-files"
-					label="Similar code"
-					@click="openSimilarCode()"
-				/>
-				<Button
-					v-if="canRunTests"
-					icon-left="lucide-list-checks"
-					label="Run tests"
-					:loading="testing"
-					@click="testSubmissions"
-				/>
-				<Button
-					v-if="assignment.submission_type === 'Python'"
-					icon-left="lucide-activity"
-					label="Live"
-					:route="`/faculty/assignments/${assignment.name}/live`"
-				/>
-				<Button
-					v-if="assignment.submission_type === 'Python'"
-					icon-left="lucide-messages-square"
-					label="Peer review"
-					@click="peerReviewOpen = true"
-				/>
+				<Dropdown v-if="pythonActions.length" :options="pythonActions" align="end">
+					<Button variant="ghost" icon="lucide-ellipsis" aria-label="More actions" />
+				</Dropdown>
 			</template>
 			<template v-else>
 				<Button
@@ -117,12 +95,17 @@
 					:rows="rows"
 					:row-key="(row: CS17Submission) => row.name"
 					:is-row-selectable="isSubmitted"
+					:row-height="closestMatches.size || testedCount ? 60 : 44"
 					selectable
 					empty="No submissions yet."
 				>
 					<template #cell-student="{ row }">
-						<div class="flex min-w-0 items-center gap-2">
+						<div
+							class="flex min-w-0 items-center gap-2"
+							:class="isDesktop && 'flex-wrap gap-y-1'"
+						>
 							<RowTitle
+								:class="isDesktop && 'basis-full'"
 								:title="row.full_name ?? row.student"
 								:to="`/faculty/students/${row.student}`"
 								@click.stop
@@ -813,10 +796,8 @@ async function copySubmissionLink() {
 	}
 }
 
-const moreHeaderActions = computed<DropdownActionOption[]>(() => [
-	{ label: 'Students', icon: 'lucide-users', onClick: () => (studentsOpen.value = true) },
-	{ label: 'Timing', icon: 'lucide-clock', onClick: () => (timingOpen.value = true) },
-	...(assignment.value?.submission_type === 'Python'
+const pythonActions = computed<DropdownActionOption[]>(() =>
+	assignment.value?.submission_type === 'Python'
 		? [
 				{ label: 'Similar code', icon: 'lucide-files', onClick: () => openSimilarCode() },
 				...(canRunTests.value
@@ -839,7 +820,13 @@ const moreHeaderActions = computed<DropdownActionOption[]>(() => [
 					onClick: () => (peerReviewOpen.value = true),
 				},
 			]
-		: []),
+		: [],
+)
+
+const moreHeaderActions = computed<DropdownActionOption[]>(() => [
+	{ label: 'Students', icon: 'lucide-users', onClick: () => (studentsOpen.value = true) },
+	{ label: 'Timing', icon: 'lucide-clock', onClick: () => (timingOpen.value = true) },
+	...pythonActions.value,
 ])
 
 watch(

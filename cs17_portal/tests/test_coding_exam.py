@@ -171,6 +171,12 @@ class TestCodingExam(FrappeTestCase):
 			questions[0],
 		)
 
+	def test_the_faculty_list_names_the_exam_of_a_question(self):
+		exam, questions = self.make_exam()
+
+		exams = {row.name: row.coding_exam for row in api.get_faculty_assignments()}
+		self.assertEqual(exams[questions[0]], exam)
+
 	def test_a_question_is_left_out_of_the_assignment_list(self):
 		_, questions = self.make_exam()
 		frappe.db.set_value("CS17 Assignment", questions[0], "is_published", 1)
