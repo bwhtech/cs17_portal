@@ -4,6 +4,8 @@ import { trySubmit } from '@/lib/trySubmit'
 const MIN_LINES = 3
 const MIN_CHARACTERS = 80
 
+export const PASTE_TOAST_ID = 'paste'
+
 export function usePasteWatch(
 	project: () => string,
 	isWatching: () => boolean,
@@ -20,6 +22,6 @@ export function usePasteWatch(
 		const lines = text.replace(/\r?\n$/, '').split('\n').length
 		if (!isWatching() || (lines < MIN_LINES && text.length < MIN_CHARACTERS)) return
 		recording = recording.then(() => trySubmit(paste, { project: project(), text }))
-		toast.warning('You pasted code. Your teacher can see this.')
+		toast.warning('You pasted code. Your teacher can see this.', { id: PASTE_TOAST_ID })
 	}
 }

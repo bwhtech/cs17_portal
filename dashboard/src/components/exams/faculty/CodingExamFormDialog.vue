@@ -111,6 +111,87 @@
 				:error="errors.questions"
 			/>
 
+			<section class="space-y-3 border-t border-outline-gray-1 pt-4">
+				<div class="space-y-1">
+					<FormLabel label="Rules" />
+					<p class="text-p-sm text-ink-gray-5">
+						Students taking the exam get a change within 10 seconds.
+					</p>
+				</div>
+				<Checkbox
+					v-model="draft.rules.require_fullscreen"
+					label="Require full screen"
+					description="Leaving full screen covers the exam until the student returns to it."
+				/>
+				<Checkbox
+					v-model="draft.rules.count_window_switches"
+					label="Count window switches"
+					description="Count leaving the browser window, not only leaving the tab."
+				/>
+				<FormControl
+					v-model="draft.rules.paste_rule"
+					type="select"
+					label="Pasting"
+					:options="PASTE_RULES"
+					:description="PASTE_RULE_HELP[draft.rules.paste_rule]"
+				/>
+				<Checkbox
+					v-model="draft.rules.watch_copy"
+					label="Watch copying the question"
+					description="Note when a student copies the question text."
+				/>
+				<div class="grid gap-3 sm:grid-cols-2">
+					<FormControl
+						v-model="draft.rules.leave_limit"
+						type="number"
+						label="Leave limit"
+						description="Leaves before the action below. 0 is off."
+						min="0"
+						step="1"
+						:error="errors.leave_limit"
+					/>
+					<FormControl
+						v-model="draft.rules.leave_seconds"
+						type="number"
+						label="Seconds away"
+						description="Seconds away in total before the action below. 0 is off."
+						min="0"
+						step="1"
+						:error="errors.leave_seconds"
+					/>
+				</div>
+				<FormControl
+					v-model="draft.rules.leave_action"
+					type="select"
+					label="When a limit is reached"
+					:options="LEAVE_ACTIONS"
+				/>
+				<FormControl
+					v-model="draft.rules.alert_kinds"
+					type="multiselect"
+					label="Alerts"
+					placeholder="Every kind"
+					description="What the live board alerts you about. Pick none for every kind."
+					:options="ALERT_KINDS"
+				/>
+				<Checkbox
+					v-model="draft.rules.require_seb"
+					label="Require Safe Exam Browser"
+					description="Students can open the exam only in Safe Exam Browser."
+				/>
+				<FormControl
+					v-if="draft.rules.require_seb"
+					v-model="draft.rules.seb_browser_exam_key"
+					type="password"
+					label="Browser Exam Key"
+					:placeholder="
+						exam?.has_seb_key ? 'Saved. Type a new key to replace it.' : undefined
+					"
+					description="From SEB Config Tool, Exam tab. Several keys: separate them with a space."
+					:error="errors.seb_browser_exam_key"
+				/>
+			</section>
+
 			<Checkbox
 				v-model="draft.is_published"
 				label="Publish"
@@ -142,18 +223,37 @@ import {
 	Dialog,
 	ErrorMessage,
 	FormControl,
+	FormLabel,
 	toast,
 	useCall,
 } from 'frappe-ui'
 import ExamQuestionsField, {
 	type QuestionDraft,
 } from '@/components/exams/faculty/ExamQuestionsField.vue'
-import type { CodingExam, QuestionOrder } from '@/components/exams/faculty/codingExam'
+import type {
+	CodingExam,
+	LeaveAction,
+	PasteRule,
+	QuestionOrder,
+} from '@/components/exams/faculty/codingExam'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useSession } from '@/composables/useSession'
 import { parseDatetime, toFrappeDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { trySubmit } from '@/lib/trySubmit'
+
+interface RulesDraft {
+	require_fullscreen: boolean
+	count_window_switches: boolean
+	paste_rule: PasteRule
+	watch_copy: boolean
+	leave_limit: string
+	leave_seconds: string
+	leave_action: LeaveAction
+	alert_kinds: string[]
+	require_seb: boolean
+	seb_browser_exam_key: string
+}
 
 interface ExamDraft {
 	title: string
@@ -168,6 +268,7 @@ interface ExamDraft {
 	can_go_back: boolean
 	questions: QuestionDraft[]
 	is_published: boolean
+	rules: RulesDraft
 }
 
 interface SaveParams {
@@ -184,9 +285,47 @@ interface SaveParams {
 	can_go_back: 0 | 1
 	questions: { assignment: string; marks: number }[]
 	is_published: 0 | 1
+	require_fullscreen: 0 | 1
+	count_window_switches: 0 | 1
+	paste_rule: PasteRule
+	watch_copy: 0 | 1
+	leave_limit: number
+	leave_seconds: number
+	leave_action: LeaveAction
+	alert_kinds: string
+	require_seb: 0 | 1
+	seb_browser_exam_key?: string
 }
 
 const QUESTION_ORDERS: QuestionOrder[] = ['Any order', 'One by one']
+
+const PASTE_RULES: PasteRule[] = ['Allow', 'Log', 'Block outside code']
+
+const PASTE_RULE_HELP: Record<PasteRule, string> = {
+	Allow: 'Students paste anything.',
+	Log: 'Pastes of code not copied in the exam editor are noted for you.',
+	'Block outside code': 'Only code copied in the exam editor can be pasted.',
+}
+
+const LEAVE_ACTIONS: { label: string; value: LeaveAction }[] = [
+	{ label: 'Flag the student', value: 'Flag' },
+	{ label: 'Lock the question', value: 'Lock question' },
+	{ label: 'Submit the exam', value: 'Submit exam' },
+]
+
+const ALERT_KINDS = [
+	{ label: 'Left the tab', value: 'tab_leave' },
+	{ label: 'Left the window', value: 'window_blur' },
+	{ label: 'Left full screen', value: 'fullscreen_exit' },
+	{ label: 'Blocked paste', value: 'paste_blocked' },
+	{ label: 'Pasted code', value: 'paste' },
+	{ label: 'Copied the question', value: 'copy_question' },
+	{ label: 'Small window', value: 'split_screen' },
+	{ label: 'Second screen', value: 'second_screen' },
+	{ label: 'Signed in twice', value: 'second_login' },
+	{ label: 'Many lines at once', value: 'code_jump' },
+	{ label: 'Leave rule applied', value: 'rule_action' },
+]
 
 const props = defineProps<{
 	open: boolean
@@ -214,6 +353,18 @@ function emptyDraft(): ExamDraft {
 		can_go_back: false,
 		questions: [],
 		is_published: false,
+		rules: {
+			require_fullscreen: false,
+			count_window_switches: false,
+			paste_rule: 'Allow',
+			watch_copy: false,
+			leave_limit: '0',
+			leave_seconds: '0',
+			leave_action: 'Flag',
+			alert_kinds: [],
+			require_seb: false,
+			seb_browser_exam_key: '',
+		},
 	}
 }
 
@@ -228,6 +379,9 @@ const errors = reactive<
 		| 'last_start_on'
 		| 'closes_on'
 		| 'questions'
+		| 'leave_limit'
+		| 'leave_seconds'
+		| 'seb_browser_exam_key'
 		| 'form',
 		string
 	>
@@ -239,6 +393,9 @@ const errors = reactive<
 	last_start_on: '',
 	closes_on: '',
 	questions: '',
+	leave_limit: '',
+	leave_seconds: '',
+	seb_browser_exam_key: '',
 	form: '',
 })
 const markErrors = ref<string[]>([])
@@ -287,6 +444,18 @@ function fromExam(exam: CodingExam): ExamDraft {
 			marks: String(question.marks),
 		})),
 		is_published: Boolean(exam.is_published),
+		rules: {
+			require_fullscreen: Boolean(exam.require_fullscreen),
+			count_window_switches: Boolean(exam.count_window_switches),
+			paste_rule: exam.paste_rule,
+			watch_copy: Boolean(exam.watch_copy),
+			leave_limit: String(exam.leave_limit),
+			leave_seconds: String(exam.leave_seconds),
+			leave_action: exam.leave_action,
+			alert_kinds: (exam.alert_kinds ?? '').split('\n').filter(Boolean),
+			require_seb: Boolean(exam.require_seb),
+			seb_browser_exam_key: '',
+		},
 	}
 }
 
@@ -298,6 +467,9 @@ function clearErrors() {
 	errors.last_start_on = ''
 	errors.closes_on = ''
 	errors.questions = ''
+	errors.leave_limit = ''
+	errors.leave_seconds = ''
+	errors.seb_browser_exam_key = ''
 	errors.form = ''
 	markErrors.value = []
 }
@@ -305,6 +477,10 @@ function clearErrors() {
 function isBefore(earlier: string, later: string, orSame = false): boolean {
 	const difference = parseDatetime(later).valueOf() - parseDatetime(earlier).valueOf()
 	return orSame ? difference >= 0 : difference > 0
+}
+
+function isCount(value: string): boolean {
+	return Number.isInteger(Number(value)) && Number(value) >= 0
 }
 
 function validate(): boolean {
@@ -324,6 +500,15 @@ function validate(): boolean {
 	if (draft.is_published && !draft.questions.length) {
 		errors.questions = 'Add at least one question to publish.'
 	}
+	if (!isCount(draft.rules.leave_limit)) errors.leave_limit = 'Use 0 or a whole number.'
+	if (!isCount(draft.rules.leave_seconds)) errors.leave_seconds = 'Use 0 or a whole number.'
+	if (
+		draft.rules.require_seb &&
+		!draft.rules.seb_browser_exam_key.trim() &&
+		!props.exam?.has_seb_key
+	) {
+		errors.seb_browser_exam_key = 'Add the Browser Exam Key.'
+	}
 	markErrors.value = draft.questions.map((question) =>
 		Number(question.marks) > 0 ? '' : 'Above 0.',
 	)
@@ -335,6 +520,9 @@ function validate(): boolean {
 		errors.last_start_on ||
 		errors.closes_on ||
 		errors.questions ||
+		errors.leave_limit ||
+		errors.leave_seconds ||
+		errors.seb_browser_exam_key ||
 		markErrors.value.some(Boolean)
 	)
 }
@@ -358,6 +546,18 @@ async function handleSubmit() {
 			marks: Number(question.marks),
 		})),
 		is_published: draft.is_published ? 1 : 0,
+		require_fullscreen: draft.rules.require_fullscreen ? 1 : 0,
+		count_window_switches: draft.rules.count_window_switches ? 1 : 0,
+		paste_rule: draft.rules.paste_rule,
+		watch_copy: draft.rules.watch_copy ? 1 : 0,
+		leave_limit: Number(draft.rules.leave_limit),
+		leave_seconds: Number(draft.rules.leave_seconds),
+		leave_action: draft.rules.leave_action,
+		alert_kinds: draft.rules.alert_kinds.join('\n'),
+		require_seb: draft.rules.require_seb ? 1 : 0,
+		...(draft.rules.seb_browser_exam_key.trim()
+			? { seb_browser_exam_key: draft.rules.seb_browser_exam_key.trim() }
+			: {}),
 	})
 	if (saveCall.error || !name) {
 		errors.form = frappeErrorMessage(saveCall.error, 'Could not save the exam.')

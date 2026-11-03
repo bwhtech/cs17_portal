@@ -2,6 +2,10 @@ import { formatDateTime, parseDatetime } from '@/lib/dates'
 
 export type QuestionOrder = 'Any order' | 'One by one'
 
+export type PasteRule = 'Allow' | 'Log' | 'Block outside code'
+
+export type LeaveAction = 'Flag' | 'Lock question' | 'Submit exam'
+
 export type CodingExamState = 'draft' | 'upcoming' | 'open' | 'closed'
 
 export interface CodingExamSummary {
@@ -47,6 +51,16 @@ export interface CodingExam {
 	question_order: QuestionOrder
 	can_go_back: 0 | 1
 	banner: string | null
+	require_fullscreen: 0 | 1
+	count_window_switches: 0 | 1
+	paste_rule: PasteRule
+	watch_copy: 0 | 1
+	leave_limit: number
+	leave_seconds: number
+	leave_action: LeaveAction
+	alert_kinds: string | null
+	require_seb: 0 | 1
+	has_seb_key: boolean
 	is_published: 0 | 1
 	has_attempts: boolean
 	questions: CodingExamQuestion[]
