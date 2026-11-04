@@ -142,10 +142,6 @@ class TestExamActivity(FrappeTestCase):
 		project = coding_exam.open_exam_question(exam, question)["project"]
 		api.save_python_project(project, "print(1)")
 		api.submit_python_project(question, project)
-		frappe.db.set_value("CS17 Coding Exam Attempt", {"exam": exam}, "started_at", from_now(minutes=-10))
-		frappe.db.set_value(
-			"CS17 Assignment Submission", {"assignment": question}, "submitted_at", from_now(minutes=-5)
-		)
 		coding_exam.finish_coding_exam(exam)
 		frappe.set_user(self.faculty_user)
 		coding_exam.reopen_coding_exam(exam, self.student)
@@ -201,6 +197,18 @@ class TestExamActivity(FrappeTestCase):
 		tasks.submit_saved_work_when_time_is_up()
 
 		self.assertFalse(frappe.db.get_value("CS17 Coding Exam Attempt", {"exam": exam}, "finished_on"))
+
+	def test_finishing_again_submits_a_reopened_question_with_no_edits(self):
+		exam, question = self.start_exam()
+		project = coding_exam.open_exam_question(exam, question)["project"]
+		api.save_python_project(project, "print(1)")
+		coding_exam.finish_coding_exam(exam)
+		frappe.set_user(self.faculty_user)
+		coding_exam.reopen_coding_exam(exam, self.student)
+		frappe.set_user(self.student_user)
+		coding_exam.finish_coding_exam(exam)
+
+		self.assertEqual(coding_exam.get_my_coding_exam(exam)["questions"][0].state, "submitted")
 
 	def test_seconds_away_submit_the_exam(self):
 		exam, _ = self.start_exam(leave_seconds=60, leave_action="Submit exam")
