@@ -117,6 +117,15 @@ class TestCodingExam(FrappeTestCase):
 			frappe.db.get_value("CS17 Assignment Submission", {"assignment": questions[0]}, "code"), CODE
 		)
 
+	def test_finish_leaves_out_a_question_left_at_the_starter_code(self):
+		exam, questions = self.make_exam()
+		frappe.db.set_value("CS17 Assignment", questions[0], "starter_code", "n = int(input())\n")
+		self.start(exam)
+		coding_exam.open_exam_question(exam, questions[0])
+		coding_exam.finish_coding_exam(exam)
+
+		self.assertFalse(frappe.db.exists("CS17 Assignment Submission", {"assignment": questions[0]}))
+
 	def test_time_up_submits_the_saved_code(self):
 		exam, questions = self.make_exam()
 		self.start(exam)
