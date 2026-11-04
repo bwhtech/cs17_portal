@@ -2,23 +2,13 @@
 	<AppHeader title="Results" />
 
 	<PageBody class="space-y-5">
-		<div v-if="cohorts.length > 1 || exams.length > 1" class="flex flex-wrap gap-3">
-			<div v-if="cohorts.length > 1" class="w-full max-w-xs">
-				<Select
-					label="Cohort"
-					:model-value="cohortFilter"
-					:options="cohortFilterOptions"
-					@update:model-value="cohortFilter = String($event)"
-				/>
-			</div>
-			<div v-if="exams.length > 1" class="w-full max-w-xs">
-				<Select
-					label="Exam"
-					:model-value="examFilter"
-					:options="examFilterOptions"
-					@update:model-value="examFilter = String($event)"
-				/>
-			</div>
+		<div v-if="cohorts.length > 1" class="w-full max-w-xs">
+			<Select
+				label="Cohort"
+				:model-value="cohortFilter"
+				:options="cohortFilterOptions"
+				@update:model-value="cohortFilter = String($event)"
+			/>
 		</div>
 
 		<LoadError
@@ -30,11 +20,12 @@
 
 		<DataTable
 			v-else
+			v-model:collapsed-groups="collapsedExams"
 			:columns="columns"
-			:rows="rows"
+			:rows="results"
 			:row-key="rowKey"
+			:group-by="examGroup"
 			:loading="resultsCall.loading && !resultsCall.data"
-			:row-height="60"
 			:on-row-click="openResult"
 			empty="No results yet."
 		>
@@ -42,10 +33,7 @@
 				<RowTitle
 					:title="row.student_name || row.student"
 					:to="`/faculty/results/${row.name}`"
-				>
-					{{ resultTitle(row) }}
-					<span v-if="spansCohorts"> · {{ row.cohort }}</span>
-				</RowTitle>
+				/>
 			</template>
 
 			<template #cell-marks="{ row }">
@@ -87,6 +75,7 @@ import LoadError from '@/components/common/LoadError.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { formatMarks, formatPercent, passTheme, publishStatus, resultTitle } from '@/lib/results'
+import { STORAGE_KEYS, readJSON, writeJSON } from '@/lib/storage'
 import type { FacultyResultSummary } from '@/types'
 
 const ALL = 'all'
@@ -103,10 +92,8 @@ const columns: Column[] = [
 ]
 
 const cohortFilter = ref(ALL)
-const examFilter = ref(ALL)
-watch(cohortFilter, () => {
-	examFilter.value = ALL
-})
+const collapsedExams = ref(readJSON<string[]>(STORAGE_KEYS.collapsedResultExams, []))
+watch(collapsedExams, (value) => writeJSON(STORAGE_KEYS.collapsedResultExams, value))
 
 const cohortsCall = useCall<string[]>({
 	url: '/api/v2/method/cs17_portal.api.get_cohorts',
@@ -131,24 +118,9 @@ const cohortFilterOptions = computed(() => [
 	...cohorts.value.map((cohort) => ({ label: cohort, value: cohort })),
 ])
 
-const exams = computed(() => {
-	const labels = new Map<string, string>()
-	for (const row of results.value) {
-		labels.set(
-			row.exam,
-			spansCohorts.value ? `${row.exam_name} · ${row.cohort}` : row.exam_name,
-		)
-	}
-	return [...labels].map(([value, label]) => ({ label, value }))
-})
-
-const examFilterOptions = computed(() => [{ label: 'All exams', value: ALL }, ...exams.value])
-
-const rows = computed(() =>
-	examFilter.value === ALL
-		? results.value
-		: results.value.filter((row) => row.exam === examFilter.value),
-)
+function examGroup(row: FacultyResultSummary) {
+	return spansCohorts.value ? `${resultTitle(row)} · ${row.cohort}` : resultTitle(row)
+}
 
 const rowKey = (row: FacultyResultSummary) => row.name
 
