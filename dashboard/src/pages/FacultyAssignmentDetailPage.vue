@@ -636,7 +636,7 @@ const metaRows = computed(() => {
 	const studentCount = assignment.value?.students?.length ?? 0
 	const timeLimit = assignment.value?.time_limit
 	const rows = [
-		{ label: 'Due', value: formatDateTime(assignment.value?.due_date) },
+		{ label: 'Due', value: formatDateTime(assignment.value?.due_date) || '—' },
 		...(assignment.value?.submission_type === 'Python'
 			? [
 					{

@@ -585,7 +585,9 @@ function validate(): boolean {
 	if (!draft.title.trim()) errors.title = 'Title is required.'
 	if (publishMode.value !== 'draft') {
 		if (!draft.cohort) errors.cohort = 'Cohort is required to publish.'
-		if (!draft.due_date) errors.due_date = 'Due date is required to publish.'
+		if (draft.assignment_type === 'Graded' && !draft.due_date) {
+			errors.due_date = 'Due date is required to publish a graded assignment.'
+		}
 		if (evaluationType.value === 'Marks' && !(Number(draft.max_marks) > 0)) {
 			errors.max_marks = 'Max marks are required to publish.'
 		}

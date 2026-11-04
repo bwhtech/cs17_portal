@@ -122,8 +122,8 @@ class CS17Assignment(Document):
 			frappe.throw(_("This assignment is a coding exam question, so it opens only through the exam."))
 		if not self.cohort:
 			frappe.throw(_("A cohort is required to publish an assignment"))
-		if not self.due_date:
-			frappe.throw(_("A due date is required to publish an assignment"))
+		if self.assignment_type == "Graded" and not self.due_date:
+			frappe.throw(_("A due date is required to publish a graded assignment"))
 		if self.remarks == "Marks" and flt(self.max_marks) <= 0:
 			frappe.throw(_("Max marks are required to publish an assignment"))
 
