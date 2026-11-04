@@ -400,6 +400,32 @@ test.describe("Faculty assignment portal", () => {
 		expect(saved.publish_on).toBe("2030-01-05 09:30:00");
 	});
 
+	test("shows an exam question as in exam with no delete", async ({ page }) => {
+		await page.route("**/cs17_portal.api.get_faculty_assignments*", (route) =>
+			route.fulfill({
+				json: {
+					data: [
+						{
+							name: "ASSIGNMENT-LOOPS",
+							title: "Loops practice",
+							due_date: "2030-01-08 12:00:00",
+							cohort: cohort.name,
+							submission_type: "Python",
+							is_published: 0,
+							publish_on: null,
+							coding_exam: "EXAM-0001",
+						},
+					],
+				},
+			})
+		);
+
+		await page.goto("/dashboard/faculty/assignments");
+		const row = page.locator(LIST_ROW, { hasText: "Loops practice" });
+		await expect(row.getByText("In exam", { exact: true })).toBeVisible();
+		await expect(row.getByRole("button", { name: "Delete Loops practice" })).toHaveCount(0);
+	});
+
 	test("shows no form when a draft cannot be loaded", async ({ page, request }) => {
 		const draft = await createTestAssignment(request, {
 			cohort: cohort.name,
