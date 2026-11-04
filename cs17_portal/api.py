@@ -725,6 +725,8 @@ def save_project(
 	thumbnail_content: str | None = None,
 ) -> dict:
 	project_doc = require_owned_project(project)
+	if project_doc.assignment:
+		_get_or_new_submission(project_doc.assignment, project_doc.profile).validate_deadline()
 
 	try:
 		with zipfile.ZipFile(io.BytesIO(decode_file_content(content))) as archive:
@@ -771,6 +773,10 @@ def save_python_project(project: str, code: str) -> dict:
 
 		require_open_question(exam, project_doc.assignment, project_doc.profile, is_saving=True)
 		record_code_jump(exam, project_doc, code)
+	elif project_doc.assignment:
+		submission = _get_or_new_submission(project_doc.assignment, project_doc.profile)
+		submission.validate_deadline()
+		submission.validate_time_limit()
 	project_doc.code = code
 	project_doc.last_saved_at = now_datetime()
 	project_doc.save(ignore_permissions=True)

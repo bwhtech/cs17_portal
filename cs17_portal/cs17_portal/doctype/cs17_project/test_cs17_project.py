@@ -408,6 +408,25 @@ class TestCS17Project(FrappeTestCase):
 			b64(make_zip({"notes.txt": b"ls -la\n"})),
 		)
 
+	def test_project_is_not_saved_after_the_assignment_closes(self):
+		frappe.set_user(STUDENT1_USER)
+		project = api.create_project("Student 1 Project", assignment=self.assignment)["name"]
+		frappe.db.set_value(
+			"CS17 Assignment",
+			self.assignment,
+			"due_date",
+			frappe.utils.add_days(frappe.utils.now_datetime(), -1),
+		)
+
+		self.assertRaisesRegex(
+			frappe.ValidationError,
+			"The deadline for this assignment has passed.",
+			api.save_project,
+			project,
+			"project.sb3",
+			b64(SAMPLE_PROJECT),
+		)
+
 	def test_python_project_keeps_its_saved_code(self):
 		frappe.set_user(STUDENT1_USER)
 		project = api.create_project("Number Guesser", project_type="Python")["name"]
@@ -422,6 +441,22 @@ class TestCS17Project(FrappeTestCase):
 		self.assertRaisesRegex(
 			frappe.ValidationError,
 			"This is not a Python project.",
+			api.save_python_project,
+			project,
+			'print("hello")\n',
+		)
+
+	def test_python_code_is_not_saved_after_the_assignment_closes(self):
+		assignment = self.make_python_assignment()
+		frappe.set_user(STUDENT1_USER)
+		project = api.create_project("Number Guesser", assignment=assignment, project_type="Python")["name"]
+		frappe.db.set_value(
+			"CS17 Assignment", assignment, "due_date", frappe.utils.add_days(frappe.utils.now_datetime(), -1)
+		)
+
+		self.assertRaisesRegex(
+			frappe.ValidationError,
+			"The deadline for this assignment has passed.",
 			api.save_python_project,
 			project,
 			'print("hello")\n',
