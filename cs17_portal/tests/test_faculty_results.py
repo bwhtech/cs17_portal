@@ -33,14 +33,14 @@ class TestFacultyResults(FrappeTestCase):
 		cls.other_cohort = make_cohort("C412TEST")
 		cls.faculty_user = make_user("faculty411@cs17test.com")
 		make_profile("Faculty", cls.cohort, cls.faculty_user, "Faculty 411")
-		subject = (
+		cls.subject = (
 			frappe.get_doc(
 				{"doctype": "CS17 Subject", "subject_code": "MATHS411", "subject_name": "Maths 411"}
 			)
 			.insert(ignore_permissions=True)
 			.name
 		)
-		scale = (
+		cls.scale = (
 			frappe.get_doc(
 				{
 					"doctype": "CS17 Grading Scale",
@@ -51,12 +51,12 @@ class TestFacultyResults(FrappeTestCase):
 			.insert(ignore_permissions=True)
 			.name
 		)
-		student = make_profile("Student", cls.cohort, make_user("student411@cs17test.com"), "Student 411")
+		cls.student = make_profile("Student", cls.cohort, make_user("student411@cs17test.com"), "Student 411")
 		other_student = make_profile(
 			"Student", cls.other_cohort, make_user("student412@cs17test.com"), "Student 412"
 		)
-		cls.result = make_result(cls.cohort, student, subject, scale)
-		cls.other_result = make_result(cls.other_cohort, other_student, subject, scale)
+		cls.result = make_result(cls.cohort, cls.student, cls.subject, cls.scale)
+		cls.other_result = make_result(cls.other_cohort, other_student, cls.subject, cls.scale)
 
 	def setUp(self):
 		self.addCleanup(frappe.set_user, "Administrator")
@@ -72,3 +72,46 @@ class TestFacultyResults(FrappeTestCase):
 
 	def test_result_of_another_cohort_is_refused(self):
 		self.assertRaises(frappe.PermissionError, api.get_faculty_result, self.other_result)
+
+	def test_result_lists_each_subject_part_with_its_section(self):
+		pattern = frappe.get_doc(
+			{
+				"doctype": "CS17 Subject Pattern",
+				"pattern_name": "Theory and Python 411",
+				"components": [
+					{"component": "Theory", "weightage": 70},
+					{"component": "Python", "section": "Practical", "weightage": 30},
+				],
+			}
+		).insert(ignore_permissions=True)
+		exam = frappe.get_doc(
+			{
+				"doctype": "CS17 Exam",
+				"exam_name": "Pattern Exam 411",
+				"cohort": self.cohort,
+				"grading_scale": self.scale,
+				"subjects": [{"subject": self.subject, "subject_pattern": pattern.name}],
+			}
+		).insert(ignore_permissions=True)
+		frappe.get_doc(
+			{
+				"doctype": "CS17 Subject Marks",
+				"exam": exam.name,
+				"student": self.student,
+				"subject": self.subject,
+				"components": [
+					{"component": "Theory", "marks_obtained": 50},
+					{"component": "Python", "marks_obtained": 20},
+				],
+			}
+		).insert(ignore_permissions=True)
+		result = frappe.get_doc({"doctype": "CS17 Result", "exam": exam.name, "student": self.student})
+		result.insert(ignore_permissions=True)
+
+		self.assertEqual(
+			api.get_faculty_result(result.name)["scores"][0]["parts"],
+			[
+				{"component": "Theory", "section": None, "marks_obtained": 50, "max_marks": 70},
+				{"component": "Python", "section": "Practical", "marks_obtained": 20, "max_marks": 30},
+			],
+		)
