@@ -265,7 +265,10 @@ def resolve_submission(assignment: str, file_url: str, submission: str | None = 
 # and many submission files are not on it.
 @frappe.whitelist(methods=["POST"])
 def upload_submission_file(assignment: str) -> Document:
-	require_current_student()
+	student = require_current_student()
+	frappe.get_doc(
+		{"doctype": "CS17 Assignment Submission", "assignment": assignment, "student": student}
+	).validate_open_to_student()
 	file = frappe.request.files["file"]
 	validate_submission_value(
 		frappe.db.get_value("CS17 Assignment", assignment, "submission_type"), file.filename
