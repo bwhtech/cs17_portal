@@ -173,16 +173,8 @@ test.describe("Student exam rules", () => {
 		);
 
 		await page.goto(`/dashboard/exams/${EXAM}`);
-		await page.getByText("Print the numbers 1 to 5.").evaluate((question) => {
-			document.getSelection()?.selectAllChildren(question);
-			question.dispatchEvent(
-				new ClipboardEvent("copy", {
-					clipboardData: new DataTransfer(),
-					bubbles: true,
-					cancelable: true,
-				})
-			);
-		});
+		await page.getByText("Print the numbers 1 to 5.").click({ clickCount: 3 });
+		await page.keyboard.press("ControlOrMeta+c");
 		await paste(page, "Print the numbers 1 to 5.\n");
 
 		await expect(page.locator(".cm-content")).toContainText("Print the numbers 1 to 5.");
