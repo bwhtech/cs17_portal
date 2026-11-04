@@ -133,9 +133,7 @@
 
 		<section v-if="result.remarks" class="space-y-2">
 			<h2 class="text-base-medium text-ink-gray-8">Remarks</h2>
-			<p class="text-p-base whitespace-pre-line break-words text-ink-gray-7">
-				{{ result.remarks }}
-			</p>
+			<MarkdownText :content="result.remarks" />
 		</section>
 	</div>
 </template>
@@ -144,6 +142,7 @@
 import { computed } from 'vue'
 import { Badge } from 'frappe-ui'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
+import MarkdownText from '@/components/common/MarkdownText.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
 import { formatDate } from '@/lib/dates'
 import { assignmentScoreLabel, formatMarks, formatPercent, passTheme } from '@/lib/results'

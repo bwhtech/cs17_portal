@@ -200,7 +200,9 @@
 
 	/* remarks, signature & footer ---------------------------------------- */
 	.rc-remarks { margin-top: 26px; page-break-inside: avoid; }
-	.rc-remarks .rc-body { padding-top: 5px; white-space: pre-line; }
+	.rc-remarks .rc-body { padding-top: 5px; }
+	.rc-remarks .rc-body :is(h1, h2, h3, h4) { font-size: 15px; margin: 16px 0 6px; }
+	.rc-remarks .rc-body p { margin: 0 0 8px; }
 
 	/* the margin above the rule is the space signed into, so it has to survive
 	   a page break intact rather than leaving the name stranded */
@@ -300,7 +302,7 @@
 	{% if doc.remarks %}
 	<div class="rc-remarks">
 		<div class="rc-cap">Remarks</div>
-		<div class="rc-body">{{ doc.remarks | e }}</div>
+		<div class="rc-body">{{ frappe.utils.md_to_html((doc.remarks | e).replace("\n", "  \n")) }}</div>
 	</div>
 	{% endif %}
 
