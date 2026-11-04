@@ -5,8 +5,6 @@ import frappe
 from frappe.model.document import Document
 from frappe.utils import add_to_date, cint, get_datetime, now_datetime, time_diff_in_seconds
 
-FINISH_SUBMIT_SECONDS = 5
-
 
 class CS17CodingExamAttempt(Document):
 	# begin: auto-generated types
@@ -85,6 +83,7 @@ class CS17CodingExamAttempt(Document):
 				as_list=True,
 			)
 		}
+		self.finished_on = now_datetime()
 		for assignment, project in get_projects(self.student, assignments).items():
 			project_doc = frappe.get_doc("CS17 Project", project)
 			if (
@@ -93,7 +92,6 @@ class CS17CodingExamAttempt(Document):
 				and _comparable_lines(project_doc.code) != starter_lines.get(assignment)
 			):
 				submit_python_code(assignment, self.student, project_doc, ignore_deadline=True)
-		self.finished_on = now_datetime()
 		self.save(ignore_permissions=True)
 
 	def reopen(self, minutes: int):
@@ -106,7 +104,7 @@ class CS17CodingExamAttempt(Document):
 			filters=[
 				["student", "=", self.student],
 				["assignment.coding_exam", "=", self.exam],
-				["submitted_at", ">=", add_to_date(self.finished_on, seconds=-FINISH_SUBMIT_SECONDS)],
+				["submitted_at", ">=", self.finished_on],
 			],
 			pluck="assignment",
 		):
