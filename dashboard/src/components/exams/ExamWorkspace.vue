@@ -346,7 +346,7 @@ const { isFullscreen, hasLeftFullscreen, enterFullscreen } = useExamFullscreen(
 )
 const isOutOfFullscreen = computed(() => isFullscreenRequired.value && !isFullscreen.value)
 
-const copiedInEditor = new Set<string>()
+const copiedInExam = new Set<string>()
 
 function isInEditor(target: EventTarget | null) {
 	return target instanceof Element && Boolean(target.closest('.cm-editor'))
@@ -356,17 +356,20 @@ function clipboardText(event: ClipboardEvent) {
 	return (event.clipboardData?.getData('text/plain') ?? '').replace(/\r\n/g, '\n')
 }
 
+function withEvenSpaces(text: string) {
+	return text.replace(/\s+/g, ' ').trim()
+}
+
 function rememberCopy(event: ClipboardEvent) {
-	if (!isInEditor(event.target)) return
 	const text = clipboardText(event) || (document.getSelection()?.toString() ?? '')
-	if (text) copiedInEditor.add(text)
+	if (text) copiedInExam.add(withEvenSpaces(text))
 }
 
 function checkPaste(event: ClipboardEvent) {
 	const pasteRule = rules.value.paste_rule
 	if (!isWatching.value || pasteRule === 'Allow' || !isInEditor(event.target)) return
 	const text = clipboardText(event)
-	if (!text || copiedInEditor.has(text)) return
+	if (!text || copiedInExam.has(withEvenSpaces(text))) return
 	const lines = text.replace(/\n$/, '').split('\n').length
 	const detail = `${lines} ${lines === 1 ? 'line' : 'lines'}`
 	if (pasteRule === 'Log') {
