@@ -327,6 +327,23 @@ def save_coding_exam(
 		],
 	)
 	exam_doc.save(ignore_permissions=True)
+	if exam and frappe.db.exists(ATTEMPT, {"exam": exam}):
+		changes = {
+			"duration_minutes": _("Changed the duration to {0} minutes").format(exam_doc.duration_minutes),
+			"opens_on": _("Moved the open time to {0}").format(format_datetime(exam_doc.opens_on)),
+			"last_start_on": _("Moved the last start time to {0}").format(
+				format_datetime(exam_doc.last_start_on)
+			),
+			"closes_on": _("Moved the close time to {0}").format(format_datetime(exam_doc.closes_on)),
+		}
+		for field in rules:
+			value = exam_doc.get(field)
+			if exam_doc.meta.get_field(field).fieldtype == "Check":
+				value = _("Yes") if value else _("No")
+			changes[field] = _("Changed {0} to {1}").format(_(exam_doc.meta.get_label(field)), value)
+		for field, change in changes.items():
+			if field != "seb_browser_exam_key" and exam_doc.has_value_changed(field):
+				log_change(exam, change)
 	return exam_doc.name
 
 
