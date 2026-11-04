@@ -10,7 +10,7 @@
 				<div class="flex h-8 items-center">
 					<h3 class="text-base-medium text-ink-gray-8">Your code</h3>
 				</div>
-				<div class="mt-2 max-h-[70vh] overflow-auto rounded-3">
+				<div class="mt-2 max-h-[60vh] overflow-auto rounded-3 md:h-[470px] md:max-h-none">
 					<PythonEditor :model-value="code" read-only :extensions="wrapLines" />
 				</div>
 			</section>
@@ -26,7 +26,7 @@
 						@update:model-value="picked = Number($event)"
 					/>
 				</div>
-				<div class="mt-2 max-h-[70vh] overflow-auto rounded-3">
+				<div class="mt-2 max-h-[60vh] overflow-auto rounded-3 md:h-[470px] md:max-h-none">
 					<PythonEditor
 						:model-value="solutions[picked]?.code ?? ''"
 						read-only
