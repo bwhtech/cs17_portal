@@ -66,6 +66,22 @@
 			<Dialog v-model:open="replayOpen" title="Replay" size="4xl">
 				<CodeReplay :submission="submission" />
 			</Dialog>
+			<div
+				v-if="solutions.length"
+				class="flex items-center justify-between gap-3 border-t border-outline-gray-1 pt-3"
+			>
+				<p class="flex items-center gap-1.5 text-base text-ink-gray-8">
+					<span
+						class="lucide-lightbulb size-4 shrink-0 text-ink-gray-5"
+						aria-hidden="true"
+					/>
+					Solutions
+				</p>
+				<Button icon-left="lucide-eye" label="View" @click="solutionsOpen = true" />
+			</div>
+			<Dialog v-model:open="solutionsOpen" title="Solutions" size="2xl">
+				<SolutionTabs :solutions="solutions" />
+			</Dialog>
 		</div>
 	</div>
 </template>
@@ -80,6 +96,7 @@ import TabLeaves from '@/components/grading/TabLeaves.vue'
 import TimeTaken from '@/components/grading/TimeTaken.vue'
 import Pastes from '@/components/grading/Pastes.vue'
 import HintsUsed from '@/components/grading/HintsUsed.vue'
+import SolutionTabs from '@/components/python/SolutionTabs.vue'
 import TestResults from '@/components/python/TestResults.vue'
 import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
 import { usePythonRunner } from '@/lib/python/runner'
@@ -109,11 +126,13 @@ const failedCall = computed(() =>
 )
 const code = computed(() => program.data ?? null)
 const tests = computed(() => assignment.data?.test_cases ?? [])
+const solutions = computed(() => assignment.data?.solutions ?? [])
 
 const runner = usePythonRunner()
 const runs = ref<TestRun[] | null>(null)
 const testing = ref(false)
 const replayOpen = ref(false)
+const solutionsOpen = ref(false)
 
 async function check() {
 	if (code.value === null || !tests.value.length || testing.value) return

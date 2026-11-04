@@ -31,6 +31,8 @@
   "python_section",
   "starter_code",
   "test_cases",
+  "solutions",
+  "show_solutions",
   "watch_tab_switches",
   "time_limit",
   "attempts_allowed",
@@ -267,6 +269,18 @@
    "fieldname": "submit_saved_work",
    "fieldtype": "Check",
    "label": "Submit saved work when time is up"
+  },
+  {
+   "fieldname": "solutions",
+   "fieldtype": "Table",
+   "label": "Solutions",
+   "options": "CS17 Python Solution"
+  },
+  {
+   "default": "0",
+   "fieldname": "show_solutions",
+   "fieldtype": "Check",
+   "label": "Show solutions to students"
   }
  ],
  "grid_page_length": 50,
@@ -281,7 +295,7 @@
    "link_fieldname": "assignment"
   }
  ],
- "modified": "2026-11-03 07:40:59.838838",
+ "modified": "2026-11-04 19:30:35.241184",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Assignment",

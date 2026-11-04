@@ -76,6 +76,22 @@ test.describe("Submission tests", () => {
 		await expect(row(page, "Diya Patel").getByTitle("1 of 2 tests passed")).toBeVisible();
 	});
 
+	test("checks each solution against the tests", async ({ page }) => {
+		await page.goto(`/dashboard/faculty/assignments/${ASSIGNMENT.name}`);
+		await page.getByRole("button", { name: "Add solutions" }).click();
+		const dialog = page.getByRole("dialog");
+		await dialog.getByRole("button", { name: "Add solution", exact: true }).click();
+		await dialog.getByRole("button", { name: "Add solution", exact: true }).click();
+		await dialog.getByLabel("Label").nth(0).fill("Reading the name");
+		await dialog.getByLabel("Label").nth(1).fill("Printing one name");
+		await dialog.locator(".cm-content").nth(0).fill(CODE["E2E-GREETING-AARAV"]);
+		await dialog.locator(".cm-content").nth(1).fill(CODE["E2E-GREETING-DIYA"]);
+		await dialog.getByRole("button", { name: "Check solutions" }).click();
+
+		await expect(dialog.getByTitle("2 of 2 tests passed")).toBeVisible({ timeout: 60000 });
+		await expect(dialog.getByTitle("1 of 2 tests passed")).toBeVisible();
+	});
+
 	test("shows the new results when run again after the tests change", async ({ page }) => {
 		await page.goto(`/dashboard/faculty/assignments/${ASSIGNMENT.name}`);
 		const moreActions = page.getByRole("button", { name: "More actions" });

@@ -20,6 +20,9 @@ class CS17Assignment(Document):
 		from cs17_portal.cs17_portal.doctype.cs17_assignment_student.cs17_assignment_student import (
 			CS17AssignmentStudent,
 		)
+		from cs17_portal.cs17_portal.doctype.cs17_python_solution.cs17_python_solution import (
+			CS17PythonSolution,
+		)
 		from cs17_portal.cs17_portal.doctype.cs17_python_test_case.cs17_python_test_case import (
 			CS17PythonTestCase,
 		)
@@ -47,6 +50,8 @@ class CS17Assignment(Document):
 		remarks: DF.Literal["Grade", "Marks"]
 		rubric: DF.Table[CS17RubricCriterion]
 		show_answers: DF.Check
+		show_solutions: DF.Check
+		solutions: DF.Table[CS17PythonSolution]
 		starter_code: DF.Code | None
 		students: DF.Table[CS17AssignmentStudent]
 		submission_type: DF.Literal["Any", "PDF", "URL", "Image", "ZIP", "Scratch", "Python"]
@@ -68,6 +73,8 @@ class CS17Assignment(Document):
 		if self.submission_type != "Python":
 			self.starter_code = None
 			self.test_cases = []
+			self.solutions = []
+			self.show_solutions = 0
 			self.watch_tab_switches = 0
 			self.time_limit = 0
 			self.attempts_allowed = 0

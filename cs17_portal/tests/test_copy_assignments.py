@@ -64,6 +64,17 @@ class TestCopyAssignments(FrappeTestCase):
 		source, copied = api.get_assignment(assignment), api.get_assignment(copy)
 		self.assertEqual({key: copied[key] for key in work}, {key: source[key] for key in work})
 
+	def test_copy_keeps_the_solutions(self):
+		solutions = [{"label": "Using a power", "code": "print(int(input()) ** 2)\n"}]
+		assignment = api.create_assignment(
+			"Square a Number 383", self.cohort, "2030-01-01 00:00:00", submission_type="Python"
+		)
+		api.save_solutions(assignment, solutions)
+
+		[copy] = api.copy_assignments([assignment], self.next_cohort)
+
+		self.assertEqual(api.get_assignment(copy).solutions, solutions)
+
 	def test_copy_is_an_undated_draft_for_the_whole_chosen_cohort_and_quarter(self):
 		quarter = (
 			frappe.get_doc({"doctype": "CS17 Quarter", "quarter_name": "Quarter 380"})

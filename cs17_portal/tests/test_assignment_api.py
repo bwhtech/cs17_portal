@@ -105,6 +105,31 @@ class TestAssignmentApi(FrappeTestCase):
 
 		self.assertEqual(api.get_assignment(assignment).test_cases, test_cases)
 
+	def test_save_solutions_keeps_them_in_order_on_a_published_assignment(self):
+		frappe.set_user(self.faculty_user)
+		solutions = [
+			{"label": "Using multiplication", "code": "n = int(input())\nprint(n * n)\n"},
+			{"label": "Using a power", "code": "print(int(input()) ** 2)\n"},
+		]
+		assignment = api.create_assignment(
+			"Square a Number 190", self.cohort, "2030-01-01 00:00:00", submission_type="Python", publish="now"
+		)
+
+		api.save_solutions(assignment, solutions)
+
+		self.assertEqual(api.get_assignment(assignment).solutions, solutions)
+
+	def test_save_solutions_leaves_the_assignment_unmodified(self):
+		frappe.set_user(self.faculty_user)
+		assignment = api.create_assignment(
+			"Square a Number 191", self.cohort, "2030-01-01 00:00:00", submission_type="Python", publish="now"
+		)
+		modified = frappe.db.get_value("CS17 Assignment", assignment, "modified")
+
+		api.save_solutions(assignment, [{"label": "Using a power", "code": "print(int(input()) ** 2)\n"}])
+
+		self.assertEqual(frappe.db.get_value("CS17 Assignment", assignment, "modified"), modified)
+
 	def test_update_assignment_refuses_a_save_from_an_older_copy(self):
 		frappe.set_user(self.faculty_user)
 		assignment = api.create_assignment("PDF Task 196", self.cohort, "2030-01-01 00:00:00")

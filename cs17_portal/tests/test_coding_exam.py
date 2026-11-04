@@ -208,6 +208,20 @@ class TestCodingExam(FrappeTestCase):
 
 		self.assertTrue(api.is_assignment_closed(questions[0]))
 
+	def test_solutions_cannot_be_shown_before_the_exam_closes(self):
+		_, questions = self.make_exam()
+
+		self.assertRaisesRegex(frappe.ValidationError, "still open", api.show_solutions, questions[0], True)
+
+	def test_a_student_gets_no_solutions_before_the_exam_closes(self):
+		question = self.make_question("Loops practice")
+		api.save_solutions(question, [{"label": "Using a power", "code": CODE}])
+		api.show_solutions(question, True)
+		exam, _ = self.make_exam(questions=[question])
+		self.start(exam)
+
+		self.assertNotIn("solutions", api.get_student_assignment(question))
+
 	def test_a_student_of_another_cohort_cannot_see_the_exam(self):
 		exam, _ = self.make_exam()
 		frappe.set_user(self.other_student_user)

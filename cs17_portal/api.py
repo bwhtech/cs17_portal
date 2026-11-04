@@ -187,6 +187,7 @@ def create_assignment(
 	hint_after_failed_runs: int | None = None,
 	max_hints: int | None = None,
 	submit_saved_work: int | None = None,
+	solutions: list | str | None = None,
 ) -> str:
 	faculty = get_current_faculty()
 	if faculty.cohort and faculty.cohort != cohort:
@@ -216,6 +217,7 @@ def create_assignment(
 		hint_after_failed_runs=hint_after_failed_runs,
 		max_hints=max_hints,
 		submit_saved_work=submit_saved_work,
+		solutions=solutions,
 	)
 	assignment.naming_series = _naming_series(assignment_type)
 	_apply_publish_state(assignment, publish, publish_on)
@@ -1422,6 +1424,7 @@ def get_student_assignment(assignment: str) -> dict:
 			"time_limit",
 			"attempts_allowed",
 			"coding_exam",
+			"show_solutions",
 		],
 		limit=1,
 	)
@@ -1434,6 +1437,7 @@ def get_student_assignment(assignment: str) -> dict:
 		is_open = details and is_published_now(details)
 	if not is_open:
 		frappe.throw(_("Assignment not found"), frappe.DoesNotExistError)
+	solutions_shown = details.pop("show_solutions")
 	if details.time_limit and not frappe.db.get_value(
 		ASSIGNMENT_SUBMISSION, {"assignment": assignment, "student": student}, "returned_on"
 	):
@@ -1452,6 +1456,8 @@ def get_student_assignment(assignment: str) -> dict:
 			if not test_case.is_hidden
 		]
 		details.hidden_test_count = len(test_cases) - len(details.sample_tests)
+		if solutions_shown and (not details.coding_exam or is_exam_closed(details.coding_exam)):
+			details.solutions = get_solutions(assignment)
 	return details
 
 
@@ -1813,6 +1819,7 @@ def _set_assignment_fields(
 	hint_after_failed_runs: int | None = None,
 	max_hints: int | None = None,
 	submit_saved_work: int | None = None,
+	solutions: list | str | None = None,
 ) -> None:
 	doc.update(
 		{
@@ -1860,6 +1867,11 @@ def _set_assignment_fields(
 				for test_case in frappe.parse_json(test_cases)
 			],
 		)
+	if solutions is not None:
+		doc.set(
+			"solutions",
+			[{"label": row.get("label"), "code": row.get("code")} for row in frappe.parse_json(solutions)],
+		)
 	if rubric is not None:
 		doc.set(
 			"rubric",
@@ -1895,6 +1907,7 @@ def get_assignment(assignment: str) -> dict | None:
 			"is_published",
 			"publish_on",
 			"starter_code",
+			"show_solutions",
 			"watch_tab_switches",
 			"time_limit",
 			"attempts_allowed",
@@ -1912,6 +1925,7 @@ def get_assignment(assignment: str) -> dict | None:
 	)
 	if assignment_doc:
 		assignment_doc.test_cases = get_test_cases(assignment)
+		assignment_doc.solutions = get_solutions(assignment)
 		assignment_doc.rubric = get_rubric(assignment)
 	return assignment_doc
 
@@ -1923,6 +1937,39 @@ def get_test_cases(assignment: str) -> list:
 		fields=["input", "expected_output", "is_hidden"],
 		order_by="idx asc",
 	)
+
+
+def get_solutions(assignment: str) -> list:
+	return frappe.get_all(
+		"CS17 Python Solution",
+		filters={"parent": assignment, "parenttype": "CS17 Assignment", "parentfield": "solutions"},
+		fields=["label", "code"],
+		order_by="idx asc",
+	)
+
+
+@frappe.whitelist(methods=["POST"])
+def save_solutions(assignment: str, solutions: list | str) -> None:
+	require_faculty_for_assignment(assignment)
+	solutions = frappe.parse_json(solutions)
+	if not all(cstr(row.get("label")).strip() and cstr(row.get("code")).strip() for row in solutions):
+		frappe.throw(_("Give every solution a label and code."))
+	doc = frappe.get_doc("CS17 Assignment", assignment)
+	doc.set("solutions", [{"label": row["label"].strip(), "code": row["code"]} for row in solutions])
+	doc.update_child_table("solutions")
+
+
+@frappe.whitelist(methods=["POST"])
+def show_solutions(assignment: str, show: bool) -> None:
+	require_faculty_for_assignment(assignment)
+	exam = frappe.db.get_value("CS17 Assignment", assignment, "coding_exam")
+	if cint(show) and exam and not is_exam_closed(exam):
+		frappe.throw(_("This question's exam is still open. Show the solutions once it closes."))
+	frappe.db.set_value("CS17 Assignment", assignment, "show_solutions", cint(show), update_modified=False)
+
+
+def is_exam_closed(exam: str) -> bool:
+	return now_datetime() > get_datetime(frappe.db.get_value("CS17 Coding Exam", exam, "closes_on"))
 
 
 @frappe.whitelist(methods=["POST"])
@@ -2618,6 +2665,7 @@ def copy_assignments(assignments: list | str, cohort: str, quarter: str | None =
 				rubric=source.rubric,
 				hint_after_failed_runs=source.hint_after_failed_runs,
 				max_hints=source.max_hints,
+				solutions=source.solutions,
 			)
 		)
 	return copies

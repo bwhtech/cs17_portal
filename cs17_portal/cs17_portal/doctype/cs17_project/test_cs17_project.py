@@ -471,6 +471,26 @@ class TestCS17Project(FrappeTestCase):
 		self.assertEqual(details.sample_tests, [{"input": "Asha\n", "expected_output": "Hello, Asha!\n"}])
 		self.assertEqual(details.hidden_test_count, 1)
 
+	def test_student_gets_no_solutions_until_they_are_shown(self):
+		assignment = self.make_python_assignment()
+		frappe.set_user(FACULTY_IN_USER)
+		api.save_solutions(
+			assignment, [{"label": "Using an f-string", "code": 'print(f"Hello, {input()}!")\n'}]
+		)
+
+		frappe.set_user(STUDENT1_USER)
+		self.assertNotIn("solutions", api.get_student_assignment(assignment))
+
+	def test_student_sees_the_solutions_once_they_are_shown(self):
+		assignment = self.make_python_assignment()
+		solutions = [{"label": "Using an f-string", "code": 'print(f"Hello, {input()}!")\n'}]
+		frappe.set_user(FACULTY_IN_USER)
+		api.save_solutions(assignment, solutions)
+		api.show_solutions(assignment, True)
+
+		frappe.set_user(STUDENT1_USER)
+		self.assertEqual(api.get_student_assignment(assignment).solutions, solutions)
+
 	def test_python_assignment_starts_from_the_starter_code(self):
 		assignment = self.make_python_assignment()
 
