@@ -37,8 +37,8 @@ test.describe("Faculty results", () => {
 		await deleteDoc(request, "CS17 Cohort", cohort.name);
 	});
 
-	test("opens a student's result from the Results page", async ({ page }) => {
-		const row = page.locator(LIST_ROW, { hasText: result.examName });
+	test("opens a student's result from its exam on the Results page", async ({ page }) => {
+		const row = page.getByRole("region", { name: result.examName }).locator(LIST_ROW);
 
 		await page.goto("/dashboard/faculty");
 		await page.getByRole("link", { name: "Results", exact: true }).click();
