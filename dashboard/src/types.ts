@@ -236,6 +236,14 @@ export interface CS17ResultSubjectScore {
 	grade: string | null
 	is_pass: Bool
 	remarks: string | null
+	parts: CS17ResultSubjectPart[]
+}
+
+export interface CS17ResultSubjectPart {
+	component: string
+	section: string | null
+	marks_obtained: number
+	max_marks: number
 }
 
 /**

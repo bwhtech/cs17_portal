@@ -44,12 +44,22 @@
 			<h2 class="text-base-medium text-ink-gray-8">Subjects</h2>
 			<DataTable
 				:columns="subjectColumns"
-				:rows="result.scores"
+				:rows="subjectRows"
 				:row-key="subjectKey"
 				empty="No subjects on this result."
 			>
 				<template #cell-subject="{ row }">
-					<RowTitle :title="row.subject_name || row.subject" />
+					<RowTitle
+						v-if="row.kind === 'subject'"
+						:title="row.subject_name || row.subject"
+					/>
+					<span
+						v-else
+						class="truncate text-base"
+						:class="row.nested ? 'pl-8 text-ink-gray-6' : 'pl-4 text-ink-gray-7'"
+					>
+						{{ row.label }}
+					</span>
 				</template>
 
 				<template #cell-marks="{ row }">
@@ -57,15 +67,20 @@
 				</template>
 
 				<template #cell-percentage="{ row }">
-					{{ formatPercent(row.percentage) }}
+					<template v-if="row.kind === 'subject'">{{
+						formatPercent(row.percentage)
+					}}</template>
 				</template>
 
 				<template #cell-grade="{ row }">
-					<span class="text-base text-ink-gray-8">{{ row.grade || '—' }}</span>
+					<span v-if="row.kind === 'subject'" class="text-base text-ink-gray-8">
+						{{ row.grade || '—' }}
+					</span>
 				</template>
 
-				<template #cell-outcome="{ row }">
+				<template #cell-is_pass="{ row }">
 					<Badge
+						v-if="row.kind === 'subject'"
 						:label="row.is_pass ? 'Pass' : 'Fail'"
 						:theme="passTheme(Boolean(row.is_pass))"
 						variant="subtle"
@@ -132,7 +147,23 @@ import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
 import { formatDate } from '@/lib/dates'
 import { assignmentScoreLabel, formatMarks, formatPercent, passTheme } from '@/lib/results'
-import type { CS17Result, CS17ResultAssignmentScore, CS17ResultSubjectScore } from '@/types'
+import type {
+	CS17Result,
+	CS17ResultAssignmentScore,
+	CS17ResultSubjectPart,
+	CS17ResultSubjectScore,
+} from '@/types'
+
+type SubjectRow =
+	| ({ kind: 'subject'; key: string } & CS17ResultSubjectScore)
+	| {
+			kind: 'part'
+			key: string
+			label: string
+			nested: boolean
+			marks_obtained: number
+			max_marks: number
+	  }
 
 const props = defineProps<{
 	result: CS17Result
@@ -147,9 +178,9 @@ const metaLine = computed(() =>
 const subjectColumns: Column[] = [
 	{ header: 'Subject', key: 'subject', variant: 'primary' },
 	{ header: 'Marks', key: 'marks', width: '8rem' },
-	{ header: 'Percentage', key: 'percentage', width: '5.5rem' },
-	{ header: 'Grade', key: 'grade', width: '6rem' },
-	{ header: 'Result', key: 'outcome', width: '4.5rem' },
+	{ header: 'Percentage', key: 'percentage', width: '5.5rem', optional: true },
+	{ header: 'Grade', key: 'grade', width: '6rem', optional: true },
+	{ header: 'Result', key: 'is_pass', width: '4.5rem', optional: true },
 ]
 
 const assignmentColumns: Column[] = [
@@ -158,6 +189,50 @@ const assignmentColumns: Column[] = [
 	{ header: 'Submitted', key: 'submitted', width: '9rem' },
 ]
 
-const subjectKey = (row: CS17ResultSubjectScore) => row.subject
+const subjectRows = computed(() =>
+	props.result.scores.flatMap((score): SubjectRow[] => [
+		{ ...score, kind: 'subject', key: score.subject },
+		...partRows(score),
+	]),
+)
+
+function partRows(score: CS17ResultSubjectScore): SubjectRow[] {
+	if (score.parts.length < 2) return []
+	const rows: SubjectRow[] = []
+	for (const part of score.parts) {
+		const key = `${score.subject}:part:${part.component}`
+		if (!part.section) {
+			rows.push(partRow(key, part.component, false, [part]))
+			continue
+		}
+		const sectionKey = `${score.subject}:section:${part.section}`
+		if (rows.some((row) => row.key === sectionKey)) continue
+		const inSection = score.parts.filter((each) => each.section === part.section)
+		rows.push(partRow(sectionKey, part.section, false, inSection))
+		for (const each of inSection)
+			rows.push(
+				partRow(`${score.subject}:part:${each.component}`, each.component, true, [each]),
+			)
+	}
+	return rows
+}
+
+function partRow(
+	key: string,
+	label: string,
+	nested: boolean,
+	parts: CS17ResultSubjectPart[],
+): SubjectRow {
+	return {
+		kind: 'part',
+		key,
+		label,
+		nested,
+		marks_obtained: parts.reduce((sum, part) => sum + part.marks_obtained, 0),
+		max_marks: parts.reduce((sum, part) => sum + part.max_marks, 0),
+	}
+}
+
+const subjectKey = (row: SubjectRow) => row.key
 const assignmentKey = (row: CS17ResultAssignmentScore) => row.assignment
 </script>

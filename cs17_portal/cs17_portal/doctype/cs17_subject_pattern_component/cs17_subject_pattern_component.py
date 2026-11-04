@@ -18,6 +18,7 @@ class CS17SubjectPatternComponent(Document):
 		parent: DF.Data
 		parentfield: DF.Data
 		parenttype: DF.Data
+		section: DF.Data | None
 		weightage: DF.Float
 	# end: auto-generated types
 

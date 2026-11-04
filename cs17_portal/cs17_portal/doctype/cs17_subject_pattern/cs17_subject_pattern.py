@@ -53,6 +53,7 @@ class CS17SubjectPattern(Document):
 			if flt(row.weightage) <= 0:
 				frappe.throw(_("Component {0}: weightage must be greater than zero.").format(name))
 			row.component = name
+			row.section = (row.section or "").strip()
 			seen.add(name)
 
 	def validate_locked_after_marks(self):
