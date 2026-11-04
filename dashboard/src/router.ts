@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { shellScrollContainer } from 'frappe-ui'
 import { useSession } from '@/composables/useSession'
 
 const routes: RouteRecordRaw[] = [
@@ -183,11 +184,32 @@ const routes: RouteRecordRaw[] = [
 	{ path: '/:pathMatch(.*)*', redirect: '/' },
 ]
 
+// The shell scrolls, not the window, so vue-router's `savedPosition` is always
+// the top. A page loads its list after it mounts, so Back waits for the height.
+const savedScrollTops = new Map<string, number>()
+let pendingScroll = 0
+
+function scrollShellTo(top: number, giveUpAt = performance.now() + 2000) {
+	cancelAnimationFrame(pendingScroll)
+	const shell = shellScrollContainer.value
+	if (!shell) return
+	if (shell.scrollHeight - shell.clientHeight < top && performance.now() < giveUpAt) {
+		pendingScroll = requestAnimationFrame(() => scrollShellTo(top, giveUpAt))
+	} else {
+		shell.scrollTop = top
+	}
+}
+
 const router = createRouter({
 	// The app is mounted at /dashboard by `website_route_rules`.
 	history: createWebHistory('/dashboard'),
 	routes,
-	scrollBehavior: () => ({ top: 0 }),
+	scrollBehavior: (to, _from, savedPosition) =>
+		scrollShellTo(savedPosition ? (savedScrollTops.get(to.fullPath) ?? 0) : 0),
+})
+
+router.beforeEach((_to, from) => {
+	savedScrollTops.set(from.fullPath, shellScrollContainer.value?.scrollTop ?? 0)
 })
 
 /** Whether a path belongs to the faculty tree. */

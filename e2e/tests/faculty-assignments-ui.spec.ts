@@ -499,6 +499,38 @@ test.describe("Faculty assignment portal", () => {
 		await expect(page.getByText("cat README.txt")).toBeVisible();
 	});
 
+	test("keeps the submission row in view after going back from a zip submission", async ({
+		page,
+		request,
+	}) => {
+		const zip = await createTestAssignment(request, {
+			cohort: cohort.name,
+			submissionType: "ZIP",
+		});
+		const submission = await createTestSubmission(request, {
+			assignment: zip.name,
+			student: student.name,
+		});
+		const uploaded = await uploadFile(request, {
+			fileName: "terminal-assignment.zip",
+			content: Buffer.from(TERMINAL_ASSIGNMENT_ZIP, "base64"),
+			doctype: "CS17 Assignment Submission",
+			docname: submission.name,
+		});
+		await updateDoc(request, "CS17 Assignment Submission", submission.name, {
+			submission_document: uploaded.file_url,
+		});
+
+		await page.setViewportSize({ width: 1280, height: 400 });
+		await page.goto(`/dashboard/faculty/assignments/${zip.name}`);
+		const row = page.locator(LIST_ROW, { hasText: student.full_name! });
+		await row.getByRole("button", { name: "Preview", exact: true }).click();
+		await expect(page).toHaveURL(new RegExp(`/faculty/submissions/${submission.name}$`));
+		await page.goBack();
+
+		await expect(row).toBeInViewport();
+	});
+
 	test("previews a Scratch submission in the read-only editor", async ({ page, request }) => {
 		const scratch = await createTestAssignment(request, {
 			cohort: cohort.name,
