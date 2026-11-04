@@ -116,6 +116,7 @@ export interface CS17Submission {
 	submitted_at: string
 	project?: string | null
 	returned_on?: string | null
+	code?: string | null
 	/** Faculty views only: the raw ToDo assignment JSON array. */
 	_assign?: string | null
 	grade?: CS17Grade | null

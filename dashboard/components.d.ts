@@ -110,6 +110,7 @@ declare module 'vue' {
     SendBackDialog: typeof import('./src/components/faculty/SendBackDialog.vue')['default']
     SettingsDialog: typeof import('./src/components/settings/SettingsDialog.vue')['default']
     SimilarCodeDialog: typeof import('./src/components/faculty/SimilarCodeDialog.vue')['default']
+    SolutionCompareDialog: typeof import('./src/components/python/SolutionCompareDialog.vue')['default']
     SolutionsCard: typeof import('./src/components/faculty/SolutionsCard.vue')['default']
     SolutionsDialog: typeof import('./src/components/faculty/SolutionsDialog.vue')['default']
     SolutionTabs: typeof import('./src/components/python/SolutionTabs.vue')['default']

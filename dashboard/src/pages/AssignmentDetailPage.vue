@@ -40,8 +40,22 @@
 					<ClassmateReviews :assignment="assignment.name" class="mt-6" />
 				</template>
 				<section v-if="assignment.solutions?.length" class="mt-6">
-					<h2 class="text-base-medium text-ink-gray-8">Solutions</h2>
+					<div class="flex flex-wrap items-center justify-between gap-2">
+						<h2 class="text-base-medium text-ink-gray-8">Solutions</h2>
+						<Button
+							v-if="submission?.code"
+							label="Compare with my code"
+							icon-left="lucide-columns-2"
+							@click="compareOpen = true"
+						/>
+					</div>
 					<SolutionTabs class="mt-2" :solutions="assignment.solutions" />
+					<SolutionCompareDialog
+						v-if="submission?.code"
+						v-model:open="compareOpen"
+						:code="submission.code"
+						:solutions="assignment.solutions"
+					/>
 				</section>
 				<section v-if="revisions.data?.length" class="mt-6">
 					<h2 class="text-base-medium text-ink-gray-8">Earlier attempts</h2>
@@ -228,6 +242,7 @@ import LoadError from '@/components/common/LoadError.vue'
 import MarkdownText from '@/components/common/MarkdownText.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import SolutionTabs from '@/components/python/SolutionTabs.vue'
+import SolutionCompareDialog from '@/components/python/SolutionCompareDialog.vue'
 import AnswersDialog from '@/components/answers/AnswersDialog.vue'
 import SubmissionRevisions from '@/components/assignments/SubmissionRevisions.vue'
 import SubmitAssignmentDialog from '@/components/assignments/SubmitAssignmentDialog.vue'
@@ -278,6 +293,7 @@ const submissions = useList<CS17Submission>({
 		'submission_url',
 		'project',
 		'returned_on',
+		'code',
 	],
 	filters: () => ({ student: profile.value?.name ?? '', assignment: props.assignmentId }),
 	limit: 1,
@@ -369,6 +385,7 @@ const evaluationType = computed(() =>
 
 const submitOpen = ref(false)
 const answersOpen = ref(false)
+const compareOpen = ref(false)
 
 const myAnswers = useCall<
 	{ answers: StudentAnswer[]; summary: AnswerSummary[]; note: string } | null,
