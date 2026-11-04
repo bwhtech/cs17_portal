@@ -389,7 +389,16 @@ def _attach_grades(submissions: list) -> None:
 	grades = frappe.get_all(
 		"CS17 Assignment Grade",
 		filters=[["submission", "in", names]],
-		fields=["name", "submission", "grade", "marks_obtained", "remarks", "is_published", "published_on"],
+		fields=[
+			"name",
+			"submission",
+			"grade",
+			"marks_obtained",
+			"remarks",
+			"voice_remark",
+			"is_published",
+			"published_on",
+		],
 	)
 	grade_by_submission = {grade["submission"]: grade for grade in grades}
 	for submission in submissions:
