@@ -261,12 +261,15 @@ def resolve_submission(assignment: str, file_url: str, submission: str | None = 
 	return {"submission_document": file_url, "submission_url": None}
 
 
-# upload_file lets users without desk access upload only a fixed list of types, and archives are not on it.
+# upload_file lets users without desk access upload only a fixed list of types,
+# and many submission files are not on it.
 @frappe.whitelist(methods=["POST"])
-def upload_archive() -> Document:
+def upload_submission_file(assignment: str) -> Document:
 	require_current_student()
 	file = frappe.request.files["file"]
-	validate_submission_value("ZIP", file.filename)
+	validate_submission_value(
+		frappe.db.get_value("CS17 Assignment", assignment, "submission_type"), file.filename
+	)
 	return frappe.get_doc(
 		{"doctype": "File", "file_name": file.filename, "is_private": 1, "content": file.stream.read()}
 	).insert(ignore_permissions=True)

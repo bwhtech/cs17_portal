@@ -12,7 +12,7 @@ from cs17_portal.api import is_assignment_closed
 from cs17_portal.cs17_portal.doctype.cs17_assignment_submission.cs17_assignment_submission import (
 	edit_submission,
 	submit_assignment,
-	upload_archive,
+	upload_submission_file,
 	validate_submission_value,
 )
 from cs17_portal.tests.test_api import (
@@ -258,16 +258,18 @@ class TestSubmissionFileOwnership(FrappeTestCase):
 		self.assertRaises(frappe.ValidationError, edit_submission, submission, file.file_url.upper())
 
 
-class TestUploadArchive(FrappeTestCase):
+class TestUploadSubmissionFile(FrappeTestCase):
 	def test_student_uploads_a_zip(self):
+		cohort = make_cohort("C480TEST")
 		student_user = make_user("student480@cs17test.com")
-		make_profile("Student", make_cohort("C480TEST"), student_user, "Student 480")
+		make_profile("Student", cohort, student_user, "Student 480")
+		assignment = make_assignment(cohort, "ZIP Task 480", "ZIP", 20)
 		self.addCleanup(frappe.set_user, "Administrator")
 		frappe.set_user(student_user)
 		self.addCleanup(delattr, frappe.local, "request")
 		set_request(method="POST", data={"file": (io.BytesIO(b"PK\x05\x06" + bytes(18)), "work-480.zip")})
 
-		file = upload_archive()
+		file = upload_submission_file(assignment)
 
 		self.assertEqual((file.owner, file.is_private), (student_user, 1))
 
