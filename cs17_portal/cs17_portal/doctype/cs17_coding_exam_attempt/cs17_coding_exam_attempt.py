@@ -58,7 +58,7 @@ class CS17CodingExamAttempt(Document):
 
 	def finish(self):
 		from cs17_portal.api import ASSIGNMENT_SUBMISSION, _comparable_lines, submit_python_code
-		from cs17_portal.coding_exam import get_projects
+		from cs17_portal.coding_exam import get_projects, question_state
 
 		assignments = frappe.get_all(
 			"CS17 Coding Exam Question",
@@ -66,14 +66,17 @@ class CS17CodingExamAttempt(Document):
 			pluck="assignment",
 			order_by="idx asc",
 		)
-		submitted_code = dict(
-			frappe.get_all(
+		reopened_on = {row.assignment: row.reopened_on for row in self.questions}
+		submitted_code = {
+			submission.assignment: submission.code
+			for submission in frappe.get_all(
 				ASSIGNMENT_SUBMISSION,
 				filters={"student": self.student, "assignment": ["in", assignments]},
-				fields=["assignment", "code"],
-				as_list=True,
+				fields=["assignment", "code", "submitted_at"],
 			)
-		)
+			if question_state(submission.submitted_at, None, reopened_on.get(submission.assignment), True)
+			== "submitted"
+		}
 		starter_lines = {
 			assignment: _comparable_lines(code or "")
 			for assignment, code in frappe.get_all(
