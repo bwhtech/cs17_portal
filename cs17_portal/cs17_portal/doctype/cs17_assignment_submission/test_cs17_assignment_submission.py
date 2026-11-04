@@ -273,6 +273,22 @@ class TestUploadSubmissionFile(FrappeTestCase):
 
 		self.assertEqual((file.owner, file.is_private), (student_user, 1))
 
+	def test_student_uploads_a_webp_image(self):
+		cohort = make_cohort("C481TEST")
+		student_user = make_user("student481@cs17test.com")
+		make_profile("Student", cohort, student_user, "Student 481")
+		assignment = make_assignment(cohort, "Image Task 481", "Image", 20)
+		self.addCleanup(frappe.set_user, "Administrator")
+		frappe.set_user(student_user)
+		self.addCleanup(delattr, frappe.local, "request")
+		set_request(
+			method="POST", data={"file": (io.BytesIO(b"RIFF\x04\x00\x00\x00WEBP"), "drawing-481.webp")}
+		)
+
+		file = upload_submission_file(assignment)
+
+		self.assertEqual((file.owner, file.is_private), (student_user, 1))
+
 
 class TestGradePastItsPublishTime(FrappeTestCase):
 	@classmethod
