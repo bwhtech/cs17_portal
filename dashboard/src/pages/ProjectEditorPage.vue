@@ -88,7 +88,7 @@
 			v-model:open="submitOpen"
 			:project="id"
 			project-type="Scratch"
-			:preset-assignment="presetAssignment ?? project.data?.assignment ?? null"
+			:preset-assignment="presetAssignment"
 		/>
 	</div>
 </template>
@@ -140,8 +140,6 @@ useZenOnMount()
 
 const frame = useTemplateRef<InstanceType<typeof ScratchFrame>>('frame')
 
-const presetAssignment = computed(() => (route.query.assignment as string) || null)
-
 const project = useCall<CS17Project, { project: string }>({
 	url: '/api/v2/method/cs17_portal.api.get_project',
 	params: () => ({ project: props.id }),
@@ -151,12 +149,17 @@ const openFailed = ref(false)
 const failed = computed(() => (Boolean(project.error) && !project.data) || openFailed.value)
 const title = computed(() => project.data?.project_title ?? 'Project')
 
+const presetAssignment = computed(
+	() => (route.query.assignment as string) || project.data?.assignment || null,
+)
+
 // Whether the assignment this project was opened for still accepts revisions.
 // Only asked when there is an assignment to ask about.
 const assignmentClosed = useCall<boolean, { assignment: string }>({
 	url: '/api/v2/method/cs17_portal.api.is_assignment_closed',
 	params: () => ({ assignment: presetAssignment.value ?? '' }),
 	immediate: Boolean(presetAssignment.value),
+	refetch: true,
 })
 
 const readOnly = computed(() => route.query.readonly === '1' || assignmentClosed.data === true)
