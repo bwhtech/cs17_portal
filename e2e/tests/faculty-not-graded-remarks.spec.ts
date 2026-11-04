@@ -12,7 +12,7 @@ import {
 	deleteTestProfile,
 	ensureSessionFaculty,
 } from "../helpers/cs17";
-import { deleteDoc } from "../helpers/frappe";
+import { callMethod, deleteDoc } from "../helpers/frappe";
 
 const LIST_ROW = '[data-slot="list-row"]';
 const REMARKS = "Good use of loops. Name your variables after what they hold.";
@@ -54,6 +54,25 @@ test.describe("Remarks on Not Graded work", () => {
 		await page.getByRole("button", { name: "Save remarks" }).click();
 
 		await expect(row.getByText("Published", { exact: true })).toBeVisible();
+	});
+
+	test("saves with only a voice note from the assignment page", async ({ page, request }) => {
+		const assignment = await createTestAssignment(request, { cohort: cohort.name });
+		const submission = await createTestSubmission(request, {
+			assignment: assignment.name,
+			student: student.name,
+		});
+		await callMethod(request, "cs17_portal.api.save_grade", {
+			submission: submission.name,
+			voice_remark: "data:audio/webm;codecs=opus;base64,R0tFQkE=",
+		});
+		const row = page.locator(LIST_ROW, { hasText: student.full_name });
+
+		await page.goto(`/dashboard/faculty/assignments/${assignment.name}`);
+		await row.getByRole("button", { name: "Edit remarks" }).click();
+		await page.getByRole("button", { name: "Save remarks" }).click();
+
+		await expect(page.getByRole("dialog")).toBeHidden();
 	});
 
 	test("saves remarks from the grading page", async ({ page, request }) => {

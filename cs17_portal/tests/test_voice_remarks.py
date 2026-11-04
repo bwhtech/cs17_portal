@@ -27,9 +27,11 @@ class TestVoiceRemarks(FrappeTestCase):
 	def setUp(self):
 		self.addCleanup(frappe.set_user, "Administrator")
 		frappe.set_user(self.faculty_user)
-		assignment = make_assignment(self.cohort, "Loops practice", "PDF", 0)
-		frappe.db.set_value("CS17 Assignment", assignment, {"assignment_type": "Not Graded", "remarks": ""})
-		self.submission = make_submission(assignment, self.student, "Aarav Sharma", "Loops practice")
+		self.assignment = make_assignment(self.cohort, "Loops practice", "PDF", 0)
+		frappe.db.set_value(
+			"CS17 Assignment", self.assignment, {"assignment_type": "Not Graded", "remarks": ""}
+		)
+		self.submission = make_submission(self.assignment, self.student, "Aarav Sharma", "Loops practice")
 
 	def test_a_voice_remark_is_stored_as_a_private_file_on_the_grade(self):
 		grade = api.save_grade(self.submission, remarks="Good use of loops.", voice_remark=VOICE_REMARK)
@@ -68,6 +70,12 @@ class TestVoiceRemarks(FrappeTestCase):
 		grade = api.save_grade(self.submission, remarks="Check the 0 case.")
 
 		self.assertEqual(grade["voice_remark"], saved)
+
+	def test_the_assignment_page_lists_the_voice_remark_with_the_grade(self):
+		saved = api.save_grade(self.submission, voice_remark=VOICE_REMARK)["voice_remark"]
+
+		submission = api.get_assignment_submissions(self.assignment)["submissions"][0]
+		self.assertEqual(submission.grade.voice_remark, saved)
 
 	def test_only_the_student_who_owns_the_submission_can_fetch_the_voice_remark(self):
 		api.save_grade(self.submission, voice_remark=VOICE_REMARK)
