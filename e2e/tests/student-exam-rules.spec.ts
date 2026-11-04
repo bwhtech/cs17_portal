@@ -167,6 +167,20 @@ test.describe("Student exam rules", () => {
 		expect(events("paste_blocked")).toEqual([]);
 	});
 
+	test("takes a paste of text copied from the question", async ({ page }) => {
+		const events = await mockExam(page, () =>
+			codingExam({ paste_rule: "Block outside code" })
+		);
+
+		await page.goto(`/dashboard/exams/${EXAM}`);
+		await page.getByText("Print the numbers 1 to 5.").click({ clickCount: 3 });
+		await page.keyboard.press("ControlOrMeta+c");
+		await paste(page, "Print the numbers 1 to 5.\n");
+
+		await expect(page.locator(".cm-content")).toContainText("Print the numbers 1 to 5.");
+		expect(events("paste_blocked")).toEqual([]);
+	});
+
 	test("logs a paste from outside with its line count", async ({ page }) => {
 		const events = await mockExam(page, () => codingExam({ paste_rule: "Log" }));
 
