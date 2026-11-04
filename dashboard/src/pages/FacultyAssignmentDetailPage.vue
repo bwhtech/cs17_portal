@@ -80,6 +80,12 @@
 				@changed="answerSheet.reload()"
 			/>
 
+			<SolutionsCard
+				v-if="assignmentDetails"
+				:assignment="assignmentDetails"
+				@changed="assignmentTests.reload()"
+			/>
+
 			<section class="space-y-3">
 				<div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
 					<h2 class="text-lg font-semibold text-ink-gray-8">
@@ -362,6 +368,7 @@ import GradeSubmissionDialog from '@/components/faculty/GradeSubmissionDialog.vu
 import PeerReviewsDialog from '@/components/faculty/PeerReviewsDialog.vue'
 import SendBackDialog from '@/components/faculty/SendBackDialog.vue'
 import SimilarCodeDialog from '@/components/faculty/SimilarCodeDialog.vue'
+import SolutionsCard from '@/components/faculty/SolutionsCard.vue'
 import SubmissionAssignees from '@/components/faculty/SubmissionAssignees.vue'
 import SubmissionBulkActions from '@/components/faculty/SubmissionBulkActions.vue'
 import TestScoreBadge from '@/components/faculty/TestScoreBadge.vue'
@@ -471,6 +478,10 @@ watch(
 			assignmentTests.reload()
 		}
 	},
+)
+
+const assignmentDetails = computed(() =>
+	assignmentTests.data?.name === assignmentId.value ? assignmentTests.data : null,
 )
 
 const canRunTests = computed(

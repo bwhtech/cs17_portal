@@ -62,6 +62,8 @@ export interface CS17Assignment {
 	test_cases?: PythonTestCase[]
 	sample_tests?: PythonTestCase[]
 	hidden_test_count?: number
+	solutions?: PythonSolution[]
+	show_solutions?: Bool
 	watch_tab_switches?: Bool
 	time_limit?: number
 	attempts_allowed?: number
@@ -81,6 +83,12 @@ export interface PythonTestCase {
 	input: string
 	expected_output: string
 	is_hidden?: Bool
+}
+
+/** `CS17 Python Solution`. */
+export interface PythonSolution {
+	label: string
+	code: string
 }
 
 /** `CS17 Code Comment`. */

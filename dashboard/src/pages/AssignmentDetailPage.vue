@@ -39,6 +39,10 @@
 					<PeerReviewCard :assignment="assignment.name" class="mt-6" />
 					<ClassmateReviews :assignment="assignment.name" class="mt-6" />
 				</template>
+				<section v-if="assignment.solutions?.length" class="mt-6">
+					<h2 class="text-base-medium text-ink-gray-8">Solutions</h2>
+					<SolutionTabs class="mt-2" :solutions="assignment.solutions" />
+				</section>
 				<section v-if="revisions.data?.length" class="mt-6">
 					<h2 class="text-base-medium text-ink-gray-8">Earlier attempts</h2>
 					<SubmissionRevisions
@@ -223,6 +227,7 @@ import PageBody from '@/components/common/PageBody.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import MarkdownText from '@/components/common/MarkdownText.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
+import SolutionTabs from '@/components/python/SolutionTabs.vue'
 import AnswersDialog from '@/components/answers/AnswersDialog.vue'
 import SubmissionRevisions from '@/components/assignments/SubmissionRevisions.vue'
 import SubmitAssignmentDialog from '@/components/assignments/SubmitAssignmentDialog.vue'
