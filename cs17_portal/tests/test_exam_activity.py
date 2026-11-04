@@ -4,7 +4,7 @@
 import frappe
 from frappe.sessions import hash_sid
 from frappe.tests.utils import FrappeTestCase
-from frappe.utils import add_to_date, now, now_datetime
+from frappe.utils import add_to_date, format_datetime, now, now_datetime
 
 from cs17_portal import api, coding_exam, exam_activity
 from cs17_portal.tests.test_api import make_cohort, make_profile, make_user
@@ -58,6 +58,30 @@ class TestExamActivity(FrappeTestCase):
 		return frappe.get_all(
 			"CS17 Exam Event", filters={"exam": exam, "kind": kind}, fields=["seconds", "detail"]
 		)
+
+	def save_exam(self, exam: str, question: str, **fields) -> None:
+		frappe.set_user(self.faculty_user)
+		saved = frappe.db.get_value(
+			"CS17 Coding Exam", exam, ["opens_on", "last_start_on", "closes_on"], as_dict=True
+		)
+		coding_exam.save_coding_exam(
+			**{
+				"exam": exam,
+				"title": "Python midterm",
+				"cohort": self.cohort,
+				"duration_minutes": 120,
+				"opens_on": str(saved.opens_on),
+				"last_start_on": str(saved.last_start_on),
+				"closes_on": str(saved.closes_on),
+				"question_order": "Any order",
+				"questions": [{"assignment": question, "marks": 10}],
+				"is_published": 1,
+				**fields,
+			}
+		)
+
+	def changes(self, exam: str) -> list:
+		return frappe.get_all("CS17 Coding Exam Change", filters={"exam": exam}, pluck="change")
 
 	def test_a_tab_leave_gets_its_seconds_on_return(self):
 		exam, _ = self.start_exam()
@@ -184,6 +208,25 @@ class TestExamActivity(FrappeTestCase):
 		)
 
 		self.assertEqual(frappe.db.get_value("CS17 Coding Exam", exam, "require_fullscreen"), 1)
+
+	def test_saving_the_exam_with_a_new_close_time_logs_it(self):
+		exam, question = self.start_exam()
+		closes_on = from_now(hours=4)
+		self.save_exam(exam, question, closes_on=closes_on)
+
+		self.assertEqual(self.changes(exam), [f"Moved the close time to {format_datetime(closes_on)}"])
+
+	def test_saving_the_exam_without_a_change_logs_nothing(self):
+		exam, question = self.start_exam()
+		self.save_exam(exam, question)
+
+		self.assertEqual(self.changes(exam), [])
+
+	def test_saving_the_exam_with_a_new_rule_logs_it(self):
+		exam, question = self.start_exam()
+		self.save_exam(exam, question, require_fullscreen=1)
+
+		self.assertEqual(self.changes(exam), ["Changed Require Full Screen to Yes"])
 
 	def test_an_unknown_alert_kind_is_refused(self):
 		self.assertRaisesRegex(
