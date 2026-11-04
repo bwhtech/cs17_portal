@@ -1,29 +1,24 @@
 <template>
-	<section class="space-y-3 rounded-4 border border-outline-gray-1 bg-surface-base p-4">
-		<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-			<div class="min-w-0 space-y-1">
-				<h2 class="text-base font-medium text-ink-gray-8">Solutions</h2>
-				<p v-if="!solutions.length" class="text-p-sm text-ink-gray-5">
-					Add one or more ways to solve this program.
-				</p>
-			</div>
-
-			<div class="flex shrink-0 flex-wrap items-center gap-3">
+	<section class="rounded-4 border border-outline-gray-1 bg-surface-base px-4 py-1">
+		<CollapsibleSection v-if="solutions.length" label="Solutions" :count="solutions.length">
+			<template #actions>
 				<Switch
-					v-if="solutions.length"
 					label="Show to students"
 					:model-value="Boolean(assignment.show_solutions)"
 					@update:model-value="setShown"
 				/>
-				<Button
-					:icon-left="solutions.length ? 'lucide-pencil' : 'lucide-plus'"
-					:label="solutions.length ? 'Edit' : 'Add solutions'"
-					@click="editOpen = true"
-				/>
-			</div>
-		</div>
+				<Button icon-left="lucide-pencil" label="Edit" @click="editOpen = true" />
+			</template>
+			<SolutionTabs class="pb-3" :solutions="solutions" />
+		</CollapsibleSection>
 
-		<SolutionTabs v-if="solutions.length" :solutions="solutions" />
+		<div v-else class="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+			<div class="min-w-0 space-y-1">
+				<h2 class="text-base font-medium text-ink-gray-8">Solutions</h2>
+				<p class="text-p-sm text-ink-gray-5">Add one or more ways to solve this program.</p>
+			</div>
+			<Button icon-left="lucide-plus" label="Add solutions" @click="editOpen = true" />
+		</div>
 
 		<SolutionsDialog
 			v-if="editOpen"
@@ -37,6 +32,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Button, Switch, toast, useCall } from 'frappe-ui'
+import CollapsibleSection from '@/components/common/CollapsibleSection.vue'
 import SolutionsDialog from '@/components/faculty/SolutionsDialog.vue'
 import SolutionTabs from '@/components/python/SolutionTabs.vue'
 import { frappeErrorMessage } from '@/lib/frappeError'

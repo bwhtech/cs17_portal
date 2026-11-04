@@ -74,6 +74,7 @@
 			</div>
 
 			<AnswerSheetCard
+				v-if="assignment.submission_type !== 'Python'"
 				:assignment="assignment.name"
 				:sheet="sheet"
 				:show-answers="answerSheet.data?.show_answers ?? false"
