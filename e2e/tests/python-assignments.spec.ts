@@ -11,12 +11,13 @@ import {
 	deleteTestUser,
 	ensureSessionFaculty,
 } from "../helpers/cs17";
-import { createDoc, deleteDoc, getList } from "../helpers/frappe";
+import { createDoc, deleteDoc, getList, updateDoc } from "../helpers/frappe";
 
 const STARTER_CODE = "name = input()";
 const CORRECT_PROGRAM = 'name = input()\nprint(f"Hello, {name}!")';
 
 let cohort: string;
+let student: string;
 
 function createPythonAssignment(
 	request: APIRequestContext,
@@ -78,7 +79,9 @@ test.describe("Python assignments", () => {
 	const faculties: TestFaculty[] = [];
 
 	test.beforeAll(async ({ request }) => {
-		cohort = JSON.parse(fs.readFileSync("e2e/.auth/student-info.json", "utf-8")).cohort;
+		({ cohort, profileName: student } = JSON.parse(
+			fs.readFileSync("e2e/.auth/student-info.json", "utf-8")
+		));
 		await ensureSessionFaculty(request);
 	});
 
@@ -296,5 +299,35 @@ test.describe("Python assignments", () => {
 			}
 		);
 		expect(submissions[0]?.code).toBe("name = input(");
+	});
+
+	test("compares the submitted program with a solution side by side", async ({
+		page,
+		request,
+	}) => {
+		const assignment = await createPythonAssignment(request);
+		await updateDoc(request, "CS17 Assignment", assignment.name, {
+			solutions: [
+				{ label: "Join with +", code: 'name = input()\nprint("Hello, " + name + "!")' },
+			],
+			show_solutions: 1,
+		});
+		await createDoc(request, "CS17 Assignment Submission", {
+			assignment: assignment.name,
+			student,
+			code: CORRECT_PROGRAM,
+			submitted_at: "2026-01-01 00:00:00",
+		});
+
+		await page.goto(`/dashboard/assignments/${assignment.name}/submission`);
+		await page.getByRole("button", { name: "Compare with my code" }).click();
+
+		const dialog = page.getByRole("dialog");
+		await expect(dialog.getByRole("region", { name: "Your code" })).toContainText(
+			'print(f"Hello, {name}!")'
+		);
+		await expect(dialog.getByRole("region", { name: "Solution" })).toContainText(
+			'print("Hello, " + name + "!")'
+		);
 	});
 });
