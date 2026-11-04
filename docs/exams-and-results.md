@@ -122,6 +122,11 @@ So the same pattern works for a 100 mark paper and a 50 mark paper. Each maximum
 decimals, except the one with the largest weightage, which takes whatever is left over, so
 the components always add up to the subject max marks.
 
+A component may name a **section**, e.g. `Python`, `Terminal` and `Viva` under `Practical`. The
+result card lists each subject's components under it when there is more than one, and the
+components of a section add up under the section's name. A section only groups what is shown, so
+it can change after marks are recorded.
+
 ### CS17 Subject Marks (+ CS17 Subject Marks Component)
 One student's component marks for one subject in one exam. Named `SM-{exam}-###`. The exam's
 subject row supplies the max marks, the pattern and the grading scale; the components are rebuilt

@@ -258,7 +258,7 @@
 								</div>
 
 								<div
-									v-for="column in fieldColumns"
+									v-for="column in cardFields(row)"
 									:key="column.header"
 									class="flex items-center justify-between gap-4 text-base"
 								>
@@ -334,6 +334,8 @@ export interface Column {
 	/** A grid track in rem, e.g. `'8rem'` or `'minmax(6rem,1fr)'`. Defaults to an equal share. */
 	width?: string
 	align?: 'left' | 'right'
+	/** On a card, a row without a `key` field leaves this label/value row out. */
+	optional?: boolean
 }
 
 const props = withDefaults(
@@ -426,6 +428,10 @@ const primaryColumn = computed(() => props.columns.find((c) => c.variant === 'pr
 const divider = computed(() => (avatarColumn.value ? 'inset' : 'full'))
 const fieldColumns = computed(() => props.columns.filter((c) => (c.variant ?? 'field') === 'field'))
 const actionColumns = computed(() => props.columns.filter((c) => c.variant === 'actions'))
+
+function cardFields(row: T) {
+	return fieldColumns.value.filter((column) => !column.optional || column.key in (row as object))
+}
 
 const selectableRows = computed(() => props.rows.filter(props.isRowSelectable))
 

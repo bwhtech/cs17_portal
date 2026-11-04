@@ -1616,6 +1616,7 @@ def get_student_result(result: str) -> dict:
 
 
 def _result_card(doc: "Document") -> dict:
+	parts = _subject_parts(doc.exam, doc.student)
 	return {
 		"name": doc.name,
 		"exam": doc.exam,
@@ -1640,6 +1641,7 @@ def _result_card(doc: "Document") -> dict:
 				"grade": row.grade,
 				"is_pass": row.is_pass,
 				"remarks": row.remarks,
+				"parts": parts.get(row.subject, []),
 			}
 			for row in doc.scores
 		],
@@ -1659,6 +1661,49 @@ def _result_card(doc: "Document") -> dict:
 			for row in doc.assignments
 		],
 	}
+
+
+def _subject_parts(exam: str, student: str) -> dict[str, list[dict]]:
+	marks = {
+		row.name: row
+		for row in frappe.get_all(
+			"CS17 Subject Marks",
+			filters={"exam": exam, "student": student},
+			fields=["name", "subject", "subject_pattern"],
+		)
+	}
+	if not marks:
+		return {}
+	patterns = list({row.subject_pattern for row in marks.values() if row.subject_pattern})
+	sections = (
+		{
+			(row.parent, row.component): row.section
+			for row in frappe.get_all(
+				"CS17 Subject Pattern Component",
+				filters={"parent": ["in", patterns], "parenttype": "CS17 Subject Pattern"},
+				fields=["parent", "component", "section"],
+			)
+		}
+		if patterns
+		else {}
+	)
+	parts = {}
+	for row in frappe.get_all(
+		"CS17 Subject Marks Component",
+		filters={"parent": ["in", list(marks)], "parenttype": "CS17 Subject Marks"},
+		fields=["parent", "component", "marks_obtained", "max_marks"],
+		order_by="idx asc",
+	):
+		subject_marks = marks[row.parent]
+		parts.setdefault(subject_marks.subject, []).append(
+			{
+				"component": row.component,
+				"section": sections.get((subject_marks.subject_pattern, row.component)) or None,
+				"marks_obtained": row.marks_obtained,
+				"max_marks": row.max_marks,
+			}
+		)
+	return parts
 
 
 def _attach_exam_names(results: list) -> None:

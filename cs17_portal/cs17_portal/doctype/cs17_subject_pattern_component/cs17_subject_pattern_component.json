@@ -2,12 +2,13 @@
  "actions": [],
  "allow_bulk_edit": 1,
  "allow_rename": 1,
- "creation": "2026-08-15 00:00:00.000000",
+ "creation": "2026-08-15 00:00:00",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "component",
+  "section",
   "weightage",
   "description"
  ],
@@ -34,13 +35,20 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Description"
+  },
+  {
+   "description": "Parts with the same section add up under it on the result card, for example Practical.",
+   "fieldname": "section",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Section"
   }
  ],
  "grid_page_length": 50,
- "index_web_pages_for_search": 1,
  "istable": 1,
+ "link_display_mode": "Search",
  "links": [],
- "modified": "2026-08-15 00:00:00.000000",
+ "modified": "2026-11-04 20:44:55.118917",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Subject Pattern Component",
