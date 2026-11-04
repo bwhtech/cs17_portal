@@ -289,6 +289,17 @@ class TestUploadSubmissionFile(FrappeTestCase):
 
 		self.assertEqual((file.owner, file.is_private), (student_user, 1))
 
+	def test_student_cannot_upload_to_another_cohorts_assignment(self):
+		student_user = make_user("student482@cs17test.com")
+		make_profile("Student", make_cohort("C482TEST"), student_user, "Student 482")
+		assignment = make_assignment(make_cohort("C483TEST"), "Notes Task 483", "Any", 20)
+		self.addCleanup(frappe.set_user, "Administrator")
+		frappe.set_user(student_user)
+		self.addCleanup(delattr, frappe.local, "request")
+		set_request(method="POST", data={"file": (io.BytesIO(b"notes 482"), "notes-482.txt")})
+
+		self.assertRaises(frappe.ValidationError, upload_submission_file, assignment)
+
 
 class TestGradePastItsPublishTime(FrappeTestCase):
 	@classmethod
