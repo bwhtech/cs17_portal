@@ -39,17 +39,18 @@
 					<PeerReviewCard :assignment="assignment.name" class="mt-6" />
 					<ClassmateReviews :assignment="assignment.name" class="mt-6" />
 				</template>
-				<section v-if="assignment.solutions?.length" class="mt-6">
-					<div class="flex flex-wrap items-center justify-between gap-2">
-						<h2 class="text-base-medium text-ink-gray-8">Solutions</h2>
-						<Button
-							v-if="submission?.code"
-							label="Compare with my code"
-							icon-left="lucide-columns-2"
-							@click="compareOpen = true"
-						/>
-					</div>
-					<SolutionTabs class="mt-2" :solutions="assignment.solutions" />
+				<section v-if="assignment.solutions?.length" class="mt-4">
+					<CollapsibleSection label="Solutions" :count="assignment.solutions.length">
+						<template #actions>
+							<Button
+								v-if="submission?.code"
+								label="Compare with my code"
+								icon-left="lucide-columns-2"
+								@click="compareOpen = true"
+							/>
+						</template>
+						<SolutionTabs :solutions="assignment.solutions" />
+					</CollapsibleSection>
 					<SolutionCompareDialog
 						v-if="submission?.code"
 						v-model:open="compareOpen"
@@ -243,6 +244,7 @@ import MarkdownText from '@/components/common/MarkdownText.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import SolutionTabs from '@/components/python/SolutionTabs.vue'
 import SolutionCompareDialog from '@/components/python/SolutionCompareDialog.vue'
+import CollapsibleSection from '@/components/common/CollapsibleSection.vue'
 import AnswersDialog from '@/components/answers/AnswersDialog.vue'
 import SubmissionRevisions from '@/components/assignments/SubmissionRevisions.vue'
 import SubmitAssignmentDialog from '@/components/assignments/SubmitAssignmentDialog.vue'

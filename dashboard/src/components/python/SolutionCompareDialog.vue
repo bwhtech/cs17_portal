@@ -2,7 +2,7 @@
 	<Dialog
 		:open="open"
 		title="Compare with my code"
-		size="5xl"
+		size="6xl"
 		@update:open="emit('update:open', $event)"
 	>
 		<div class="grid gap-4 md:grid-cols-2">
@@ -10,7 +10,7 @@
 				<div class="flex h-8 items-center">
 					<h3 class="text-base-medium text-ink-gray-8">Your code</h3>
 				</div>
-				<div class="mt-2 max-h-[60vh] overflow-auto rounded-3">
+				<div class="mt-2 max-h-[60vh] overflow-auto rounded-3 md:h-[470px] md:max-h-none">
 					<PythonEditor :model-value="code" read-only :extensions="wrapLines" />
 				</div>
 			</section>
@@ -19,14 +19,14 @@
 					<h3 class="text-base-medium text-ink-gray-8">Solution</h3>
 					<Select
 						v-if="solutions.length > 1"
-						class="w-48"
+						class="w-64 max-w-[60%]"
 						aria-label="Way to solve it"
 						:model-value="String(picked)"
 						:options="options"
 						@update:model-value="picked = Number($event)"
 					/>
 				</div>
-				<div class="mt-2 max-h-[60vh] overflow-auto rounded-3">
+				<div class="mt-2 max-h-[60vh] overflow-auto rounded-3 md:h-[470px] md:max-h-none">
 					<PythonEditor
 						:model-value="solutions[picked]?.code ?? ''"
 						read-only

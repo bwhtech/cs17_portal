@@ -318,6 +318,7 @@ import RowDragPreview from '@/components/common/RowDragPreview.vue'
 import { List, ListCell, ListHeader, ListHeaderCell, ListRow, ListRows } from 'frappe-ui/list'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useRowDrag } from '@/composables/useRowDrag'
+import { growToContent, releaseHeight, shrinkToZero } from '@/lib/collapse'
 
 export interface Column {
 	/** Column heading, and the label of the field row on mobile. */
@@ -454,24 +455,6 @@ const groups = computed(() => {
 })
 
 const collapsedGroups = defineModel<string[]>('collapsedGroups', { default: () => [] })
-
-function growToContent(el: Element) {
-	const body = el as HTMLElement
-	body.style.height = '0'
-	void body.offsetHeight
-	body.style.height = `${body.scrollHeight}px`
-}
-
-function shrinkToZero(el: Element) {
-	const body = el as HTMLElement
-	body.style.height = `${body.scrollHeight}px`
-	void body.offsetHeight
-	body.style.height = '0'
-}
-
-function releaseHeight(el: Element) {
-	;(el as HTMLElement).style.height = ''
-}
 
 function toggleGroup(label: string) {
 	collapsedGroups.value = collapsedGroups.value.includes(label)

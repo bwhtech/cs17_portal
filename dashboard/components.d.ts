@@ -42,6 +42,7 @@ declare module 'vue' {
     CodeComments: typeof import('./src/components/grading/CodeComments.vue')['default']
     CodeReplay: typeof import('./src/components/grading/CodeReplay.vue')['default']
     CodingExamFormDialog: typeof import('./src/components/exams/faculty/CodingExamFormDialog.vue')['default']
+    CollapsibleSection: typeof import('./src/components/common/CollapsibleSection.vue')['default']
     CopyAssignmentsDialog: typeof import('./src/components/faculty/CopyAssignmentsDialog.vue')['default']
     DataTable: typeof import('./src/components/common/DataTable.vue')['default']
     DeleteAnnouncementDialog: typeof import('./src/components/faculty/DeleteAnnouncementDialog.vue')['default']
