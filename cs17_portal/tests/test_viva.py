@@ -129,6 +129,15 @@ class TestViva(FrappeTestCase):
 		with self.assertRaises(frappe.PermissionError):
 			viva.get_viva(self.viva.name)
 
+	def test_students_whose_user_is_disabled_are_left_out(self):
+		make_profile("Student", self.viva.cohort, make_user("left611@cs17test.com"), "Left 611")
+		frappe.db.set_value("User", "left611@cs17test.com", "enabled", 0)
+
+		self.assertEqual(
+			[row["student"] for row in viva.get_viva(self.viva.name)["students"]], [self.student]
+		)
+		self.assertEqual([row.students for row in viva.get_vivas()], [1])
+
 	def test_sections_must_add_up_to_the_part_marks(self):
 		doc = frappe.copy_doc(self.viva)
 		doc.append(
