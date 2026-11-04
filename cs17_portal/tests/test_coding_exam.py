@@ -205,6 +205,27 @@ class TestCodingExam(FrappeTestCase):
 
 		self.assertRaises(frappe.DoesNotExistError, coding_exam.get_my_coding_exam, exam)
 
+	def test_extra_time_for_everyone_moves_a_close_time_that_would_cut_it_short(self):
+		exam, _ = self.make_exam()
+		self.start(exam)
+		frappe.set_user(self.faculty_user)
+		coding_exam.set_exam_closes_on(exam, from_now(minutes=60))
+		closes_on = get_datetime(frappe.db.get_value("CS17 Coding Exam", exam, "closes_on"))
+		coding_exam.add_exam_time(exam, 10)
+		frappe.set_user(self.student_user)
+
+		self.assertEqual(
+			coding_exam.get_my_coding_exam(exam)["attempt"]["ends_at"], add_to_date(closes_on, minutes=10)
+		)
+
+	def test_extra_time_for_one_student_past_the_close_time_is_refused(self):
+		exam, _ = self.make_exam()
+		self.start(exam)
+		frappe.set_user(self.faculty_user)
+		coding_exam.set_exam_closes_on(exam, from_now(minutes=60))
+
+		self.assertRaises(frappe.ValidationError, coding_exam.add_exam_time, exam, 10, self.student)
+
 	def test_faculty_of_another_cohort_cannot_add_time(self):
 		exam, _ = self.make_exam()
 		frappe.set_user(self.other_faculty_user)
