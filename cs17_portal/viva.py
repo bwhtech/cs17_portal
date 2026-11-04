@@ -4,7 +4,7 @@ from collections import Counter
 import frappe
 from frappe import _
 
-from cs17_portal.api import get_current_faculty
+from cs17_portal.api import get_cohort_students, get_current_faculty
 from cs17_portal.cs17_portal.doctype.cs17_viva.cs17_viva import get_component_max_marks
 
 VIVA = "CS17 Viva"
@@ -23,7 +23,11 @@ def get_vivas() -> list[dict]:
 	students = Counter(
 		frappe.get_all(
 			"CS17 Profile",
-			filters={"profile_type": "Student", "cohort": ("in", list({viva.cohort for viva in vivas}))},
+			filters={
+				"profile_type": "Student",
+				"cohort": ("in", list({viva.cohort for viva in vivas})),
+				"user": ["not in", frappe.get_all("User", filters={"enabled": 0}, pluck="name")],
+			},
 			pluck="cohort",
 		)
 	)
@@ -53,12 +57,7 @@ def get_viva(viva: str) -> dict:
 	for row in marks:
 		marks_by_student.setdefault(row.student, {})[row.question] = row.marks_obtained
 
-	students = frappe.get_all(
-		"CS17 Profile",
-		filters={"profile_type": "Student", "cohort": doc.cohort},
-		fields=["name", "full_name"],
-		order_by="full_name asc",
-	)
+	students = get_cohort_students(doc.cohort)
 	return {
 		"name": doc.name,
 		"exam_name": doc.exam_name,
@@ -79,9 +78,9 @@ def get_viva(viva: str) -> dict:
 		],
 		"students": [
 			{
-				"student": student.name,
+				"student": student.student,
 				"student_name": student.full_name,
-				"marks": marks_by_student.get(student.name, {}),
+				"marks": marks_by_student.get(student.student, {}),
 			}
 			for student in students
 		],

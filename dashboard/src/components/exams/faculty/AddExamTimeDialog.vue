@@ -15,7 +15,7 @@
 				v-model="student"
 				type="select"
 				label="For"
-				description="Students see the new time within a few seconds."
+				description="Students see the new time within a few seconds. Time for everyone moves the close time if it has to."
 				:options="studentOptions"
 			/>
 			<ErrorMessage :message="error" />

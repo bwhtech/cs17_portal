@@ -495,17 +495,31 @@ def get_coding_exam_students(exam: str) -> list:
 
 @frappe.whitelist(methods=["POST"])
 def add_exam_time(exam: str, minutes: int, student: str | None = None) -> None:
-	require_faculty_exam(exam)
+	exam_doc = require_faculty_exam(exam)
 	minutes = cint(minutes)
 	if minutes < 1:
 		frappe.throw(_("Add at least 1 minute."))
 	attempts = unfinished_attempts(exam, student)
 	if not attempts:
 		frappe.throw(_("Nobody is taking this exam right now."))
+	closes_on = get_datetime(exam_doc.closes_on)
+	needed_close = max(
+		add_to_date(current_ends_at(attempt, exam_doc.closes_on), minutes=minutes) for attempt in attempts
+	)
+	if student and needed_close > closes_on:
+		frappe.throw(
+			_("The exam closes at {0}, so this time would be cut short. Move the close time first.").format(
+				format_datetime(closes_on, "MMM d, h:mm a")
+			)
+		)
 	for attempt in attempts:
 		attempt.add_time(minutes)
 	unit = _("minute") if minutes == 1 else _("minutes")
 	log_change(exam, _("Added {0} {1} for {2}").format(minutes, unit, name_or_everyone(student)), student)
+	if needed_close > closes_on:
+		exam_doc.closes_on = needed_close
+		exam_doc.save(ignore_permissions=True)
+		log_change(exam, _("Moved the close time to {0}").format(format_datetime(exam_doc.closes_on)))
 
 
 @frappe.whitelist(methods=["POST"])

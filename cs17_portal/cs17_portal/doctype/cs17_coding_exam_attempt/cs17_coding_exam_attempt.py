@@ -59,7 +59,7 @@ class CS17CodingExamAttempt(Document):
 		self.save(ignore_permissions=True)
 
 	def finish(self):
-		from cs17_portal.api import ASSIGNMENT_SUBMISSION, submit_python_code
+		from cs17_portal.api import ASSIGNMENT_SUBMISSION, _comparable_lines, submit_python_code
 		from cs17_portal.coding_exam import get_projects
 
 		assignments = frappe.get_all(
@@ -76,9 +76,22 @@ class CS17CodingExamAttempt(Document):
 				as_list=True,
 			)
 		)
+		starter_lines = {
+			assignment: _comparable_lines(code or "")
+			for assignment, code in frappe.get_all(
+				"CS17 Assignment",
+				filters={"name": ["in", assignments]},
+				fields=["name", "starter_code"],
+				as_list=True,
+			)
+		}
 		for assignment, project in get_projects(self.student, assignments).items():
 			project_doc = frappe.get_doc("CS17 Project", project)
-			if (project_doc.code or "").strip() and project_doc.code != submitted_code.get(assignment):
+			if (
+				(project_doc.code or "").strip()
+				and project_doc.code != submitted_code.get(assignment)
+				and _comparable_lines(project_doc.code) != starter_lines.get(assignment)
+			):
 				submit_python_code(assignment, self.student, project_doc, ignore_deadline=True)
 		self.finished_on = now_datetime()
 		self.save(ignore_permissions=True)
