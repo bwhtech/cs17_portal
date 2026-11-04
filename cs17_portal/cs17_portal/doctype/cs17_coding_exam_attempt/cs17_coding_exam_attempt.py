@@ -5,6 +5,8 @@ import frappe
 from frappe.model.document import Document
 from frappe.utils import add_to_date, cint, get_datetime, now_datetime, time_diff_in_seconds
 
+FINISH_SUBMIT_SECONDS = 5
+
 
 class CS17CodingExamAttempt(Document):
 	# begin: auto-generated types
@@ -79,4 +81,29 @@ class CS17CodingExamAttempt(Document):
 			if (project_doc.code or "").strip() and project_doc.code != submitted_code.get(assignment):
 				submit_python_code(assignment, self.student, project_doc, ignore_deadline=True)
 		self.finished_on = now_datetime()
+		self.save(ignore_permissions=True)
+
+	def reopen(self, minutes: int):
+		from cs17_portal.api import ASSIGNMENT_SUBMISSION
+		from cs17_portal.coding_exam import is_locked_by_rule, progress_row, question_state
+
+		now = now_datetime()
+		for assignment in frappe.get_all(
+			ASSIGNMENT_SUBMISSION,
+			filters=[
+				["student", "=", self.student],
+				["assignment.coding_exam", "=", self.exam],
+				["submitted_at", ">=", add_to_date(self.finished_on, seconds=-FINISH_SUBMIT_SECONDS)],
+			],
+			pluck="assignment",
+		):
+			step = progress_row(self, assignment)
+			was_skipped = question_state(None, step.skipped_on, step.reopened_on, True) == "skipped"
+			if not (was_skipped or is_locked_by_rule(step)):
+				step.reopened_on = now
+		self.paused_seconds = cint(self.paused_seconds) + cint(
+			time_diff_in_seconds(now, min(get_datetime(self.finished_on), get_datetime(self.ends_at)))
+		)
+		self.extra_minutes = cint(self.extra_minutes) + minutes
+		self.finished_on = None
 		self.save(ignore_permissions=True)
