@@ -25,6 +25,11 @@
 				<FileUploader
 					private
 					:file-types="config.accept"
+					:upload-endpoint="
+						submissionType === 'ZIP'
+							? `/api/method/${SUBMISSION_METHOD}.upload_archive`
+							: undefined
+					"
 					:validate-file="validateFile"
 					@success="onUploaded"
 					@failure="onUploadFailed"
