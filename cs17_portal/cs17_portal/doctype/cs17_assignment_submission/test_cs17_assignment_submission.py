@@ -12,7 +12,7 @@ from cs17_portal.api import is_assignment_closed
 from cs17_portal.cs17_portal.doctype.cs17_assignment_submission.cs17_assignment_submission import (
 	edit_submission,
 	submit_assignment,
-	upload_archive,
+	upload_submission_file,
 	validate_submission_value,
 )
 from cs17_portal.tests.test_api import (
@@ -258,18 +258,47 @@ class TestSubmissionFileOwnership(FrappeTestCase):
 		self.assertRaises(frappe.ValidationError, edit_submission, submission, file.file_url.upper())
 
 
-class TestUploadArchive(FrappeTestCase):
+class TestUploadSubmissionFile(FrappeTestCase):
 	def test_student_uploads_a_zip(self):
+		cohort = make_cohort("C480TEST")
 		student_user = make_user("student480@cs17test.com")
-		make_profile("Student", make_cohort("C480TEST"), student_user, "Student 480")
+		make_profile("Student", cohort, student_user, "Student 480")
+		assignment = make_assignment(cohort, "ZIP Task 480", "ZIP", 20)
 		self.addCleanup(frappe.set_user, "Administrator")
 		frappe.set_user(student_user)
 		self.addCleanup(delattr, frappe.local, "request")
 		set_request(method="POST", data={"file": (io.BytesIO(b"PK\x05\x06" + bytes(18)), "work-480.zip")})
 
-		file = upload_archive()
+		file = upload_submission_file(assignment)
 
 		self.assertEqual((file.owner, file.is_private), (student_user, 1))
+
+	def test_student_uploads_a_webp_image(self):
+		cohort = make_cohort("C481TEST")
+		student_user = make_user("student481@cs17test.com")
+		make_profile("Student", cohort, student_user, "Student 481")
+		assignment = make_assignment(cohort, "Image Task 481", "Image", 20)
+		self.addCleanup(frappe.set_user, "Administrator")
+		frappe.set_user(student_user)
+		self.addCleanup(delattr, frappe.local, "request")
+		set_request(
+			method="POST", data={"file": (io.BytesIO(b"RIFF\x04\x00\x00\x00WEBP"), "drawing-481.webp")}
+		)
+
+		file = upload_submission_file(assignment)
+
+		self.assertEqual((file.owner, file.is_private), (student_user, 1))
+
+	def test_student_cannot_upload_to_another_cohorts_assignment(self):
+		student_user = make_user("student482@cs17test.com")
+		make_profile("Student", make_cohort("C482TEST"), student_user, "Student 482")
+		assignment = make_assignment(make_cohort("C483TEST"), "Notes Task 483", "Any", 20)
+		self.addCleanup(frappe.set_user, "Administrator")
+		frappe.set_user(student_user)
+		self.addCleanup(delattr, frappe.local, "request")
+		set_request(method="POST", data={"file": (io.BytesIO(b"notes 482"), "notes-482.txt")})
+
+		self.assertRaises(frappe.ValidationError, upload_submission_file, assignment)
 
 
 class TestGradePastItsPublishTime(FrappeTestCase):

@@ -25,11 +25,7 @@
 				<FileUploader
 					private
 					:file-types="config.accept"
-					:upload-endpoint="
-						submissionType === 'ZIP'
-							? `/api/method/${SUBMISSION_METHOD}.upload_archive`
-							: undefined
-					"
+					:upload-endpoint="uploadEndpoint"
 					:validate-file="validateFile"
 					@success="onUploaded"
 					@failure="onUploadFailed"
@@ -109,6 +105,10 @@ const submissionType = computed(() => props.assignment.submission_type ?? 'Any')
 const config = computed(() => getSubmissionConfig(submissionType.value))
 const isUrl = computed(() => submissionType.value === 'URL')
 const isEdit = computed(() => Boolean(props.existingSubmission))
+const uploadEndpoint = computed(
+	() =>
+		`/api/method/${SUBMISSION_METHOD}.upload_submission_file?${new URLSearchParams({ assignment: props.assignment.name })}`,
+)
 
 const url = ref('')
 const fileUrl = ref<string | null>(null)
