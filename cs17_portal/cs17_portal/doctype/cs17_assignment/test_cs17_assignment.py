@@ -95,6 +95,17 @@ class IntegrationTestCS17Assignment(IntegrationTestCase):
 			publish="now",
 		)
 
+	def test_non_graded_assignment_publishes_without_a_due_date(self):
+		cohort = make_cohort("C70TEST")
+		faculty_user = make_user("faculty74@cs17test.com")
+		make_profile("Faculty", cohort, faculty_user, "Faculty 74")
+
+		frappe.set_user(faculty_user)
+		self.addCleanup(frappe.set_user, "Administrator")
+		assignment = create_assignment("Practice Task 74", cohort, "", publish="now")
+
+		self.assertTrue(frappe.db.get_value("CS17 Assignment", assignment, "is_published"))
+
 	def test_scheduled_assignment_not_yet_due_can_go_back_to_draft(self):
 		name = make_assignment(make_cohort("C70TEST"), "Desk Task 74", "PDF", 20)
 		frappe.db.set_value(

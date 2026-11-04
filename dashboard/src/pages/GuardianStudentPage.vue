@@ -52,7 +52,9 @@
 				>
 					<template #cell-title="{ row }">
 						<RowTitle :title="row.title">
-							Due {{ formatDateTime(row.due_date) }}
+							<template v-if="row.due_date">
+								Due {{ formatDateTime(row.due_date) }}
+							</template>
 						</RowTitle>
 					</template>
 

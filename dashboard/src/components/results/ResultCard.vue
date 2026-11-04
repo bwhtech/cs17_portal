@@ -98,7 +98,7 @@
 						:title="row.assignment_title || row.assignment"
 						:to="assignmentRoute(row.assignment)"
 					>
-						Due {{ formatDate(row.due_date) }}
+						<template v-if="row.due_date">Due {{ formatDate(row.due_date) }}</template>
 					</RowTitle>
 				</template>
 
