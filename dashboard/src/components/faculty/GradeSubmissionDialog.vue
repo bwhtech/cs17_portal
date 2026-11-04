@@ -32,7 +32,7 @@
 				type="textarea"
 				label="Remarks"
 				:description="remarksOnly ? undefined : 'Optional feedback for the student.'"
-				:required="remarksOnly"
+				:required="remarksOnly && !voiceRemark"
 				:error="remarksError"
 				:rows="3"
 			/>
@@ -119,6 +119,7 @@ const isGradeScale = computed(() => props.evaluationType === 'Grade')
 const isMarks = computed(() => props.evaluationType === 'Marks')
 const remarksOnly = computed(() => !props.evaluationType)
 const noun = computed(() => (remarksOnly.value ? 'remarks' : 'grade'))
+const voiceRemark = computed(() => props.submission?.grade?.voice_remark)
 
 const gradeOptions = [
 	{ label: 'No grade', value: '' },
@@ -244,7 +245,8 @@ async function handleSave() {
 	saveError.value = ''
 	fieldError.value = validate() ?? ''
 	criterionErrors.value = rubricMarksErrors(props.rubric ?? [], criterionMarks.value)
-	remarksError.value = remarksOnly.value && !remarks.value.trim() ? 'Enter the remarks.' : ''
+	remarksError.value =
+		remarksOnly.value && !remarks.value.trim() && !voiceRemark.value ? 'Enter the remarks.' : ''
 	publishOnError.value =
 		publishMode.value === 'schedule' && !publishOn.value ? 'Pick a publish date.' : ''
 	if (
