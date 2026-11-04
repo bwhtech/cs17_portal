@@ -210,7 +210,10 @@
 						/>
 					</template>
 
-					<div class="space-y-2">
+					<p v-if="isExamQuestion" class="text-p-sm text-ink-gray-5">
+						Students open this question through its exam.
+					</p>
+					<div v-else class="space-y-2">
 						<PublishFields
 							v-model:mode="publishMode"
 							v-model:publish-on="publishOn"
@@ -232,7 +235,7 @@
 				class="mt-6 flex items-center justify-between gap-3 border-t border-outline-gray-1 pt-4"
 			>
 				<Button
-					v-if="deletableName"
+					v-if="deletableName && !isExamQuestion"
 					variant="subtle"
 					theme="red"
 					label="Delete"
@@ -371,6 +374,7 @@ const loadedForm = ref('')
 const loadedModified = ref<string>()
 const loadFailed = ref(false)
 const published = ref(false)
+const isExamQuestion = ref(false)
 
 const errors = reactive<
 	Record<
@@ -418,7 +422,7 @@ const evaluationType = computed({
 })
 
 const existingCall = useCall<
-	(CS17Assignment & { submit_saved_work?: Bool }) | null,
+	(CS17Assignment & { submit_saved_work?: Bool; coding_exam?: string | null }) | null,
 	{ assignment: string }
 >({
 	url: '/api/v2/method/cs17_portal.api.get_assignment',
@@ -490,6 +494,7 @@ function initialize() {
 	}
 
 	savedName.value = null
+	isExamQuestion.value = false
 	const stored = readJSON<Partial<StoredDraft>>(STORAGE_KEYS.newAssignmentDraft, {})
 	Object.assign(draft, emptyDraft(), stored.draft ?? {})
 	if (facultyCohort.value) draft.cohort = facultyCohort.value
@@ -538,6 +543,7 @@ async function loadExisting(name: string) {
 	} satisfies AssignmentDraft)
 	publishMode.value = existing.publish_on ? 'schedule' : 'draft'
 	publishOn.value = existing.publish_on ?? ''
+	isExamQuestion.value = Boolean(existing.coding_exam)
 	savedName.value = name
 	loadedForm.value = currentForm()
 	loadedModified.value = existing.modified
