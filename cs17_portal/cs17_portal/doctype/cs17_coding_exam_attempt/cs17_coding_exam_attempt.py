@@ -58,7 +58,7 @@ class CS17CodingExamAttempt(Document):
 
 	def finish(self):
 		from cs17_portal.api import ASSIGNMENT_SUBMISSION, _comparable_lines, submit_python_code
-		from cs17_portal.coding_exam import get_projects
+		from cs17_portal.coding_exam import get_projects, question_state
 
 		assignments = frappe.get_all(
 			"CS17 Coding Exam Question",
@@ -66,14 +66,17 @@ class CS17CodingExamAttempt(Document):
 			pluck="assignment",
 			order_by="idx asc",
 		)
-		submitted_code = dict(
-			frappe.get_all(
+		reopened_on = {row.assignment: row.reopened_on for row in self.questions}
+		submitted_code = {
+			submission.assignment: submission.code
+			for submission in frappe.get_all(
 				ASSIGNMENT_SUBMISSION,
 				filters={"student": self.student, "assignment": ["in", assignments]},
-				fields=["assignment", "code"],
-				as_list=True,
+				fields=["assignment", "code", "submitted_at"],
 			)
-		)
+			if question_state(submission.submitted_at, None, reopened_on.get(submission.assignment), True)
+			== "submitted"
+		}
 		starter_lines = {
 			assignment: _comparable_lines(code or "")
 			for assignment, code in frappe.get_all(
@@ -83,6 +86,7 @@ class CS17CodingExamAttempt(Document):
 				as_list=True,
 			)
 		}
+		self.finished_on = now_datetime()
 		for assignment, project in get_projects(self.student, assignments).items():
 			project_doc = frappe.get_doc("CS17 Project", project)
 			if (
@@ -91,5 +95,29 @@ class CS17CodingExamAttempt(Document):
 				and _comparable_lines(project_doc.code) != starter_lines.get(assignment)
 			):
 				submit_python_code(assignment, self.student, project_doc, ignore_deadline=True)
-		self.finished_on = now_datetime()
+		self.save(ignore_permissions=True)
+
+	def reopen(self, minutes: int):
+		from cs17_portal.api import ASSIGNMENT_SUBMISSION
+		from cs17_portal.coding_exam import is_locked_by_rule, progress_row, question_state
+
+		now = now_datetime()
+		for assignment in frappe.get_all(
+			ASSIGNMENT_SUBMISSION,
+			filters=[
+				["student", "=", self.student],
+				["assignment.coding_exam", "=", self.exam],
+				["submitted_at", ">=", self.finished_on],
+			],
+			pluck="assignment",
+		):
+			step = progress_row(self, assignment)
+			was_skipped = question_state(None, step.skipped_on, step.reopened_on, True) == "skipped"
+			if not (was_skipped or is_locked_by_rule(step)):
+				step.reopened_on = now
+		self.paused_seconds = cint(self.paused_seconds) + cint(
+			time_diff_in_seconds(now, min(get_datetime(self.finished_on), get_datetime(self.ends_at)))
+		)
+		self.extra_minutes = cint(self.extra_minutes) + minutes
+		self.finished_on = None
 		self.save(ignore_permissions=True)

@@ -55,6 +55,21 @@ const STUDENTS = [
 		total_marks: null,
 		max_marks: 30,
 	},
+	{
+		student: "STUDENT-ISHAAN",
+		full_name: "Ishaan Verma",
+		state: "finished",
+		started_at: "2030-01-08 09:00:00",
+		ends_at: "2030-01-08 11:00:00",
+		is_paused: false,
+		extra_minutes: 0,
+		questions: [
+			{ assignment: "ASSIGNMENT-LOOPS", state: "submitted" },
+			{ assignment: "ASSIGNMENT-LISTS", state: "submitted" },
+		],
+		total_marks: null,
+		max_marks: 30,
+	},
 ];
 
 async function mockCohorts(page: Page) {
@@ -163,6 +178,28 @@ test.describe("Faculty coding exam", () => {
 
 		await expect(page.getByText("Added 10 minutes for Aarav Sharma")).toBeVisible();
 		expect(added).toEqual([{ exam: EXAM.name, minutes: 10, student: "STUDENT-AARAV" }]);
+	});
+
+	test("reopens the exam for a student who finished", async ({ page }) => {
+		await mockCohorts(page);
+		await mockExam(page);
+		const reopened: unknown[] = [];
+		await page.route("**/cs17_portal.coding_exam.reopen_coding_exam", (route) => {
+			reopened.push(route.request().postDataJSON());
+			return route.fulfill({ json: { data: null } });
+		});
+
+		await page.goto(`/dashboard/faculty/exams/${EXAM.name}`);
+		await page
+			.locator(LIST_ROW, { hasText: "Ishaan Verma" })
+			.getByRole("button", { name: "Actions for Ishaan Verma" })
+			.click();
+		await page.getByRole("menuitem", { name: "Reopen exam" }).click();
+		await page.getByRole("dialog").getByLabel("Extra minutes").fill("5");
+		await page.getByRole("dialog").getByRole("button", { name: "Reopen exam" }).click();
+
+		await expect(page.getByText("Reopened the exam for Ishaan Verma")).toBeVisible();
+		expect(reopened).toEqual([{ exam: EXAM.name, student: "STUDENT-ISHAAN", minutes: 5 }]);
 	});
 
 	test("pauses the exam for everyone", async ({ page }) => {

@@ -197,7 +197,7 @@
 					</template>
 
 					<template #cell-actions="{ row }">
-						<div v-if="row.state === 'in_progress'" class="flex md:justify-end">
+						<div v-if="row.state !== 'not_started'" class="flex md:justify-end">
 							<Dropdown :options="studentActions(row)" align="end">
 								<Button
 									icon="lucide-ellipsis"
@@ -228,6 +228,14 @@
 		:exam="exam.name"
 		:students="running"
 		:initial-student="addTimeStudent"
+		@saved="reload"
+	/>
+
+	<ReopenExamDialog
+		v-if="reopenExamOpen && reopenExamStudent && exam"
+		v-model:open="reopenExamOpen"
+		:exam="exam.name"
+		:student="reopenExamStudent"
 		@saved="reload"
 	/>
 
@@ -266,6 +274,7 @@ import AddExamTimeDialog from '@/components/exams/faculty/AddExamTimeDialog.vue'
 import CodingExamFormDialog from '@/components/exams/faculty/CodingExamFormDialog.vue'
 import ExamChangeLog from '@/components/exams/faculty/ExamChangeLog.vue'
 import ExamCloseTimeDialog from '@/components/exams/faculty/ExamCloseTimeDialog.vue'
+import ReopenExamDialog from '@/components/exams/faculty/ReopenExamDialog.vue'
 import SafeExamBrowserSetup from '@/components/exams/faculty/SafeExamBrowserSetup.vue'
 import {
 	formatMinutes,
@@ -351,6 +360,8 @@ const formOpen = ref(false)
 const closeTimeOpen = ref(false)
 const addTimeOpen = ref(false)
 const addTimeStudent = ref<string | null>(null)
+const reopenExamOpen = ref(false)
+const reopenExamStudent = ref<ExamStudent | null>(null)
 
 function reload() {
 	examCall.reload()
@@ -360,6 +371,11 @@ function reload() {
 function openAddTime(student: string | null = null) {
 	addTimeStudent.value = student
 	addTimeOpen.value = true
+}
+
+function openReopenExam(student: ExamStudent) {
+	reopenExamStudent.value = student
+	reopenExamOpen.value = true
 }
 
 const metaRows = computed(() => {
@@ -571,6 +587,11 @@ function confirmPublish() {
 }
 
 function studentActions(row: ExamStudent): DropdownActionOption[] {
+	if (row.state === 'finished') {
+		return [
+			{ label: 'Reopen exam', icon: 'lucide-rotate-ccw', onClick: () => openReopenExam(row) },
+		]
+	}
 	return [
 		{ label: 'Add time', icon: 'lucide-timer', onClick: () => openAddTime(row.student) },
 		{

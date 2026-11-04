@@ -598,6 +598,36 @@ def reopen_exam_question(exam: str, student: str, assignment: str) -> None:
 	log_change(exam, _("Reopened {0} for {1}").format(question.title, name_or_everyone(student)), student)
 
 
+@frappe.whitelist(methods=["POST"])
+def reopen_coding_exam(exam: str, student: str, minutes: int = 0) -> None:
+	exam_doc = require_faculty_exam(exam)
+	minutes = cint(minutes)
+	if minutes < 0:
+		frappe.throw(_("Extra minutes cannot be less than 0."))
+	attempt = get_attempt_doc(exam, student)
+	if not (attempt and attempt.finished_on):
+		frappe.throw(_("{0} has not finished this exam.").format(name_or_everyone(student)))
+	seconds_left = max(time_diff_in_seconds(attempt.ends_at, attempt.finished_on), 0) + minutes * 60
+	if seconds_left <= 0:
+		frappe.throw(_("{0} had no time left. Add at least 1 minute.").format(name_or_everyone(student)))
+	closes_on = get_datetime(exam_doc.closes_on)
+	if add_to_date(now_datetime(), seconds=seconds_left) > closes_on:
+		frappe.throw(
+			_("The exam closes at {0}, so this time would be cut short. Move the close time first.").format(
+				format_datetime(closes_on, "MMM d, h:mm a")
+			)
+		)
+	attempt.reopen(minutes)
+	unit = _("minute") if minutes == 1 else _("minutes")
+	log_change(
+		exam,
+		_("Reopened the exam for {0} and added {1} {2}").format(name_or_everyone(student), minutes, unit)
+		if minutes
+		else _("Reopened the exam for {0}").format(name_or_everyone(student)),
+		student,
+	)
+
+
 def get_student_exam(exam: str, student: str) -> "Document":
 	exam_doc = frappe.get_doc(CODING_EXAM, exam)
 	if not exam_doc.is_published or exam_doc.cohort != frappe.db.get_value("CS17 Profile", student, "cohort"):

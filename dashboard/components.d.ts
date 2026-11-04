@@ -94,6 +94,7 @@ declare module 'vue' {
     PythonEditor: typeof import('./src/components/python/PythonEditor.vue')['default']
     PythonHints: typeof import('./src/components/python/PythonHints.vue')['default']
     PythonSubmissionView: typeof import('./src/components/grading/PythonSubmissionView.vue')['default']
+    ReopenExamDialog: typeof import('./src/components/exams/faculty/ReopenExamDialog.vue')['default']
     ResultCard: typeof import('./src/components/results/ResultCard.vue')['default']
     ReviewClassmateDialog: typeof import('./src/components/assignments/ReviewClassmateDialog.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
