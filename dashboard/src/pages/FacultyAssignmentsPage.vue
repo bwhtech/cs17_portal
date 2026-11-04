@@ -106,6 +106,7 @@
 						@click="publishTarget = row"
 					/>
 					<Button
+						v-if="!row.coding_exam"
 						variant="ghost"
 						icon="lucide-trash-2"
 						class="hover:!bg-surface-red-3 hover:!text-ink-red-7"
@@ -179,8 +180,8 @@ import type { CS17Assignment } from '@/types'
 /** A row plus the badge ladder, resolved once instead of three times in the cell. */
 interface AssignmentRow extends CS17Assignment {
 	coding_exam?: string | null
-	statusLabel: 'Published' | 'Scheduled' | 'Draft'
-	statusTheme: 'green' | 'amber' | 'gray'
+	statusLabel: 'In exam' | 'Published' | 'Scheduled' | 'Draft'
+	statusTheme: 'blue' | 'green' | 'amber' | 'gray'
 	/** The scheduled publish time, shown under the Scheduled badge. */
 	scheduledAt: string
 }
@@ -312,7 +313,10 @@ async function saveTopics(topics: Record<string, string>): Promise<string> {
 	return error
 }
 
-function status(assignment: CS17Assignment) {
+function status(assignment: CS17Assignment & Pick<AssignmentRow, 'coding_exam'>) {
+	if (assignment.coding_exam) {
+		return { statusLabel: 'In exam', statusTheme: 'blue', scheduledAt: '' } as const
+	}
 	if (assignment.is_published) {
 		return { statusLabel: 'Published', statusTheme: 'green', scheduledAt: '' } as const
 	}

@@ -1890,6 +1890,7 @@ def get_assignment(assignment: str) -> dict | None:
 			"hint_after_failed_runs",
 			"max_hints",
 			"submit_saved_work",
+			"coding_exam",
 			"modified",
 		],
 		as_dict=True,
