@@ -42,6 +42,14 @@ test.describe("Late work for a student", () => {
 		await expect(page.getByRole("button", { name: "Submit Assignment" })).toBeVisible();
 	});
 
+	test("keeps work in its late window on the dashboard", async ({ page }) => {
+		await page.goto("/dashboard");
+
+		await expect(
+			page.locator('[data-slot="list-row"]').filter({ hasText: assignment.title })
+		).toBeVisible();
+	});
+
 	test("shows a submission made after the due date as late", async ({ page, request }) => {
 		submission = await createTestSubmission(request, { assignment: assignment.name, student });
 

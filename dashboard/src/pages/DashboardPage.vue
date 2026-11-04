@@ -143,7 +143,7 @@ const gradeMap = computed(() =>
 /** Still open, most recently touched first — the same three the React app showed. */
 const upcoming = computed(() =>
 	assignments.value
-		.filter((a) => !isPast(a.due_date))
+		.filter((a) => !isPast(a.late_until || a.due_date))
 		.sort((a, b) => dayjs(b.modified).valueOf() - dayjs(a.modified).valueOf())
 		.slice(0, UPCOMING_LIMIT),
 )
