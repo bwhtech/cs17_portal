@@ -584,10 +584,12 @@ def reopen_exam_question(exam: str, student: str, assignment: str) -> None:
 @frappe.whitelist(methods=["POST"])
 def reopen_coding_exam(exam: str, student: str, minutes: int = 0) -> None:
 	exam_doc = require_faculty_exam(exam)
+	minutes = cint(minutes)
+	if minutes < 0:
+		frappe.throw(_("Extra minutes cannot be less than 0."))
 	attempt = get_attempt_doc(exam, student)
 	if not (attempt and attempt.finished_on):
 		frappe.throw(_("{0} has not finished this exam.").format(name_or_everyone(student)))
-	minutes = cint(minutes)
 	seconds_left = max(time_diff_in_seconds(attempt.ends_at, attempt.finished_on), 0) + minutes * 60
 	if seconds_left <= 0:
 		frappe.throw(_("{0} had no time left. Add at least 1 minute.").format(name_or_everyone(student)))
