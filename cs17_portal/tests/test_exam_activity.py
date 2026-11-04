@@ -6,7 +6,7 @@ from frappe.sessions import hash_sid
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_to_date, now, now_datetime
 
-from cs17_portal import api, coding_exam, exam_activity
+from cs17_portal import api, coding_exam, exam_activity, tasks
 from cs17_portal.tests.test_api import make_cohort, make_profile, make_user
 
 LONG_CODE = "\n".join(f"print({number})" for number in range(20))
@@ -112,6 +112,95 @@ class TestExamActivity(FrappeTestCase):
 		frappe.set_user(self.student_user)
 
 		self.assertFalse(coding_exam.get_my_coding_exam(exam)["questions"][0].is_locked)
+
+	def test_reopening_the_exam_gives_back_the_time_left(self):
+		exam, _ = self.start_exam()
+		coding_exam.finish_coding_exam(exam)
+		frappe.db.set_value("CS17 Coding Exam Attempt", {"exam": exam}, "finished_on", from_now(minutes=-20))
+		ends_at = frappe.db.get_value("CS17 Coding Exam Attempt", {"exam": exam}, "ends_at")
+		frappe.set_user(self.faculty_user)
+		coding_exam.reopen_coding_exam(exam, self.student)
+
+		self.assertEqual(
+			frappe.db.get_value("CS17 Coding Exam Attempt", {"exam": exam}, "ends_at"),
+			add_to_date(ends_at, minutes=20),
+		)
+
+	def test_reopening_the_exam_reopens_a_question_finishing_submitted(self):
+		exam, question = self.start_exam()
+		project = coding_exam.open_exam_question(exam, question)["project"]
+		api.save_python_project(project, "print(1)")
+		coding_exam.finish_coding_exam(exam)
+		frappe.set_user(self.faculty_user)
+		coding_exam.reopen_coding_exam(exam, self.student)
+		frappe.set_user(self.student_user)
+
+		self.assertEqual(coding_exam.get_my_coding_exam(exam)["questions"][0].state, "in_progress")
+
+	def test_reopening_the_exam_keeps_a_question_submitted_before_finishing(self):
+		exam, question = self.start_exam()
+		project = coding_exam.open_exam_question(exam, question)["project"]
+		api.save_python_project(project, "print(1)")
+		api.submit_python_project(question, project)
+		frappe.db.set_value("CS17 Coding Exam Attempt", {"exam": exam}, "started_at", from_now(minutes=-10))
+		frappe.db.set_value(
+			"CS17 Assignment Submission", {"assignment": question}, "submitted_at", from_now(minutes=-5)
+		)
+		coding_exam.finish_coding_exam(exam)
+		frappe.set_user(self.faculty_user)
+		coding_exam.reopen_coding_exam(exam, self.student)
+		frappe.set_user(self.student_user)
+
+		self.assertEqual(coding_exam.get_my_coding_exam(exam)["questions"][0].state, "submitted")
+
+	def test_reopening_the_exam_past_the_close_time_is_refused(self):
+		exam, _ = self.start_exam()
+		coding_exam.finish_coding_exam(exam)
+		frappe.set_user(self.faculty_user)
+		coding_exam.set_exam_closes_on(exam, from_now(minutes=60))
+
+		self.assertRaisesRegex(
+			frappe.ValidationError,
+			"^The exam closes at",
+			coding_exam.reopen_coding_exam,
+			exam,
+			self.student,
+		)
+
+	def test_reopening_the_exam_with_no_time_left_is_refused(self):
+		exam, _ = self.start_exam()
+		frappe.db.set_value(
+			"CS17 Coding Exam Attempt",
+			{"exam": exam},
+			{"started_at": from_now(minutes=-121), "ends_at": from_now(minutes=-1)},
+		)
+		frappe.set_user("Administrator")
+		tasks.submit_saved_work_when_time_is_up()
+		frappe.set_user(self.faculty_user)
+
+		self.assertRaisesRegex(
+			frappe.ValidationError,
+			"^Aarav Sharma had no time left",
+			coding_exam.reopen_coding_exam,
+			exam,
+			self.student,
+		)
+
+	def test_the_time_up_job_leaves_an_exam_reopened_with_extra_minutes_running(self):
+		exam, _ = self.start_exam()
+		frappe.db.set_value(
+			"CS17 Coding Exam Attempt",
+			{"exam": exam},
+			{"started_at": from_now(minutes=-121), "ends_at": from_now(minutes=-1)},
+		)
+		frappe.set_user("Administrator")
+		tasks.submit_saved_work_when_time_is_up()
+		frappe.set_user(self.faculty_user)
+		coding_exam.reopen_coding_exam(exam, self.student, 10)
+		frappe.set_user("Administrator")
+		tasks.submit_saved_work_when_time_is_up()
+
+		self.assertFalse(frappe.db.get_value("CS17 Coding Exam Attempt", {"exam": exam}, "finished_on"))
 
 	def test_seconds_away_submit_the_exam(self):
 		exam, _ = self.start_exam(leave_seconds=60, leave_action="Submit exam")
