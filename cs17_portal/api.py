@@ -1581,17 +1581,7 @@ def get_student_results() -> list:
 	results = frappe.get_list(
 		"CS17 Result",
 		filters={"student": student, "is_published": 1},
-		fields=[
-			"name",
-			"exam",
-			"quarter",
-			"total_marks_obtained",
-			"total_max_marks",
-			"percentage",
-			"overall_grade",
-			"result_status",
-			"published_on",
-		],
+		fields=["name", "exam", "quarter", "overall_grade", "result_status", "published_on"],
 		order_by="published_on desc, modified desc",
 		# `get_list` paginates at 20 by default; a student's whole result history
 		# is a handful of rows and the page shows all of it.
@@ -1615,9 +1605,9 @@ def get_student_result(result: str) -> dict:
 	return _result_card(doc)
 
 
-def _result_card(doc: "Document") -> dict:
-	parts = _subject_parts(doc.exam, doc.student)
-	return {
+def _result_card(doc: "Document", show_marks: bool = False) -> dict:
+	"""Students and guardians see grades only, as on the printed card; marks stay with faculty."""
+	card = {
 		"name": doc.name,
 		"exam": doc.exam,
 		"exam_name": _exam_name(doc.exam),
@@ -1625,9 +1615,6 @@ def _result_card(doc: "Document") -> dict:
 		"cohort": doc.cohort,
 		"student_name": doc.student_name,
 		"published_on": doc.published_on,
-		"total_marks_obtained": doc.total_marks_obtained,
-		"total_max_marks": doc.total_max_marks,
-		"percentage": doc.percentage,
 		"overall_grade": doc.overall_grade,
 		"result_status": doc.result_status,
 		"remarks": doc.remarks,
@@ -1635,13 +1622,9 @@ def _result_card(doc: "Document") -> dict:
 			{
 				"subject": row.subject,
 				"subject_name": row.subject_name,
-				"max_marks": row.max_marks,
-				"marks_obtained": row.marks_obtained,
-				"percentage": row.percentage,
 				"grade": row.grade,
 				"is_pass": row.is_pass,
 				"remarks": row.remarks,
-				"parts": parts.get(row.subject, []),
 			}
 			for row in doc.scores
 		],
@@ -1651,8 +1634,6 @@ def _result_card(doc: "Document") -> dict:
 				"assignment_title": row.assignment_title,
 				"assignment_type": row.assignment_type,
 				"evaluation_type": row.evaluation_type,
-				"max_marks": row.max_marks,
-				"marks_obtained": row.marks_obtained,
 				"grade": row.grade,
 				"is_submitted": row.is_submitted,
 				"is_graded": row.is_graded,
@@ -1661,6 +1642,25 @@ def _result_card(doc: "Document") -> dict:
 			for row in doc.assignments
 		],
 	}
+	if not show_marks:
+		return card
+
+	parts = _subject_parts(doc.exam, doc.student)
+	card.update(
+		total_marks_obtained=doc.total_marks_obtained,
+		total_max_marks=doc.total_max_marks,
+		percentage=doc.percentage,
+	)
+	for score, row in zip(card["scores"], doc.scores, strict=True):
+		score.update(
+			max_marks=row.max_marks,
+			marks_obtained=row.marks_obtained,
+			percentage=row.percentage,
+			parts=parts.get(row.subject, []),
+		)
+	for assignment, row in zip(card["assignments"], doc.assignments, strict=True):
+		assignment.update(max_marks=row.max_marks, marks_obtained=row.marks_obtained)
+	return card
 
 
 def _subject_parts(exam: str, student: str) -> dict[str, list[dict]]:
@@ -1764,7 +1764,7 @@ def get_faculty_result(result: str) -> dict:
 	doc = frappe.get_doc("CS17 Result", result)
 	if faculty.cohort and faculty.cohort != doc.cohort:
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	return {**_result_card(doc), "student": doc.student, "is_published": doc.is_published}
+	return {**_result_card(doc, show_marks=True), "student": doc.student, "is_published": doc.is_published}
 
 
 @frappe.whitelist(methods=["POST"])
