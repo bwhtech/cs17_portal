@@ -17,13 +17,13 @@
 			</div>
 
 			<div class="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3">
-				<div>
+				<div v-if="showMarks">
 					<p class="text-xs text-ink-gray-5">Total marks</p>
 					<p class="mt-0.5 text-lg text-ink-gray-9">
 						{{ formatMarks(result.total_marks_obtained, result.total_max_marks) }}
 					</p>
 				</div>
-				<div>
+				<div v-if="showMarks">
 					<p class="text-xs text-ink-gray-5">Percentage</p>
 					<p class="mt-0.5 text-lg text-ink-gray-9">
 						{{ formatPercent(result.percentage) }}
@@ -97,7 +97,7 @@
 					{{ result.quarter ? `${result.quarter} assignments` : 'Assignments' }}
 				</h2>
 				<p class="mt-1 text-sm text-ink-gray-5">
-					Reported alongside the exam. These do not count toward the total above.
+					Reported alongside the exam. These do not count toward the exam result.
 				</p>
 			</div>
 
@@ -118,7 +118,7 @@
 				</template>
 
 				<template #cell-score="{ row }">
-					{{ assignmentScoreLabel(row) }}
+					{{ assignmentScoreLabel(row, showMarks) }}
 				</template>
 
 				<template #cell-submitted="{ row }">
@@ -167,6 +167,7 @@ type SubjectRow =
 const props = defineProps<{
 	result: CS17Result
 	assignmentRoute: (assignment: string) => string
+	showMarks?: boolean
 }>()
 
 /** Cohort and quarter, the two labels that place an exam, on one line. */
@@ -174,19 +175,23 @@ const metaLine = computed(() =>
 	[props.result.quarter, props.result.cohort].filter(Boolean).join(' · '),
 )
 
-const subjectColumns: Column[] = [
+const subjectColumns = computed((): Column[] => [
 	{ header: 'Subject', key: 'subject', variant: 'primary' },
-	{ header: 'Marks', key: 'marks', width: '8rem' },
-	{ header: 'Percentage', key: 'percentage', width: '5.5rem', optional: true },
-	{ header: 'Grade', key: 'grade', width: '6rem', optional: true },
+	...(props.showMarks
+		? [
+				{ header: 'Marks', key: 'marks', width: '8rem' },
+				{ header: 'Percentage', key: 'percentage', width: '5.5rem', optional: true },
+			]
+		: []),
+	{ header: 'Grade', key: 'grade', width: '6rem', optional: props.showMarks },
 	{ header: 'Result', key: 'is_pass', width: '4.5rem', optional: true },
-]
+])
 
-const assignmentColumns: Column[] = [
+const assignmentColumns = computed((): Column[] => [
 	{ header: 'Assignment', key: 'assignment', variant: 'primary' },
-	{ header: 'Score', key: 'score', width: '9rem' },
+	{ header: props.showMarks ? 'Score' : 'Grade', key: 'score', width: '9rem' },
 	{ header: 'Submitted', key: 'submitted', width: '9rem' },
-]
+])
 
 const subjectRows = computed(() =>
 	props.result.scores.flatMap((score): SubjectRow[] => [
@@ -196,7 +201,7 @@ const subjectRows = computed(() =>
 )
 
 function partRows(score: CS17ResultSubjectScore): SubjectRow[] {
-	if (score.parts.length < 2) return []
+	if (!score.parts || score.parts.length < 2) return []
 	const rows: SubjectRow[] = []
 	for (const part of score.parts) {
 		const key = `${score.subject}:part:${part.component}`

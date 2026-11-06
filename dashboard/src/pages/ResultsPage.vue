@@ -33,14 +33,6 @@
 				</RowTitle>
 			</template>
 
-			<template #cell-marks="{ row }">
-				{{ formatMarks(row.total_marks_obtained, row.total_max_marks) }}
-			</template>
-
-			<template #cell-percentage="{ row }">
-				{{ formatPercent(row.percentage) }}
-			</template>
-
 			<template #cell-grade="{ row }">
 				<span class="text-base text-ink-gray-8">{{ row.overall_grade || '—' }}</span>
 			</template>
@@ -70,7 +62,7 @@ import RowTitle from '@/components/common/RowTitle.vue'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { usePolledCall, usePolling } from '@/composables/usePolling'
 import { formatDate } from '@/lib/dates'
-import { formatMarks, formatPercent, passTheme } from '@/lib/results'
+import { passTheme } from '@/lib/results'
 import type { CS17ResultSummary } from '@/types'
 
 const router = useRouter()
@@ -90,8 +82,6 @@ const failed = useLoadFailed(resultsCall)
 
 const columns: Column[] = [
 	{ header: 'Exam', key: 'exam', variant: 'primary' },
-	{ header: 'Marks', key: 'marks', width: '8rem' },
-	{ header: 'Percentage', key: 'percentage', width: '5.5rem' },
 	{ header: 'Grade', key: 'grade', width: '6rem' },
 	{ header: 'Status', key: 'status', width: '4.5rem' },
 ]

@@ -55,28 +55,29 @@ test.describe("Student results", () => {
 		await deleteTestUser(request, otherStudent.email);
 	});
 
-	test("lists the student's own published result", async ({ page }) => {
+	test("lists the student's own published result with its grade only", async ({ page }) => {
 		await page.goto("/dashboard/results");
 
 		const row = listRow(page, own.examName);
-		await expect(row).toBeVisible();
-		await expect(row).toContainText(`${MARKS_OBTAINED} / ${MAX_MARKS}`);
-		await expect(row).toContainText("82%");
+		await expect(row.getByText("P", { exact: true })).toBeVisible();
 		await expect(row).toContainText("Pass");
+		await expect(row).not.toContainText(`${MARKS_OBTAINED} / ${MAX_MARKS}`);
+		await expect(row).not.toContainText(`${MARKS_OBTAINED}%`);
 	});
 
-	test("opens the report card with its subject breakdown", async ({ page }) => {
+	test("opens the report card with a grade for each subject and no marks", async ({ page }) => {
 		await page.goto("/dashboard/results");
 		await page.getByRole("link", { name: own.examName }).click();
 
 		await expect(page).toHaveURL(new RegExp(`/dashboard/results/${own.result}$`));
-		await expect(page.getByText(own.examName, { exact: true }).first()).toBeVisible();
-		await expect(page.getByText("Total marks")).toBeVisible();
-		await expect(page.getByText(`${MARKS_OBTAINED} / ${MAX_MARKS}`).first()).toBeVisible();
+		await expect(page.getByText("Overall grade")).toBeVisible();
+		await expect(page.getByText("Total marks")).toHaveCount(0);
 
 		const subject = listRow(page, own.subjectName);
-		await expect(subject).toContainText(`${MARKS_OBTAINED} / ${MAX_MARKS}`);
+		await expect(subject.getByText("P", { exact: true })).toBeVisible();
 		await expect(subject).toContainText("Pass");
+		await expect(page.getByText(`${MARKS_OBTAINED} / ${MAX_MARKS}`)).toHaveCount(0);
+		await expect(page.getByText(`${MARKS_OBTAINED}%`)).toHaveCount(0);
 	});
 
 	test("refuses another student's result", async ({ page }) => {

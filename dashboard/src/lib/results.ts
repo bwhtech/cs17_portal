@@ -3,9 +3,10 @@ import { formatGrade } from '@/lib/grades'
 import type { CS17ResultAssignmentScore, CS17ResultSummary, FacultyResultSummary } from '@/types'
 
 /**
- * How a result reads. The list and the detail page both show marks, a
- * percentage and a pass/fail, so the formatting lives here once — a report
- * card that disagreed with itself between two screens would be alarming.
+ * How a result reads. Faculty see marks and a percentage beside each grade,
+ * students and guardians the grades only; the formatting lives here once, as
+ * a report card that disagreed with itself between two screens would be
+ * alarming.
  */
 
 /** "45 / 50". Marks are Floats, so a whole number is shown without its `.0`. */
@@ -33,11 +34,12 @@ export function passTheme(passed: boolean): 'green' | 'red' {
  * nothing at all for work that was never graded. Work that was never handed
  * in has no score to show — the submitted column beside it says why.
  */
-export function assignmentScoreLabel(row: CS17ResultAssignmentScore): string {
+export function assignmentScoreLabel(row: CS17ResultAssignmentScore, showMarks = false): string {
 	if (!row.is_submitted) return '—'
 	if (row.evaluation_type === 'Grade') return row.grade || 'Not graded'
 	if (row.evaluation_type === 'Marks') {
 		if (!row.is_graded) return 'Not graded'
+		if (!showMarks) return row.grade || '—'
 		return formatGrade({
 			evaluationType: 'Marks',
 			grade: row.grade,

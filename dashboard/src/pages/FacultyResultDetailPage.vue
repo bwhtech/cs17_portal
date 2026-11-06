@@ -25,7 +25,7 @@
 		<div v-else class="space-y-6">
 			<h1 class="break-words text-2xl text-ink-gray-9 md:sr-only">{{ title }}</h1>
 
-			<ResultCard :result="result" :assignment-route="assignmentRoute" />
+			<ResultCard :result="result" :assignment-route="assignmentRoute" show-marks />
 		</div>
 	</PageBody>
 </template>

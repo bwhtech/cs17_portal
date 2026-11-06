@@ -227,17 +227,20 @@ export interface CS17Project {
 	is_submitted?: boolean
 }
 
-/** One row of `CS17 Result.scores` — a subject as it was graded. */
+/**
+ * One row of `CS17 Result.scores` — a subject as it was graded. Students and
+ * guardians get the grade only; the marks come with faculty reads.
+ */
 export interface CS17ResultSubjectScore {
 	subject: string
 	subject_name: string | null
-	max_marks: number
-	marks_obtained: number
-	percentage: number
+	max_marks?: number
+	marks_obtained?: number
+	percentage?: number
 	grade: string | null
 	is_pass: Bool
 	remarks: string | null
-	parts: CS17ResultSubjectPart[]
+	parts?: CS17ResultSubjectPart[]
 }
 
 export interface CS17ResultSubjectPart {
@@ -257,8 +260,8 @@ export interface CS17ResultAssignmentScore {
 	assignment_title: string | null
 	assignment_type: AssignmentType | null
 	evaluation_type: EvaluationType | '' | null
-	max_marks: number
-	marks_obtained: number | null
+	max_marks?: number
+	marks_obtained?: number | null
 	grade: string | null
 	is_submitted: Bool
 	is_graded: Bool
@@ -271,9 +274,9 @@ export interface CS17ResultSummary {
 	exam: string
 	exam_name: string
 	quarter: string | null
-	total_marks_obtained: number
-	total_max_marks: number
-	percentage: number
+	total_marks_obtained?: number
+	total_max_marks?: number
+	percentage?: number
 	overall_grade: string | null
 	result_status: 'Pass' | 'Fail' | null
 	published_on: string | null
@@ -407,6 +410,9 @@ declare global {
 
 /** A row of `get_faculty_results`: one student's result, published or not. */
 export interface FacultyResultSummary extends CS17ResultSummary {
+	total_marks_obtained: number
+	total_max_marks: number
+	percentage: number
 	cohort: string
 	student: string
 	student_name: string | null
