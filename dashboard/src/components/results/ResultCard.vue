@@ -49,14 +49,32 @@
 				empty="No subjects on this result."
 			>
 				<template #cell-subject="{ row }">
+					<button
+						v-if="row.kind === 'subject' && hasParts(row)"
+						type="button"
+						class="flex min-w-0 items-center gap-2 rounded-2 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
+						:aria-expanded="openSubjects.has(row.subject)"
+						@click="toggleSubject(row.subject)"
+					>
+						<span
+							class="lucide-chevron-down size-4 shrink-0 text-ink-gray-5 transition-transform duration-300 ease-in-out"
+							:class="!openSubjects.has(row.subject) && '-rotate-90'"
+						/>
+						<RowTitle :title="row.subject_name || row.subject" />
+					</button>
 					<RowTitle
-						v-if="row.kind === 'subject'"
+						v-else-if="row.kind === 'subject'"
+						:class="anySubjectHasParts && 'md:pl-6'"
 						:title="row.subject_name || row.subject"
 					/>
 					<span
 						v-else
 						class="truncate text-base"
-						:class="row.nested ? 'pl-8 text-ink-gray-6' : 'pl-4 text-ink-gray-7'"
+						:class="
+							row.nested
+								? 'pl-8 text-ink-gray-6 md:pl-14'
+								: 'pl-4 text-ink-gray-7 md:pl-10'
+						"
 					>
 						{{ row.label }}
 					</span>
@@ -131,20 +149,35 @@
 			</DataTable>
 		</section>
 
-		<section v-if="result.remarks" class="space-y-2">
+		<section v-if="remarkParts.length" class="space-y-3">
 			<h2 class="text-base-medium text-ink-gray-8">Remarks</h2>
-			<MarkdownText :content="result.remarks" />
+			<div
+				v-for="(part, index) in remarkParts"
+				:key="index"
+				class="rounded-4 border border-outline-gray-1"
+			>
+				<h3
+					v-if="part.title"
+					class="border-b border-outline-gray-1 px-5 py-3 text-base-semibold text-ink-gray-9"
+				>
+					{{ part.title }}
+				</h3>
+				<div v-if="part.body" class="px-5 py-4">
+					<MarkdownText :content="part.body" />
+				</div>
+			</div>
 		</section>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { Badge } from 'frappe-ui'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import MarkdownText from '@/components/common/MarkdownText.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
 import { formatDate } from '@/lib/dates'
+import { splitAtHeadings } from '@/lib/markdown'
 import { assignmentScoreLabel, formatMarks, formatPercent, passTheme } from '@/lib/results'
 import type {
 	CS17Result,
@@ -193,15 +226,26 @@ const assignmentColumns = computed((): Column[] => [
 	{ header: 'Submitted', key: 'submitted', width: '9rem' },
 ])
 
+const openSubjects = ref(new Set<string>())
+
+function toggleSubject(subject: string) {
+	if (!openSubjects.value.delete(subject)) openSubjects.value.add(subject)
+}
+
+const hasParts = (score: CS17ResultSubjectScore) => (score.parts?.length ?? 0) > 1
+const anySubjectHasParts = computed(() => props.result.scores.some(hasParts))
+
 const subjectRows = computed(() =>
 	props.result.scores.flatMap((score): SubjectRow[] => [
 		{ ...score, kind: 'subject', key: score.subject },
-		...partRows(score),
+		...(openSubjects.value.has(score.subject) ? partRows(score) : []),
 	]),
 )
 
+const remarkParts = computed(() => splitAtHeadings(props.result.remarks ?? ''))
+
 function partRows(score: CS17ResultSubjectScore): SubjectRow[] {
-	if (!score.parts || score.parts.length < 2) return []
+	if (!score.parts || !hasParts(score)) return []
 	const rows: SubjectRow[] = []
 	for (const part of score.parts) {
 		const key = `${score.subject}:part:${part.component}`
