@@ -14,6 +14,7 @@ from cs17_portal.api import (
 	list_cohort_submissions,
 )
 from cs17_portal.cs17_portal.doctype.cs17_assignment.cs17_assignment import get_quarter_assignments
+from cs17_portal.cs17_portal.doctype.cs17_feedback.cs17_feedback import create_helpdesk_ticket
 
 
 def make_user(email: str) -> str:
@@ -896,6 +897,20 @@ class TestSubmitFeedback(FrappeTestCase):
 	def test_faculty_is_refused(self):
 		frappe.set_user(self.faculty_user)
 		self.assertRaises(frappe.PermissionError, api.submit_feedback, "Stay", "Fan is broken")
+
+	def test_ticket_does_not_name_the_student(self):
+		frappe.set_user(self.student_user)
+		api.submit_feedback("Food", "Lunch was late")
+		feedback = frappe.db.get_value("CS17 Feedback", {"description": "Lunch was late"})
+
+		create_helpdesk_ticket(feedback)
+
+		ticket = frappe.get_last_doc("HD Ticket", filters={"subject": f"Food feedback ({feedback})"})
+		self.assertEqual(ticket.description, "Lunch was late")
+		self.assertEqual((ticket.owner, ticket.raised_by), ("Administrator", "Administrator"))
+		self.assertFalse(
+			frappe.db.exists("Communication", {"reference_name": ticket.name, "sender": self.student_user})
+		)
 
 	def test_feedback_needs_text_or_a_voice_note(self):
 		frappe.set_user(self.student_user)

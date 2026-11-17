@@ -87,8 +87,14 @@ app_license = "mit"
 
 # before_install = "cs17_portal.install.before_install"
 # after_install = "cs17_portal.install.after_install"
-after_install = "cs17_portal.install.allow_submission_files"
-after_migrate = "cs17_portal.install.allow_submission_files"
+after_install = [
+	"cs17_portal.install.allow_submission_files",
+	"cs17_portal.install.remove_helpdesk_home_pages",
+]
+after_migrate = [
+	"cs17_portal.install.allow_submission_files",
+	"cs17_portal.install.remove_helpdesk_home_pages",
+]
 
 # Uninstallation
 # ------------

@@ -100,11 +100,14 @@ jobs:
       - name: Install App
         working-directory: /home/runner/frappe-bench
         run: |
+          bench get-app --skip-assets telephony --branch develop
+          bench get-app --skip-assets helpdesk --branch develop
           bench get-app cs17_portal $GITHUB_WORKSPACE
           bench setup requirements --dev
           bench new-site --db-root-password root --admin-password admin test_site.localhost
+          bench --site test_site.localhost install-app helpdesk
           bench --site test_site.localhost install-app cs17_portal
-          bench build
+          bench build --apps frappe,cs17_portal
         env:
           CI: "Yes"
 
