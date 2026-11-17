@@ -22,7 +22,8 @@ class CS17Feedback(Document):
 	# end: auto-generated types
 
 	def after_insert(self):
-		frappe.enqueue(create_helpdesk_ticket, feedback=self.name, enqueue_after_commit=True)
+		if "helpdesk" in frappe.get_installed_apps():
+			frappe.enqueue(create_helpdesk_ticket, feedback=self.name, enqueue_after_commit=True)
 
 
 def create_helpdesk_ticket(feedback: str) -> None:
