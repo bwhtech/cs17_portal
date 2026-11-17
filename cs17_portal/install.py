@@ -12,3 +12,10 @@ def allow_submission_files() -> None:
 		frappe.db.set_single_value(
 			"System Settings", "allowed_file_extensions", "\n".join([allowed, *missing])
 		)
+
+
+def remove_helpdesk_home_pages() -> None:
+	for field, value in {"default_portal_home": "/helpdesk", "default_role": "HD Customer"}.items():
+		if frappe.db.get_single_value("Portal Settings", field) == value:
+			frappe.db.set_single_value("Portal Settings", field, "")
+	frappe.db.set_value("Role", {"home_page": "/helpdesk"}, "home_page", "")
