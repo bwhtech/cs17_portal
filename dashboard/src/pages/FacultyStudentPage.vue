@@ -33,6 +33,8 @@
 				</div>
 			</div>
 
+			<ActivityCalendar :student="studentId" />
+
 			<section class="space-y-3">
 				<h2 class="text-lg font-semibold text-ink-gray-8">Assignments</h2>
 
@@ -174,6 +176,7 @@ import EmptyState from '@/components/common/EmptyState.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
+import ActivityCalendar from '@/components/students/ActivityCalendar.vue'
 import StudentGuardians from '@/components/guardian/StudentGuardians.vue'
 import TopicProgress, { type TopicProgressRow } from '@/components/reports/TopicProgress.vue'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
