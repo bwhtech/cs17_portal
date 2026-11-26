@@ -2448,6 +2448,10 @@ def get_cohort_students(cohort: str) -> list:
 	faculty = get_current_faculty()
 	if faculty.cohort and faculty.cohort != cohort:
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	return list_cohort_students(cohort)
+
+
+def list_cohort_students(cohort: str) -> list:
 	return frappe.get_all(
 		"CS17 Profile",
 		filters={
