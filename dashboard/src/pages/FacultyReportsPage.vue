@@ -71,6 +71,8 @@
 		<TopicProgress :topics="topicProgress.data" :failed="topicProgressFailed" class="space-y-3">
 			<h2 class="text-lg font-semibold text-ink-gray-8">By topic</h2>
 		</TopicProgress>
+
+		<CommonErrors v-show="!failed" :params="params" />
 	</PageBody>
 </template>
 
@@ -81,6 +83,7 @@ import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
+import CommonErrors from '@/components/reports/CommonErrors.vue'
 import TopicProgress, { type TopicProgressRow } from '@/components/reports/TopicProgress.vue'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
