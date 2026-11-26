@@ -15,8 +15,10 @@ import { createDoc, deleteDoc } from "../helpers/frappe";
 let cohort: CS17Cohort;
 let firstStudent: CS17Profile;
 let secondStudent: CS17Profile;
+let openedStudent: CS17Profile;
 let assignment: CS17Assignment;
 const runs: string[] = [];
+let project: string;
 
 async function addRun(
 	request: APIRequestContext,
@@ -39,6 +41,7 @@ test.describe("Live lab", () => {
 		cohort = await createTestCohort(request);
 		firstStudent = await createTestProfile(request, { cohort: cohort.name });
 		secondStudent = await createTestProfile(request, { cohort: cohort.name });
+		openedStudent = await createTestProfile(request, { cohort: cohort.name });
 		assignment = await createTestAssignment(request, {
 			cohort: cohort.name,
 			submissionType: "Python",
@@ -52,13 +55,23 @@ test.describe("Live lab", () => {
 			error_type: "NameError",
 			error_line: 4,
 		});
+		project = (
+			await createDoc<{ name: string }>(request, "CS17 Project", {
+				project_title: assignment.title,
+				project_type: "Python",
+				profile: openedStudent.name,
+				assignment: assignment.name,
+			})
+		).name;
 	});
 
 	test.afterAll(async ({ request }) => {
 		for (const run of runs) await deleteDoc(request, "CS17 Code Run", run);
+		await deleteDoc(request, "CS17 Project", project);
 		await cleanupTestAssignments(request, cohort.name);
 		await deleteTestProfile(request, firstStudent.name);
 		await deleteTestProfile(request, secondStudent.name);
+		await deleteTestProfile(request, openedStudent.name);
 		await deleteDoc(request, "CS17 Cohort", cohort.name);
 	});
 
@@ -77,5 +90,12 @@ test.describe("Live lab", () => {
 		await page.goto(`/dashboard/faculty/assignments/${assignment.name}/live`);
 
 		await expect(page.getByText("NameError on line 4: 2 students")).toBeVisible();
+	});
+
+	test("shows a student who opened it but typed nothing as opened", async ({ page }) => {
+		await page.goto(`/dashboard/faculty/assignments/${assignment.name}/live`);
+		const card = page.getByRole("listitem").filter({ hasText: openedStudent.full_name! });
+
+		await expect(card.getByText("Opened", { exact: true })).toBeVisible();
 	});
 });
