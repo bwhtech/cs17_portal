@@ -1,8 +1,10 @@
 import frappe
 from frappe import _
+from frappe.query_builder.functions import Coalesce
 from frappe.utils import add_to_date, get_datetime
+from pypika.functions import Length, Replace
 
-from cs17_portal.api import ASSIGNMENT_SUBMISSION, _comparable_lines, require_faculty_for_assignment
+from cs17_portal.api import ASSIGNMENT_SUBMISSION, require_faculty_for_assignment
 
 SUDDEN_CODE_MIN_LINES = 6
 SUDDEN_CODE_SHARE = 0.7
@@ -34,18 +36,23 @@ def find_sudden_code(assignment: str, filters: dict) -> dict:
 	if not submissions:
 		return {}
 
-	starter_lines = len(
-		_comparable_lines(frappe.db.get_value("CS17 Assignment", assignment, "starter_code") or "")
-	)
+	starter_lines = _count_lines(frappe.db.get_value("CS17 Assignment", assignment, "starter_code"))
 	students = [submission.student for submission in submissions]
-	snapshots_by_project = {}
-	for snapshot in frappe.get_all(
-		"CS17 Code Snapshot",
-		filters={"project": ("in", [submission.project for submission in submissions])},
-		fields=["project", "saved_at", "code"],
-		order_by="saved_at asc",
+	snapshot = frappe.qb.DocType("CS17 Code Snapshot")
+	code = Coalesce(snapshot.code, "")
+	lines_by_project = {}
+	for row in (
+		frappe.qb.from_(snapshot)
+		.select(
+			snapshot.project,
+			snapshot.saved_at,
+			(Length(code) - Length(Replace(code, "\n", "")) + 1).as_("lines"),
+		)
+		.where(snapshot.project.isin([submission.project for submission in submissions]))
+		.orderby(snapshot.saved_at)
+		.run(as_dict=True)
 	):
-		snapshots_by_project.setdefault(snapshot.project, []).append(snapshot)
+		lines_by_project.setdefault(row.project, []).append(row)
 	pastes = frappe.get_all(
 		"CS17 Paste",
 		filters={
@@ -63,12 +70,12 @@ def find_sudden_code(assignment: str, filters: dict) -> dict:
 
 	flagged = {}
 	for submission in submissions:
-		final_lines = len(_comparable_lines(submission.code or ""))
+		final_lines = _count_lines(submission.code)
 		if final_lines < SUDDEN_CODE_MIN_LINES:
 			continue
 		previous_lines = starter_lines
-		for snapshot in snapshots_by_project.get(submission.project, []):
-			lines = len(_comparable_lines(snapshot.code or ""))
+		for snapshot in lines_by_project.get(submission.project, []):
+			lines = snapshot.lines
 			if lines - previous_lines >= SUDDEN_CODE_SHARE * final_lines:
 				lead_up = (add_to_date(snapshot.saved_at, minutes=-LEAD_UP_MINUTES), snapshot.saved_at)
 				flagged[submission.name] = {
@@ -91,3 +98,7 @@ def find_sudden_code(assignment: str, filters: dict) -> dict:
 def _is_within(moment, period: tuple) -> bool:
 	start, end = period
 	return bool(moment) and start <= get_datetime(moment) <= end
+
+
+def _count_lines(code: str | None) -> int:
+	return code.count("\n") + 1 if code else 0
