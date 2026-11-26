@@ -36,9 +36,7 @@ test.describe("Activity reminder", () => {
 		await page.locator(LIST_ROW, { hasText: student.full_name }).getByRole("checkbox").click();
 		await page.getByRole("button", { name: "Send reminder" }).click();
 
-		await expect(
-			page.locator("[data-sonner-toast]").getByText("Reminder sent to 1 student")
-		).toBeVisible();
+		await expect(page.getByText("Reminder sent to 1 student")).toBeVisible();
 		await expect(page.getByRole("region", { name: "Selected students" })).toBeHidden();
 	});
 });
