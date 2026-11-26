@@ -7,6 +7,7 @@ from frappe.utils import add_to_date, format_datetime, get_url, getdate, now_dat
 from frappe.utils.background_jobs import defer_enqueue_after_commit
 
 from cs17_portal.api import ASSIGNMENT_SUBMISSION, submit_python_code, time_limit_ends_at
+from cs17_portal.class_activity import get_class_activity
 from cs17_portal.guardian import get_child_assignments, get_children, is_due_this_week, is_missing
 
 if TYPE_CHECKING:
@@ -389,3 +390,63 @@ def _log_error_once(title: str, doctype: str, name: str, modified: "datetime") -
 		limit=1,
 	):
 		frappe.log_error(title=title, reference_doctype=doctype, reference_name=name)
+
+
+def send_daily_activity_email():
+	if frappe.db.get_value("CS17 Portal Settings", {}, "daily_activity_email") == 0:
+		return
+	faculty = frappe.get_all(
+		"CS17 Profile",
+		filters=[["profile_type", "=", "Faculty"], ["user.enabled", "=", 1], ["user.email", "is", "set"]],
+		fields=["user", "user.email as email", "cohort"],
+	)
+	opted_out = frappe.get_all(
+		"Notification Settings",
+		filters={"name": ["in", [member.user for member in faculty]], "enable_email_notifications": 0},
+		pluck="name",
+	)
+	faculty = [member for member in faculty if member.user not in opted_out]
+	if not faculty:
+		return
+
+	active_cohorts = frappe.get_all("CS17 Cohort", filters={"disabled": 0}, pluck="name", order_by="name asc")
+	now = now_datetime()
+	open_cohorts = set(
+		frappe.get_all(
+			"CS17 Assignment",
+			filters={"is_published": 1},
+			or_filters=[["due_date", "is", "not set"], ["due_date", ">=", now], ["late_until", ">=", now]],
+			pluck="cohort",
+			distinct=True,
+		)
+	)
+
+	activity_link = get_url("/dashboard/faculty/activity")
+	activity_by_cohort = {}
+	session_user = frappe.session.user
+	try:
+		for member in faculty:
+			cohorts = [member.cohort] if member.cohort else active_cohorts
+			for cohort in cohorts:
+				if cohort in activity_by_cohort:
+					continue
+				frappe.set_user(member.user)  # nosemgrep
+				students = get_class_activity(cohort)["students"]
+				worked = [row for row in students if row["opened"]]
+				activity_by_cohort[cohort] = None
+				if cohort in open_cohorts or worked:
+					activity_by_cohort[cohort] = frappe._dict(
+						cohort=cohort,
+						no_work=[row["full_name"] for row in students if not row["opened"]],
+						worked=worked,
+					)
+			in_scope = [activity_by_cohort[cohort] for cohort in cohorts if activity_by_cohort[cohort]]
+			if in_scope:
+				frappe.sendmail(
+					recipients=[member.email],
+					subject=_("Class activity today"),
+					template="daily_activity",
+					args={"cohorts": in_scope, "activity_link": activity_link},
+				)
+	finally:
+		frappe.set_user(session_user)  # nosemgrep

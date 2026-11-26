@@ -6,7 +6,8 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "quick_links"
+  "quick_links",
+  "daily_activity_email"
  ],
  "fields": [
   {
@@ -14,12 +15,18 @@
    "fieldtype": "Table",
    "label": "Quick Links",
    "options": "CS17 Quick Link"
+  },
+  {
+   "default": "1",
+   "fieldname": "daily_activity_email",
+   "fieldtype": "Check",
+   "label": "Send daily activity email"
   }
  ],
  "grid_page_length": 50,
- "index_web_pages_for_search": 1,
+ "link_display_mode": "Search",
  "links": [],
- "modified": "2026-05-22 16:32:46.366826",
+ "modified": "2026-11-26 20:45:14.073213",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Portal Settings",

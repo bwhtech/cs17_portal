@@ -172,6 +172,7 @@ scheduler_events = {
 	"cron": {
 		"* * * * *": ["cs17_portal.tasks.submit_saved_work_when_time_is_up"],
 		"0 8 * * 1": ["cs17_portal.tasks.send_faculty_digest", "cs17_portal.tasks.send_guardian_digest"],
+		"0 19 * * *": ["cs17_portal.tasks.send_daily_activity_email"],
 	},
 }
 
