@@ -20,7 +20,7 @@
 				class="grid min-w-max grid-cols-[minmax(10rem,1fr)_repeat(7,3rem)] gap-1"
 			>
 				<div role="row" class="contents">
-					<span role="columnheader" class="sr-only">Student</span>
+					<span role="columnheader"><span class="sr-only">Student</span></span>
 					<span
 						v-for="day in week.data.days"
 						:key="day"
