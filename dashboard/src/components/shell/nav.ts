@@ -82,6 +82,7 @@ const faculty: NavConfig = {
 				{ label: 'Projects', icon: 'lucide-blocks', to: '/faculty/projects' },
 				{ label: 'Gallery', icon: 'lucide-images', to: '/faculty/gallery' },
 				{ label: 'Reports', icon: 'lucide-chart-column', to: '/faculty/reports' },
+				{ label: 'Activity', icon: 'lucide-activity', to: '/faculty/activity' },
 			],
 		},
 		{

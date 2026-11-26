@@ -115,6 +115,7 @@ declare module 'vue' {
     SolutionsCard: typeof import('./src/components/faculty/SolutionsCard.vue')['default']
     SolutionsDialog: typeof import('./src/components/faculty/SolutionsDialog.vue')['default']
     SolutionTabs: typeof import('./src/components/python/SolutionTabs.vue')['default']
+    StudentActivityDialog: typeof import('./src/components/reports/StudentActivityDialog.vue')['default']
     StudentCodeComments: typeof import('./src/components/assignments/StudentCodeComments.vue')['default']
     StudentGuardians: typeof import('./src/components/guardian/StudentGuardians.vue')['default']
     StudentImport: typeof import('./src/components/settings/StudentImport.vue')['default']

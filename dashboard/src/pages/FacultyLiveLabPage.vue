@@ -123,6 +123,7 @@ interface LiveStudent extends CodeError {
 	student: string
 	full_name: string | null
 	submitted: boolean
+	opened: boolean
 	last_active_at: string | null
 	passed: number | null
 	total: number | null
@@ -149,11 +150,14 @@ const live = usePolledCall<LiveLab, { assignment: string }>({
 usePolling(live.reload, LIVE_POLL_MS)
 const failed = useLoadFailed(live, { except: isRefusal })
 
-function status(row: LiveStudent): { label: string; theme: 'amber' | 'green' | 'gray' } | null {
+function status(
+	row: LiveStudent,
+): { label: string; theme: 'amber' | 'green' | 'blue' | 'gray' } | null {
 	if (row.stuck) return { label: 'Stuck', theme: 'amber' }
 	if (row.submitted) return { label: 'Submitted', theme: 'green' }
-	if (!row.last_active_at) return { label: 'Not started', theme: 'gray' }
-	return null
+	if (row.last_active_at) return null
+	if (row.opened) return { label: 'Opened', theme: 'blue' }
+	return { label: 'Not started', theme: 'gray' }
 }
 
 function errorAt(error: CodeError): string {

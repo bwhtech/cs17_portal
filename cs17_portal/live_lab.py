@@ -92,6 +92,7 @@ def get_live_lab(assignment: str) -> dict:
 				"student": row.student,
 				"full_name": row.full_name,
 				"submitted": submitted,
+				"opened": row.student in last_saved,
 				"last_active_at": last_active_at,
 				"passed": tested.passed,
 				"total": tested.total,

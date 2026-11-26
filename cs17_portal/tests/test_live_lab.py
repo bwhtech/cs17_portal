@@ -84,6 +84,14 @@ class TestLiveLab(FrappeTestCase):
 
 		self.assertEqual([row["full_name"] for row in students], ["Diya Patel", "Aarav Sharma"])
 
+	def test_a_student_who_only_opened_the_assignment_shows_as_opened(self):
+		frappe.set_user(self.student_user)
+		api.start_python_assignment(self.assignment)
+
+		[row] = [row for row in self.get_live_lab()["students"] if row["full_name"] == "Aarav Sharma"]
+
+		self.assertEqual((row["opened"], row["last_active_at"]), (True, None))
+
 	def test_a_submitted_student_is_not_stuck(self):
 		self.add_second_student_run(minutes_ago=11)
 		make_submission(self.assignment, self.second_student, "Diya Patel", "Loops practice")
