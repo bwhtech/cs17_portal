@@ -34,6 +34,7 @@ class TestDailyActivityEmail(FrappeTestCase):
 		cls.other_cohort = make_cohort("C641TEST")
 		cls.other_faculty_user = make_user("faculty641@cs17test.com")
 		make_profile("Faculty", cls.other_cohort, cls.other_faculty_user, "Rohan Mehta")
+		make_profile("Student", cls.other_cohort, make_user("student642@cs17test.com"), "Kabir Rao")
 		cls.idle_faculty_user = make_user("faculty643@cs17test.com")
 		make_profile("Faculty", make_cohort("C642TEST"), cls.idle_faculty_user, "Neha Kulkarni")
 		cls.faculty_without_cohort_user = make_user("faculty642@cs17test.com")
