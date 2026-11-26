@@ -112,6 +112,8 @@
 				<h2 class="text-lg font-semibold text-ink-gray-8">By topic</h2>
 			</TopicProgress>
 
+			<StuckHistory :student-id="studentId" />
+
 			<section class="space-y-3">
 				<h2 class="text-lg font-semibold text-ink-gray-8">Results</h2>
 
@@ -175,6 +177,7 @@ import LoadError from '@/components/common/LoadError.vue'
 import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
 import StudentGuardians from '@/components/guardian/StudentGuardians.vue'
+import StuckHistory from '@/components/students/StuckHistory.vue'
 import TopicProgress, { type TopicProgressRow } from '@/components/reports/TopicProgress.vue'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
 import { useLoadFailed } from '@/composables/useLoadFailed'
