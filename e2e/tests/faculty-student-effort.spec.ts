@@ -52,7 +52,11 @@ test.describe("Student effort", () => {
 	test("shows runs to the first pass and hints next to the assignment", async ({ page }) => {
 		await page.goto(`/dashboard/faculty/students/${student.name}`);
 
-		await expect(page.locator(LIST_ROW, { hasText: assignment.title })).toContainText(
+		const assignments = page.locator("section", {
+			has: page.getByRole("heading", { name: "Assignments" }),
+		});
+
+		await expect(assignments.locator(LIST_ROW, { hasText: assignment.title })).toContainText(
 			"Passed on run 2 · 1 hint"
 		);
 	});
