@@ -102,7 +102,7 @@
 					:rows="rows"
 					:row-key="(row: CS17Submission) => row.name"
 					:is-row-selectable="isSubmitted"
-					:row-height="closestMatches.size || testedCount ? 60 : 44"
+					:row-height="closestMatches.size || testedCount || hasSuddenCode ? 60 : 44"
 					selectable
 					empty="No submissions yet."
 				>
@@ -143,6 +143,24 @@
 										}}</span>
 									</Badge>
 								</button>
+							</Tooltip>
+							<Tooltip
+								v-if="suddenCode.data?.[row.name]"
+								:text="suddenCodeReason(suddenCode.data[row.name])"
+								:disabled="!isDesktop"
+							>
+								<RouterLink
+									class="flex shrink-0 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
+									:to="`/faculty/submissions/${row.name}`"
+									:aria-label="suddenCodeReason(suddenCode.data[row.name])"
+									@click.stop
+								>
+									<Badge label="Check" theme="amber" variant="subtle">
+										<template #prefix>
+											<span class="lucide-zap size-full" aria-hidden="true" />
+										</template>
+									</Badge>
+								</RouterLink>
 							</Tooltip>
 							<TestScoreBadge
 								v-if="isDesktop && testScores[row.name]"
@@ -341,7 +359,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, toRefs, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import {
 	Badge,
 	Button,
@@ -383,6 +401,7 @@ import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
 import { formatGrade } from '@/lib/grades'
 import { isLate } from '@/lib/status'
 import { previewKind } from '@/lib/submissionTypes'
+import { suddenCodeReason, type SuddenCode } from '@/lib/suddenCode'
 import { trySubmit } from '@/lib/trySubmit'
 import type {
 	AnswerSheet,
@@ -465,6 +484,13 @@ const similar = useCall<SimilarPair[], { assignment: string }>({
 	immediate: false,
 })
 
+const suddenCode = useCall<Record<string, SuddenCode>, { assignment: string }>({
+	url: '/api/v2/method/cs17_portal.sudden_code.get_sudden_code',
+	params: () => ({ assignment: assignmentId.value }),
+	immediate: false,
+})
+const hasSuddenCode = computed(() => Object.keys(suddenCode.data ?? {}).length > 0)
+
 const assignmentTests = useCall<CS17Assignment | null, { assignment: string }>({
 	url: '/api/v2/method/cs17_portal.api.get_assignment',
 	params: () => ({ assignment: assignmentId.value }),
@@ -476,6 +502,7 @@ watch(
 	(pythonAssignment) => {
 		if (pythonAssignment) {
 			similar.reload()
+			suddenCode.reload()
 			assignmentTests.reload()
 		}
 	},
