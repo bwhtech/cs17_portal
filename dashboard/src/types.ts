@@ -436,6 +436,33 @@ export interface ClassReportRow {
 	grade: string | null
 }
 
+export interface AssignmentActivity {
+	assignment: string
+	title: string
+	typed: boolean
+	runs: number
+	passed: number | null
+	total: number | null
+	submitted: boolean
+	last_active_at: string
+}
+
+export interface StudentActivity {
+	student: string
+	full_name: string
+	opened: number
+	typed: number
+	ran: number
+	submitted: number
+	last_active_at: string | null
+	assignments: AssignmentActivity[]
+}
+
+export interface ClassActivity {
+	date: string
+	students: StudentActivity[]
+}
+
 export interface StudentOverviewAssignment extends CS17Assignment {
 	tab_leave_count: number
 }
