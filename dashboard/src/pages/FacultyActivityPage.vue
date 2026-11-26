@@ -147,6 +147,8 @@ const activity = useCall<ClassActivity, { cohort: string; date?: string }>({
 const rows = computed(() => activity.data?.students ?? [])
 const loading = computed(() => !activity.data && (!cohortsCall.data || Boolean(cohort.value)))
 
+watch(cohort, () => (selection.value = []))
+
 watch(rows, () => {
 	const students = new Set(rows.value.map((row) => row.student))
 	selection.value = selection.value.filter((student) => students.has(student))
