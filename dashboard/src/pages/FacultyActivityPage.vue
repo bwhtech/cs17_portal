@@ -19,10 +19,13 @@
 					@update:model-value="pickedDate = $event"
 				/>
 			</div>
+			<TabButtons v-model="view" aria-label="View" class="self-end" :options="VIEWS" />
 		</div>
 
+		<ActivityWeek v-if="view === 'week'" :cohort="cohort" :date="pickedDate" />
+
 		<LoadError
-			v-if="failed"
+			v-else-if="failed"
 			title="Could not load the activity"
 			:loading="cohortsCall.loading || activity.loading"
 			@retry="retry"
@@ -95,11 +98,12 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Badge, Button, DatePicker, Select, useCall } from 'frappe-ui'
+import { Badge, Button, DatePicker, Select, TabButtons, useCall } from 'frappe-ui'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
+import ActivityWeek from '@/components/reports/ActivityWeek.vue'
 import StudentActivityDialog from '@/components/reports/StudentActivityDialog.vue'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import { useLoadFailed } from '@/composables/useLoadFailed'
@@ -118,6 +122,12 @@ const columns: Column[] = [
 	{ header: 'Last active', key: 'last_active_at', width: '6.5rem' },
 ]
 
+const VIEWS = [
+	{ label: 'Day', value: 'day' },
+	{ label: 'Week', value: 'week' },
+]
+
+const view = ref('day')
 const pickedCohort = ref('')
 const pickedDate = ref('')
 const openStudent = ref<StudentActivity | null>(null)
