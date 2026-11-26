@@ -30,16 +30,24 @@
 
 		<DataTable
 			v-else
+			v-model:selection="selection"
 			:columns="columns"
 			:rows="rows"
 			:row-key="(row: StudentActivity) => row.student"
 			:loading="loading"
 			:on-row-click="(row: StudentActivity) => (openStudent = row)"
+			selectable
 			empty="No students in this cohort."
 		>
 			<template #cell-full_name="{ row }">
 				<div class="flex min-w-0 items-center gap-2">
-					<RowTitle :title="row.full_name" />
+					<button
+						type="button"
+						class="min-w-0 rounded-1 text-left hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
+						@click.stop="openStudent = row"
+					>
+						<RowTitle :title="row.full_name" />
+					</button>
 					<Badge v-if="!row.opened" label="No work" theme="red" variant="subtle" />
 				</div>
 			</template>
@@ -49,6 +57,33 @@
 				<template v-else>{{ parseDatetime(row.last_active_at).format('h:mm A') }}</template>
 			</template>
 		</DataTable>
+
+		<div v-if="selection.length" class="flex justify-center">
+			<div
+				class="fixed bottom-20 z-10 flex max-w-[calc(100vw-1.5rem)] items-center gap-3 rounded-4 border border-outline-gray-1 bg-surface-base py-2 pl-4 pr-2 text-base shadow-2xl md:bottom-6"
+				role="region"
+				aria-label="Selected students"
+			>
+				<p class="whitespace-nowrap text-ink-gray-8">{{ selection.length }} selected</p>
+
+				<div class="h-5 border-l border-outline-gray-2" />
+
+				<Button
+					label="Send reminder"
+					icon-left="lucide-bell"
+					:loading="reminder.loading"
+					@click="sendReminder"
+				/>
+
+				<Button
+					variant="ghost"
+					icon="lucide-x"
+					aria-label="Clear selection"
+					tooltip="Clear selection"
+					@click="selection = []"
+				/>
+			</div>
+		</div>
 	</PageBody>
 
 	<StudentActivityDialog
@@ -59,8 +94,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { Badge, DatePicker, Select, useCall } from 'frappe-ui'
+import { computed, ref, watch } from 'vue'
+import { Badge, Button, DatePicker, Select, useCall } from 'frappe-ui'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import PageBody from '@/components/common/PageBody.vue'
@@ -69,6 +104,9 @@ import StudentActivityDialog from '@/components/reports/StudentActivityDialog.vu
 import AppHeader from '@/components/shell/AppHeader.vue'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { parseDatetime } from '@/lib/dates'
+import { frappeErrorMessage } from '@/lib/frappeError'
+import { toast } from '@/lib/toast'
+import { trySubmit } from '@/lib/trySubmit'
 import type { ClassActivity, StudentActivity } from '@/types'
 
 const columns: Column[] = [
@@ -83,6 +121,7 @@ const columns: Column[] = [
 const pickedCohort = ref('')
 const pickedDate = ref('')
 const openStudent = ref<StudentActivity | null>(null)
+const selection = ref<string[]>([])
 
 const cohortsCall = useCall<string[]>({
 	url: '/api/v2/method/cs17_portal.api.get_cohorts',
@@ -107,6 +146,28 @@ const activity = useCall<ClassActivity, { cohort: string; date?: string }>({
 
 const rows = computed(() => activity.data?.students ?? [])
 const loading = computed(() => !activity.data && (!cohortsCall.data || Boolean(cohort.value)))
+
+watch(rows, () => {
+	const students = new Set(rows.value.map((row) => row.student))
+	selection.value = selection.value.filter((student) => students.has(student))
+})
+
+const reminder = useCall<null, { cohort: string; students: string[] }>({
+	url: '/api/v2/method/cs17_portal.class_activity.remind_students',
+	method: 'POST',
+	immediate: false,
+})
+
+async function sendReminder() {
+	const count = selection.value.length
+	await trySubmit(reminder, { cohort: cohort.value, students: selection.value })
+	if (reminder.error) {
+		toast.error(frappeErrorMessage(reminder.error, 'Could not send the reminder.'))
+		return
+	}
+	toast.success(`Reminder sent to ${count} ${count === 1 ? 'student' : 'students'}`)
+	selection.value = []
+}
 
 const cohortsFailed = useLoadFailed(cohortsCall)
 const activityFailed = useLoadFailed(activity)
