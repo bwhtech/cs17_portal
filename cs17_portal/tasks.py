@@ -398,7 +398,7 @@ def _log_error_once(title: str, doctype: str, name: str, modified: "datetime") -
 
 
 def send_daily_activity_email():
-	if frappe.db.get_value("CS17 Portal Settings", {}, "daily_activity_email") == 0:
+	if frappe.db.exists("CS17 Portal Settings", {"daily_activity_email": 0}):
 		return
 	faculty = frappe.get_all(
 		"CS17 Profile",
@@ -436,7 +436,7 @@ def send_daily_activity_email():
 			students = summarize_class_activity(list_cohort_students(cohort))["students"]
 			worked = [row for row in students if row["opened"]]
 			activity_by_cohort[cohort] = None
-			if cohort in open_cohorts or worked:
+			if students and (cohort in open_cohorts or worked):
 				activity_by_cohort[cohort] = frappe._dict(
 					cohort=cohort,
 					no_work=[row["full_name"] for row in students if not row["opened"]],
