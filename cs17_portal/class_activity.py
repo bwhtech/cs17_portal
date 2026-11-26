@@ -1,11 +1,11 @@
 import frappe
 from frappe import _
-from frappe.desk.doctype.notification_log.notification_log import make_notification_logs
 from frappe.query_builder.functions import Max
 from frappe.rate_limiter import rate_limit
-from frappe.utils import get_url, getdate, today
+from frappe.utils import getdate, today
 
 from cs17_portal.api import ASSIGNMENT_SUBMISSION, get_cohort_students
+from cs17_portal.cs17_portal.doctype.cs17_assignment.cs17_assignment import alert_students
 
 
 @frappe.whitelist(methods=["GET"])
@@ -112,30 +112,8 @@ def remind_students(cohort: str, students: list) -> None:
 
 
 def send_reminder(students: list[str]) -> None:
-	subject = _("Don't forget your assignments today. Open them and give them a go.")
-	link = "/dashboard/assignments"
-	users = frappe.get_all(
-		"User",
-		filters={
-			"name": ["in", frappe.get_all("CS17 Profile", filters={"name": ["in", students]}, pluck="user")],
-			"enabled": 1,
-			"email": ["is", "set"],
-		},
-		fields=["name", "email"],
+	alert_students(
+		students,
+		_("Don't forget your assignments today. Open them and give them a go."),
+		"/dashboard/assignments",
 	)
-	make_notification_logs(
-		frappe._dict(type="Alert", subject=subject, link=link), [user.email for user in users]
-	)
-	opted_out = frappe.get_all(
-		"Notification Settings",
-		filters={"name": ["in", [user.name for user in users]], "enable_email_notifications": 0},
-		pluck="name",
-	)
-	recipients = [user.email for user in users if user.name not in opted_out]
-	if recipients:
-		frappe.sendmail(
-			recipients=recipients,
-			subject=subject,
-			template="new_notification",
-			args={"body_content": subject, "doc_link": get_url(link)},
-		)
