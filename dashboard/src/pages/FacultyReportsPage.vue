@@ -72,7 +72,7 @@
 			<h2 class="text-lg font-semibold text-ink-gray-8">By topic</h2>
 		</TopicProgress>
 
-		<CommonErrors v-show="!failed" :params="params" />
+		<CommonErrors v-show="!failed" :params="params" :loading="!cohortsCall.data" />
 	</PageBody>
 </template>
 

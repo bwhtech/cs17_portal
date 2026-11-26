@@ -7,7 +7,7 @@
 			:columns="columns"
 			:rows="errors.data ?? []"
 			:row-key="(row: CommonError) => `${row.assignment}:${row.error_type}:${row.error_line}`"
-			:loading="Boolean(params.cohort) && !errors.data"
+			:loading="loading || (Boolean(params.cohort) && !errors.data)"
 			:group-by="(row: CommonError) => row.topic"
 			:on-row-click="openLiveLab"
 			empty="No errors in this cohort's runs."
@@ -37,6 +37,7 @@ interface CommonError {
 
 const props = defineProps<{
 	params: { cohort: string; quarter?: string }
+	loading?: boolean
 }>()
 
 const columns: Column[] = [
