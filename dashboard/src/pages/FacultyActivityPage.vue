@@ -61,7 +61,7 @@
 			</template>
 		</DataTable>
 
-		<div v-if="selection.length" class="flex justify-center">
+		<div v-if="view === 'day' && selection.length" class="flex justify-center">
 			<div
 				class="fixed bottom-20 z-10 flex max-w-[calc(100vw-1.5rem)] items-center gap-3 rounded-4 border border-outline-gray-1 bg-surface-base py-2 pl-4 pr-2 text-base shadow-2xl md:bottom-6"
 				role="region"
