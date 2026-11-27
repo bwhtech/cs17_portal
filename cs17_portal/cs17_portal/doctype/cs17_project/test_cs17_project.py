@@ -471,6 +471,13 @@ class TestCS17Project(FrappeTestCase):
 		self.assertEqual(details.sample_tests, [{"input": "Asha\n", "expected_output": "Hello, Asha!\n"}])
 		self.assertEqual(details.hidden_test_count, 1)
 
+	def test_student_assignment_says_it_is_closed_after_the_due_date(self):
+		assignment = self.make_python_assignment()
+		frappe.db.set_value("CS17 Assignment", assignment, "due_date", "2020-01-01 00:00:00")
+
+		frappe.set_user(STUDENT1_USER)
+		self.assertTrue(api.get_student_assignment(assignment).is_closed)
+
 	def test_student_gets_no_solutions_until_they_are_shown(self):
 		assignment = self.make_python_assignment()
 		frappe.set_user(FACULTY_IN_USER)
