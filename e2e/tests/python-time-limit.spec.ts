@@ -229,6 +229,7 @@ test.describe("Python assignment time limit", () => {
 		const dialog = facultyPage.getByRole("dialog");
 		await dialog.getByLabel("Time limit (minutes)").fill("45");
 		await dialog.getByRole("button", { name: "Save" }).click();
+		await facultyPage.getByRole("tab", { name: "Brief" }).click();
 
 		await expect(facultyPage.getByText("45 minutes")).toBeVisible();
 		await context.close();
