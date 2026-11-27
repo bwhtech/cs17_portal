@@ -50,7 +50,7 @@
 			empty="No students in this cohort."
 		>
 			<template #cell-full_name="{ row }">
-				<RowTitle :title="row.full_name" />
+				<RowTitle :title="row.full_name" :to="`/faculty/students/${row.student}`" />
 			</template>
 
 			<template #cell-missing="{ row }">
