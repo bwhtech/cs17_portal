@@ -291,9 +291,9 @@
 					/>
 
 					<SolutionsCard
-						v-if="assignmentDetails"
-						:assignment="assignmentDetails"
-						@changed="assignmentTests.reload()"
+						v-if="assignment.submission_type === 'Python'"
+						:assignment="assignment"
+						@changed="detail.reload()"
 					/>
 				</TabPanel>
 			</Tabs>
@@ -513,42 +513,18 @@ function openSimilarCode(submission?: CS17Submission) {
 const similar = useCall<SimilarPair[], { assignment: string }>({
 	url: '/api/v2/method/cs17_portal.api.get_similar_submissions',
 	params: () => ({ assignment: assignmentId.value }),
-	immediate: false,
+	refetch: true,
 })
 
 const suddenCode = useCall<Record<string, SuddenCode>, { assignment: string }>({
 	url: '/api/v2/method/cs17_portal.sudden_code.get_sudden_code',
 	params: () => ({ assignment: assignmentId.value }),
-	immediate: false,
+	refetch: true,
 })
 const hasSuddenCode = computed(() => Object.keys(suddenCode.data ?? {}).length > 0)
 
-const assignmentTests = useCall<CS17Assignment | null, { assignment: string }>({
-	url: '/api/v2/method/cs17_portal.api.get_assignment',
-	params: () => ({ assignment: assignmentId.value }),
-	immediate: false,
-})
-
-watch(
-	() => assignment.value?.submission_type === 'Python' && assignment.value.name,
-	(pythonAssignment) => {
-		if (pythonAssignment) {
-			similar.reload()
-			suddenCode.reload()
-			assignmentTests.reload()
-		}
-	},
-)
-
-const assignmentDetails = computed(() =>
-	assignmentTests.data?.name === assignmentId.value ? assignmentTests.data : null,
-)
-
 const canRunTests = computed(
-	() =>
-		submissions.value.length > 0 &&
-		assignmentTests.data?.name === assignmentId.value &&
-		Boolean(assignmentTests.data.test_cases?.length),
+	() => submissions.value.length > 0 && Boolean(assignment.value?.test_cases?.length),
 )
 
 const { testResults, testing } = useSubmissionTests()
@@ -631,8 +607,15 @@ const answerSheet = useCall<
 >({
 	url: '/api/v2/method/cs17_portal.answer_sheet.get_answer_sheet',
 	params: () => ({ assignment: assignmentId.value }),
-	refetch: true,
+	immediate: false,
 })
+
+watch(
+	() => assignment.value?.submission_type !== 'Python' && assignment.value?.name,
+	(name) => {
+		if (name) answerSheet.reload()
+	},
+)
 
 interface AnswerTarget {
 	assignment: string

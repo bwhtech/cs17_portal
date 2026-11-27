@@ -284,11 +284,15 @@ def get_assignment_submissions(assignment: str) -> dict:
 			"difficulty",
 			"late_until",
 			"late_penalty",
+			"show_solutions",
 		],
 		as_dict=True,
 	)
 	if not assignment_doc:
 		frappe.throw(_("Assignment not found"), frappe.DoesNotExistError)
+	if assignment_doc.submission_type == "Python":
+		assignment_doc.test_cases = get_test_cases(assignment)
+		assignment_doc.solutions = get_solutions(assignment)
 	assignment_doc.can_check_with_ai = (
 		assignment_doc.submission_type == "Python"
 		and assignment_doc.remarks in ("Grade", "Marks")
