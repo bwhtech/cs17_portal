@@ -1,7 +1,7 @@
 # Copyright (c) 2026, developers@bwh.tech and contributors
 # For license information, please see license.txt
 
-# import frappe
+import frappe
 from frappe.model.document import Document
 
 
@@ -22,3 +22,7 @@ class CS17CodeSnapshot(Document):
 	# end: auto-generated types
 
 	_DOCTYPE_NAME = "CS17 Code Snapshot"
+
+
+def on_doctype_update():
+	frappe.db.add_index("CS17 Code Snapshot", ["student", "saved_at"])

@@ -11,7 +11,7 @@
 					@update:model-value="pickedCohort = String($event)"
 				/>
 			</div>
-			<div class="w-full max-w-xs">
+			<div v-if="view === 'day'" class="w-full max-w-xs">
 				<DatePicker
 					label="Date"
 					:model-value="pickedDate || activity.data?.date"
@@ -19,20 +19,41 @@
 					@update:model-value="pickedDate = $event"
 				/>
 			</div>
+			<div v-else class="flex items-center gap-1 self-end">
+				<Button
+					variant="ghost"
+					icon="lucide-chevron-left"
+					aria-label="Previous week"
+					tooltip="Previous week"
+					@click="moveWeek(-1)"
+				/>
+				<Button
+					variant="ghost"
+					icon="lucide-chevron-right"
+					aria-label="Next week"
+					tooltip="Next week"
+					:disabled="isThisWeek"
+					@click="moveWeek(1)"
+				/>
+				<span class="px-1 text-base font-medium text-ink-gray-8">{{ weekLabel }}</span>
+				<Button v-if="!isThisWeek" label="This week" @click="pickedDate = today" />
+			</div>
 			<TabButtons v-model="view" aria-label="View" class="self-end" :options="VIEWS" />
 		</div>
 
-		<ActivityWeek v-if="view === 'week'" :cohort="cohort" :date="pickedDate" />
+		<KeepAlive>
+			<ActivityWeek v-if="view === 'week'" :cohort="cohort" :date="pickedDate" />
+		</KeepAlive>
 
 		<LoadError
-			v-else-if="failed"
+			v-if="view === 'day' && failed"
 			title="Could not load the activity"
 			:loading="cohortsCall.loading || activity.loading"
 			@retry="retry"
 		/>
 
 		<DataTable
-			v-else
+			v-else-if="view === 'day'"
 			v-model:selection="selection"
 			:columns="columns"
 			:rows="rows"
@@ -108,7 +129,7 @@ import ActivityWeek from '@/components/reports/ActivityWeek.vue'
 import StudentActivityDialog from '@/components/reports/StudentActivityDialog.vue'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import { useLoadFailed } from '@/composables/useLoadFailed'
-import { parseDatetime } from '@/lib/dates'
+import { dayjs, parseDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { toast } from '@/lib/toast'
 import { trySubmit } from '@/lib/trySubmit'
@@ -155,8 +176,30 @@ const activity = useCall<ClassActivity, { cohort: string; date?: string }>({
 	refetch: true,
 })
 
-const rows = computed(() => activity.data?.students ?? [])
-const loading = computed(() => !activity.data && (!cohortsCall.data || Boolean(cohort.value)))
+const activityOnDate = computed(() =>
+	!pickedDate.value || activity.data?.date === pickedDate.value ? activity.data : null,
+)
+const rows = computed(() => activityOnDate.value?.students ?? [])
+const loading = computed(
+	() => !activityOnDate.value && (!cohortsCall.data || Boolean(cohort.value)),
+)
+
+const today = dayjs().format('YYYY-MM-DD')
+const weekStart = computed(() => dayjs(pickedDate.value || today).startOf('week'))
+const isThisWeek = computed(() => weekStart.value.isSame(dayjs(today).startOf('week'), 'day'))
+const weekLabel = computed(() => {
+	const start = weekStart.value
+	const end = start.add(6, 'day')
+	const startFormat =
+		start.year() !== end.year() ? 'D MMM YYYY' : start.month() !== end.month() ? 'D MMM' : 'D'
+	return `${start.format(startFormat)} to ${end.format('D MMM YYYY')}`
+})
+
+function moveWeek(weeks: number) {
+	pickedDate.value = dayjs(pickedDate.value || today)
+		.add(weeks, 'week')
+		.format('YYYY-MM-DD')
+}
 
 watch(cohort, () => (selection.value = []))
 
