@@ -562,10 +562,13 @@ def require_faculty_for_announcement_cohort(cohort: str | None) -> None:
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 
-def get_cohort_submissions(cohort: str | None, limit: int | None = None) -> list:
+def get_cohort_submissions(cohort: str | None, limit: int | None = None, names: list | None = None) -> list:
+	filters = [["assignment.cohort", "=", cohort]] if cohort else []
+	if names is not None:
+		filters.append(["name", "in", names])
 	return frappe.get_all(
 		"CS17 Assignment Submission",
-		filters=[["assignment.cohort", "=", cohort]] if cohort else [],
+		filters=filters,
 		fields=["name", "student", "full_name", "assignment", "assignment_title", "submitted_at"],
 		order_by="submitted_at desc",
 		limit=limit,
@@ -1155,8 +1158,12 @@ def get_submission_project(submission: str) -> dict:
 
 
 @frappe.whitelist(methods=["GET"])
-def list_cohort_submissions(limit: int | None = None) -> list:
-	submissions = get_cohort_submissions(get_current_faculty().cohort, limit=limit)
+def list_cohort_submissions(limit: int | None = None, assigned_to_me: bool = False) -> list:
+	submissions = get_cohort_submissions(
+		get_current_faculty().cohort,
+		limit=limit,
+		names=_assigned_submission_names(frappe.session.user) if assigned_to_me else None,
+	)
 	if not submissions:
 		return []
 
