@@ -6,7 +6,7 @@
 		@retry="week.reload()"
 	/>
 
-	<div v-else-if="!week.data" class="cs17-delay-in space-y-2">
+	<div v-else-if="!week.data || showsOtherWeek" class="cs17-delay-in space-y-2">
 		<Skeleton v-for="n in 4" :key="n" class="h-8 w-full rounded-2" />
 	</div>
 
@@ -83,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { Skeleton, useCall } from 'frappe-ui'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadError from '@/components/common/LoadError.vue'
@@ -119,6 +119,8 @@ const week = useCall<ClassActivityWeek, { cohort: string; date?: string }>({
 	params: () => ({ cohort: props.cohort, ...(props.date ? { date: props.date } : {}) }),
 	refetch: true,
 })
+
+const showsOtherWeek = computed(() => !!props.date && !week.data?.days.includes(props.date))
 
 const failed = useLoadFailed(week)
 
