@@ -148,6 +148,8 @@ import VoiceNoteRecorder from '@/components/feedback/VoiceNoteRecorder.vue'
 import RubricMarksFields from '@/components/grading/RubricMarksFields.vue'
 import { GRADE_SCALE, type AIGradeDraft, type EvaluationType, type GradeBand } from '@/types'
 
+type RubricCall = ReturnType<typeof useCall<RubricCriterion[], { assignment: string }>>
+
 interface SubmissionGrade {
 	name: string
 	marks_obtained: number | null
@@ -167,6 +169,8 @@ const props = defineProps<{
 	canCheckWithAi?: boolean
 	submittedLate?: boolean
 	latePenalty?: number | null
+	gradeBands: GradeBand[]
+	rubricCall: RubricCall
 }>()
 
 const emit = defineEmits<{ saved: [] }>()
@@ -200,14 +204,7 @@ const existing = useCall<SubmissionGrade | null, { submission: string }>({
 	refetch: true,
 })
 
-const rubricCall = useCall<RubricCriterion[], { assignment: string }>({
-	url: '/api/v2/method/cs17_portal.rubric.get_assignment_rubric',
-	method: 'GET',
-	params: () => ({ assignment: props.assignment }),
-	immediate: showMarks.value,
-})
-
-const rubric = computed(() => rubricCall.data ?? [])
+const rubric = computed(() => props.rubricCall.data ?? [])
 const criterionMarks = ref<string[]>([])
 const criterionErrors = ref<string[]>([])
 const typedMarks = computed(() =>
@@ -215,20 +212,20 @@ const typedMarks = computed(() =>
 )
 
 const gradeFailed = useLoadFailed(existing, { except: isRefusal })
-const rubricFailed = useLoadFailed(rubricCall, { except: isRefusal })
+const rubricFailed = useLoadFailed(props.rubricCall, { except: isRefusal })
 const failed = computed(() => gradeFailed.value || rubricFailed.value)
 
 function reload() {
 	existing.reload()
-	if (showMarks.value) rubricCall.reload()
+	if (showMarks.value) props.rubricCall.reload()
 }
 
 // `isFinished`, not `data`: an ungraded submission answers with `null`, which
 // never changes the data ref and so would never fire a watcher on it.
 watch(
-	() => existing.isFinished && (!showMarks.value || rubricCall.isFinished),
+	() => existing.isFinished && (!showMarks.value || props.rubricCall.isFinished),
 	(finished) => {
-		if (!finished || seeded.value || existing.error || rubricCall.error) return
+		if (!finished || seeded.value || existing.error || props.rubricCall.error) return
 		const grade = existing.data
 		marks.value = grade?.marks_obtained != null ? String(grade.marks_obtained) : ''
 		criterionMarks.value = savedRubricMarks(rubric.value, grade?.rubric_scores)
@@ -255,22 +252,8 @@ watch(
 	{ immediate: true },
 )
 
-const bands = useCall<GradeBand[]>({
-	url: '/api/v2/method/cs17_portal.api.get_grade_bands',
-	method: 'GET',
-	immediate: false,
-})
-
-watch(
-	() => props.evaluationType,
-	(evaluationType) => {
-		if (evaluationType === 'Marks') bands.fetch()
-	},
-	{ immediate: true },
-)
-
 const marksGrade = computed(() => {
-	const letter = gradeForMarks(bands.data ?? [], typedMarks.value, props.maxMarks)
+	const letter = gradeForMarks(props.gradeBands, typedMarks.value, props.maxMarks)
 	return letter ? `Grade ${letter}` : ''
 })
 
@@ -382,6 +365,8 @@ interface SavedRemark {
 const savedRemarks = useCall<SavedRemark[]>({
 	url: '/api/v2/method/cs17_portal.saved_remarks.get_saved_remarks',
 	method: 'GET',
+	cacheKey: 'saved-remarks',
+	immediate: false,
 })
 
 const saveRemarkCall = useCall<string, { remark: string }>({
