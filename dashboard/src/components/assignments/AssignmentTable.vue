@@ -1,23 +1,14 @@
 <template>
 	<DataTable
 		:columns="columns"
-		:rows="assignments"
+		:rows="rows"
 		:row-key="rowKey"
 		:loading="loading"
 		:row-height="60"
 		:empty="cohort ? 'No assignments yet.' : 'You are not in a cohort yet.'"
-		v-model:collapsed-groups="collapsedTopics"
-		:group-by="grouped ? (row: CS17Assignment) => row.topic || 'Other' : undefined"
+		v-model:collapsed-groups="collapsedGroups"
+		:group-by="grouped ? groupOf : undefined"
 	>
-		<template #group-suffix="{ rows }">
-			<Badge
-				v-if="pendingCount(rows)"
-				:label="`${pendingCount(rows)} pending`"
-				:theme="assignmentStatusTheme('Pending')"
-				variant="subtle"
-			/>
-		</template>
-
 		<template #cell-icon="{ row }">
 			<SubmissionTypeIcon :submission-type="row.submission_type" />
 		</template>
@@ -131,7 +122,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, ref, watch } from 'vue'
 import { Badge, Button, toast, useCall } from 'frappe-ui'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
@@ -140,7 +131,7 @@ import SubmitAssignmentDialog from '@/components/assignments/SubmitAssignmentDia
 import { usePythonAssignment } from '@/components/assignments/pythonEditor'
 import { useScratchAssignment } from '@/components/assignments/scratchEditor'
 import { useSession } from '@/composables/useSession'
-import { formatDateTime, isPast } from '@/lib/dates'
+import { formatDateTime, isPast, parseDatetime } from '@/lib/dates'
 import { formatGrade } from '@/lib/grades'
 import { assignmentStatus, assignmentStatusTheme } from '@/lib/status'
 import { STORAGE_KEYS, readJSON, writeJSON } from '@/lib/storage'
@@ -186,8 +177,30 @@ const columns: Column[] = [
 
 const rowKey = (row: CS17Assignment) => row.name
 
-const collapsedTopics = ref(readJSON<string[]>(STORAGE_KEYS.collapsedTopics, []))
-watch(collapsedTopics, (value) => writeJSON(STORAGE_KEYS.collapsedTopics, value))
+const collapsedGroups = ref(readJSON<string[]>(STORAGE_KEYS.collapsedAssignmentGroups, ['Closed']))
+watch(collapsedGroups, (value) => writeJSON(STORAGE_KEYS.collapsedAssignmentGroups, value))
+
+const GROUPS = ['To do', 'Submitted', 'Closed'] as const
+
+function groupOf(assignment: CS17Assignment): (typeof GROUPS)[number] {
+	const status = statusOf(assignment)
+	return status === 'Pending' || status === 'Returned' ? 'To do' : status
+}
+
+function dueTime(assignment: CS17Assignment): number {
+	return assignment.due_date ? parseDatetime(assignment.due_date).valueOf() : Infinity
+}
+
+const rows = computed(() =>
+	props.grouped
+		? GROUPS.flatMap((group) => {
+				const inGroup = props.assignments.filter(
+					(assignment) => groupOf(assignment) === group,
+				)
+				return group === 'To do' ? inGroup.sort((a, b) => dueTime(a) - dueTime(b)) : inGroup
+			})
+		: props.assignments,
+)
 
 const scratch = useScratchAssignment()
 const python = usePythonAssignment()
@@ -228,10 +241,6 @@ function statusOf(assignment: CS17Assignment) {
 		props.submissionMap[assignment.name],
 		props.gradeMap?.[assignment.name],
 	)
-}
-
-function pendingCount(assignments: CS17Assignment[]): number {
-	return assignments.filter((assignment) => statusOf(assignment) === 'Pending').length
 }
 
 function isOverdue(assignment: CS17Assignment): boolean {
