@@ -121,7 +121,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Badge, Button, useCall } from 'frappe-ui'
+import { Badge, Button } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
@@ -132,6 +132,7 @@ import DeleteAnnouncementDialog from '@/components/faculty/DeleteAnnouncementDia
 import PreviewAnnouncementDialog from '@/components/faculty/PreviewAnnouncementDialog.vue'
 import PublishAnnouncementDialog from '@/components/faculty/PublishAnnouncementDialog.vue'
 import { useAnnouncements } from '@/composables/useAnnouncements'
+import { useCohorts } from '@/composables/useCohorts'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { formatDate, formatDateTime } from '@/lib/dates'
 import type { AlertVariant, CS17Announcement } from '@/types'
@@ -153,10 +154,7 @@ const { facultyCall: listCall } = useAnnouncements()
 const announcements = computed(() => listCall.data ?? [])
 const failed = useLoadFailed(listCall)
 
-const cohortsCall = useCall<string[]>({
-	url: '/api/v2/method/cs17_portal.api.get_cohorts',
-	method: 'GET',
-})
+const cohortsCall = useCohorts()
 
 const cohorts = computed(() => cohortsCall.data ?? [])
 

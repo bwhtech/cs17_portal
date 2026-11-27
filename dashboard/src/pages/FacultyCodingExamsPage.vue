@@ -74,6 +74,7 @@ import {
 	type CodingExamSummary,
 } from '@/components/exams/faculty/codingExam'
 import { useBreakpoint } from '@/composables/useBreakpoint'
+import { useCohorts, useQuarters } from '@/composables/useCohorts'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 
 const router = useRouter()
@@ -88,15 +89,9 @@ const columns: Column[] = [
 
 const formOpen = ref(false)
 
-const cohortsCall = useCall<string[]>({
-	url: '/api/v2/method/cs17_portal.api.get_cohorts',
-	method: 'GET',
-})
+const cohortsCall = useCohorts()
 
-const quartersCall = useCall<string[]>({
-	url: '/api/v2/method/cs17_portal.api.get_quarters',
-	method: 'GET',
-})
+const quartersCall = useQuarters()
 
 const examsCall = useCall<CodingExamSummary[]>({
 	url: '/api/v2/method/cs17_portal.coding_exam.get_coding_exams',

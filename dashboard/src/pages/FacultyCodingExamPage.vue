@@ -284,6 +284,7 @@ import {
 } from '@/components/exams/faculty/codingExam'
 import { useBreadcrumbs } from '@/composables/useBreadcrumbs'
 import { useBreakpoint } from '@/composables/useBreakpoint'
+import { useCohorts, useQuarters } from '@/composables/useCohorts'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { usePolledCall, usePolling } from '@/composables/usePolling'
 import { formatDateTime, parseDatetime, toFrappeDatetime } from '@/lib/dates'
@@ -333,15 +334,9 @@ const exam = computed(() => (examCall.data?.name === props.examId ? examCall.dat
 const failed = useLoadFailed(examCall, { except: isRefusal })
 const studentsFailed = useLoadFailed(studentsCall)
 
-const cohortsCall = useCall<string[]>({
-	url: '/api/v2/method/cs17_portal.api.get_cohorts',
-	method: 'GET',
-})
+const cohortsCall = useCohorts()
 
-const quartersCall = useCall<string[]>({
-	url: '/api/v2/method/cs17_portal.api.get_quarters',
-	method: 'GET',
-})
+const quartersCall = useQuarters()
 
 const students = computed(() => {
 	const rows = studentsCall.data ?? []
