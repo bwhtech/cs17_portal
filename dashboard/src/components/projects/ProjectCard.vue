@@ -1,8 +1,8 @@
 <template>
-	<div class="relative">
+	<div class="relative h-full">
 		<router-link
 			:to="projectEditorPath(projectsPath, project)"
-			class="block overflow-hidden rounded-4 border border-outline-gray-1 bg-surface-base transition-colors hover:border-outline-gray-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
+			class="flex h-full flex-col overflow-hidden rounded-4 border border-outline-gray-1 bg-surface-base transition-colors hover:border-outline-gray-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
 		>
 			<div
 				v-if="!isPython"
@@ -45,9 +45,10 @@
 				</div>
 			</div>
 			<pre
-				v-if="isPython && project.code_preview"
-				class="mx-3 mb-3 overflow-hidden rounded-2 bg-surface-gray-2 px-2.5 py-2 font-mono text-xs leading-4 text-ink-gray-7"
-				v-text="project.code_preview"
+				v-if="isPython"
+				class="mx-3 mb-3 min-h-20 flex-1 overflow-hidden rounded-2 bg-surface-gray-2 px-2.5 py-2 font-mono text-xs leading-4"
+				:class="project.code_preview ? 'text-ink-gray-7' : 'text-ink-gray-4'"
+				v-text="project.code_preview || 'No code yet'"
 			/>
 		</router-link>
 
