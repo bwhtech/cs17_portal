@@ -583,6 +583,15 @@ class TestStudentListsUseOwnCohort(FrappeTestCase):
 		names = [row.name for row in get_student_assignments()["assignments"]]
 		self.assertNotIn(draft, names)
 
+	def test_student_upcoming_assignments_leave_out_closed_ones(self):
+		frappe.set_user(self.faculty_user)
+		closed = make_assignment(self.cohort_40, "PDF Closed 40", "PDF", 20)
+		frappe.db.set_value("CS17 Assignment", closed, "due_date", "2020-01-01 00:00:00")
+
+		frappe.set_user(self.student_user)
+		names = [row.name for row in api.get_student_upcoming_assignments()["assignments"]]
+		self.assertEqual(names, [self.assignment_40])
+
 	def test_student_does_not_list_draft_grades(self):
 		student = frappe.db.get_value("CS17 Profile", {"user": self.student_user})
 		submission = make_submission(self.assignment_40, student, "Student 40", "Scratch Task 40")
