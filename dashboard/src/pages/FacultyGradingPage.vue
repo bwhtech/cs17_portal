@@ -383,12 +383,20 @@ const fileUrl = computed(
 )
 
 watch(
-	() => submission.value?.assignment_title,
-	(title) => {
-		setBreadcrumbs([
-			{ label: 'Submissions', route: '/faculty/submissions' },
-			{ label: title ?? 'Grading' },
-		])
+	() => submission.value,
+	(row) => {
+		setBreadcrumbs(
+			row
+				? [
+						{ label: 'Assignments', route: '/faculty/assignments' },
+						{
+							label: row.assignment_title,
+							route: `/faculty/assignments/${row.assignment}`,
+						},
+						{ label: row.full_name },
+					]
+				: [],
+		)
 	},
 	{ immediate: true },
 )
