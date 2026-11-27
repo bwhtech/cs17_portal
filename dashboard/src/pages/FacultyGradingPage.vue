@@ -171,6 +171,8 @@
 					:can-check-with-ai="submission.can_check_with_ai"
 					:submitted-late="submittedLate"
 					:late-penalty="detailRow?.late_penalty"
+					:grade-bands="bands.data ?? []"
+					:rubric-call="rubricCall"
 					@saved="onSaved"
 				/>
 			</KeepAlive>
@@ -219,8 +221,15 @@ import { useZenMode, useZenOnMount } from '@/composables/useZenMode'
 import { formatDateTime } from '@/lib/dates'
 import { isRefusal } from '@/lib/frappeError'
 import { isLate } from '@/lib/status'
+import type { RubricCriterion } from '@/lib/rubric'
 import { isProjectSubmission } from '@/lib/submissionTypes'
-import type { CS17Assignment, CS17Submission, CohortSubmission, SubmissionRevision } from '@/types'
+import type {
+	CS17Assignment,
+	CS17Submission,
+	CohortSubmission,
+	GradeBand,
+	SubmissionRevision,
+} from '@/types'
 
 interface ExplanationRequest {
 	answered_on: string | null
@@ -296,6 +305,29 @@ watch(
 	(assignment) => {
 		if (assignment) assignmentSubmissionNames.reload()
 	},
+	{ immediate: true },
+)
+
+const isMarks = computed(() => submission.value?.evaluation_type === 'Marks')
+
+const bands = useCall<GradeBand[]>({
+	url: '/api/v2/method/cs17_portal.api.get_grade_bands',
+	method: 'GET',
+	immediate: false,
+})
+
+watch(isMarks, (marks) => marks && bands.fetch(), { immediate: true })
+
+const rubricCall = useCall<RubricCriterion[], { assignment: string }>({
+	url: '/api/v2/method/cs17_portal.rubric.get_assignment_rubric',
+	method: 'GET',
+	params: () => ({ assignment: submission.value?.assignment ?? '' }),
+	immediate: false,
+})
+
+watch(
+	() => isMarks.value && submission.value?.assignment,
+	(assignment) => assignment && rubricCall.reload(),
 	{ immediate: true },
 )
 
