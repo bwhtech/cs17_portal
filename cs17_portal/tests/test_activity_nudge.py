@@ -40,7 +40,8 @@ class TestActivityNudge(FrappeTestCase):
 		)
 
 	def test_reminder_reaches_the_student(self):
-		class_activity.send_reminder([self.student])
+		with patch.object(frappe, "sendmail"):
+			class_activity.send_reminder([self.student])
 
 		self.assertTrue(
 			frappe.db.exists(
