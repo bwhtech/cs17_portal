@@ -65,39 +65,24 @@ import type { CodingExamSummary } from '@/components/exams/codingExam'
 import TopicProgress, { type TopicProgressRow } from '@/components/reports/TopicProgress.vue'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
+import { useAnnouncements } from '@/composables/useAnnouncements'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { usePolledCall, usePolling, usePublishTimer } from '@/composables/usePolling'
 import { useSession } from '@/composables/useSession'
-import { dayjs, formatLongDate, isPast } from '@/lib/dates'
+import { dayjs, formatLongDate } from '@/lib/dates'
 import { isRefusal } from '@/lib/frappeError'
 import { gradesByAssignment, submissionsByAssignment } from '@/lib/status'
-import type {
-	StudentAnnouncementsResponse,
-	StudentAssignmentsResponse,
-	StudentGradesResponse,
-} from '@/types'
-
-/** The dashboard shows the next few pieces of work, not the whole list. */
-const UPCOMING_LIMIT = 3
+import type { StudentUpcomingAssignmentsResponse } from '@/types'
 
 const { profile, cohort, isStudent } = useSession()
+const { announcements } = useAnnouncements()
 
 const firstName = computed(() => profile.value?.first_name || 'Student')
 const today = formatLongDate()
 
-const announcementsCall = usePolledCall<StudentAnnouncementsResponse>({
-	url: '/api/v2/method/cs17_portal.api.get_student_announcements',
-	immediate: isStudent.value,
-})
-
-const assignmentsCall = usePolledCall<StudentAssignmentsResponse>({
-	url: '/api/v2/method/cs17_portal.api.get_student_assignments',
+const upcomingCall = usePolledCall<StudentUpcomingAssignmentsResponse>({
+	url: '/api/v2/method/cs17_portal.api.get_student_upcoming_assignments',
 	immediate: Boolean(cohort.value),
-})
-
-const gradesCall = usePolledCall<StudentGradesResponse>({
-	url: '/api/v2/method/cs17_portal.api.get_student_grades',
-	immediate: Boolean(profile.value?.name),
 })
 
 const topicProgressCall = usePolledCall<TopicProgressRow[]>({
@@ -110,47 +95,27 @@ const examsCall = usePolledCall<CodingExamSummary[]>({
 	immediate: isStudent.value,
 })
 
-// Each student endpoint answers with the next scheduled publish beside its
-// rows, so a publish lands on the second; the interval covers everything else.
-for (const handle of [
-	announcementsCall,
-	assignmentsCall,
-	gradesCall,
-	topicProgressCall,
-	examsCall,
-]) {
-	usePolling(handle.reload)
-}
-usePublishTimer(() => announcementsCall.data?.next_publish_on, announcementsCall.reload)
-usePublishTimer(() => assignmentsCall.data?.next_publish_on, assignmentsCall.reload)
-usePublishTimer(() => gradesCall.data?.next_publish_on, gradesCall.reload)
+usePolling(upcomingCall.reload)
+usePolling(examsCall.reload)
+usePublishTimer(() => upcomingCall.data?.next_publish_on, reloadSubmissionsAndGrades)
 
-const announcements = computed(() => announcementsCall.data?.announcements ?? [])
 const comingExams = computed(() =>
 	(examsCall.data ?? [])
 		.filter((exam) => ['in_progress', 'open', 'upcoming'].includes(exam.state))
 		.sort((a, b) => dayjs(a.opens_on).valueOf() - dayjs(b.opens_on).valueOf()),
 )
-const assignments = computed(() => assignmentsCall.data?.assignments ?? [])
-const submissions = computed(() => assignments.value.flatMap((row) => row.submission ?? []))
+const upcoming = computed(() => upcomingCall.data?.assignments ?? [])
+const submissions = computed(() => upcoming.value.flatMap((row) => row.submission ?? []))
 
 const submissionMap = computed(() => submissionsByAssignment(submissions.value))
 /** §7: a grade is only the student's to see when it traces back to their own work. */
 const gradeMap = computed(() =>
-	gradesByAssignment(gradesCall.data?.grades ?? [], submissions.value),
+	gradesByAssignment(upcomingCall.data?.grades ?? [], submissions.value),
 )
 
-/** Still open, most recently touched first — the same three the React app showed. */
-const upcoming = computed(() =>
-	assignments.value
-		.filter((a) => !isPast(a.late_until || a.due_date))
-		.sort((a, b) => dayjs(b.modified).valueOf() - dayjs(a.modified).valueOf())
-		.slice(0, UPCOMING_LIMIT),
-)
+const loading = computed(() => upcomingCall.loading && !upcomingCall.data)
 
-const loading = computed(() => assignmentsCall.loading && !assignmentsCall.data)
-
-const failed = useLoadFailed(assignmentsCall)
+const failed = useLoadFailed(upcomingCall)
 const topicProgressFailed = useLoadFailed(topicProgressCall, { except: isRefusal })
 
 const gradeAssignment = ref<string | null>(null)
@@ -165,8 +130,7 @@ function openGrade(assignment: string) {
 }
 
 function reloadSubmissionsAndGrades() {
-	assignmentsCall.reload()
-	gradesCall.reload()
+	upcomingCall.reload()
 	topicProgressCall.reload()
 }
 </script>

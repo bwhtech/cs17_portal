@@ -357,6 +357,10 @@ export interface StudentAssignmentsResponse {
 	next_publish_on: string | null
 }
 
+export interface StudentUpcomingAssignmentsResponse extends StudentAssignmentsResponse {
+	grades: CS17Grade[]
+}
+
 export interface StudentGradesResponse {
 	grades: CS17Grade[]
 	next_publish_on: string | null

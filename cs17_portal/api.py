@@ -1400,6 +1400,27 @@ def get_student_assignments() -> dict:
 
 
 @frappe.whitelist(methods=["GET"])
+def get_student_upcoming_assignments() -> dict:
+	"""The dashboard's three open assignments, most recently changed first, with their grades."""
+	now = now_datetime()
+	listed = get_student_assignments()
+	assignments = sorted(
+		(row for row in listed["assignments"] if (row.late_until or row.due_date or now) >= now),
+		key=lambda row: row.modified,
+		reverse=True,
+	)[:3]
+	names = {row.name for row in assignments}
+	graded = get_student_grades()
+	return {
+		"assignments": assignments,
+		"grades": [grade for grade in graded["grades"] if grade.assignment in names],
+		"next_publish_on": min(
+			filter(None, [listed["next_publish_on"], graded["next_publish_on"]]), default=None
+		),
+	}
+
+
+@frappe.whitelist(methods=["GET"])
 def get_student_assignment(assignment: str) -> dict:
 	student = require_current_student()
 	cohort = frappe.db.get_value("CS17 Profile", student, "cohort")
