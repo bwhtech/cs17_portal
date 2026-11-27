@@ -6,7 +6,7 @@
 		@retry="week.reload()"
 	/>
 
-	<div v-else-if="!week.data" class="cs17-delay-in space-y-2">
+	<div v-else-if="!week.data || showsOtherWeek" class="cs17-delay-in space-y-2">
 		<Skeleton v-for="n in 4" :key="n" class="h-8 w-full rounded-2" />
 	</div>
 
@@ -55,10 +55,9 @@
 						<button
 							v-if="day.opened"
 							type="button"
-							class="size-full rounded-2 hover:opacity-80 disabled:cursor-wait focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
+							class="size-full rounded-2 hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
 							:aria-label="describe(week.data.days[index], day)"
-							:disabled="dayActivity.loading"
-							@click="openDay(row.student, week.data.days[index])"
+							@click="openDay(row, week.data.days[index])"
 						>
 							{{ day.opened }}
 						</button>
@@ -84,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { Skeleton, useCall } from 'frappe-ui'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadError from '@/components/common/LoadError.vue'
@@ -92,10 +91,6 @@ import RowTitle from '@/components/common/RowTitle.vue'
 import StudentActivityDialog from '@/components/reports/StudentActivityDialog.vue'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { dayjs } from '@/lib/dates'
-import { frappeErrorMessage } from '@/lib/frappeError'
-import { toast } from '@/lib/toast'
-import { trySubmit } from '@/lib/trySubmit'
-import type { ClassActivity, StudentActivity } from '@/types'
 
 interface DayActivity {
 	opened: number
@@ -125,26 +120,18 @@ const week = useCall<ClassActivityWeek, { cohort: string; date?: string }>({
 	refetch: true,
 })
 
+const showsOtherWeek = computed(() => !!props.date && !week.data?.days.includes(props.date))
+
 const failed = useLoadFailed(week)
 
-const openStudent = ref<StudentActivity | null>(null)
+type WeekStudent = ClassActivityWeek['students'][number]
+
+const openStudent = ref<WeekStudent | null>(null)
 const openDate = ref('')
 
-const dayActivity = useCall<ClassActivity, { cohort: string; date: string }>({
-	url: '/api/v2/method/cs17_portal.class_activity.get_class_activity',
-	method: 'GET',
-	immediate: false,
-})
-
-async function openDay(student: string, date: string) {
-	if (dayActivity.loading) return
-	await trySubmit(dayActivity, { cohort: props.cohort, date })
-	if (dayActivity.error) {
-		toast.error(frappeErrorMessage(dayActivity.error, 'Could not load the day.'))
-		return
-	}
+function openDay(student: WeekStudent, date: string) {
 	openDate.value = date
-	openStudent.value = dayActivity.data?.students.find((row) => row.student === student) ?? null
+	openStudent.value = student
 }
 
 function level(day: DayActivity) {
