@@ -61,6 +61,15 @@
 			:file-url="fileUrl"
 		/>
 
+		<div v-else-if="kind === 'url' && fileUrl" class="flex px-3 py-3 sm:px-5">
+			<Button
+				class="max-w-full"
+				icon-right="lucide-external-link"
+				:label="fileUrl"
+				:href="fileUrl"
+			/>
+		</div>
+
 		<div
 			v-else-if="fileUrl"
 			class="flex h-full flex-col items-center justify-center gap-3 p-6 text-center"

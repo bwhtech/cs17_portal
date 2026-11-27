@@ -118,7 +118,15 @@
 			</div>
 		</header>
 
-		<div :class="['min-h-0 bg-surface-gray-2', isZen ? 'flex-1' : 'h-[60vh] min-h-80']">
+		<div
+			:class="[
+				'min-h-0 bg-surface-gray-2',
+				{
+					'flex-1': isZen && !isLinkSubmission,
+					'h-[60vh] min-h-80': !isZen && !isLinkSubmission,
+				},
+			]"
+		>
 			<LoadError
 				v-if="failed && !isProjectSubmission(submission.submission_type)"
 				class="h-full"
@@ -130,7 +138,7 @@
 				v-else-if="detailLoading && !isProjectSubmission(submission.submission_type)"
 				class="cs17-delay-in h-full p-4"
 			>
-				<Skeleton class="h-full w-full" />
+				<Skeleton :class="['w-full', isLinkSubmission ? 'h-7' : 'h-full']" />
 			</div>
 			<SubmissionPlayer
 				v-else
@@ -222,7 +230,7 @@ import { formatDateTime } from '@/lib/dates'
 import { isRefusal } from '@/lib/frappeError'
 import { isLate } from '@/lib/status'
 import type { RubricCriterion } from '@/lib/rubric'
-import { isProjectSubmission } from '@/lib/submissionTypes'
+import { isProjectSubmission, previewKind } from '@/lib/submissionTypes'
 import type {
 	CS17Assignment,
 	CS17Submission,
@@ -380,6 +388,12 @@ const suggestedMarks = computed(() => {
 
 const fileUrl = computed(
 	() => detailRow.value?.submission_document || detailRow.value?.submission_url || null,
+)
+
+const isLinkSubmission = computed(
+	() =>
+		submission.value?.submission_type === 'URL' ||
+		previewKind(submission.value?.submission_type ?? undefined, fileUrl.value) === 'url',
 )
 
 watch(
