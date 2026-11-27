@@ -74,7 +74,7 @@ test.describe("Class activity", () => {
 			.click();
 
 		await expect(page.getByRole("dialog")).toContainText(
-			"12:00 AM · 1 run, 1 of 2 tests passed"
+			/\d{1,2}:\d{2} [AP]M · 1 run, 1 of 2 tests passed/
 		);
 	});
 

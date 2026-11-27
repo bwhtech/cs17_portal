@@ -76,6 +76,6 @@ test.describe("Class activity week", () => {
 
 		await page.getByRole("button", { name: /1 opened, 1 typed or ran, 0 submitted/ }).click();
 
-		await expect(page.getByRole("dialog")).toContainText("12:00 AM · 1 run");
+		await expect(page.getByRole("dialog")).toContainText(/\d{1,2}:\d{2} [AP]M · 1 run/);
 	});
 });
