@@ -1,11 +1,14 @@
 import frappe
 from frappe import _
-from frappe.query_builder.functions import Max
+from frappe.query_builder.functions import Max, Min
 from frappe.rate_limiter import rate_limit
-from frappe.utils import getdate, today
+from frappe.utils import add_to_date, get_datetime, getdate, now_datetime, today
 
-from cs17_portal.api import ASSIGNMENT_SUBMISSION, get_cohort_students
+from cs17_portal.api import ASSIGNMENT_SUBMISSION, get_cohort_students, given_to
 from cs17_portal.cs17_portal.doctype.cs17_assignment.cs17_assignment import alert_students
+from cs17_portal.guardian import require_faculty_for_student
+
+IDLE_MINUTES = 60
 
 
 @frappe.whitelist(methods=["GET"])
@@ -29,9 +32,11 @@ def summarize_class_activity(students: list, date: str | None = None) -> dict:
 				passed=None,
 				total=None,
 				submitted=False,
+				first_active_at=at,
 				last_active_at=at,
 			),
 		)
+		row.first_active_at = min(row.first_active_at, at)
 		row.last_active_at = max(row.last_active_at, at)
 		return row
 
@@ -45,7 +50,12 @@ def summarize_class_activity(students: list, date: str | None = None) -> dict:
 	snapshot = frappe.qb.DocType("CS17 Code Snapshot")
 	for row in (
 		frappe.qb.from_(snapshot)
-		.select(snapshot.student, snapshot.assignment, Max(snapshot.saved_at).as_("saved_at"))
+		.select(
+			snapshot.student,
+			snapshot.assignment,
+			Min(snapshot.saved_at).as_("first_saved_at"),
+			Max(snapshot.saved_at).as_("last_saved_at"),
+		)
 		.where(
 			snapshot.student.isin(names)
 			& snapshot.assignment.isnotnull()
@@ -54,7 +64,8 @@ def summarize_class_activity(students: list, date: str | None = None) -> dict:
 		.groupby(snapshot.student, snapshot.assignment)
 		.run(as_dict=True)
 	):
-		note(row.student, row.assignment, row.saved_at).typed = True
+		note(row.student, row.assignment, row.first_saved_at)
+		note(row.student, row.assignment, row.last_saved_at).typed = True
 
 	for row in frappe.get_all(
 		"CS17 Code Run",
@@ -120,3 +131,95 @@ def send_reminder(students: list[str]) -> None:
 		_("Don't forget your assignments today. Open them and give them a go."),
 		"/dashboard/assignments",
 	)
+
+
+@frappe.whitelist(methods=["GET"])
+def get_student_day(student: str, date: str | None = None) -> dict:
+	require_faculty_for_student(student)
+	date = str(getdate(date or today()))
+	day_start, day_end = get_datetime(f"{date} 00:00:00"), get_datetime(f"{date} 23:59:59.999999")
+	on_the_day = ["between", [date, date]]
+
+	events = [
+		{"at": at, "kind": "start"}
+		for at in frappe.get_all(
+			"CS17 Project",
+			filters={"profile": student, "assignment": ["is", "set"], "creation": on_the_day},
+			pluck="creation",
+		)
+	]
+	for doctype, at, kind in (("CS17 Code Snapshot", "saved_at", "save"), ("CS17 Code Run", "ran_at", "run")):
+		events += [
+			{"at": time, "kind": kind}
+			for time in {
+				time.replace(second=0, microsecond=0)
+				for time in frappe.get_all(
+					doctype,
+					filters={"student": student, "assignment": ["is", "set"], at: on_the_day},
+					pluck=at,
+				)
+			}
+		]
+	events += [
+		{"at": at, "kind": "submit"}
+		for at in frappe.get_all(
+			ASSIGNMENT_SUBMISSION,
+			filters={"student": student, "submitted_at": on_the_day, "docstatus": ["<", 2]},
+			pluck="submitted_at",
+		)
+	]
+	events.sort(key=lambda event: event["at"])
+
+	start, end = (
+		get_datetime(f"{date} {time}")
+		for time in frappe.db.get_value(
+			"CS17 Portal Settings", {}, ["practice_hours_start", "practice_hours_end"]
+		)
+		or ("09:00:00", "21:00:00")
+	)
+	idle, previous = [], start
+	for at in [event["at"] for event in events if start <= event["at"] <= end] + [min(end, now_datetime())]:
+		if at >= add_to_date(previous, minutes=IDLE_MINUTES):
+			idle.append({"from": previous, "to": at})
+		previous = max(previous, at)
+
+	return {
+		"date": date,
+		"practice_hours": {"start": start, "end": end},
+		"events": events,
+		"idle": idle,
+		"not_started": get_not_started(student, day_start, day_end),
+	}
+
+
+def get_not_started(student: str, day_start, day_end) -> list:
+	started = set(
+		frappe.get_all(
+			"CS17 Project",
+			filters={"profile": student, "assignment": ["is", "set"], "creation": ["<=", day_end]},
+			pluck="assignment",
+		)
+	) | set(
+		frappe.get_all(
+			ASSIGNMENT_SUBMISSION,
+			filters={"student": student, "submitted_at": ["<=", day_end], "docstatus": ["<", 2]},
+			pluck="assignment",
+		)
+	)
+	return [
+		{"assignment": row.name, "title": row.title, "due_date": row.due_date}
+		for row in frappe.get_all(
+			"CS17 Assignment",
+			filters={
+				"cohort": frappe.db.get_value("CS17 Profile", student, "cohort"),
+				"coding_exam": ["is", "not set"],
+				"creation": ["<=", day_end],
+			},
+			or_filters=given_to(student),
+			fields=["name", "title", "due_date", "late_until", "is_published", "publish_on"],
+			order_by="due_date asc",
+		)
+		if row.name not in started
+		and (row.publish_on <= day_end if row.publish_on else row.is_published)
+		and (row.late_until or row.due_date or day_start) >= day_start
+	]

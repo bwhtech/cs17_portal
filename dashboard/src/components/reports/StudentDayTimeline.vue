@@ -1,0 +1,101 @@
+<template>
+	<LoadError
+		v-if="failed"
+		title="Could not load the day"
+		:loading="day.loading"
+		@retry="day.reload()"
+	/>
+
+	<Skeleton v-else-if="!day.data" class="h-16 w-full rounded-2" />
+
+	<div v-else class="space-y-4">
+		<section aria-label="Day timeline" class="space-y-1.5">
+			<div class="relative h-6 overflow-hidden rounded-2 bg-surface-gray-1">
+				<span
+					class="absolute inset-y-0 bg-surface-gray-2"
+					:style="span(day.data.practice_hours.start, day.data.practice_hours.end)"
+				/>
+				<span
+					v-for="window in day.data.idle"
+					:key="window.from"
+					class="absolute inset-y-0 bg-surface-red-3"
+					:style="span(window.from, window.to)"
+				/>
+				<span
+					v-for="(event, index) in day.data.events"
+					:key="index"
+					class="absolute inset-y-1 w-0.5 -translate-x-1/2 rounded-full"
+					:class="event.kind === 'submit' ? 'bg-surface-green-5' : 'bg-surface-gray-7'"
+					:style="{ left: `${position(event.at)}%` }"
+				/>
+			</div>
+			<div class="flex justify-between text-xs text-ink-gray-5" aria-hidden="true">
+				<span v-for="(label, index) in AXIS" :key="index">{{ label }}</span>
+			</div>
+		</section>
+
+		<ul v-if="day.data.idle.length" class="space-y-1 text-sm text-ink-gray-7">
+			<li v-for="window in day.data.idle" :key="window.from" class="flex items-center gap-2">
+				<span class="size-2 shrink-0 rounded-full bg-surface-red-3" />
+				No work recorded {{ time(window.from) }} to {{ time(window.to) }}
+			</li>
+		</ul>
+
+		<section v-if="day.data.not_started.length" class="space-y-1.5">
+			<h3 class="text-sm font-medium text-ink-gray-8">Not started</h3>
+			<ul class="space-y-1 text-sm text-ink-gray-7">
+				<li
+					v-for="row in day.data.not_started"
+					:key="row.assignment"
+					class="flex items-center justify-between gap-3"
+				>
+					<span class="min-w-0 truncate">{{ row.title }}</span>
+					<span v-if="row.due_date" class="shrink-0 text-ink-gray-5">
+						Due {{ formatDate(row.due_date) }}
+					</span>
+				</li>
+			</ul>
+		</section>
+	</div>
+</template>
+
+<script setup lang="ts">
+import { Skeleton, useCall } from 'frappe-ui'
+import LoadError from '@/components/common/LoadError.vue'
+import { useLoadFailed } from '@/composables/useLoadFailed'
+import { dayjs, formatDate, parseDatetime } from '@/lib/dates'
+
+interface StudentDay {
+	date: string
+	practice_hours: { start: string; end: string }
+	events: { at: string; kind: 'start' | 'save' | 'run' | 'submit' }[]
+	idle: { from: string; to: string }[]
+	not_started: { assignment: string; title: string; due_date: string | null }[]
+}
+
+const props = defineProps<{ student: string; date: string }>()
+
+const AXIS = ['12 AM', '6 AM', '12 PM', '6 PM', '12 AM']
+
+const day = useCall<StudentDay, { student: string; date: string }>({
+	url: '/api/v2/method/cs17_portal.class_activity.get_student_day',
+	method: 'GET',
+	params: () => ({ student: props.student, date: props.date }),
+	refetch: true,
+})
+
+const failed = useLoadFailed(day)
+
+function position(at: string): number {
+	const time = dayjs(at)
+	return ((time.hour() * 60 + time.minute()) / (24 * 60)) * 100
+}
+
+function span(from: string, to: string) {
+	return { left: `${position(from)}%`, width: `${position(to) - position(from)}%` }
+}
+
+function time(at: string): string {
+	return parseDatetime(at).format('h:mm A')
+}
+</script>
