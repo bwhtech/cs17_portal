@@ -1418,7 +1418,7 @@ def get_student_upcoming_assignments() -> dict:
 		"assignments": assignments,
 		"grades": [grade for grade in graded["grades"] if grade.assignment in names],
 		"next_publish_on": min(
-			filter(None, [listed["next_publish_on"], graded["next_publish_on"]]), default=None
+			(at for at in (listed["next_publish_on"], graded["next_publish_on"]) if at), default=None
 		),
 	}
 
