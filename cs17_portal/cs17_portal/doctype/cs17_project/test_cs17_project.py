@@ -434,6 +434,14 @@ class TestCS17Project(FrappeTestCase):
 
 		self.assertEqual(api.get_project(project)["code"], 'print("hello")\n')
 
+	def test_project_list_carries_the_first_lines_of_python_code(self):
+		frappe.set_user(STUDENT1_USER)
+		project = api.create_project("Number Guesser", project_type="Python")["name"]
+		api.save_python_project(project, "a = 1\nb = 2\nc = 3\nd = 4\ne = 5\n")
+
+		row = next(row for row in api.list_my_projects() if row.name == project)
+		self.assertEqual(row.code_preview, "a = 1\nb = 2\nc = 3\nd = 4")
+
 	def test_python_code_is_not_saved_to_a_scratch_project(self):
 		frappe.set_user(STUDENT1_USER)
 		project = api.create_project("Student 1 Project")["name"]
