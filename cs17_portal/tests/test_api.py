@@ -494,6 +494,54 @@ class TestFacultyCohortSubmissions(FrappeTestCase):
 
 		self.assertEqual([row.name for row in api.get_assigned_submissions(limit=1)], [self.submission_27])
 
+	def test_assigned_to_me_lists_only_submissions_assigned_to_the_faculty(self):
+		make_profile("Faculty", None, make_user("faculty55@cs17test.com"), "Faculty 55")
+		frappe.set_user("faculty55@cs17test.com")
+		api.assign_submission(self.submission_28, "faculty55@cs17test.com")
+
+		self.assertEqual(
+			[row.name for row in list_cohort_submissions(assigned_to_me=True)], [self.submission_28]
+		)
+
+	def test_faculty_dashboard_lists_ungraded_submissions_of_own_cohort_to_grade(self):
+		frappe.set_user(self.faculty_28_user)
+
+		to_grade = api.get_faculty_dashboard()["to_grade"]
+
+		self.assertEqual(
+			(to_grade["total"], [row.name for row in to_grade["submissions"]]), (1, [self.submission_28])
+		)
+
+	def test_faculty_dashboard_counts_submissions_of_an_assignment_due_soon(self):
+		frappe.set_user(self.faculty_27_user)
+		assignment = make_assignment(self.cohort_27, "Scratch Task 56", "Scratch", 20)
+		frappe.db.set_value("CS17 Assignment", assignment, "due_date", frappe.utils.add_to_date(None, days=2))
+		self.addCleanup(frappe.delete_doc, "CS17 Assignment", assignment)
+		submission = make_submission(assignment, self.student_27, "Student 27", "Scratch Task 56")
+		self.addCleanup(frappe.delete_doc, "CS17 Assignment Submission", submission)
+
+		due_soon = {row.name: row for row in api.get_faculty_dashboard()["due_soon"]}
+
+		self.assertEqual((due_soon[assignment].submitted, due_soon[assignment].total), (1, 1))
+
+	def test_faculty_dashboard_lists_a_coding_exam_open_now(self):
+		exam = frappe.get_doc(
+			{
+				"doctype": "CS17 Coding Exam",
+				"title": "Python midterm",
+				"cohort": self.cohort_27,
+				"duration_minutes": 60,
+				"opens_on": frappe.utils.add_to_date(None, minutes=-10),
+				"last_start_on": frappe.utils.add_to_date(None, minutes=20),
+				"closes_on": frappe.utils.add_to_date(None, hours=1),
+			}
+		).insert(ignore_permissions=True)
+		self.addCleanup(frappe.delete_doc, "CS17 Coding Exam", exam.name)
+		exam.db_set("is_published", 1)
+		frappe.set_user(self.faculty_27_user)
+
+		self.assertEqual([row.name for row in api.get_faculty_dashboard()["live_exams"]], [exam.name])
+
 	def test_get_submission_blocks_other_cohort_faculty(self):
 		frappe.set_user(self.faculty_28_user)
 		self.assertRaises(frappe.PermissionError, api.get_submission, self.submission_27)
