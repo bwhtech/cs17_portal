@@ -1,7 +1,5 @@
 <template>
-	<!-- The same two-column shape the student sees on AssignmentDetailPage, so
-	     the author is looking at the real thing and not an approximation. -->
-	<div class="flex flex-col gap-6 md:flex-row">
+	<div class="flex flex-col gap-6">
 		<div class="min-w-0 flex-1">
 			<h2 class="mb-4 break-words text-2xl font-semibold text-ink-gray-9">
 				{{ draft.title || 'Untitled Assignment' }}
@@ -9,7 +7,7 @@
 			<MarkdownText :content="draft.description" />
 		</div>
 
-		<div class="shrink-0 md:w-56">
+		<div>
 			<div class="space-y-3 rounded-4 border border-outline-gray-1 p-4">
 				<div v-for="row in metaRows" :key="row.label">
 					<p class="text-xs text-ink-gray-5">{{ row.label }}</p>

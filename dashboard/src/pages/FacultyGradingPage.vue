@@ -118,7 +118,15 @@
 			</div>
 		</header>
 
-		<div :class="['min-h-0 bg-surface-gray-2', isZen ? 'flex-1' : 'h-[60vh] min-h-80']">
+		<div
+			:class="[
+				'min-h-0 bg-surface-gray-2',
+				{
+					'flex-1': isZen && !isLinkSubmission,
+					'h-[60vh] min-h-80': !isZen && !isLinkSubmission,
+				},
+			]"
+		>
 			<LoadError
 				v-if="failed && !isProjectSubmission(submission.submission_type)"
 				class="h-full"
@@ -130,7 +138,7 @@
 				v-else-if="detailLoading && !isProjectSubmission(submission.submission_type)"
 				class="cs17-delay-in h-full p-4"
 			>
-				<Skeleton class="h-full w-full" />
+				<Skeleton :class="['w-full', isLinkSubmission ? 'h-7' : 'h-full']" />
 			</div>
 			<SubmissionPlayer
 				v-else
@@ -171,6 +179,8 @@
 					:can-check-with-ai="submission.can_check_with_ai"
 					:submitted-late="submittedLate"
 					:late-penalty="detailRow?.late_penalty"
+					:grade-bands="bands.data ?? []"
+					:rubric-call="rubricCall"
 					@saved="onSaved"
 				/>
 			</KeepAlive>
@@ -219,8 +229,15 @@ import { useZenMode, useZenOnMount } from '@/composables/useZenMode'
 import { formatDateTime } from '@/lib/dates'
 import { isRefusal } from '@/lib/frappeError'
 import { isLate } from '@/lib/status'
-import { isProjectSubmission } from '@/lib/submissionTypes'
-import type { CS17Assignment, CS17Submission, CohortSubmission, SubmissionRevision } from '@/types'
+import type { RubricCriterion } from '@/lib/rubric'
+import { isProjectSubmission, previewKind } from '@/lib/submissionTypes'
+import type {
+	CS17Assignment,
+	CS17Submission,
+	CohortSubmission,
+	GradeBand,
+	SubmissionRevision,
+} from '@/types'
 
 interface ExplanationRequest {
 	answered_on: string | null
@@ -299,6 +316,29 @@ watch(
 	{ immediate: true },
 )
 
+const isMarks = computed(() => submission.value?.evaluation_type === 'Marks')
+
+const bands = useCall<GradeBand[]>({
+	url: '/api/v2/method/cs17_portal.api.get_grade_bands',
+	method: 'GET',
+	immediate: false,
+})
+
+watch(isMarks, (marks) => marks && bands.fetch(), { immediate: true })
+
+const rubricCall = useCall<RubricCriterion[], { assignment: string }>({
+	url: '/api/v2/method/cs17_portal.rubric.get_assignment_rubric',
+	method: 'GET',
+	params: () => ({ assignment: submission.value?.assignment ?? '' }),
+	immediate: false,
+})
+
+watch(
+	() => isMarks.value && submission.value?.assignment,
+	(assignment) => assignment && rubricCall.reload(),
+	{ immediate: true },
+)
+
 const position = computed(() => assignmentSubmissionNames.data?.indexOf(props.submissionId) ?? -1)
 const previousSubmission = computed(() =>
 	position.value > 0 ? assignmentSubmissionNames.data?.[position.value - 1] : undefined,
@@ -350,13 +390,27 @@ const fileUrl = computed(
 	() => detailRow.value?.submission_document || detailRow.value?.submission_url || null,
 )
 
+const isLinkSubmission = computed(
+	() =>
+		submission.value?.submission_type === 'URL' ||
+		previewKind(submission.value?.submission_type ?? undefined, fileUrl.value) === 'url',
+)
+
 watch(
-	() => submission.value?.assignment_title,
-	(title) => {
-		setBreadcrumbs([
-			{ label: 'Submissions', route: '/faculty/submissions' },
-			{ label: title ?? 'Grading' },
-		])
+	() => submission.value,
+	(row) => {
+		setBreadcrumbs(
+			row
+				? [
+						{ label: 'Assignments', route: '/faculty/assignments' },
+						{
+							label: row.assignment_title,
+							route: `/faculty/assignments/${row.assignment}`,
+						},
+						{ label: row.full_name },
+					]
+				: [],
+		)
 	},
 	{ immediate: true },
 )

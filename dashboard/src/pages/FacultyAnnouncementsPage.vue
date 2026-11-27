@@ -131,6 +131,7 @@ import AnnouncementFormDialog from '@/components/faculty/AnnouncementFormDialog.
 import DeleteAnnouncementDialog from '@/components/faculty/DeleteAnnouncementDialog.vue'
 import PreviewAnnouncementDialog from '@/components/faculty/PreviewAnnouncementDialog.vue'
 import PublishAnnouncementDialog from '@/components/faculty/PublishAnnouncementDialog.vue'
+import { useCohorts } from '@/composables/useCohorts'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { formatDate, formatDateTime } from '@/lib/dates'
 import type { AlertVariant, CS17Announcement } from '@/types'
@@ -154,10 +155,7 @@ const listCall = useCall<CS17Announcement[]>({
 const announcements = computed(() => listCall.data ?? [])
 const failed = useLoadFailed(listCall)
 
-const cohortsCall = useCall<string[]>({
-	url: '/api/v2/method/cs17_portal.api.get_cohorts',
-	method: 'GET',
-})
+const cohortsCall = useCohorts()
 
 const cohorts = computed(() => cohortsCall.data ?? [])
 
