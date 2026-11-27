@@ -128,6 +128,7 @@ import RowTitle from '@/components/common/RowTitle.vue'
 import ActivityWeek from '@/components/reports/ActivityWeek.vue'
 import StudentActivityDialog from '@/components/reports/StudentActivityDialog.vue'
 import AppHeader from '@/components/shell/AppHeader.vue'
+import { useCohorts } from '@/composables/useCohorts'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { dayjs, parseDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
@@ -155,10 +156,7 @@ const pickedDate = ref('')
 const openStudent = ref<StudentActivity | null>(null)
 const selection = ref<string[]>([])
 
-const cohortsCall = useCall<string[]>({
-	url: '/api/v2/method/cs17_portal.api.get_cohorts',
-	method: 'GET',
-})
+const cohortsCall = useCohorts()
 
 const cohorts = computed(() => cohortsCall.data ?? [])
 const cohort = computed(() => pickedCohort.value || cohorts.value[0] || '')
@@ -172,7 +170,7 @@ const activity = useCall<ClassActivity, { cohort: string; date?: string }>({
 		cohort: cohort.value,
 		...(pickedDate.value ? { date: pickedDate.value } : {}),
 	}),
-	immediate: false,
+	immediate: Boolean(cohort.value),
 	refetch: true,
 })
 
