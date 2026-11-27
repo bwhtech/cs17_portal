@@ -20,6 +20,9 @@ export const STORAGE_KEYS = {
 	get collapsedTopics() {
 		return `cs17-collapsed-topics:${window.current_user}`
 	},
+	get collapsedAssignmentGroups() {
+		return `cs17-collapsed-assignment-groups:${window.current_user}`
+	},
 	get collapsedResultExams() {
 		return `cs17-collapsed-result-exams:${window.current_user}`
 	},

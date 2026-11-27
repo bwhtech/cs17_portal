@@ -66,13 +66,11 @@ import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import { useAnnouncementDismissals } from '@/composables/useAnnouncementDismissals'
+import { useAnnouncements } from '@/composables/useAnnouncements'
 import { useLoadFailed } from '@/composables/useLoadFailed'
-import { usePolledCall, usePolling, usePublishTimer } from '@/composables/usePolling'
-import { useSession } from '@/composables/useSession'
 import { formatDate } from '@/lib/dates'
-import type { CS17Announcement, StudentAnnouncementsResponse } from '@/types'
+import type { CS17Announcement } from '@/types'
 
-const { isStudent } = useSession()
 const { dismiss, isDismissed } = useAnnouncementDismissals()
 
 const opened = ref<CS17Announcement | null>(null)
@@ -83,15 +81,8 @@ function openAnnouncement(announcement: CS17Announcement) {
 	dialogOpen.value = true
 }
 
-const announcementsCall = usePolledCall<StudentAnnouncementsResponse>({
-	url: '/api/v2/method/cs17_portal.api.get_student_announcements',
-	immediate: isStudent.value,
-})
+const { studentCall: announcementsCall, announcements } = useAnnouncements()
 
-usePolling(announcementsCall.reload)
-usePublishTimer(() => announcementsCall.data?.next_publish_on, announcementsCall.reload)
-
-const announcements = computed(() => announcementsCall.data?.announcements ?? [])
 // A user who is not a student never fires the request, so "loading" would hang.
 const loading = computed(() => announcementsCall.loading && !announcementsCall.data)
 const failed = useLoadFailed(announcementsCall)

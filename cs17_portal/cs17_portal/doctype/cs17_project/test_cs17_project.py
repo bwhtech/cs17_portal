@@ -434,6 +434,14 @@ class TestCS17Project(FrappeTestCase):
 
 		self.assertEqual(api.get_project(project)["code"], 'print("hello")\n')
 
+	def test_project_list_carries_the_first_lines_of_python_code(self):
+		frappe.set_user(STUDENT1_USER)
+		project = api.create_project("Number Guesser", project_type="Python")["name"]
+		api.save_python_project(project, "a = 1\nb = 2\nc = 3\nd = 4\ne = 5\n")
+
+		row = next(row for row in api.list_my_projects() if row.name == project)
+		self.assertEqual(row.code_preview, "a = 1\nb = 2\nc = 3\nd = 4")
+
 	def test_python_code_is_not_saved_to_a_scratch_project(self):
 		frappe.set_user(STUDENT1_USER)
 		project = api.create_project("Student 1 Project")["name"]
@@ -470,6 +478,13 @@ class TestCS17Project(FrappeTestCase):
 
 		self.assertEqual(details.sample_tests, [{"input": "Asha\n", "expected_output": "Hello, Asha!\n"}])
 		self.assertEqual(details.hidden_test_count, 1)
+
+	def test_student_assignment_says_it_is_closed_after_the_due_date(self):
+		assignment = self.make_python_assignment()
+		frappe.db.set_value("CS17 Assignment", assignment, "due_date", "2020-01-01 00:00:00")
+
+		frappe.set_user(STUDENT1_USER)
+		self.assertTrue(api.get_student_assignment(assignment).is_closed)
 
 	def test_student_gets_no_solutions_until_they_are_shown(self):
 		assignment = self.make_python_assignment()

@@ -683,9 +683,12 @@ def list_my_projects() -> list:
 			"thumbnail",
 			"last_saved_at",
 			"is_shared",
+			"code",
 		],
 		order_by="creation desc",
 	)
+	for project in projects:
+		project.code_preview = "\n".join((project.pop("code") or "").splitlines()[:4])
 	_attach_submitted_flags(projects)
 	return projects
 
@@ -1419,6 +1422,27 @@ def get_student_assignments() -> dict:
 
 
 @frappe.whitelist(methods=["GET"])
+def get_student_upcoming_assignments() -> dict:
+	"""The dashboard's three open assignments, most recently changed first, with their grades."""
+	now = now_datetime()
+	listed = get_student_assignments()
+	assignments = sorted(
+		(row for row in listed["assignments"] if (row.late_until or row.due_date or now) >= now),
+		key=lambda row: row.modified,
+		reverse=True,
+	)[:3]
+	names = {row.name for row in assignments}
+	graded = get_student_grades()
+	return {
+		"assignments": assignments,
+		"grades": [grade for grade in graded["grades"] if grade.assignment in names],
+		"next_publish_on": min(
+			(at for at in (listed["next_publish_on"], graded["next_publish_on"]) if at), default=None
+		),
+	}
+
+
+@frappe.whitelist(methods=["GET"])
 def get_student_assignment(assignment: str) -> dict:
 	student = require_current_student()
 	cohort = frappe.db.get_value("CS17 Profile", student, "cohort")
@@ -1457,6 +1481,7 @@ def get_student_assignment(assignment: str) -> dict:
 	if not is_open:
 		frappe.throw(_("Assignment not found"), frappe.DoesNotExistError)
 	solutions_shown = details.pop("show_solutions")
+	details.is_closed = is_assignment_closed(assignment)
 	if details.time_limit and not frappe.db.get_value(
 		ASSIGNMENT_SUBMISSION, {"assignment": assignment, "student": student}, "returned_on"
 	):

@@ -1,12 +1,15 @@
 import { computed, inject, provide, type ComputedRef, type InjectionKey } from 'vue'
 import { useCall } from 'frappe-ui'
 import { useAnnouncementDismissals } from '@/composables/useAnnouncementDismissals'
-import { usePolling } from '@/composables/usePolling'
+import { usePolling, usePublishTimer } from '@/composables/usePolling'
 import { useSession } from '@/composables/useSession'
 import { isRefusal } from '@/lib/frappeError'
 import type { CS17Announcement, StudentAnnouncementsResponse } from '@/types'
 
 interface Announcements {
+	facultyCall: ReturnType<typeof useCall<CS17Announcement[]>>
+	studentCall: ReturnType<typeof useCall<StudentAnnouncementsResponse>>
+	announcements: ComputedRef<CS17Announcement[]>
 	unread: ComputedRef<CS17Announcement[]>
 }
 
@@ -29,6 +32,7 @@ export function provideAnnouncements(): void {
 	usePolling(() =>
 		isFaculty.value ? facultyCall.reload() : isStudent.value && studentCall.reload(),
 	)
+	usePublishTimer(() => studentCall.data?.next_publish_on, studentCall.reload)
 
 	const announcements = computed<CS17Announcement[]>((previous = []) => {
 		const call = isFaculty.value ? facultyCall : studentCall
@@ -39,6 +43,9 @@ export function provideAnnouncements(): void {
 	})
 
 	provide(announcementsKey, {
+		facultyCall,
+		studentCall,
+		announcements,
 		unread: computed(() => announcements.value.filter((a) => !dismissed.value.has(a.name))),
 	})
 }

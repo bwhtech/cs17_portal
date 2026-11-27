@@ -68,6 +68,8 @@ export interface CS17Assignment {
 	time_limit?: number
 	attempts_allowed?: number
 	next_attempt?: number | null
+	/** Only from `get_student_assignment`: the student can no longer revise. */
+	is_closed?: boolean
 	started_at?: string
 	ends_at?: string
 	/** The server's clock, sent with a timed assignment. */
@@ -223,6 +225,8 @@ export interface CS17Project {
 	sb3_file: string | null
 	thumbnail?: string | null
 	code?: string | null
+	/** Only from `list_my_projects`: the first lines of a Python project's code. */
+	code_preview?: string
 	last_saved_at: string | null
 	is_submitted?: boolean
 }
@@ -367,6 +371,10 @@ export interface GradeBand {
 export interface StudentAssignmentsResponse {
 	assignments: CS17Assignment[]
 	next_publish_on: string | null
+}
+
+export interface StudentUpcomingAssignmentsResponse extends StudentAssignmentsResponse {
+	grades: CS17Grade[]
 }
 
 export interface StudentGradesResponse {

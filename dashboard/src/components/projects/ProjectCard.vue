@@ -1,10 +1,13 @@
 <template>
-	<div class="relative">
+	<div class="relative h-full">
 		<router-link
 			:to="projectEditorPath(projectsPath, project)"
-			class="block overflow-hidden rounded-4 border border-outline-gray-1 bg-surface-base transition-colors hover:border-outline-gray-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
+			class="flex h-full flex-col overflow-hidden rounded-4 border border-outline-gray-1 bg-surface-base transition-colors hover:border-outline-gray-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
 		>
-			<div class="flex aspect-[4/3] items-center justify-center bg-surface-gray-2">
+			<div
+				v-if="!isPython"
+				class="flex aspect-[4/3] items-center justify-center bg-surface-gray-2"
+			>
 				<img
 					v-if="project.thumbnail && !thumbnailFailed"
 					:src="project.thumbnail"
@@ -13,28 +16,44 @@
 					class="h-full w-full object-cover"
 					@error="thumbnailFailed = true"
 				/>
-				<span
-					v-else
-					:class="[
-						project.project_type === 'Python' ? 'lucide-code' : 'lucide-blocks',
-						'size-8 text-ink-gray-4',
-					]"
-					aria-hidden="true"
-				/>
+				<span v-else class="lucide-blocks size-8 text-ink-gray-4" aria-hidden="true" />
 			</div>
-			<div class="border-t border-outline-gray-1 p-3">
+			<div
+				class="p-3"
+				:class="
+					isPython
+						? project.is_submitted
+							? 'pr-24'
+							: 'pr-11'
+						: 'border-t border-outline-gray-1'
+				"
+			>
 				<p
 					class="line-clamp-2 break-words text-base text-ink-gray-8"
 					:title="project.project_title"
 				>
 					{{ project.project_title }}
 				</p>
-				<p class="mt-1 text-sm text-ink-gray-5">{{ savedLabel }}</p>
+				<div class="mt-1 flex items-center gap-2">
+					<span class="text-sm text-ink-gray-5">{{ savedLabel }}</span>
+					<Badge
+						v-if="isPython && project.is_shared"
+						label="Shared"
+						theme="blue"
+						variant="subtle"
+					/>
+				</div>
 			</div>
+			<pre
+				v-if="isPython"
+				class="mx-3 mb-3 min-h-20 flex-1 overflow-hidden rounded-2 bg-surface-gray-2 px-2.5 py-2 font-mono text-xs leading-4"
+				:class="project.code_preview ? 'text-ink-gray-7' : 'text-ink-gray-4'"
+				v-text="project.code_preview || 'No code yet'"
+			/>
 		</router-link>
 
 		<Badge
-			v-if="project.is_shared"
+			v-if="!isPython && project.is_shared"
 			class="absolute left-2 top-2"
 			label="Shared"
 			theme="blue"
@@ -79,6 +98,7 @@ const projectsPath = useProjectsPath()
 const { isStudent } = useSession()
 
 const thumbnailFailed = ref(false)
+const isPython = computed(() => props.project.project_type === 'Python')
 
 const shareAction = computed(() =>
 	props.project.is_shared
