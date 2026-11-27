@@ -24,10 +24,10 @@
 
 			<div class="ml-auto flex shrink-0 items-center gap-2">
 				<TimeLeft
-					v-if="timing.data?.ends_at && timing.data.now && canSubmit"
-					:key="timing.data.ends_at"
-					:ends-at="timing.data.ends_at"
-					:now="timing.data.now"
+					v-if="assignment.data?.ends_at && assignment.data.now && canSubmit"
+					:key="assignment.data.ends_at"
+					:ends-at="assignment.data.ends_at"
+					:now="assignment.data.now"
 					@end="submitWhenTimeIsUp"
 				/>
 				<Button
@@ -64,13 +64,13 @@
 						@click="run"
 					/>
 					<Button
-						v-if="canReattempt && timing.data"
+						v-if="canReattempt && assignment.data"
 						variant="solid"
 						theme="gray"
 						:icon-left="isDesktop ? 'lucide-rotate-ccw' : undefined"
 						:icon="isDesktop ? undefined : 'lucide-rotate-ccw'"
 						label="Reattempt"
-						@click="python.reattempt(timing.data, timing.reload)"
+						@click="python.reattempt(assignment.data, assignment.reload)"
 					/>
 					<Button
 						v-if="canSubmit"
@@ -155,7 +155,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute } from 'vue-router'
-import { Button, LoadingIndicator, toast, useCall } from 'frappe-ui'
+import { Button, LoadingIndicator, toast, useCall, usePageMeta } from 'frappe-ui'
 import EmptyState from '@/components/common/EmptyState.vue'
 import SubmitProjectDialog from '@/components/projects/SubmitProjectDialog.vue'
 import ProblemPanel from '@/components/python/ProblemPanel.vue'
@@ -202,6 +202,7 @@ const project = useCall<CS17Project, { project: string }>({
 })
 const failed = computed(() => Boolean(project.error) && !project.data)
 const title = computed(() => project.data?.project_title ?? 'Project')
+usePageMeta(() => ({ title: `${title.value} | CS17 Portal` }))
 
 const assignmentName = computed(
 	() => (route.query.assignment as string) || project.data?.assignment || null,
@@ -209,18 +210,6 @@ const assignmentName = computed(
 
 const assignment = useCall<CS17Assignment, { assignment: string }>({
 	url: '/api/v2/method/cs17_portal.api.get_student_assignment',
-	params: () => ({ assignment: assignmentName.value ?? '' }),
-	immediate: false,
-})
-
-const timing = useCall<CS17Assignment, { assignment: string }>({
-	url: '/api/v2/method/cs17_portal.api.get_student_assignment',
-	params: () => ({ assignment: assignmentName.value ?? '' }),
-	immediate: false,
-})
-
-const assignmentClosed = useCall<boolean, { assignment: string }>({
-	url: '/api/v2/method/cs17_portal.api.is_assignment_closed',
 	params: () => ({ assignment: assignmentName.value ?? '' }),
 	immediate: false,
 })
@@ -237,37 +226,34 @@ watch(
 	(name) => {
 		if (!name || !isStudent.value) return
 		assignment.reload()
-		timing.reload()
-		assignmentClosed.reload()
 		hintState.reload()
 	},
 	{ immediate: true },
 )
 
 usePolling(() => {
-	if (assignment.data?.time_limit) timing.reload()
+	if (assignment.data?.time_limit) assignment.reload()
 })
 
 const timeIsUp = ref(false)
 
 watch(
-	() => timing.data?.ends_at,
+	() => assignment.data?.ends_at,
 	(endsAt, previous) => {
-		const now = timing.data?.now
+		const now = assignment.data?.now
 		if (!endsAt || !previous || !now || parseDatetime(endsAt) <= parseDatetime(now)) return
 		timeIsUp.value = false
-		assignmentClosed.reload()
 	},
 )
 const readOnly = computed(
-	() => route.query.readonly === '1' || assignmentClosed.data === true || timeIsUp.value,
+	() => route.query.readonly === '1' || assignment.data?.is_closed === true || timeIsUp.value,
 )
 const readOnlySettled = computed(
-	() => !isStudent.value || !assignmentName.value || assignmentClosed.isFinished,
+	() => !isStudent.value || !assignmentName.value || assignment.isFinished,
 )
 const canSubmit = computed(() => isStudent.value && Boolean(assignment.data) && !readOnly.value)
 const canReattempt = computed(
-	() => isStudent.value && readOnly.value && Boolean(timing.data?.next_attempt),
+	() => isStudent.value && readOnly.value && Boolean(assignment.data?.next_attempt),
 )
 const python = usePythonAssignment()
 const sampleTests = computed(() => assignment.data?.sample_tests ?? [])
@@ -471,7 +457,7 @@ async function submitWhenTimeIsUp() {
 	timeIsUp.value = true
 	if (!code.value.trim() || !assignmentName.value) {
 		toast.info('Time is up.')
-		timing.reload()
+		assignment.reload()
 		return
 	}
 	if (!(await save())) return
@@ -481,7 +467,7 @@ async function submitWhenTimeIsUp() {
 		return
 	}
 	toast.success('Time is up. Your code was submitted.')
-	timing.reload()
+	assignment.reload()
 }
 
 async function saveBeforeLeave() {

@@ -68,6 +68,8 @@ export interface CS17Assignment {
 	time_limit?: number
 	attempts_allowed?: number
 	next_attempt?: number | null
+	/** Only from `get_student_assignment`: the student can no longer revise. */
+	is_closed?: boolean
 	started_at?: string
 	ends_at?: string
 	/** The server's clock, sent with a timed assignment. */

@@ -1459,6 +1459,7 @@ def get_student_assignment(assignment: str) -> dict:
 	if not is_open:
 		frappe.throw(_("Assignment not found"), frappe.DoesNotExistError)
 	solutions_shown = details.pop("show_solutions")
+	details.is_closed = is_assignment_closed(assignment)
 	if details.time_limit and not frappe.db.get_value(
 		ASSIGNMENT_SUBMISSION, {"assignment": assignment, "student": student}, "returned_on"
 	):
