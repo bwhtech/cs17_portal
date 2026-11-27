@@ -17,7 +17,7 @@
 
 		<p v-if="details" class="text-sm text-ink-gray-5">{{ details }}</p>
 
-		<ol class="space-y-1.5">
+		<ol v-if="student.state !== 'not_started'" class="space-y-1.5">
 			<li
 				v-for="(question, index) in student.questions"
 				:key="question.assignment"
