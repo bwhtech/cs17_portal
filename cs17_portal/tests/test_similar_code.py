@@ -1,6 +1,9 @@
 # Copyright (c) 2026, developers@bwh.tech and Contributors
 # See license.txt
 
+import difflib
+from unittest.mock import patch
+
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
@@ -59,6 +62,29 @@ class TestSimilarSubmissions(FrappeTestCase):
 		frappe.set_user(self.faculty_user)
 
 		self.assertEqual(api.get_similar_submissions(self.assignment), [])
+
+	def test_does_not_compare_again_when_no_code_changed(self):
+		make_python_submission(self.assignment, self.first_student, "print(1)\n")
+		make_python_submission(self.assignment, self.second_student, "print(2)\n")
+		frappe.set_user(self.faculty_user)
+		api.get_similar_submissions(self.assignment)
+
+		with patch.object(difflib, "SequenceMatcher", wraps=difflib.SequenceMatcher) as matcher:
+			api.get_similar_submissions(self.assignment)
+
+		matcher.assert_not_called()
+
+	def test_compares_again_when_code_changed(self):
+		first = make_python_submission(self.assignment, self.first_student, "print(1)\n")
+		make_python_submission(self.assignment, self.second_student, "print(2)\n")
+		frappe.set_user(self.faculty_user)
+		api.get_similar_submissions(self.assignment)
+		frappe.db.set_value("CS17 Assignment Submission", first, "code", "print(3)\n")
+
+		with patch.object(difflib, "SequenceMatcher", wraps=difflib.SequenceMatcher) as matcher:
+			api.get_similar_submissions(self.assignment)
+
+		matcher.assert_called_once()
 
 	def test_refuses_faculty_of_another_cohort(self):
 		other_faculty = make_user("faculty872@cs17test.com")
