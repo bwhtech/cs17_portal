@@ -676,9 +676,12 @@ def list_my_projects() -> list:
 			"thumbnail",
 			"last_saved_at",
 			"is_shared",
+			"code",
 		],
 		order_by="creation desc",
 	)
+	for project in projects:
+		project.code_preview = "\n".join((project.pop("code") or "").splitlines()[:4])
 	_attach_submitted_flags(projects)
 	return projects
 

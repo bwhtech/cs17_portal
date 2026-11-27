@@ -225,6 +225,8 @@ export interface CS17Project {
 	sb3_file: string | null
 	thumbnail?: string | null
 	code?: string | null
+	/** Only from `list_my_projects`: the first lines of a Python project's code. */
+	code_preview?: string
 	last_saved_at: string | null
 	is_submitted?: boolean
 }
