@@ -26,8 +26,8 @@ def get_student_effort(student: str) -> dict:
 		)
 
 	def stretch(row: frappe._dict, started_at, saved_at) -> None:
-		row.started_at = min(filter(None, [row.started_at, started_at]), default=None)
-		row.last_saved_at = max(filter(None, [row.last_saved_at, saved_at]), default=None)
+		row.started_at = min((at for at in (row.started_at, started_at) if at), default=None)
+		row.last_saved_at = max((at for at in (row.last_saved_at, saved_at) if at), default=None)
 
 	for row in frappe.get_all(
 		"CS17 Project",
