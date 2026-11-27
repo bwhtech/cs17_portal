@@ -421,6 +421,7 @@ test.describe("Student submission types", () => {
 		});
 
 		await page.goto("/dashboard/assignments");
+		await page.getByRole("button", { name: /^Closed \d+$/, expanded: false }).click();
 		const row = assignmentRow(page, scratchGraded.title);
 		await row.getByRole("button", { name: "Preview" }).click();
 		await page.waitForURL(
