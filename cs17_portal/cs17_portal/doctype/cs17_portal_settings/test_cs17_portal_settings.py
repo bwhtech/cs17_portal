@@ -1,7 +1,7 @@
 # Copyright (c) 2026, developers@bwh.tech and Contributors
 # See license.txt
 
-# import frappe
+import frappe
 from frappe.tests import IntegrationTestCase
 
 # On IntegrationTestCase, the doctype test records and all
@@ -17,4 +17,13 @@ class IntegrationTestCS17PortalSettings(IntegrationTestCase):
 	Use this class for testing interactions between multiple components.
 	"""
 
-	pass
+	def test_refuses_practice_hours_that_end_before_they_start(self):
+		settings = frappe.get_doc(
+			{
+				"doctype": "CS17 Portal Settings",
+				"practice_hours_start": "21:00:00",
+				"practice_hours_end": "09:00:00",
+			}
+		)
+
+		self.assertRaises(frappe.ValidationError, settings.insert)

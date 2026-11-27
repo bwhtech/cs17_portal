@@ -65,4 +65,17 @@ test.describe("Class activity week", () => {
 			rows.nth(2).getByRole("cell", { name: /1 opened, 1 typed or ran, 0 submitted/ })
 		).toHaveCount(1);
 	});
+
+	test("opens what the student did on a day", async ({ page }) => {
+		await page.goto("/dashboard/faculty/activity");
+		await page.getByRole("combobox", { name: "Cohort" }).click();
+		await page.getByRole("listbox").waitFor();
+		await page.keyboard.type(cohort.name);
+		await page.keyboard.press("Enter");
+		await page.getByRole("radio", { name: "Week" }).click();
+
+		await page.getByRole("button", { name: /1 opened, 1 typed or ran, 0 submitted/ }).click();
+
+		await expect(page.getByRole("dialog")).toContainText(/\d{1,2}:\d{2} [AP]M · 1 run/);
+	});
 });

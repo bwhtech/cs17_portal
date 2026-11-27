@@ -92,6 +92,7 @@
 	<StudentActivityDialog
 		:open="Boolean(openStudent)"
 		:student="openStudent"
+		:date="activity.data?.date ?? ''"
 		@update:open="openStudent = null"
 	/>
 </template>

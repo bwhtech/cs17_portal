@@ -444,6 +444,7 @@ export interface AssignmentActivity {
 	passed: number | null
 	total: number | null
 	submitted: boolean
+	first_active_at: string
 	last_active_at: string
 }
 

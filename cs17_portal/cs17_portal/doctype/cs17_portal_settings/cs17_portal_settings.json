@@ -7,7 +7,11 @@
  "engine": "InnoDB",
  "field_order": [
   "quick_links",
-  "daily_activity_email"
+  "daily_activity_email",
+  "practice_hours_section",
+  "practice_hours_start",
+  "column_break_practice_hours",
+  "practice_hours_end"
  ],
  "fields": [
   {
@@ -21,12 +25,38 @@
    "fieldname": "daily_activity_email",
    "fieldtype": "Check",
    "label": "Send daily activity email"
+  },
+  {
+   "description": "Gaps in a student's work are counted only between these times.",
+   "fieldname": "practice_hours_section",
+   "fieldtype": "Section Break",
+   "label": "Practice Hours"
+  },
+  {
+   "default": "09:00:00",
+   "fieldname": "practice_hours_start",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "label": "Starts at",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_practice_hours",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "21:00:00",
+   "fieldname": "practice_hours_end",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "label": "Ends at",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "link_display_mode": "Search",
  "links": [],
- "modified": "2026-11-26 20:45:14.073213",
+ "modified": "2026-11-27 12:42:45.314659",
  "modified_by": "Administrator",
  "module": "CS17 Portal",
  "name": "CS17 Portal Settings",

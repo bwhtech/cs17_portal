@@ -3,7 +3,7 @@
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
-from frappe.utils import add_to_date, now_datetime
+from frappe.utils import add_days, add_to_date, get_datetime, now_datetime, today
 
 from cs17_portal import api, class_activity, live_lab
 from cs17_portal.tests.test_api import make_cohort, make_profile, make_user
@@ -75,6 +75,65 @@ class TestClassActivity(FrappeTestCase):
 		).insert(ignore_permissions=True)
 
 		self.assertEqual(self.get_student("Diya Patel")["opened"], 0)
+
+	def test_spans_the_first_and_last_work_on_an_assignment(self):
+		for ran_at in ("09:15:00", "11:40:00"):
+			frappe.get_doc(
+				{
+					"doctype": "CS17 Code Run",
+					"assignment": self.assignment,
+					"student": self.second_student,
+					"ran_at": f"{today()} {ran_at}",
+				}
+			).insert(ignore_permissions=True)
+
+		[row] = self.get_student("Diya Patel")["assignments"]
+
+		self.assertEqual(
+			(str(row.first_active_at), str(row.last_active_at)),
+			(f"{today()} 09:15:00", f"{today()} 11:40:00"),
+		)
+
+	def test_finds_the_long_gaps_in_practice_hours(self):
+		two_days_ago = add_days(today(), -2)
+		for ran_at in ("09:15:00", "11:40:00"):
+			frappe.get_doc(
+				{
+					"doctype": "CS17 Code Run",
+					"assignment": self.assignment,
+					"student": self.second_student,
+					"ran_at": f"{two_days_ago} {ran_at}",
+				}
+			).insert(ignore_permissions=True)
+
+		day = class_activity.get_student_day(self.second_student, two_days_ago)
+
+		self.assertEqual(
+			[(window["from"], window["to"]) for window in day["idle"]],
+			[
+				(get_datetime(f"{two_days_ago} 09:15:00"), get_datetime(f"{two_days_ago} 11:40:00")),
+				(get_datetime(f"{two_days_ago} 11:40:00"), get_datetime(f"{two_days_ago} 21:00:00")),
+			],
+		)
+
+	def test_lists_only_the_assignments_not_started(self):
+		untouched = api.create_assignment(
+			"Patterns practice", self.cohort, "2030-01-01 00:00:00", submission_type="Python", publish="now"
+		)
+		student = frappe.db.get_value("CS17 Profile", {"user": self.student_user})
+		frappe.set_user(self.student_user)
+		api.start_python_assignment(self.assignment)
+
+		frappe.set_user(self.faculty_user)
+		not_started = [row["assignment"] for row in class_activity.get_student_day(student)["not_started"]]
+
+		self.assertIn(untouched, not_started)
+		self.assertNotIn(self.assignment, not_started)
+
+	def test_refuses_a_student_day_to_faculty_of_another_cohort(self):
+		frappe.set_user(self.other_faculty_user)
+
+		self.assertRaises(frappe.PermissionError, class_activity.get_student_day, self.second_student)
 
 	def test_refuses_faculty_of_another_cohort(self):
 		frappe.set_user(self.other_faculty_user)
