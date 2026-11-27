@@ -130,6 +130,7 @@ import StudentActivityDialog from '@/components/reports/StudentActivityDialog.vu
 import AppHeader from '@/components/shell/AppHeader.vue'
 import { useCohorts } from '@/composables/useCohorts'
 import { useLoadFailed } from '@/composables/useLoadFailed'
+import { useSession } from '@/composables/useSession'
 import { dayjs, parseDatetime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
 import { toast } from '@/lib/toast'
@@ -151,6 +152,7 @@ const VIEWS = [
 ]
 
 const view = ref('day')
+const { cohort: sessionCohort } = useSession()
 const pickedCohort = ref('')
 const pickedDate = ref('')
 const openStudent = ref<StudentActivity | null>(null)
@@ -159,7 +161,7 @@ const selection = ref<string[]>([])
 const cohortsCall = useCohorts()
 
 const cohorts = computed(() => cohortsCall.data ?? [])
-const cohort = computed(() => pickedCohort.value || cohorts.value[0] || '')
+const cohort = computed(() => pickedCohort.value || sessionCohort.value || cohorts.value[0] || '')
 
 const cohortOptions = computed(() => cohorts.value.map((name) => ({ label: name, value: name })))
 

@@ -89,6 +89,7 @@ import AppHeader from '@/components/shell/AppHeader.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useCohorts, useQuarters } from '@/composables/useCohorts'
 import { useLoadFailed } from '@/composables/useLoadFailed'
+import { useSession } from '@/composables/useSession'
 import { formatPercent } from '@/lib/results'
 import type { ClassReportRow } from '@/types'
 
@@ -102,6 +103,7 @@ const columns: Column[] = [
 	{ header: 'Grade', key: 'grade', width: '6rem' },
 ]
 
+const { cohort: sessionCohort } = useSession()
 const pickedCohort = ref('')
 const quarter = ref('')
 
@@ -111,7 +113,7 @@ const quartersCall = useQuarters()
 
 const cohorts = computed(() => cohortsCall.data ?? [])
 const quarters = computed(() => quartersCall.data ?? [])
-const cohort = computed(() => pickedCohort.value || cohorts.value[0] || '')
+const cohort = computed(() => pickedCohort.value || sessionCohort.value || cohorts.value[0] || '')
 
 const cohortOptions = computed(() => cohorts.value.map((name) => ({ label: name, value: name })))
 
