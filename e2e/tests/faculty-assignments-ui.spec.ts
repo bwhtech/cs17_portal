@@ -779,7 +779,7 @@ test.describe("Faculty assignment portal", () => {
 				await route.continue();
 			});
 			await page.goto("/dashboard/faculty/submissions");
-			await page.locator(LIST_ROW, { hasText: marked.title }).click();
+			await page.getByRole("region", { name: marked.title }).locator(LIST_ROW).click();
 
 			await expect(page.getByRole("button", { name: "Back", exact: true })).toBeVisible();
 			await expect(page.getByText("No submitted file.")).toHaveCount(0);
@@ -794,7 +794,7 @@ test.describe("Faculty assignment portal", () => {
 				route.fulfill({ status: 500 })
 			);
 			await page.goto("/dashboard/faculty/submissions");
-			await page.locator(LIST_ROW, { hasText: marked.title }).click();
+			await page.getByRole("region", { name: marked.title }).locator(LIST_ROW).click();
 
 			await expect(page.getByText("Could not load the submitted file")).toBeVisible();
 			await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();

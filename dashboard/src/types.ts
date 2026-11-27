@@ -309,6 +309,18 @@ export interface CohortSubmission {
 	can_check_with_ai?: boolean
 }
 
+export interface FacultyDashboard {
+	to_grade: {
+		submissions: Pick<
+			CohortSubmission,
+			'name' | 'full_name' | 'assignment' | 'assignment_title' | 'submitted_at'
+		>[]
+		total: number
+	}
+	due_soon: { name: string; title: string; due_date: string; submitted: number; total: number }[]
+	live_exams: { name: string; title: string; closes_on: string }[]
+}
+
 export type PairedSubmission = Pick<CS17Submission, 'name' | 'student' | 'full_name'>
 
 export interface SimilarPair {

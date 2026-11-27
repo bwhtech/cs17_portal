@@ -44,6 +44,7 @@ declare module 'vue' {
     CodingExamFormDialog: typeof import('./src/components/exams/faculty/CodingExamFormDialog.vue')['default']
     CollapsibleSection: typeof import('./src/components/common/CollapsibleSection.vue')['default']
     CopyAssignmentsDialog: typeof import('./src/components/faculty/CopyAssignmentsDialog.vue')['default']
+    DashboardCard: typeof import('./src/components/faculty/DashboardCard.vue')['default']
     DataTable: typeof import('./src/components/common/DataTable.vue')['default']
     DeleteAnnouncementDialog: typeof import('./src/components/faculty/DeleteAnnouncementDialog.vue')['default']
     DeleteAssignmentDialog: typeof import('./src/components/faculty/DeleteAssignmentDialog.vue')['default']

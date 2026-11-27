@@ -6,6 +6,15 @@
 			Open, run, and grade submissions from your cohort.
 		</p>
 
+		<div v-if="assignedToMe" class="mb-5">
+			<Button
+				label="Assigned to me"
+				icon-right="lucide-x"
+				aria-label="Remove filter: Assigned to me"
+				@click="router.replace({ query: {} })"
+			/>
+		</div>
+
 		<LoadError
 			v-if="failed"
 			title="Could not load submissions"
@@ -15,25 +24,31 @@
 
 		<DataTable
 			v-else
+			v-model:collapsed-groups="collapsedAssignments"
 			:columns="columns"
-			:rows="rows"
+			:rows="groupedRows"
 			:row-key="rowKey"
+			:group-by="(row: CohortSubmission) => row.assignment"
+			:group-label="assignmentTitle"
 			:loading="submissions.loading && !submissions.data"
 			:on-row-click="openGrading"
-			empty="No submissions yet."
+			:empty="assignedToMe ? 'No submissions assigned to you.' : 'No submissions yet.'"
 		>
+			<template #group-suffix="{ rows: groupRows }">
+				<Badge
+					v-if="pendingCount(groupRows)"
+					:label="`${pendingCount(groupRows)} to grade`"
+					:theme="assignmentStatusTheme('Pending')"
+					variant="subtle"
+				/>
+			</template>
+
 			<template #cell-full_name="{ row }">
 				<RowTitle
 					:title="row.full_name"
 					:to="`/faculty/students/${row.student}`"
 					@click.stop
 				/>
-			</template>
-
-			<template #cell-assignment_title="{ row }">
-				<span class="block truncate" :title="row.assignment_title">{{
-					row.assignment_title
-				}}</span>
 			</template>
 
 			<template #cell-submission_type="{ row }">
@@ -87,8 +102,8 @@ const limit = ref(PAGE_LENGTH)
 </script>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { Badge, Button, useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
@@ -98,25 +113,36 @@ import LoadError from '@/components/common/LoadError.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { formatDateTime } from '@/lib/dates'
+import { assignmentStatusTheme } from '@/lib/status'
+import { STORAGE_KEYS, readJSON, writeJSON } from '@/lib/storage'
 import type { CohortSubmission } from '@/types'
 
+const route = useRoute()
 const router = useRouter()
 
 const columns: Column[] = [
-	{ header: 'Student', key: 'full_name', variant: 'primary', width: 'minmax(6rem,12rem)' },
-	{ header: 'Assignment', key: 'assignment_title', width: 'minmax(6rem,1fr)' },
+	{ header: 'Student', key: 'full_name', variant: 'primary', width: 'minmax(6rem,1fr)' },
 	{ header: 'Type', key: 'submission_type', width: 'minmax(4.5rem,8rem)' },
 	{ header: 'Submitted', key: 'submitted_at', width: 'minmax(8rem,11rem)' },
 	{ header: 'Grade', key: 'grade', width: 'minmax(8.5rem,9rem)' },
 	{ header: '', key: 'actions', variant: 'actions', width: '5rem', align: 'right' },
 ]
 
-const submissions = useCall<CohortSubmission[], { limit: number }>({
+const collapsedAssignments = ref(
+	readJSON<string[]>(STORAGE_KEYS.collapsedSubmissionAssignments, []),
+)
+watch(collapsedAssignments, (value) =>
+	writeJSON(STORAGE_KEYS.collapsedSubmissionAssignments, value),
+)
+
+const assignedToMe = computed(() => route.query.assigned === 'me')
+
+const submissions = useCall<CohortSubmission[], { limit: number; assigned_to_me?: boolean }>({
 	url: '/api/v2/method/cs17_portal.api.list_cohort_submissions',
 	method: 'GET',
-	params: () => ({ limit: limit.value }),
+	params: () => ({ limit: limit.value, ...(assignedToMe.value && { assigned_to_me: true }) }),
 	refetch: true,
-	cacheKey: 'cohort-submissions',
+	cacheKey: assignedToMe.value ? undefined : 'cohort-submissions',
 })
 
 // While a request runs, `data` falls back to the rows cached when the page
@@ -128,6 +154,25 @@ const hasNextPage = computed<boolean>((previous = false) =>
 	submissions.loading || submissions.error ? previous : rows.value.length >= limit.value,
 )
 const failed = useLoadFailed(submissions)
+
+const isPending = (row: CohortSubmission) => Boolean(row.evaluation_type) && !row.graded
+
+const groupedRows = computed(() => {
+	const pendingAssignments = new Set(rows.value.filter(isPending).map((row) => row.assignment))
+	return [...rows.value].sort(
+		(a, b) =>
+			Number(pendingAssignments.has(b.assignment)) -
+			Number(pendingAssignments.has(a.assignment)),
+	)
+})
+
+function assignmentTitle(assignment: string): string {
+	return rows.value.find((row) => row.assignment === assignment)?.assignment_title ?? assignment
+}
+
+function pendingCount(groupRows: CohortSubmission[]): number {
+	return groupRows.filter(isPending).length
+}
 
 const rowKey = (row: CohortSubmission) => row.name
 

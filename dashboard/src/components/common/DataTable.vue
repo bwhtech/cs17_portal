@@ -26,7 +26,7 @@
 				<GroupHeader
 					v-if="group.label"
 					class="px-5"
-					:label="group.label"
+					:label="groupLabel?.(group.label) ?? group.label"
 					:count="group.rows.length"
 					:expanded="!collapsedGroups.includes(group.label)"
 					:label-id="`${groupId}-${index}-label`"
@@ -200,7 +200,7 @@
 			>
 				<GroupHeader
 					v-if="group.label"
-					:label="group.label"
+					:label="groupLabel?.(group.label) ?? group.label"
 					:count="group.rows.length"
 					:expanded="!collapsedGroups.includes(group.label)"
 					:label-id="`${groupId}-${index}-label`"
@@ -358,6 +358,7 @@ const props = withDefaults(
 		/** Taller rows for a two-line primary cell; 44 is the dense default. */
 		rowHeight?: number
 		groupBy?: (row: T) => string
+		groupLabel?: (group: string) => string
 		onRowDrop?: (rows: T[], group: string) => void
 	}>(),
 	{

@@ -11,7 +11,7 @@ import frappe
 from frappe import _
 from frappe.core.doctype.file.utils import decode_file_content
 from frappe.query_builder import Order
-from frappe.query_builder.functions import Coalesce, Date
+from frappe.query_builder.functions import Coalesce, Count, Date
 from frappe.rate_limiter import rate_limit
 from frappe.utils import add_to_date, cint, cstr, flt, get_datetime, getdate, now_datetime, sha256_hash
 
@@ -566,10 +566,13 @@ def require_faculty_for_announcement_cohort(cohort: str | None) -> None:
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 
-def get_cohort_submissions(cohort: str | None, limit: int | None = None) -> list:
+def get_cohort_submissions(cohort: str | None, limit: int | None = None, names: list | None = None) -> list:
+	filters = [["assignment.cohort", "=", cohort]] if cohort else []
+	if names is not None:
+		filters.append(["name", "in", names])
 	return frappe.get_all(
 		"CS17 Assignment Submission",
-		filters=[["assignment.cohort", "=", cohort]] if cohort else [],
+		filters=filters,
 		fields=["name", "student", "full_name", "assignment", "assignment_title", "submitted_at"],
 		order_by="submitted_at desc",
 		limit=limit,
@@ -1167,8 +1170,12 @@ def get_submission_project(submission: str) -> dict:
 
 
 @frappe.whitelist(methods=["GET"])
-def list_cohort_submissions(limit: int | None = None) -> list:
-	submissions = get_cohort_submissions(get_current_faculty().cohort, limit=limit)
+def list_cohort_submissions(limit: int | None = None, assigned_to_me: bool = False) -> list:
+	submissions = get_cohort_submissions(
+		get_current_faculty().cohort,
+		limit=limit,
+		names=_assigned_submission_names(frappe.session.user) if assigned_to_me else None,
+	)
 	if not submissions:
 		return []
 
@@ -2088,6 +2095,103 @@ def _assigned_submission_names(user: str) -> list:
 def get_assigned_submission_summary(limit: int = 5) -> dict:
 	submissions = get_assigned_submissions(limit=0)
 	return {"submissions": submissions[:limit], "total": len(submissions)}
+
+
+@frappe.whitelist(methods=["GET"])
+def get_faculty_dashboard(limit: int = 5) -> dict:
+	cohort = get_current_faculty().cohort
+	now = now_datetime()
+
+	submission = frappe.qb.DocType(ASSIGNMENT_SUBMISSION)
+	assignment = frappe.qb.DocType("CS17 Assignment")
+	grade = frappe.qb.DocType("CS17 Assignment Grade")
+	waiting = (
+		frappe.qb.from_(submission)
+		.join(assignment)
+		.on(assignment.name == submission.assignment)
+		.left_join(grade)
+		.on(grade.submission == submission.name)
+		.where(
+			(submission.docstatus < 2)
+			& submission.returned_on.isnull()
+			& grade.name.isnull()
+			& (assignment.assignment_type == "Graded")
+		)
+	)
+	if cohort:
+		waiting = waiting.where(assignment.cohort == cohort)
+	to_grade = {
+		"total": waiting.select(Count(submission.name)).run()[0][0],
+		"submissions": waiting.select(
+			submission.name,
+			submission.full_name,
+			submission.assignment,
+			submission.assignment_title,
+			submission.submitted_at,
+		)
+		.orderby(submission.submitted_at)
+		.limit(limit)
+		.run(as_dict=True),
+	}
+
+	due_soon = frappe.get_all(
+		"CS17 Assignment",
+		filters=[
+			["is_published", "=", 1],
+			["coding_exam", "is", "not set"],
+			["due_date", ">", now],
+			["due_date", "<=", add_to_date(now, days=7)],
+			*([["cohort", "=", cohort]] if cohort else []),
+		],
+		fields=["name", "title", "cohort", "due_date"],
+		order_by="due_date asc",
+	)
+	if due_soon:
+		names = [row.name for row in due_soon]
+		students_by_assignment = {}
+		for row in frappe.get_all(
+			"CS17 Assignment Student",
+			filters={"parent": ("in", names), "parenttype": "CS17 Assignment"},
+			fields=["parent", "student"],
+		):
+			students_by_assignment.setdefault(row.parent, set()).add(row.student)
+		students_by_cohort = {}
+		for row in frappe.get_all(
+			"CS17 Profile",
+			filters=[
+				["profile_type", "=", "Student"],
+				["cohort", "in", list({row.cohort for row in due_soon})],
+				["user", "not in", frappe.get_all("User", filters={"enabled": 0}, pluck="name")],
+			],
+			fields=["name", "cohort"],
+		):
+			students_by_cohort.setdefault(row.cohort, set()).add(row.name)
+		submitted = {}
+		for row in frappe.get_all(
+			ASSIGNMENT_SUBMISSION,
+			filters={"assignment": ("in", names), "docstatus": ("<", 2)},
+			fields=["assignment", "student"],
+		):
+			submitted.setdefault(row.assignment, set()).add(row.student)
+		for row in due_soon:
+			in_cohort = students_by_cohort.get(row.cohort, set())
+			given = in_cohort & students_by_assignment.get(row.name, in_cohort)
+			row.total = len(given)
+			row.submitted = len(given & submitted.get(row.name, set()))
+
+	live_exams = frappe.get_all(
+		"CS17 Coding Exam",
+		filters=[
+			["is_published", "=", 1],
+			["opens_on", "<=", now],
+			["closes_on", ">=", now],
+			*([["cohort", "=", cohort]] if cohort else []),
+		],
+		fields=["name", "title", "closes_on"],
+		order_by="closes_on asc",
+	)
+
+	return {"to_grade": to_grade, "due_soon": due_soon, "live_exams": live_exams}
 
 
 def _order_by_names(rows: list, ordered_names: list) -> list:

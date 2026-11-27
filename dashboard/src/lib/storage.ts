@@ -23,6 +23,9 @@ export const STORAGE_KEYS = {
 	get collapsedResultExams() {
 		return `cs17-collapsed-result-exams:${window.current_user}`
 	},
+	get collapsedSubmissionAssignments() {
+		return `cs17-collapsed-submission-assignments:${window.current_user}`
+	},
 	unsavedPythonCode(project: string) {
 		return `cs17-unsaved-python-code:${window.current_user}:${project}`
 	},
