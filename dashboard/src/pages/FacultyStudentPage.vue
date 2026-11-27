@@ -13,12 +13,18 @@
 			@retry="overview.reload()"
 		/>
 
-		<PageSkeleton v-else-if="overview.loading && !student" />
-
-		<EmptyState v-else-if="!student" icon="lucide-user-x" title="Student not found" />
+		<EmptyState
+			v-else-if="!overview.loading && !student"
+			icon="lucide-user-x"
+			title="Student not found"
+		/>
 
 		<div v-else class="space-y-6">
-			<div class="flex items-center gap-4">
+			<div v-if="!student" class="cs17-delay-in flex items-center gap-4">
+				<Skeleton class="size-16 shrink-0 rounded-full" />
+				<Skeleton class="h-5 w-48 rounded-full" />
+			</div>
+			<div v-else class="flex items-center gap-4">
 				<Avatar
 					class="size-16 shrink-0"
 					size="3xl"
@@ -43,6 +49,7 @@
 					:rows="overview.data?.assignments ?? []"
 					:row-key="(row: StudentOverviewAssignment) => row.name"
 					:row-height="60"
+					:loading="!student"
 					:on-row-click="openGrading"
 					empty="No assignments yet."
 				>
@@ -140,6 +147,7 @@
 					:rows="overview.data?.results ?? []"
 					:row-key="(row: StudentOverviewResult) => row.name"
 					:row-height="60"
+					:loading="!student"
 					:on-row-click="openResult"
 					empty="No results yet."
 				>
@@ -178,7 +186,7 @@
 				</DataTable>
 			</section>
 
-			<StudentGuardians :student="studentId" :student-name="student.full_name" />
+			<StudentGuardians :student="studentId" :student-name="student?.full_name ?? ''" />
 		</div>
 	</PageBody>
 </template>
@@ -186,13 +194,12 @@
 <script setup lang="ts">
 import { computed, reactive, ref, toRefs, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { Avatar, Badge, PageHeaderBackButton, useCall } from 'frappe-ui'
+import { Avatar, Badge, PageHeaderBackButton, Skeleton, useCall } from 'frappe-ui'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadError from '@/components/common/LoadError.vue'
-import PageSkeleton from '@/components/common/PageSkeleton.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
 import ActivityCalendar from '@/components/students/ActivityCalendar.vue'
 import StudentGuardians from '@/components/guardian/StudentGuardians.vue'

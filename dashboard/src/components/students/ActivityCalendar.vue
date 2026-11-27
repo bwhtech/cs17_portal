@@ -1,7 +1,10 @@
 <template>
-	<section v-if="failed || calendar.data" class="space-y-3">
+	<section class="space-y-3">
 		<h2 class="text-lg font-semibold text-ink-gray-8">Activity</h2>
 		<ErrorMessage v-if="failed" message="Could not load activity." />
+		<div v-else-if="!calendar.data" class="cs17-delay-in">
+			<Skeleton class="h-36 w-full max-w-xs rounded-4" />
+		</div>
 		<template v-else>
 			<div class="overflow-x-auto">
 				<div
@@ -24,7 +27,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ErrorMessage, Tooltip, useCall } from 'frappe-ui'
+import { ErrorMessage, Skeleton, Tooltip, useCall } from 'frappe-ui'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { dayjs, formatDate } from '@/lib/dates'
 
