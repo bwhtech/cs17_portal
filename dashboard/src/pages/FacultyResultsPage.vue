@@ -73,6 +73,7 @@ import PageBody from '@/components/common/PageBody.vue'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
+import { useCohorts } from '@/composables/useCohorts'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { formatMarks, formatPercent, passTheme, publishStatus, resultTitle } from '@/lib/results'
 import { STORAGE_KEYS, readJSON, writeJSON } from '@/lib/storage'
@@ -95,10 +96,7 @@ const cohortFilter = ref(ALL)
 const collapsedExams = ref(readJSON<string[]>(STORAGE_KEYS.collapsedResultExams, []))
 watch(collapsedExams, (value) => writeJSON(STORAGE_KEYS.collapsedResultExams, value))
 
-const cohortsCall = useCall<string[]>({
-	url: '/api/v2/method/cs17_portal.api.get_cohorts',
-	method: 'GET',
-})
+const cohortsCall = useCohorts()
 
 const resultsCall = useCall<FacultyResultSummary[], { cohort?: string }>({
 	url: '/api/v2/method/cs17_portal.api.get_faculty_results',

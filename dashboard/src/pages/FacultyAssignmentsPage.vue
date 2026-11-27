@@ -169,6 +169,7 @@ import PublishAssignmentDialog from '@/components/faculty/PublishAssignmentDialo
 import AppHeader from '@/components/shell/AppHeader.vue'
 import PageBody from '@/components/common/PageBody.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
+import { useCohorts, useQuarters } from '@/composables/useCohorts'
 import { useLoadFailed } from '@/composables/useLoadFailed'
 import { formatDateTime } from '@/lib/dates'
 import { frappeErrorMessage } from '@/lib/frappeError'
@@ -208,15 +209,9 @@ const selection = ref<string[]>([])
 const collapsedTopics = ref(readJSON<string[]>(STORAGE_KEYS.collapsedTopics, []))
 watch(collapsedTopics, (value) => writeJSON(STORAGE_KEYS.collapsedTopics, value))
 
-const cohortsCall = useCall<string[]>({
-	url: '/api/v2/method/cs17_portal.api.get_cohorts',
-	method: 'GET',
-})
+const cohortsCall = useCohorts()
 
-const quartersCall = useCall<string[]>({
-	url: '/api/v2/method/cs17_portal.api.get_quarters',
-	method: 'GET',
-})
+const quartersCall = useQuarters()
 
 const assignmentsCall = useCall<CS17Assignment[], { cohort?: string }>({
 	url: '/api/v2/method/cs17_portal.api.get_faculty_assignments',
