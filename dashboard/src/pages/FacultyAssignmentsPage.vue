@@ -51,7 +51,7 @@
 			:row-key="(row: AssignmentRow) => row.name"
 			:loading="assignmentsCall.loading && !assignmentsCall.data"
 			:row-height="60"
-			v-model:collapsed-groups="collapsedTopics"
+			v-model:collapsed-groups="shownCollapsedTopics"
 			:group-by="(row: AssignmentRow) => row.topic || NO_TOPIC"
 			:on-row-drop="moveToTopic"
 			selectable
@@ -222,6 +222,15 @@ const deleteTarget = ref<AssignmentRow | null>(null)
 const selection = ref<string[]>([])
 const collapsedTopics = ref(readJSON<string[]>(STORAGE_KEYS.collapsedTopics, []))
 watch(collapsedTopics, (value) => writeJSON(STORAGE_KEYS.collapsedTopics, value))
+const collapsedSearchTopics = ref<string[]>([])
+watch(search, () => (collapsedSearchTopics.value = []))
+const shownCollapsedTopics = computed({
+	get: () => (search.value ? collapsedSearchTopics.value : collapsedTopics.value),
+	set: (value) => {
+		if (search.value) collapsedSearchTopics.value = value
+		else collapsedTopics.value = value
+	},
+})
 
 const cohortsCall = useCall<string[]>({
 	url: '/api/v2/method/cs17_portal.api.get_cohorts',
