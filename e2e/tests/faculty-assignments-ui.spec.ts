@@ -149,10 +149,13 @@ test.describe("Faculty assignment portal", () => {
 		);
 		await page.goto(`/dashboard/faculty/assignments/${graded.name}`);
 		await page.getByRole("tab", { name: "Brief" }).click();
+		const uploaded = page.waitForResponse(/answer_sheet\.upload_answer_sheet/);
 		await page
 			.locator("section", { hasText: "Answer sheet" })
 			.locator('input[type="file"]')
 			.setInputFiles(sheet);
+		await uploaded;
+		await page.waitForResponse(/answer_sheet\.get_answer_sheet/);
 		await page.getByRole("tab", { name: /^Submissions/ }).click();
 
 		const row = page.locator(LIST_ROW, { hasText: student.last_name });
