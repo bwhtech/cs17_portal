@@ -83,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { Button, Skeleton, useCall } from 'frappe-ui'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadError from '@/components/common/LoadError.vue'
@@ -102,7 +102,7 @@ const PLAYBACK_SPEED = 40
 const LONGEST_STEP_MS = 1000
 const RANGE_THUMB_PX = 16
 
-const props = defineProps<{ submission: string }>()
+const props = defineProps<{ submission: string; startAt?: string }>()
 
 const replay = useCall<CodeReplay, { submission: string }>({
 	url: '/api/v2/method/cs17_portal.code_replay.get_code_snapshots',
@@ -118,6 +118,16 @@ const savedAt = computed(() =>
 const lastIndex = computed(() => Math.max(snapshots.value.length - 1, 0))
 
 const index = ref(0)
+watch(
+	[snapshots, () => props.startAt],
+	([rows, startAt]) => {
+		index.value = Math.max(
+			rows.findIndex((row) => row.saved_at === startAt),
+			0,
+		)
+	},
+	{ immediate: true },
+)
 const snapshot = computed(() => snapshots.value[index.value])
 
 const markers = computed(() =>

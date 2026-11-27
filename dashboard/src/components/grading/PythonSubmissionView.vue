@@ -61,10 +61,20 @@
 					/>
 					How the code was written
 				</p>
-				<Button icon-left="lucide-play" label="Replay" @click="replayOpen = true" />
+				<Button icon-left="lucide-play" label="Replay" @click="openReplay()" />
+			</div>
+			<div v-if="suddenCode.data" class="flex items-start justify-between gap-3">
+				<p class="flex gap-1.5 text-p-sm text-ink-gray-8">
+					<span
+						class="lucide-zap mt-0.5 size-4 shrink-0 text-ink-amber-7"
+						aria-hidden="true"
+					/>
+					{{ suddenCodeReason(suddenCode.data) }}
+				</p>
+				<Button label="Show" @click="openReplay(suddenCode.data.saved_at)" />
 			</div>
 			<Dialog v-model:open="replayOpen" title="Replay" size="4xl">
-				<CodeReplay :submission="submission" />
+				<CodeReplay :submission="submission" :start-at="replayStartAt" />
 			</Dialog>
 			<div
 				v-if="solutions.length"
@@ -101,6 +111,7 @@ import TestResults from '@/components/python/TestResults.vue'
 import { frappeErrorMessage, isRefusal } from '@/lib/frappeError'
 import { usePythonRunner } from '@/lib/python/runner'
 import { runTests, type TestRun } from '@/lib/python/tests'
+import { suddenCodeReason, type SuddenCode } from '@/lib/suddenCode'
 import type { CS17Assignment } from '@/types'
 
 const props = defineProps<{ submission: string; assignment: string }>()
@@ -132,7 +143,18 @@ const runner = usePythonRunner()
 const runs = ref<TestRun[] | null>(null)
 const testing = ref(false)
 const replayOpen = ref(false)
+const replayStartAt = ref<string>()
 const solutionsOpen = ref(false)
+
+const suddenCode = useCall<SuddenCode | null, { submission: string }>({
+	url: '/api/v2/method/cs17_portal.sudden_code.get_submission_sudden_code',
+	params: () => ({ submission: props.submission }),
+})
+
+function openReplay(startAt?: string) {
+	replayStartAt.value = startAt
+	replayOpen.value = true
+}
 
 async function check() {
 	if (code.value === null || !tests.value.length || testing.value) return
