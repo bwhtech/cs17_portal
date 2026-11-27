@@ -70,4 +70,12 @@ test.describe("Faculty dashboard", () => {
 		await expect(page.getByRole("link", { name: "View all (6)" })).toBeVisible();
 		await expect(page.getByRole("link", { name: "Grade", exact: true })).toHaveCount(5);
 	});
+
+	test("view all lists only the submissions assigned to you", async ({ page }) => {
+		await page.goto("/dashboard/faculty");
+		await page.getByRole("link", { name: "View all (6)" }).click();
+
+		await expect(page).toHaveURL(/\/faculty\/submissions\?assigned=me$/);
+		await expect(page.locator('[data-slot="list-row"]')).toHaveCount(6);
+	});
 });
