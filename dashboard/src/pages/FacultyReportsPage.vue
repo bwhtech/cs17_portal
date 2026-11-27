@@ -87,7 +87,9 @@ import CommonErrors from '@/components/reports/CommonErrors.vue'
 import TopicProgress, { type TopicProgressRow } from '@/components/reports/TopicProgress.vue'
 import AppHeader from '@/components/shell/AppHeader.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
+import { useCohorts, useQuarters } from '@/composables/useCohorts'
 import { useLoadFailed } from '@/composables/useLoadFailed'
+import { useSession } from '@/composables/useSession'
 import { formatPercent } from '@/lib/results'
 import type { ClassReportRow } from '@/types'
 
@@ -101,22 +103,17 @@ const columns: Column[] = [
 	{ header: 'Grade', key: 'grade', width: '6rem' },
 ]
 
+const { cohort: sessionCohort } = useSession()
 const pickedCohort = ref('')
 const quarter = ref('')
 
-const cohortsCall = useCall<string[]>({
-	url: '/api/v2/method/cs17_portal.api.get_cohorts',
-	method: 'GET',
-})
+const cohortsCall = useCohorts()
 
-const quartersCall = useCall<string[]>({
-	url: '/api/v2/method/cs17_portal.api.get_quarters',
-	method: 'GET',
-})
+const quartersCall = useQuarters()
 
 const cohorts = computed(() => cohortsCall.data ?? [])
 const quarters = computed(() => quartersCall.data ?? [])
-const cohort = computed(() => pickedCohort.value || cohorts.value[0] || '')
+const cohort = computed(() => pickedCohort.value || sessionCohort.value || cohorts.value[0] || '')
 
 const cohortOptions = computed(() => cohorts.value.map((name) => ({ label: name, value: name })))
 
@@ -134,7 +131,7 @@ const report = useCall<ClassReportRow[], { cohort: string; quarter?: string }>({
 	url: '/api/v2/method/cs17_portal.api.get_class_report',
 	method: 'GET',
 	params: () => params.value,
-	immediate: false,
+	immediate: Boolean(cohort.value),
 	refetch: true,
 })
 
@@ -165,7 +162,7 @@ const topicProgress = useCall<TopicProgressRow[], { cohort: string; quarter?: st
 	url: '/api/v2/method/cs17_portal.topic_progress.get_class_topic_progress',
 	method: 'GET',
 	params: () => params.value,
-	immediate: false,
+	immediate: Boolean(cohort.value),
 	refetch: true,
 })
 const topicProgressFailed = useLoadFailed(topicProgress)

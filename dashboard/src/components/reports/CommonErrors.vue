@@ -50,7 +50,7 @@ const errors = useCall<CommonError[], { cohort: string; quarter?: string }>({
 	url: '/api/v2/method/cs17_portal.common_errors.get_common_errors',
 	method: 'GET',
 	params: () => props.params,
-	immediate: false,
+	immediate: Boolean(props.params.cohort),
 	refetch: true,
 })
 const failed = useLoadFailed(errors)
