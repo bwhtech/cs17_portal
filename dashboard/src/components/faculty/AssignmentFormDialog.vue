@@ -4,7 +4,7 @@
 	     frappe-ui equivalent. -->
 	<component
 		:is="isDesktop ? Dialog : BottomSheet"
-		v-bind="isDesktop ? { size: '3xl' } : {}"
+		v-bind="isDesktop ? { size: '6xl' } : {}"
 		:open="open"
 		:title="scheduled ? 'Edit Assignment' : draftName ? 'Continue Draft' : 'New Assignment'"
 		@update:open="emit('update:open', $event)"
@@ -29,23 +29,32 @@
 			title="A published assignment can no longer be edited"
 		/>
 
-		<div v-else :class="isDesktop ? undefined : 'px-4 pb-6'">
+		<div v-else :class="isDesktop ? 'flex max-h-[calc(100vh-12rem)] flex-col' : 'px-4 pb-6'">
 			<p class="text-p-base text-ink-gray-5">
-				Fill in the details, then switch to Preview to see the student view.
+				{{
+					isDesktop
+						? 'Fill in the details. The preview beside them is what students see.'
+						: 'Fill in the details, then switch to Preview to see the student view.'
+				}}
 				<template v-if="!scheduled">Closing keeps your work as a draft.</template>
 			</p>
 
 			<Tabs
-				class="mt-4"
+				:class="isDesktop ? 'mt-5 flex min-h-0 gap-6' : 'mt-4'"
 				:model-value="activeTab"
 				@update:model-value="activeTab = String($event)"
 			>
-				<TabList variant="underline">
+				<TabList v-if="!isDesktop" variant="underline">
 					<TabTrigger value="edit" label="Edit" icon-left="lucide-pencil" />
 					<TabTrigger value="preview" label="Preview" icon-left="lucide-eye" />
 				</TabList>
 
-				<TabPanel value="edit" class="space-y-4 pt-5">
+				<component
+					:is="isDesktop ? 'div' : TabPanel"
+					value="edit"
+					class="space-y-4"
+					:class="isDesktop ? '-mx-1 min-w-0 flex-1 overflow-y-auto px-1 pb-1' : 'pt-5'"
+				>
 					<FormControl
 						v-model="draft.title"
 						type="text"
@@ -224,15 +233,23 @@
 					</div>
 
 					<ErrorMessage :message="errors.form" />
-				</TabPanel>
+				</component>
 
-				<TabPanel value="preview" class="pt-5">
+				<component
+					:is="isDesktop ? 'div' : TabPanel"
+					value="preview"
+					:class="
+						isDesktop
+							? 'min-w-0 flex-1 overflow-y-auto border-l border-outline-gray-1 pl-6'
+							: 'pt-5'
+					"
+				>
 					<AssignmentPreview :draft="draft" />
-				</TabPanel>
+				</component>
 			</Tabs>
 
 			<div
-				class="mt-6 flex items-center justify-between gap-3 border-t border-outline-gray-1 pt-4"
+				class="mt-6 flex shrink-0 items-center justify-between gap-3 border-t border-outline-gray-1 pt-4"
 			>
 				<Button
 					v-if="deletableName && !isExamQuestion"
