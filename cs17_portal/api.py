@@ -13,7 +13,7 @@ from frappe.core.doctype.file.utils import decode_file_content
 from frappe.query_builder import Order
 from frappe.query_builder.functions import Coalesce, Date
 from frappe.rate_limiter import rate_limit
-from frappe.utils import add_to_date, cint, cstr, flt, get_datetime, getdate, now_datetime
+from frappe.utils import add_to_date, cint, cstr, flt, get_datetime, getdate, now_datetime, sha256_hash
 
 if TYPE_CHECKING:
 	from datetime import datetime
@@ -895,22 +895,28 @@ def get_submission_code(submission: str) -> str:
 
 
 SIMILAR_CODE_CUTOFF = 0.6
+SIMILAR_SUBMISSIONS_CACHE = "cs17_similar_submissions"
 PYTHON_TOKEN = re.compile(r"""'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"|#.*|\w+|\S""")
 
 
 @frappe.whitelist(methods=["GET"])
 def get_similar_submissions(assignment: str) -> list:
 	require_faculty_for_assignment(assignment)
-	starter_lines = set(
-		_comparable_lines(frappe.db.get_value("CS17 Assignment", assignment, "starter_code") or "")
-	)
-	submissions = []
-	for submission in frappe.get_all(
+	starter_code = frappe.db.get_value("CS17 Assignment", assignment, "starter_code") or ""
+	compared_submissions = frappe.get_all(
 		ASSIGNMENT_SUBMISSION,
 		filters={"assignment": assignment},
 		fields=["name", "student", "full_name", "code"],
 		order_by="submitted_at asc",
-	):
+	)
+	compared = sha256_hash(frappe.as_json([starter_code, compared_submissions]))
+	cached = frappe.cache.hget(SIMILAR_SUBMISSIONS_CACHE, assignment)
+	if cached and cached["compared"] == compared:
+		return cached["pairs"]
+
+	starter_lines = set(_comparable_lines(starter_code))
+	submissions = []
+	for submission in compared_submissions:
 		lines = [
 			line for line in _comparable_lines(submission.pop("code") or "") if line not in starter_lines
 		]
@@ -929,7 +935,9 @@ def get_similar_submissions(assignment: str) -> list:
 				and matcher.ratio() >= SIMILAR_CODE_CUTOFF
 			):
 				pairs.append({"similarity": matcher.ratio(), "submissions": [first, second]})
-	return sorted(pairs, key=lambda pair: pair["similarity"], reverse=True)
+	pairs.sort(key=lambda pair: pair["similarity"], reverse=True)
+	frappe.cache.hset(SIMILAR_SUBMISSIONS_CACHE, assignment, {"compared": compared, "pairs": pairs})
+	return pairs
 
 
 def _comparable_lines(code: str) -> list[str]:
