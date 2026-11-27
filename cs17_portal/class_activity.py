@@ -183,12 +183,14 @@ def get_student_day(student: str, date: str | None = None) -> dict:
 			idle.append({"from": previous, "to": at})
 		previous = max(previous, at)
 
+	[activity] = summarize_class_activity([frappe._dict(student=student)], date)["students"]
 	return {
 		"date": date,
 		"practice_hours": {"start": start, "end": end},
 		"events": events,
 		"idle": idle,
 		"not_started": get_not_started(student, day_start, day_end),
+		"assignments": activity["assignments"],
 	}
 
 
@@ -207,7 +209,7 @@ def get_not_started(student: str, day_start, day_end) -> list:
 		)
 	)
 	return [
-		{"assignment": row.name, "title": row.title, "due_date": row.due_date}
+		{"assignment": row.name, "title": row.title, "due_date": row.due_date, "topic": row.topic}
 		for row in frappe.get_all(
 			"CS17 Assignment",
 			filters={
@@ -216,7 +218,7 @@ def get_not_started(student: str, day_start, day_end) -> list:
 				"creation": ["<=", day_end],
 			},
 			or_filters=given_to(student),
-			fields=["name", "title", "due_date", "late_until", "is_published", "publish_on"],
+			fields=["name", "title", "due_date", "topic", "late_until", "is_published", "publish_on"],
 			order_by="due_date asc",
 		)
 		if row.name not in started

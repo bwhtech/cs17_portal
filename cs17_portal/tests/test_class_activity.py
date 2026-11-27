@@ -130,6 +130,16 @@ class TestClassActivity(FrappeTestCase):
 		self.assertIn(untouched, not_started)
 		self.assertNotIn(self.assignment, not_started)
 
+	def test_a_student_day_lists_the_assignments_worked_on(self):
+		student = frappe.db.get_value("CS17 Profile", {"user": self.student_user})
+		frappe.set_user(self.student_user)
+		api.start_python_assignment(self.assignment)
+
+		frappe.set_user(self.faculty_user)
+		assignments = class_activity.get_student_day(student)["assignments"]
+
+		self.assertEqual([row.assignment for row in assignments], [self.assignment])
+
 	def test_refuses_a_student_day_to_faculty_of_another_cohort(self):
 		frappe.set_user(self.other_faculty_user)
 
