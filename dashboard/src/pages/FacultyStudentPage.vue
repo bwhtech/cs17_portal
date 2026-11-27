@@ -103,6 +103,22 @@
 						}}</span>
 						<span v-else class="text-ink-gray-5">—</span>
 					</template>
+
+					<template #cell-effort="{ row }">
+						<div v-if="effort.data?.[row.name]" class="min-w-0">
+							<p class="text-base text-ink-gray-7">
+								{{ formatTimeSpent(effort.data[row.name].seconds) }}
+							</p>
+							<p
+								v-if="effortCounts(effort.data[row.name])"
+								class="mt-1 truncate text-sm text-ink-gray-5"
+								:title="effortCounts(effort.data[row.name])"
+							>
+								{{ effortCounts(effort.data[row.name]) }}
+							</p>
+						</div>
+						<span v-else class="text-ink-gray-5">—</span>
+					</template>
 				</DataTable>
 			</section>
 
@@ -228,12 +244,27 @@ const topicProgress = useCall<TopicProgressRow[], { student: string }>({
 })
 const topicProgressFailed = useLoadFailed(topicProgress)
 
+interface AssignmentEffort {
+	seconds: number | null
+	runs: number
+	runs_to_pass: number | null
+	hints: number
+	pastes: number
+}
+
+const effort = useCall<Record<string, AssignmentEffort>, { student: string }>({
+	url: '/api/v2/method/cs17_portal.effort.get_student_effort',
+	params: () => ({ student: props.studentId }),
+	refetch: true,
+})
+
 const assignmentColumns: Column[] = [
 	{ header: 'Assignment', key: 'title', variant: 'primary' },
 	{ header: 'Status', key: 'status', width: '6.5rem' },
 	{ header: 'Submitted', key: 'submitted', width: '8rem' },
 	{ header: 'Grade', key: 'grade', width: '10rem' },
 	{ header: 'Tab leaves', key: 'tab_leaves', width: '5.5rem' },
+	{ header: 'Effort', key: 'effort', width: '10rem' },
 ]
 
 const resultColumns: Column[] = [
@@ -275,6 +306,32 @@ function publishStatus(grade: CS17Grade) {
 		} as const
 	}
 	return { label: 'Draft', theme: 'gray' } as const
+}
+
+function formatTimeSpent(seconds: number | null): string {
+	if (seconds === null) return '—'
+	const minutes = Math.floor(seconds / 60)
+	if (minutes < 1) return 'Under a minute'
+	const [days, hours] = [Math.floor(minutes / 1440), Math.floor(minutes / 60) % 24]
+	if (days) return hours ? `${days}d ${hours}h` : `${days}d`
+	if (hours) return minutes % 60 ? `${hours}h ${minutes % 60}m` : `${hours}h`
+	return `${minutes}m`
+}
+
+function plural(count: number, word: string): string {
+	return `${count} ${word}${count === 1 ? '' : 's'}`
+}
+
+function effortCounts(row: AssignmentEffort): string {
+	return [
+		row.runs_to_pass
+			? `Passed on run ${row.runs_to_pass}`
+			: row.runs && `${plural(row.runs, 'run')}, no pass`,
+		row.hints && plural(row.hints, 'hint'),
+		row.pastes && plural(row.pastes, 'paste'),
+	]
+		.filter(Boolean)
+		.join(' · ')
 }
 
 function openResult(row: StudentOverviewResult) {
