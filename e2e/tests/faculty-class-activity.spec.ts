@@ -17,6 +17,7 @@ let cohort: CS17Cohort;
 let idleStudent: CS17Profile;
 let busyStudent: CS17Profile;
 let run: string;
+let assignmentTitle: string;
 
 test.describe("Class activity", () => {
 	test.beforeAll(async ({ request }) => {
@@ -28,6 +29,7 @@ test.describe("Class activity", () => {
 			cohort: cohort.name,
 			submissionType: "Python",
 		});
+		assignmentTitle = assignment.title;
 		const { date } = await callGetMethod<{ date: string }>(
 			request,
 			"cs17_portal.class_activity.get_class_activity",
@@ -71,6 +73,22 @@ test.describe("Class activity", () => {
 			.getByRole("button", { name: busyStudent.full_name, exact: true })
 			.click();
 
-		await expect(page.getByRole("dialog")).toContainText("1 run, 1 of 2 tests passed");
+		await expect(page.getByRole("dialog")).toContainText(
+			"12:00 AM · 1 run, 1 of 2 tests passed"
+		);
+	});
+
+	test("shows the assignment a student has not started", async ({ page }) => {
+		await page.goto("/dashboard/faculty/activity");
+		await page.getByRole("combobox", { name: "Cohort" }).click();
+		await page.getByRole("listbox").waitFor();
+		await page.keyboard.type(cohort.name);
+		await page.keyboard.press("Enter");
+
+		await page.getByRole("button", { name: idleStudent.full_name, exact: true }).click();
+
+		const dialog = page.getByRole("dialog");
+		await expect(dialog.getByRole("region", { name: "Day timeline" })).toBeVisible();
+		await expect(dialog).toContainText(`Not started${assignmentTitle}`);
 	});
 });
