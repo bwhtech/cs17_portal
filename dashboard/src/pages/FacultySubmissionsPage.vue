@@ -28,7 +28,8 @@
 			:columns="columns"
 			:rows="groupedRows"
 			:row-key="rowKey"
-			:group-by="(row: CohortSubmission) => row.assignment_title"
+			:group-by="(row: CohortSubmission) => row.assignment"
+			:group-label="assignmentTitle"
 			:loading="submissions.loading && !submissions.data"
 			:on-row-click="openGrading"
 			:empty="assignedToMe ? 'No submissions assigned to you.' : 'No submissions yet.'"
@@ -164,6 +165,10 @@ const groupedRows = computed(() => {
 			Number(pendingAssignments.has(a.assignment)),
 	)
 })
+
+function assignmentTitle(assignment: string): string {
+	return rows.value.find((row) => row.assignment === assignment)?.assignment_title ?? assignment
+}
 
 function pendingCount(groupRows: CohortSubmission[]): number {
 	return groupRows.filter(isPending).length
