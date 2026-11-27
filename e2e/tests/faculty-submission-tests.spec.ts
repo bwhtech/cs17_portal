@@ -49,7 +49,11 @@ test.describe("Submission tests", () => {
 		await page.route("**/cs17_portal.api.get_assignment_submissions*", (route) =>
 			route.fulfill({
 				json: {
-					data: { assignment: ASSIGNMENT, submissions: SUBMISSIONS, not_submitted: [] },
+					data: {
+						assignment: { ...ASSIGNMENT, test_cases: testCases },
+						submissions: SUBMISSIONS,
+						not_submitted: [],
+					},
 				},
 			})
 		);
@@ -77,7 +81,7 @@ test.describe("Submission tests", () => {
 	});
 
 	test("checks each solution against the tests", async ({ page }) => {
-		await page.goto(`/dashboard/faculty/assignments/${ASSIGNMENT.name}`);
+		await page.goto(`/dashboard/faculty/assignments/${ASSIGNMENT.name}?tab=brief`);
 		await page.getByRole("button", { name: "Add solutions" }).click();
 		const dialog = page.getByRole("dialog");
 		await dialog.getByRole("button", { name: "Add solution", exact: true }).click();
