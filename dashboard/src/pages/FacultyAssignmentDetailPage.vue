@@ -54,227 +54,249 @@
 
 		<div v-else class="space-y-6">
 			<h1 class="break-words text-2xl text-ink-gray-9 md:sr-only">{{ assignment.title }}</h1>
-			<div class="flex flex-col gap-6 md:flex-row">
-				<div class="min-w-0 flex-1">
-					<MarkdownText :content="assignment.description" />
-				</div>
+			<Tabs :model-value="tab" @update:model-value="showTab">
+				<TabList variant="underline">
+					<TabTrigger value="submissions" label="Submissions">
+						<template #suffix>
+							<span class="text-ink-gray-5">
+								{{ submissions.length.toLocaleString() }} of
+								{{ rows.length.toLocaleString() }}
+							</span>
+						</template>
+					</TabTrigger>
+					<TabTrigger value="brief" label="Brief" />
+				</TabList>
 
-				<div class="w-full shrink-0 md:w-64">
-					<dl
-						class="space-y-3 rounded-4 border border-outline-gray-1 bg-surface-base p-4"
+				<TabPanel value="submissions" class="pt-5">
+					<p
+						class="text-sm text-ink-gray-5"
+						:class="testProgress && 'mb-3'"
+						aria-live="polite"
 					>
-						<div v-for="meta in metaRows" :key="meta.label">
-							<dt class="text-xs text-ink-gray-5">{{ meta.label }}</dt>
-							<dd class="text-base font-medium text-ink-gray-8">
-								{{ meta.value }}
-							</dd>
-						</div>
-					</dl>
-				</div>
-			</div>
+						{{ testProgress }}
+					</p>
 
-			<AnswerSheetCard
-				v-if="assignment.submission_type !== 'Python'"
-				:assignment="assignment.name"
-				:sheet="sheet"
-				:show-answers="answerSheet.data?.show_answers ?? false"
-				@changed="answerSheet.reload()"
-			/>
-
-			<SolutionsCard
-				v-if="assignmentDetails"
-				:assignment="assignmentDetails"
-				@changed="assignmentTests.reload()"
-			/>
-
-			<section class="space-y-3">
-				<div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-					<h2 class="text-lg font-semibold text-ink-gray-8">
-						Submissions ({{ submissions.length.toLocaleString() }} of
-						{{ rows.length.toLocaleString() }})
-					</h2>
-					<p class="text-sm text-ink-gray-5" aria-live="polite">{{ testProgress }}</p>
-				</div>
-
-				<DataTable
-					v-model:selection="selection"
-					:columns="columns"
-					:rows="rows"
-					:row-key="(row: CS17Submission) => row.name"
-					:is-row-selectable="isSubmitted"
-					:row-height="closestMatches.size || testedCount || hasSuddenCode ? 60 : 44"
-					selectable
-					empty="No submissions yet."
-				>
-					<template #cell-student="{ row }">
-						<div
-							class="flex min-w-0 items-center gap-2"
-							:class="isDesktop && 'flex-wrap gap-y-1'"
-						>
-							<RowTitle
-								:class="isDesktop && 'basis-full'"
-								:title="row.full_name ?? row.student"
-								:to="`/faculty/students/${row.student}`"
-								@click.stop
-							/>
-							<Tooltip
-								v-if="closestMatches.has(row.name)"
-								:text="closestMatches.get(row.name)?.label"
-								:disabled="!isDesktop"
+					<DataTable
+						v-model:selection="selection"
+						:columns="columns"
+						:rows="rows"
+						:row-key="(row: CS17Submission) => row.name"
+						:is-row-selectable="isSubmitted"
+						:row-height="closestMatches.size || testedCount || hasSuddenCode ? 60 : 44"
+						selectable
+						empty="No submissions yet."
+					>
+						<template #cell-student="{ row }">
+							<div
+								class="flex min-w-0 items-center gap-2"
+								:class="isDesktop && 'flex-wrap gap-y-1'"
 							>
-								<button
-									type="button"
-									class="flex rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
-									:class="isDesktop ? 'shrink-0' : 'min-w-0'"
-									:aria-label="closestMatches.get(row.name)?.label"
-									@click.stop="openSimilarCode(row)"
-								>
-									<Badge class="min-w-0" theme="amber" variant="subtle">
-										<template #prefix>
-											<span
-												class="lucide-files size-full"
-												aria-hidden="true"
-											/>
-										</template>
-										<span class="truncate">{{
-											isDesktop
-												? closestMatches.get(row.name)?.percent
-												: closestMatches.get(row.name)?.label
-										}}</span>
-									</Badge>
-								</button>
-							</Tooltip>
-							<Tooltip
-								v-if="suddenCode.data?.[row.name]"
-								:text="suddenCodeReason(suddenCode.data[row.name])"
-								:disabled="!isDesktop"
-							>
-								<RouterLink
-									class="flex shrink-0 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
-									:to="`/faculty/submissions/${row.name}`"
-									:aria-label="suddenCodeReason(suddenCode.data[row.name])"
+								<RowTitle
+									:class="isDesktop && 'basis-full'"
+									:title="row.full_name ?? row.student"
+									:to="`/faculty/students/${row.student}`"
 									@click.stop
+								/>
+								<Tooltip
+									v-if="closestMatches.has(row.name)"
+									:text="closestMatches.get(row.name)?.label"
+									:disabled="!isDesktop"
 								>
-									<Badge label="Check" theme="amber" variant="subtle">
-										<template #prefix>
-											<span class="lucide-zap size-full" aria-hidden="true" />
-										</template>
-									</Badge>
-								</RouterLink>
-							</Tooltip>
+									<button
+										type="button"
+										class="flex rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
+										:class="isDesktop ? 'shrink-0' : 'min-w-0'"
+										:aria-label="closestMatches.get(row.name)?.label"
+										@click.stop="openSimilarCode(row)"
+									>
+										<Badge class="min-w-0" theme="amber" variant="subtle">
+											<template #prefix>
+												<span
+													class="lucide-files size-full"
+													aria-hidden="true"
+												/>
+											</template>
+											<span class="truncate">{{
+												isDesktop
+													? closestMatches.get(row.name)?.percent
+													: closestMatches.get(row.name)?.label
+											}}</span>
+										</Badge>
+									</button>
+								</Tooltip>
+								<Tooltip
+									v-if="suddenCode.data?.[row.name]"
+									:text="suddenCodeReason(suddenCode.data[row.name])"
+									:disabled="!isDesktop"
+								>
+									<RouterLink
+										class="flex shrink-0 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
+										:to="`/faculty/submissions/${row.name}`"
+										:aria-label="suddenCodeReason(suddenCode.data[row.name])"
+										@click.stop
+									>
+										<Badge label="Check" theme="amber" variant="subtle">
+											<template #prefix>
+												<span
+													class="lucide-zap size-full"
+													aria-hidden="true"
+												/>
+											</template>
+										</Badge>
+									</RouterLink>
+								</Tooltip>
+								<TestScoreBadge
+									v-if="isDesktop && testScores[row.name]"
+									class="shrink-0"
+									v-bind="testScores[row.name]"
+								/>
+							</div>
+						</template>
+
+						<template #cell-tests="{ row }">
 							<TestScoreBadge
-								v-if="isDesktop && testScores[row.name]"
-								class="shrink-0"
+								v-if="testScores[row.name]"
 								v-bind="testScores[row.name]"
 							/>
-						</div>
-					</template>
+							<span v-else class="text-ink-gray-5">—</span>
+						</template>
 
-					<template #cell-tests="{ row }">
-						<TestScoreBadge v-if="testScores[row.name]" v-bind="testScores[row.name]" />
-						<span v-else class="text-ink-gray-5">—</span>
-					</template>
-
-					<template #cell-status="{ row }">
-						<Badge
-							v-if="row.returned_on"
-							label="Returned"
-							theme="amber"
-							variant="subtle"
-							:title="formatDateTime(row.returned_on)"
-						/>
-						<Badge
-							v-else
-							:label="isSubmitted(row) ? 'Submitted' : 'Not submitted'"
-							:theme="isSubmitted(row) ? 'green' : 'gray'"
-							variant="subtle"
-						/>
-					</template>
-
-					<template #cell-submitted="{ row }">
-						<span v-if="row.submitted_at" class="flex min-w-0 items-center gap-1.5">
-							<span class="truncate text-ink-gray-6">{{
-								formatDateTime(row.submitted_at)
-							}}</span>
+						<template #cell-status="{ row }">
 							<Badge
-								v-if="isLate(row.submitted_at, assignment.due_date)"
-								class="shrink-0"
-								label="Late"
-								theme="red"
+								v-if="row.returned_on"
+								label="Returned"
+								theme="amber"
+								variant="subtle"
+								:title="formatDateTime(row.returned_on)"
+							/>
+							<Badge
+								v-else
+								:label="isSubmitted(row) ? 'Submitted' : 'Not submitted'"
+								:theme="isSubmitted(row) ? 'green' : 'gray'"
 								variant="subtle"
 							/>
-						</span>
-						<span v-else class="text-ink-gray-5">—</span>
-					</template>
+						</template>
 
-					<template #cell-assignees="{ row }">
-						<div v-if="isSubmitted(row)" class="min-w-0 max-w-full" @click.stop>
-							<SubmissionAssignees
-								:submission="row.name"
-								:assigned-to="assigneesOf(row)"
-								:cohort="assignment.cohort"
-								@changed="detail.reload()"
-							/>
-						</div>
-						<span v-else class="text-ink-gray-5">—</span>
-					</template>
-
-					<template #cell-grade="{ row }">
-						<span v-if="row.grade" class="flex items-center gap-2">
-							<span v-if="isGraded" class="text-base font-medium text-ink-gray-8">{{
-								gradeValue(row.grade)
-							}}</span>
-							<Badge v-bind="publishStatus(row.grade)" variant="subtle" />
-						</span>
-						<Badge
-							v-else-if="isSubmitted(row) && isGraded"
-							label="Ungraded"
-							theme="gray"
-							variant="subtle"
-						/>
-						<span v-else class="text-ink-gray-5">—</span>
-					</template>
-
-					<template #cell-actions="{ row }">
-						<div class="flex flex-wrap items-center gap-2 md:justify-end">
-							<Button
-								v-if="isSubmitted(row)"
-								label="Preview"
-								@click="openPreview(row)"
-							/>
-							<Button
-								v-if="isSubmitted(row)"
-								:label="gradeActionLabel(row)"
-								@click="gradeTarget = row"
-							/>
-							<Dropdown
-								v-if="moreActions(row).length"
-								:options="moreActions(row)"
-								align="end"
-							>
-								<Button
-									icon="lucide-ellipsis"
-									:aria-label="`Actions for ${row.full_name ?? row.student}`"
+						<template #cell-submitted="{ row }">
+							<span v-if="row.submitted_at" class="flex min-w-0 items-center gap-1.5">
+								<span class="truncate text-ink-gray-6">{{
+									formatDateTime(row.submitted_at)
+								}}</span>
+								<Badge
+									v-if="isLate(row.submitted_at, assignment.due_date)"
+									class="shrink-0"
+									label="Late"
+									theme="red"
+									variant="subtle"
 								/>
-							</Dropdown>
-						</div>
-					</template>
-				</DataTable>
+							</span>
+							<span v-else class="text-ink-gray-5">—</span>
+						</template>
 
-				<SubmissionBulkActions
-					v-if="selection.length"
-					:submissions="selection"
-					:assignment="assignmentId"
-					:cohort="assignment.cohort"
-					:draft-grades="selectedDraftGrades"
-					:remarks-only="!isGraded"
-					:can-check-with-ai="assignment.can_check_with_ai"
-					:ungraded-submissions="selectedUngradedSubmissions"
-					@checking="waitForAiDrafts"
-					@done="clearSelection"
-					@clear="selection = []"
-				/>
-			</section>
+						<template #cell-assignees="{ row }">
+							<div v-if="isSubmitted(row)" class="min-w-0 max-w-full" @click.stop>
+								<SubmissionAssignees
+									:submission="row.name"
+									:assigned-to="assigneesOf(row)"
+									:cohort="assignment.cohort"
+									@changed="detail.reload()"
+								/>
+							</div>
+							<span v-else class="text-ink-gray-5">—</span>
+						</template>
+
+						<template #cell-grade="{ row }">
+							<span v-if="row.grade" class="flex items-center gap-2">
+								<span v-if="isGraded" class="text-base font-medium text-ink-gray-8">
+									{{ gradeValue(row.grade) }}
+								</span>
+								<Badge v-bind="publishStatus(row.grade)" variant="subtle" />
+							</span>
+							<Badge
+								v-else-if="isSubmitted(row) && isGraded"
+								label="Ungraded"
+								theme="gray"
+								variant="subtle"
+							/>
+							<span v-else class="text-ink-gray-5">—</span>
+						</template>
+
+						<template #cell-actions="{ row }">
+							<div class="flex flex-wrap items-center gap-2 md:justify-end">
+								<Button
+									v-if="isSubmitted(row)"
+									label="Preview"
+									@click="openPreview(row)"
+								/>
+								<Button
+									v-if="isSubmitted(row)"
+									:label="gradeActionLabel(row)"
+									@click="gradeTarget = row"
+								/>
+								<Dropdown
+									v-if="moreActions(row).length"
+									:options="moreActions(row)"
+									align="end"
+								>
+									<Button
+										icon="lucide-ellipsis"
+										:aria-label="`Actions for ${row.full_name ?? row.student}`"
+									/>
+								</Dropdown>
+							</div>
+						</template>
+					</DataTable>
+
+					<SubmissionBulkActions
+						v-if="selection.length"
+						:submissions="selection"
+						:assignment="assignmentId"
+						:cohort="assignment.cohort"
+						:draft-grades="selectedDraftGrades"
+						:remarks-only="!isGraded"
+						:can-check-with-ai="assignment.can_check_with_ai"
+						:ungraded-submissions="selectedUngradedSubmissions"
+						@checking="waitForAiDrafts"
+						@done="clearSelection"
+						@clear="selection = []"
+					/>
+				</TabPanel>
+
+				<TabPanel value="brief" class="space-y-6 pt-5">
+					<div class="flex flex-col gap-6 md:flex-row">
+						<div class="min-w-0 flex-1">
+							<MarkdownText :content="assignment.description" />
+						</div>
+
+						<div class="w-full shrink-0 md:w-64">
+							<dl
+								class="space-y-3 rounded-4 border border-outline-gray-1 bg-surface-base p-4"
+							>
+								<div v-for="meta in metaRows" :key="meta.label">
+									<dt class="text-xs text-ink-gray-5">{{ meta.label }}</dt>
+									<dd class="text-base font-medium text-ink-gray-8">
+										{{ meta.value }}
+									</dd>
+								</div>
+							</dl>
+						</div>
+					</div>
+
+					<AnswerSheetCard
+						v-if="assignment.submission_type !== 'Python'"
+						:assignment="assignment.name"
+						:sheet="sheet"
+						:show-answers="answerSheet.data?.show_answers ?? false"
+						@changed="answerSheet.reload()"
+					/>
+
+					<SolutionsCard
+						v-if="assignmentDetails"
+						:assignment="assignmentDetails"
+						@changed="assignmentTests.reload()"
+					/>
+				</TabPanel>
+			</Tabs>
 		</div>
 	</PageBody>
 
@@ -365,6 +387,10 @@ import {
 	Button,
 	Dropdown,
 	PageHeaderBackButton,
+	TabList,
+	TabPanel,
+	TabTrigger,
+	Tabs,
 	toast,
 	Tooltip,
 	useCall,
@@ -419,6 +445,12 @@ const breadcrumbs = useBreadcrumbs()
 const { isDesktop } = useBreakpoint()
 
 const assignmentId = computed(() => String(route.params.assignmentId ?? ''))
+
+const tab = computed(() => (route.query.tab === 'brief' ? 'brief' : 'submissions'))
+
+function showTab(value: string | number) {
+	router.replace({ query: { ...route.query, tab: value === 'brief' ? 'brief' : undefined } })
+}
 
 const detail = useCall<
 	{ assignment: CS17Assignment; submissions: CS17Submission[]; not_submitted: CS17Student[] },
