@@ -224,6 +224,22 @@ class CS17Assignment(Document):
 
 
 def notify_students(assignment: str, students: list[str], subject: str) -> None:
+	alert_students(
+		students,
+		subject,
+		f"/dashboard/assignments/{assignment}/submission",
+		document_type="CS17 Assignment",
+		document_name=assignment,
+	)
+
+
+def alert_students(
+	students: list[str],
+	subject: str,
+	link: str,
+	document_type: str | None = None,
+	document_name: str | None = None,
+) -> None:
 	users = frappe.get_all(
 		"User",
 		filters={
@@ -233,13 +249,12 @@ def notify_students(assignment: str, students: list[str], subject: str) -> None:
 		},
 		fields=["name", "email"],
 	)
-	link = f"/dashboard/assignments/{assignment}/submission"
 	make_notification_logs(
 		frappe._dict(
 			type="Alert",
 			subject=subject,
-			document_type="CS17 Assignment",
-			document_name=assignment,
+			document_type=document_type,
+			document_name=document_name,
 			link=link,
 		),
 		[user.email for user in users],

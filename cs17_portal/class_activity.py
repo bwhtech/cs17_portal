@@ -1,8 +1,11 @@
 import frappe
+from frappe import _
 from frappe.query_builder.functions import Max
+from frappe.rate_limiter import rate_limit
 from frappe.utils import getdate, today
 
 from cs17_portal.api import ASSIGNMENT_SUBMISSION, get_cohort_students
+from cs17_portal.cs17_portal.doctype.cs17_assignment.cs17_assignment import alert_students
 
 
 @frappe.whitelist(methods=["GET"])
@@ -101,3 +104,19 @@ def summarize_class_activity(students: list, date: str | None = None) -> dict:
 		)
 	rows.sort(key=lambda row: (bool(row["opened"]), row["submitted"]))
 	return {"date": date, "students": rows}
+
+
+@frappe.whitelist(methods=["POST"])
+@rate_limit(limit=20, seconds=60 * 60, methods=["POST"], ip_based=False, user_based=True)
+def remind_students(cohort: str, students: list) -> None:
+	if not set(students) <= {student.student for student in get_cohort_students(cohort)}:
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	frappe.enqueue(send_reminder, students=sorted(set(students)), enqueue_after_commit=True)
+
+
+def send_reminder(students: list[str]) -> None:
+	alert_students(
+		students,
+		_("Don't forget your assignments today. Open them and give them a go."),
+		"/dashboard/assignments",
+	)

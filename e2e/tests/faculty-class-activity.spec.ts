@@ -66,7 +66,10 @@ test.describe("Class activity", () => {
 		await expect(rows).toContainText([idleStudent.full_name!, busyStudent.full_name!]);
 		await expect(rows.first()).toContainText("No work");
 
-		await rows.nth(1).click();
+		await rows
+			.nth(1)
+			.getByRole("button", { name: busyStudent.full_name, exact: true })
+			.click();
 
 		await expect(page.getByRole("dialog")).toContainText("1 run, 1 of 2 tests passed");
 	});
