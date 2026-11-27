@@ -3,7 +3,7 @@ import { test, expect, Page } from "@playwright/test";
 async function reloadWithServiceWorker(page: Page) {
 	await page.goto("/dashboard");
 	await page.evaluate(() => navigator.serviceWorker.ready);
-	const responses = page.waitForResponse("**/cs17_portal.api.get_student_assignments*");
+	const responses = page.waitForResponse("**/cs17_portal.api.get_student_upcoming_assignments*");
 	const fromWorker = new Map<string, boolean>();
 	page.on("response", (response) =>
 		fromWorker.set(new URL(response.url()).pathname, response.fromServiceWorker())
