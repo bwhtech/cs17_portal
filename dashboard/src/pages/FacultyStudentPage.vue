@@ -1,7 +1,7 @@
 <template>
 	<AppHeader title="Student">
 		<template #left-mobile>
-			<PageHeaderBackButton fallback-route="/faculty/submissions" />
+			<PageHeaderBackButton fallback-route="/faculty/reports" />
 		</template>
 	</AppHeader>
 
@@ -349,9 +349,7 @@ watch(
 	() => student.value?.full_name,
 	(fullName) => {
 		breadcrumbs.set(
-			fullName
-				? [{ label: 'Submissions', route: '/faculty/submissions' }, { label: fullName }]
-				: [],
+			fullName ? [{ label: 'Reports', route: '/faculty/reports' }, { label: fullName }] : [],
 		)
 	},
 	{ immediate: true },
