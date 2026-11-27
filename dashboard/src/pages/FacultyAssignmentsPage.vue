@@ -13,8 +13,22 @@
 	</AppHeader>
 
 	<PageBody class="space-y-5">
-		<div v-if="cohorts.length > 1" class="max-w-xs">
+		<div class="flex flex-wrap items-end gap-3">
+			<TextInput
+				v-model="search"
+				class="w-full sm:max-w-xs"
+				type="search"
+				placeholder="Search assignments"
+				aria-label="Search assignments"
+				:debounce="300"
+			>
+				<template #prefix>
+					<span class="lucide-search size-4 text-ink-gray-5" aria-hidden="true" />
+				</template>
+			</TextInput>
 			<Select
+				v-if="cohorts.length > 1"
+				class="w-full sm:max-w-xs"
 				label="Cohort"
 				:model-value="cohortFilter"
 				:options="cohortFilterOptions"
@@ -41,7 +55,7 @@
 			:group-by="(row: AssignmentRow) => row.topic || NO_TOPIC"
 			:on-row-drop="moveToTopic"
 			selectable
-			empty="No assignments yet."
+			:empty="search ? 'No assignments match your search.' : 'No assignments yet.'"
 		>
 			<template #cell-icon="{ row }">
 				<SubmissionTypeIcon :submission-type="row.submission_type" />
@@ -156,7 +170,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Badge, Button, Select, useCall } from 'frappe-ui'
+import { Badge, Button, Select, TextInput, useCall } from 'frappe-ui'
 import DataTable, { type Column } from '@/components/common/DataTable.vue'
 import LoadError from '@/components/common/LoadError.vue'
 import RowTitle from '@/components/common/RowTitle.vue'
@@ -198,6 +212,7 @@ const columns: Column[] = [
 ]
 
 const cohortFilter = ref(ALL_COHORTS)
+const search = ref('')
 const formOpen = ref(false)
 const formKey = ref(0)
 const editingDraft = ref<string | null>(null)
@@ -218,11 +233,10 @@ const quartersCall = useCall<string[]>({
 	method: 'GET',
 })
 
-const assignmentsCall = useCall<CS17Assignment[], { cohort?: string }>({
+const assignmentsCall = useCall<CS17Assignment[]>({
 	url: '/api/v2/method/cs17_portal.api.get_faculty_assignments',
 	method: 'GET',
-	params: () => (cohortFilter.value === ALL_COHORTS ? {} : { cohort: cohortFilter.value }),
-	refetch: true,
+	cacheKey: 'faculty-assignments',
 })
 
 const failed = useLoadFailed(assignmentsCall)
@@ -244,13 +258,20 @@ const cohortFilterOptions = computed(() => [
 
 const movedTopics = ref<Record<string, string>>({})
 
-const rows = computed<AssignmentRow[]>(() =>
-	(assignmentsCall.data ?? []).map((assignment) => ({
-		...assignment,
-		topic: movedTopics.value[assignment.name] ?? assignment.topic,
-		...status(assignment),
-	})),
-)
+const rows = computed<AssignmentRow[]>(() => {
+	const query = search.value.trim().toLowerCase()
+	return (assignmentsCall.data ?? [])
+		.filter(
+			(assignment) =>
+				(cohortFilter.value === ALL_COHORTS || assignment.cohort === cohortFilter.value) &&
+				assignment.title.toLowerCase().includes(query),
+		)
+		.map((assignment) => ({
+			...assignment,
+			topic: movedTopics.value[assignment.name] ?? assignment.topic,
+			...status(assignment),
+		}))
+})
 
 const selectionHasSubmissions = computed(() =>
 	rows.value.some((row) => selection.value.includes(row.name) && !!row.submission_count),
