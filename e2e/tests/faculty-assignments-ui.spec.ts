@@ -148,10 +148,12 @@ test.describe("Faculty assignment portal", () => {
 				"1,Create gallery folder,gallery/ at the assignment root,Yes,Named gallary\n"
 		);
 		await page.goto(`/dashboard/faculty/assignments/${graded.name}`);
+		await page.getByRole("tab", { name: "Brief" }).click();
 		await page
 			.locator("section", { hasText: "Answer sheet" })
 			.locator('input[type="file"]')
 			.setInputFiles(sheet);
+		await page.getByRole("tab", { name: /^Submissions/ }).click();
 
 		const row = page.locator(LIST_ROW, { hasText: student.last_name });
 		await row.getByRole("button", { name: /Actions for/ }).click();
@@ -170,6 +172,7 @@ test.describe("Faculty assignment portal", () => {
 			"#,Task,Expected answer,Scored\n1,Create gallery folder,gallery/ at the assignment root,Yes\n"
 		);
 		await page.goto(`/dashboard/faculty/assignments/${graded.name}`);
+		await page.getByRole("tab", { name: "Brief" }).click();
 		const uploaded = page.waitForResponse(/answer_sheet\.upload_answer_sheet/);
 		await page
 			.locator("section", { hasText: "Answer sheet" })
@@ -177,6 +180,7 @@ test.describe("Faculty assignment portal", () => {
 			.setInputFiles(sheet);
 		await uploaded;
 		await page.waitForResponse(/answer_sheet\.get_answer_sheet/);
+		await page.getByRole("tab", { name: /^Submissions/ }).click();
 
 		const row = page.locator(LIST_ROW, { hasText: student.last_name });
 		await row.getByRole("button", { name: /Actions for/ }).click();
