@@ -54,7 +54,7 @@
 
 		<div v-else class="space-y-6">
 			<h1 class="break-words text-2xl text-ink-gray-9 md:sr-only">{{ assignment.title }}</h1>
-			<Tabs :model-value="tab" @update:model-value="showTab">
+			<Tabs :model-value="tab" :unmount-on-hide="false" @update:model-value="showTab">
 				<TabList variant="underline">
 					<TabTrigger value="submissions" label="Submissions">
 						<template #suffix>
