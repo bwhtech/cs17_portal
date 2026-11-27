@@ -7,8 +7,11 @@ from cs17_portal.api import ASSIGNMENT_SUBMISSION, get_cohort_students
 
 @frappe.whitelist(methods=["GET"])
 def get_class_activity(cohort: str, date: str | None = None) -> dict:
+	return summarize_class_activity(get_cohort_students(cohort), date)
+
+
+def summarize_class_activity(students: list, date: str | None = None) -> dict:
 	date = str(getdate(date or today()))
-	students = get_cohort_students(cohort)
 	names = [student.student for student in students] or [""]
 	on_the_day = ["between", [date, date]]
 	work = {}

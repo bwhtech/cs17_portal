@@ -1,0 +1,29 @@
+{% for cohort in cohorts %}
+{% if cohorts | length > 1 %}
+<p class="text-bold">{{ cohort.cohort | e }}</p>
+{% endif %}
+{% if cohort.no_work %}
+<p>{{ _("No work") }}: {{ cohort.no_work | join(", ") | e }}</p>
+{% endif %}
+{% if cohort.worked %}
+<table cellpadding="4">
+	<tr>
+		<th align="left">{{ _("Student") }}</th>
+		<th>{{ _("Opened") }}</th>
+		<th>{{ _("Typed in") }}</th>
+		<th>{{ _("Ran") }}</th>
+		<th>{{ _("Submitted") }}</th>
+	</tr>
+	{% for student in cohort.worked %}
+	<tr>
+		<td>{{ student.full_name | e }}</td>
+		<td align="center">{{ student.opened }}</td>
+		<td align="center">{{ student.typed }}</td>
+		<td align="center">{{ student.ran }}</td>
+		<td align="center">{{ student.submitted }}</td>
+	</tr>
+	{% endfor %}
+</table>
+{% endif %}
+{% endfor %}
+<p><a href="{{ activity_link }}">{{ _("Open Activity") }}</a></p>

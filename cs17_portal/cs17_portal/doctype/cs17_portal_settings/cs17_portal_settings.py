@@ -16,6 +16,7 @@ class CS17PortalSettings(Document):
 
 		from cs17_portal.cs17_portal.doctype.cs17_quick_link.cs17_quick_link import CS17QuickLink
 
+		daily_activity_email: DF.Check
 		quick_links: DF.Table[CS17QuickLink]
 	# end: auto-generated types
 
